@@ -1,0 +1,247 @@
+<Window x:Class="SmartPS.Views.Auth.LoginView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        mc:Ignorable="d"
+        Title="Smart Parking System - Đăng nhập Hệ thống"
+        Height="620" Width="960"
+        MinHeight="540" MinWidth="760"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="CanResizeWithGrip">
+
+    <!-- Cấu hình WindowChrome: Cho phép kéo mép Resize cửa sổ và kéo TitleBar di chuyển mượt mà -->
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="42"
+                      ResizeBorderThickness="6"
+                      CornerRadius="14"
+                      GlassFrameThickness="0"
+                      UseAeroCaptionButtons="False"/>
+    </WindowChrome.WindowChrome>
+
+    <!-- Viền chính của ứng dụng phong cách Trắng & Băng -->
+    <Border Background="{StaticResource AppBackgroundBrush}"
+            CornerRadius="14"
+            BorderBrush="{StaticResource WindowBorderBrush}"
+            BorderThickness="1"
+            Margin="6">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="20" Color="#64748B" Opacity="0.16" ShadowDepth="3"/>
+        </Border.Effect>
+
+        <!-- Grid chính của toàn bộ cửa sổ -->
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="42"/>
+                <!-- Row 0: Custom Title Bar -->
+                <RowDefinition Height="*"/>
+                <!-- Row 1: Responsive Content Layout -->
+            </Grid.RowDefinitions>
+
+            <!-- ============================================== -->
+            <!-- ROW 0: TITLE BAR (Hỗ trợ Resize, Minimize, Maximize, Close) -->
+            <!-- ============================================== -->
+            <Grid Grid.Row="0" Background="Transparent">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Tiêu đề chữ sạch sẽ bên trái -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                    <TextBlock Text="Smart Parking System" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextBrandBrush}" VerticalAlignment="Center"/>
+                    <TextBlock Text="|" FontSize="11" Foreground="{StaticResource AppBorderBrush}" Margin="8,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="Hệ thống Quản lý Bãi đỗ xe Thông minh" FontSize="12" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Các nút điều khiển cửa sổ đồng đều kích thước (46x32px) -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,5,8,0" WindowChrome.IsHitTestVisibleInChrome="True">
+                    <Button Style="{StaticResource WindowControlBtnStyle}" Content="-" Click="MinimizeButton_Click" ToolTip="Thu nhỏ"/>
+                    <Button x:Name="MaximizeButton" Style="{StaticResource WindowControlBtnStyle}" Content="[ ]" Click="MaximizeButton_Click" ToolTip="Phóng to / Khôi phục"/>
+                    <Button Style="{StaticResource CloseControlBtnStyle}" Content="X" Click="CloseButton_Click" ToolTip="Đóng"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- ============================================== -->
+            <!-- ROW 1: RESPONSIVE 2-COLUMN GRID (Tỷ lệ đều 1:1) -->
+            <!-- ============================================== -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <!-- Cột 1: Branding Banner Tông Băng (Tỷ lệ 1*, MinWidth 350) -->
+                    <ColumnDefinition Width="1*" MinWidth="350"/>
+                    <!-- Cột 2: Form Đăng nhập Tông Trắng (Tỷ lệ 1*, MinWidth 350) -->
+                    <ColumnDefinition Width="1*" MinWidth="350"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- ========================================== -->
+                <!-- CỘT 1: BRANDING BANNER                     -->
+                <!-- ========================================== -->
+                <Border Grid.Column="0"
+                        Margin="14,4,7,14"
+                        CornerRadius="10"
+                        Background="{StaticResource BannerGradientBrush}"
+                        BorderBrush="{StaticResource IceBadgeBorderBrush}"
+                        BorderThickness="1">
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <Grid Margin="32,28">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Header Thương hiệu -->
+                            <StackPanel Grid.Row="0" Margin="0,0,0,24">
+                                <Border Background="{StaticResource CardBackgroundBrush}"
+                                        BorderBrush="{StaticResource IceBadgeBorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="10"
+                                        Width="48" Height="48"
+                                        HorizontalAlignment="Left"
+                                        Margin="0,0,0,14">
+                                    <TextBlock Text="P" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextBrandBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="Smart Parking" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,2"/>
+                                <TextBlock Text="System" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextBrandBrush}" Margin="0,0,0,6"/>
+                                <TextBlock Text="Giải pháp quản lý bãi đỗ xe thông minh, tự động hóa và an toàn" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+                            </StackPanel>
+
+                            <!-- Danh sách tính năng (Bố trí đều đặn, số thứ tự 01, 02, 03) -->
+                            <StackPanel Grid.Row="1" VerticalAlignment="Center" Margin="0,10,0,20">
+                                <Grid Margin="0,0,0,20">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="34"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="01" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextBrandBrush}" VerticalAlignment="Top" Margin="0,1,0,0"/>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Giám sát vị trí đỗ xe" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Cập nhật số lượng chỗ trống và điều phối phương tiện thời gian thực" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Margin="0,0,0,20">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="34"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="02" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextBrandBrush}" VerticalAlignment="Top" Margin="0,1,0,0"/>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Soát vé &amp; Tính phí tự động" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Quét thẻ RFID, nhận diện biển số xe và thanh toán cước phí linh hoạt" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Margin="0,0,0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="34"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="03" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextBrandBrush}" VerticalAlignment="Top" Margin="0,1,0,0"/>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Bảo mật &amp; Thống kê doanh thu" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Kiểm soát lịch sử ra vào chặt chẽ, phân quyền ca trực và báo cáo minh bạch" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- Footer nhỏ bên banner -->
+                            <StackPanel Grid.Row="2">
+                                <TextBlock Text="Phiên bản 1.0.0" FontSize="11" Foreground="{StaticResource TextDimBrush}"/>
+                            </StackPanel>
+                        </Grid>
+                    </ScrollViewer>
+                </Border>
+
+                <!-- ========================================== -->
+                <!-- CỘT 2: FORM ĐĂNG NHẬP (KHÔNG KHUNG ĐỎ)     -->
+                <!-- ========================================== -->
+                <Border Grid.Column="1"
+                        Margin="7,4,14,14"
+                        Background="{StaticResource CardBackgroundBrush}"
+                        CornerRadius="10"
+                        BorderBrush="{StaticResource AppBorderBrush}"
+                        BorderThickness="1">
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <Grid Margin="36,28" MaxWidth="360" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <!-- Row 0: Form Header -->
+                                <RowDefinition Height="Auto"/>
+                                <!-- Row 1: Username Input -->
+                                <RowDefinition Height="Auto"/>
+                                <!-- Row 2: Password Input -->
+                                <RowDefinition Height="Auto"/>
+                                <!-- Row 3: Loading Indicator -->
+                                <RowDefinition Height="Auto"/>
+                                <!-- Row 4: Login Button -->
+                                <RowDefinition Height="Auto"/>
+                                <!-- Row 5: Helper Info -->
+                            </Grid.RowDefinitions>
+
+                            <!-- Header của Form (Khoảng cách chuẩn) -->
+                            <StackPanel Grid.Row="0" Margin="0,0,0,24">
+                                <TextBlock Text="Đăng Nhập" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <TextBlock Text="Nhập thông tin xác thực để truy cập hệ thống bãi đỗ xe"
+                                           FontSize="12.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+
+                            <!-- Username Input (Chiều cao chuẩn 42px) -->
+                            <StackPanel Grid.Row="1" Margin="0,0,0,18">
+                                <TextBlock Text="Tên đăng nhập" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+                                <TextBox x:Name="UsernameInput"
+                                         Style="{StaticResource ModernTextBoxStyle}"
+                                         Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
+                                         IsEnabled="{Binding CanInteract}"
+                                         KeyDown="UsernameInput_KeyDown"/>
+                            </StackPanel>
+
+                            <!-- Password Input (Chiều cao chuẩn 42px) -->
+                            <StackPanel Grid.Row="2" Margin="0,0,0,22">
+                                <TextBlock Text="Mật khẩu" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+                                <PasswordBox x:Name="PasswordInput"
+                                             Style="{StaticResource ModernPasswordBoxStyle}"
+                                             IsEnabled="{Binding CanInteract}"
+                                             KeyDown="PasswordInput_KeyDown"/>
+                            </StackPanel>
+
+                            <!-- Loading Progress Bar -->
+                            <StackPanel Grid.Row="3"
+                                        Margin="0,0,0,14"
+                                        Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisConverter}}">
+                                <ProgressBar IsIndeterminate="True" Height="3"
+                                             Foreground="{StaticResource ProgressIndicatorBrush}"
+                                             Background="{StaticResource ProgressTrackBrush}"
+                                             BorderThickness="0"/>
+                                <TextBlock Text="Đang xử lý đăng nhập..."
+                                           FontSize="12" Foreground="{StaticResource TextBrandBrush}"
+                                           HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                            </StackPanel>
+
+                            <!-- Login Button (Chiều cao chuẩn 42px đồng đều các ô nhập) -->
+                            <Button Grid.Row="4"
+                                    x:Name="LoginButton"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Content="ĐĂNG NHẬP"
+                                    Command="{Binding LoginCommand}"
+                                    CommandParameter="{Binding ElementName=PasswordInput}"
+                                    IsEnabled="{Binding CanInteract}"/>
+
+                            <!-- Helper Info / Liên hệ Admin -->
+                            <StackPanel Grid.Row="5" Margin="0,20,0,0" HorizontalAlignment="Center">
+                                <TextBlock Text="Quên thông tin đăng nhập? Vui lòng liên hệ Quản trị viên"
+                                           FontSize="11.5" Foreground="{StaticResource TextDimBrush}"/>
+                            </StackPanel>
+                        </Grid>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

@@ -1,0 +1,87 @@
+using System.Windows;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using SmartPS.Data;
+using SmartPS.Services.Auth;
+using SmartPS.Services.Authorization;
+using SmartPS.ViewModels.Auth;
+using SmartPS.ViewModels.Dashboard;
+using SmartPS.Views.Auth;
+using SmartPS.Views.Dashboard;
+
+namespace SmartPS;
+
+/// <summary>
+/// Interaction logic for App.xaml
+/// </summary>
+public partial class App : Application
+{
+    public static IServiceProvider ServiceProvider { get; private set; } = null!;
+
+    protected override async void OnStartup(StartupEventArgs e)
+    {
+        base.OnStartup(e);
+
+        // 1. Khởi tạo cấu hình ứng dụng từ appsettings.json
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+            .Build();
+
+        // 2. Cấu hình Service Collection (Dependency Injection)
+        var services = new ServiceCollection();
+
+        services.AddSingleton<IConfiguration>(configuration);
+
+        var connectionString = configuration.GetConnectionString("DefaultConnection")
+            ?? "Host=localhost;Port=5432;Database=SmartPS;Username=smartps;Password=smartps;";
+
+        // Cấu hình Npgsql PostgreSQL
+        services.AddDbContextFactory<SmartPsDbContext>(options =>
+        {
+            options.UseNpgsql(connectionString);
+        });
+
+        // Đăng ký Business Services
+        services.AddSingleton<IAuthService, AuthService>();
+        services.AddSingleton<IPermissionService, PermissionService>();
+
+        // Đăng ký ViewModels
+        services.AddTransient<LoginViewModel>();
+        services.AddTransient<DashboardViewModel>();
+
+        // Đăng ký Views
+        services.AddTransient<LoginView>();
+        services.AddTransient<DashboardView>();
+
+        ServiceProvider = services.BuildServiceProvider();
+
+        // 3. Tự động kiểm tra, tạo Database PostgreSQL (Code First) và nạp dữ liệu mặc định (Seed Data)
+        try
+        {
+            var dbContextFactory = ServiceProvider.GetRequiredService<IDbContextFactory<SmartPsDbContext>>();
+            await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+            await DbInitializer.InitializeAsync(dbContext);
+        }
+        catch (Exception ex)
+        {
+            // Bắt lỗi kết nối PostgreSQL 
+            System.Diagnostics.Debug.WriteLine($"[SmartPS PostgreSQL Auto-DB Warning]: {ex.Message}");
+        }
+
+        // 4. Khởi tạo và hiển thị màn hình Đăng nhập
+        var loginView = ServiceProvider.GetRequiredService<LoginView>();
+        loginView.Show();
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        if (ServiceProvider is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
+
+        base.OnExit(e);
+    }
+}
