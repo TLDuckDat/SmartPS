@@ -61,6 +61,26 @@ public class DashboardViewModel : ViewModelBase
         }
     }
 
+    private string _searchText = string.Empty;
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            if (SetProperty(ref _searchText, value))
+            {
+                ApplyRoleFilter();
+            }
+        }
+    }
+
+    private bool _isCreatePanelVisible;
+    public bool IsCreatePanelVisible
+    {
+        get => _isCreatePanelVisible;
+        set => SetProperty(ref _isCreatePanelVisible, value);
+    }
+
     // Form tạo tài khoản mới
     private string _newUsername = string.Empty;
     public string NewUsername
@@ -93,6 +113,7 @@ public class DashboardViewModel : ViewModelBase
     // Các lệnh
     public AsyncRelayCommand CreateUserCommand { get; }
     public RelayCommand FilterRoleCommand { get; }
+    public RelayCommand ToggleCreatePanelCommand { get; }
     public AsyncRelayCommand RefreshCommand { get; }
     public RelayCommand LogoutCommand { get; }
 
@@ -106,6 +127,7 @@ public class DashboardViewModel : ViewModelBase
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
 
         CreateUserCommand = new AsyncRelayCommand(ExecuteCreateUserAsync, _ => !IsBusy);
+        ToggleCreatePanelCommand = new RelayCommand(() => IsCreatePanelVisible = !IsCreatePanelVisible);
         FilterRoleCommand = new RelayCommand(param =>
         {
             if (param is string role)
@@ -179,6 +201,16 @@ public class DashboardViewModel : ViewModelBase
             _ => _allUsers
         };
 
+        if (!string.IsNullOrWhiteSpace(SearchText))
+        {
+            var search = SearchText.Trim();
+            query = query.Where(u =>
+                u.Username.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                u.FullName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                u.UserId.ToString().Contains(search) ||
+                (u.Role != null && u.Role.RoleName.Contains(search, StringComparison.OrdinalIgnoreCase)));
+        }
+
         foreach (var u in query)
         {
             DisplayedUsers.Add(u);
@@ -213,7 +245,12 @@ public class DashboardViewModel : ViewModelBase
         if (parameter is object[] boxes && boxes.Length >= 2)
         {
             if (boxes[0] is PasswordBox p1) password = p1.Password;
+            else if (boxes[0] is SmartPS.Views.Common.RevealPasswordBox r1) password = r1.Password;
+            else if (boxes[0] is string s1) password = s1;
+
             if (boxes[1] is PasswordBox p2) confirmPassword = p2.Password;
+            else if (boxes[1] is SmartPS.Views.Common.RevealPasswordBox r2) confirmPassword = r2.Password;
+            else if (boxes[1] is string s2) confirmPassword = s2;
         }
 
         if (string.IsNullOrWhiteSpace(password))
@@ -258,7 +295,10 @@ public class DashboardViewModel : ViewModelBase
                 if (parameter is object[] pBoxes)
                 {
                     if (pBoxes[0] is PasswordBox pb1) pb1.Password = string.Empty;
+                    else if (pBoxes[0] is SmartPS.Views.Common.RevealPasswordBox rpb1) rpb1.Clear();
+
                     if (pBoxes[1] is PasswordBox pb2) pb2.Password = string.Empty;
+                    else if (pBoxes[1] is SmartPS.Views.Common.RevealPasswordBox rpb2) rpb2.Clear();
                 }
 
                 // Tải lại danh sách
@@ -280,6 +320,30 @@ public class DashboardViewModel : ViewModelBase
         catch (Exception ex)
         {
             OperationFailed?.Invoke($"Đã xảy ra lỗi khi tạo tài khoản: {ex.Message}");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    public async Task<bool> DeleteUserAsync(int userId)
+    {
+        try
+        {
+            IsBusy = true;
+            var success = await _authService.DeleteUserAsync(userId);
+            if (success)
+            {
+                await LoadDataAsync();
+                return true;
+            }
+            return false;
+        }
+        catch (Exception ex)
+        {
+            OperationFailed?.Invoke(ex.Message);
+            return false;
         }
         finally
         {

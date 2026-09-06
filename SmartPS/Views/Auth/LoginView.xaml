@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        xmlns:common="clr-namespace:SmartPS.Views.Common"
         mc:Ignorable="d"
         Title="Smart Parking System - Đăng nhập Hệ thống"
         Height="620" Width="960"
@@ -58,11 +59,17 @@
                     <TextBlock Text="Hệ thống Quản lý Bãi đỗ xe Thông minh" FontSize="12" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <!-- Các nút điều khiển cửa sổ đồng đều kích thước (46x32px) -->
+                <!-- Các nút điều khiển cửa sổ chuẩn vector (Thu nhỏ, Phóng to/Khôi phục, Đóng) -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,5,8,0" WindowChrome.IsHitTestVisibleInChrome="True">
-                    <Button Style="{StaticResource WindowControlBtnStyle}" Content="-" Click="MinimizeButton_Click" ToolTip="Thu nhỏ"/>
-                    <Button x:Name="MaximizeButton" Style="{StaticResource WindowControlBtnStyle}" Content="[ ]" Click="MaximizeButton_Click" ToolTip="Phóng to / Khôi phục"/>
-                    <Button Style="{StaticResource CloseControlBtnStyle}" Content="X" Click="CloseButton_Click" ToolTip="Đóng"/>
+                    <Button Style="{StaticResource WindowControlBtnStyle}" Click="MinimizeButton_Click" ToolTip="Thu nhỏ">
+                        <Path Data="M0 5h10v1.2H0z" Width="10" Height="10" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                    </Button>
+                    <Button x:Name="MaximizeButton" Style="{StaticResource WindowControlBtnStyle}" Click="MaximizeButton_Click" ToolTip="Phóng to">
+                        <Path x:Name="MaximizeIcon" Data="M1 1h8v8H1V1zm1 1.2v5.6h6V2.2H2z" Width="10" Height="10" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                    </Button>
+                    <Button Style="{StaticResource CloseControlBtnStyle}" Click="CloseButton_Click" ToolTip="Đóng">
+                        <Path Data="M1.2 0.2L5 4l3.8-3.8 1 1L6 5l3.8 3.8-1 1L5 6l-3.8 3.8-1-1L4 5 0.2 1.2z" Width="10" Height="10" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                    </Button>
                 </StackPanel>
             </Grid>
 
@@ -78,13 +85,13 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- ========================================== -->
-                <!-- CỘT 1: BRANDING BANNER                     -->
+                <!-- CỘT 1: BRANDING BANNER (MIDNIGHT SLATE)     -->
                 <!-- ========================================== -->
                 <Border Grid.Column="0"
                         Margin="14,4,7,14"
-                        CornerRadius="10"
+                        CornerRadius="12"
                         Background="{StaticResource BannerGradientBrush}"
-                        BorderBrush="{StaticResource IceBadgeBorderBrush}"
+                        BorderBrush="#334155"
                         BorderThickness="1">
 
                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -97,18 +104,18 @@
 
                             <!-- Header Thương hiệu -->
                             <StackPanel Grid.Row="0" Margin="0,0,0,24">
-                                <Border Background="{StaticResource CardBackgroundBrush}"
-                                        BorderBrush="{StaticResource IceBadgeBorderBrush}"
-                                        BorderThickness="1"
+                                <Border Background="#1E293B"
+                                        BorderBrush="#38BDF8"
+                                        BorderThickness="1.5"
                                         CornerRadius="10"
                                         Width="48" Height="48"
                                         HorizontalAlignment="Left"
                                         Margin="0,0,0,14">
-                                    <TextBlock Text="P" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextBrandBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <TextBlock Text="P" FontSize="24" FontWeight="Bold" Foreground="#38BDF8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
-                                <TextBlock Text="Smart Parking" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,2"/>
-                                <TextBlock Text="System" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextBrandBrush}" Margin="0,0,0,6"/>
-                                <TextBlock Text="Giải pháp quản lý bãi đỗ xe thông minh, tự động hóa và an toàn" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+                                <TextBlock Text="Smart Parking" FontSize="25" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,0,0,2"/>
+                                <TextBlock Text="System Enterprise" FontSize="15" FontWeight="SemiBold" Foreground="#38BDF8" Margin="0,0,0,6"/>
+                                <TextBlock Text="Giải pháp quản lý bãi đỗ xe thông minh, tự động hóa và bảo mật dữ liệu" FontSize="12.5" Foreground="#94A3B8" TextWrapping="Wrap"/>
                             </StackPanel>
 
                             <!-- Danh sách tính năng (Bố trí đều đặn, số thứ tự 01, 02, 03) -->
@@ -118,10 +125,10 @@
                                         <ColumnDefinition Width="34"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="01" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextBrandBrush}" VerticalAlignment="Top" Margin="0,1,0,0"/>
+                                    <TextBlock Grid.Column="0" Text="01" FontSize="13" FontWeight="Bold" Foreground="#38BDF8" VerticalAlignment="Top" Margin="0,1,0,0"/>
                                     <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Giám sát vị trí đỗ xe" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                        <TextBlock Text="Cập nhật số lượng chỗ trống và điều phối phương tiện thời gian thực" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock Text="Giám sát vị trí đỗ xe thời gian thực" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF"/>
+                                        <TextBlock Text="Cập nhật số lượng chỗ trống và điều phối phương tiện tự động" FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                     </StackPanel>
                                 </Grid>
 
@@ -130,10 +137,10 @@
                                         <ColumnDefinition Width="34"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="02" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextBrandBrush}" VerticalAlignment="Top" Margin="0,1,0,0"/>
+                                    <TextBlock Grid.Column="0" Text="02" FontSize="13" FontWeight="Bold" Foreground="#38BDF8" VerticalAlignment="Top" Margin="0,1,0,0"/>
                                     <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Soát vé &amp; Tính phí tự động" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                        <TextBlock Text="Quét thẻ RFID, nhận diện biển số xe và thanh toán cước phí linh hoạt" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock Text="Soát vé &amp; Nhận diện biển số" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF"/>
+                                        <TextBlock Text="Quét thẻ RFID, nhận diện camera AI và tính phí linh hoạt" FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                     </StackPanel>
                                 </Grid>
 
@@ -142,17 +149,17 @@
                                         <ColumnDefinition Width="34"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="03" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextBrandBrush}" VerticalAlignment="Top" Margin="0,1,0,0"/>
+                                    <TextBlock Grid.Column="0" Text="03" FontSize="13" FontWeight="Bold" Foreground="#38BDF8" VerticalAlignment="Top" Margin="0,1,0,0"/>
                                     <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Bảo mật &amp; Thống kê doanh thu" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                        <TextBlock Text="Kiểm soát lịch sử ra vào chặt chẽ, phân quyền ca trực và báo cáo minh bạch" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock Text="Bảo mật &amp; Thống kê doanh thu" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF"/>
+                                        <TextBlock Text="Kiểm soát lịch sử ra vào chặt chẽ, phân quyền ca trực minh bạch" FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
 
                             <!-- Footer nhỏ bên banner -->
                             <StackPanel Grid.Row="2">
-                                <TextBlock Text="Phiên bản 1.0.0" FontSize="11" Foreground="{StaticResource TextDimBrush}"/>
+                                <TextBlock Text="SmartPS Platform • Phiên bản 1.0.0" FontSize="11" Foreground="#64748B"/>
                             </StackPanel>
                         </Grid>
                     </ScrollViewer>
@@ -202,13 +209,18 @@
                                          KeyDown="UsernameInput_KeyDown"/>
                             </StackPanel>
 
-                            <!-- Password Input (Chiều cao chuẩn 42px) -->
+                            <!-- Password Input (Chiều cao chuẩn 42px, có nút Ẩn/Hiện mật khẩu) -->
                             <StackPanel Grid.Row="2" Margin="0,0,0,22">
                                 <TextBlock Text="Mật khẩu" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
-                                <PasswordBox x:Name="PasswordInput"
-                                             Style="{StaticResource ModernPasswordBoxStyle}"
-                                             IsEnabled="{Binding CanInteract}"
-                                             KeyDown="PasswordInput_KeyDown"/>
+                                <common:RevealPasswordBox x:Name="PasswordInput"
+                                                          InputHeight="42"
+                                                          InputCornerRadius="8"
+                                                          InputBackground="{StaticResource InputBackgroundBrush}"
+                                                          InputBorderBrush="{StaticResource InputBorderBrush}"
+                                                          InputFocusedBorderBrush="{StaticResource InputFocusedBorderBrush}"
+                                                          InputForeground="{StaticResource TextPrimaryBrush}"
+                                                          IsEnabled="{Binding CanInteract}"
+                                                          KeyDown="PasswordInput_KeyDown"/>
                             </StackPanel>
 
                             <!-- Loading Progress Bar -->
@@ -230,7 +242,7 @@
                                     Style="{StaticResource PrimaryButtonStyle}"
                                     Content="ĐĂNG NHẬP"
                                     Command="{Binding LoginCommand}"
-                                    CommandParameter="{Binding ElementName=PasswordInput}"
+                                    CommandParameter="{Binding ElementName=PasswordInput, Path=Password}"
                                     IsEnabled="{Binding CanInteract}"/>
 
                             <!-- Helper Info / Liên hệ Admin -->

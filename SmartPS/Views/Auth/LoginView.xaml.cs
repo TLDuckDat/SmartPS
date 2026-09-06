@@ -3,6 +3,7 @@ using System.Windows.Input;
 using Microsoft.Extensions.DependencyInjection;
 using SmartPS.Models.Auth;
 using SmartPS.ViewModels.Auth;
+using SmartPS.Views.Common;
 using SmartPS.Views.Dashboard;
 
 namespace SmartPS.Views.Auth;
@@ -35,10 +36,10 @@ public partial class LoginView : Window
 
     private void OnLoginSucceeded(User user)
     {
-        MessageBox.Show($"Xin chào {user.FullName}!\nBạn đã đăng nhập thành công vào Hệ thống Quản lý Bãi đỗ xe Smart Parking System.",
-                        "Đăng nhập thành công",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+        NotificationDialog.ShowSuccess(
+            $"Xin chào {user.FullName}!\nBạn đã đăng nhập thành công vào Hệ thống Quản lý Bãi đỗ xe Smart Parking System.",
+            "Đăng nhập thành công",
+            this);
 
         // Khởi tạo và hiển thị Dashboard chính
         var dashboardView = App.ServiceProvider.GetRequiredService<DashboardView>();
@@ -50,10 +51,10 @@ public partial class LoginView : Window
 
     private void OnLoginFailed(string message)
     {
-        MessageBox.Show(message,
-                        "Lỗi đăng nhập",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+        NotificationDialog.ShowWarning(
+            message,
+            "Lỗi đăng nhập",
+            this);
     }
 
     private void MinimizeButton_Click(object sender, RoutedEventArgs e)
@@ -86,9 +87,9 @@ public partial class LoginView : Window
     {
         if (e.Key == Key.Enter)
         {
-            if (ViewModel.LoginCommand.CanExecute(PasswordInput))
+            if (ViewModel.LoginCommand.CanExecute(PasswordInput.Password))
             {
-                ViewModel.LoginCommand.Execute(PasswordInput);
+                ViewModel.LoginCommand.Execute(PasswordInput.Password);
             }
             e.Handled = true;
         }

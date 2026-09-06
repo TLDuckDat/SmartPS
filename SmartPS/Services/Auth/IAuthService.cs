@@ -17,5 +17,9 @@ public interface IAuthService
 
     Task<List<User>> GetUsersAsync();
 
+    Task<bool> UpdateUserAsync(UpdateUserRequest request);
+
+    Task<bool> DeleteUserAsync(int userId);
+
     void Logout();
 }

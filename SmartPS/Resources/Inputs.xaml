@@ -1,15 +1,15 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Style cho TextBox Tông Trắng & Băng (Chiều cao chuẩn 42px đồng đều với Button) -->
+    <!-- Style cho TextBox Chuẩn Desktop LOB (Chiều cao 36px, Bo góc 4px, Viền rõ nét) -->
     <Style x:Key="ModernTextBoxStyle" TargetType="TextBox">
         <Setter Property="Background" Value="{StaticResource InputBackgroundBrush}"/>
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource InputBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="Height" Value="42"/>
-        <Setter Property="Padding" Value="12,0"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Height" Value="36"/>
+        <Setter Property="Padding" Value="10,0"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="CaretBrush" Value="{StaticResource TextCaretBrush}"/>
         <Setter Property="Template">
@@ -19,7 +19,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="8"
+                            CornerRadius="4"
                             SnapsToDevicePixels="True">
                         <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
                     </Border>
@@ -41,15 +41,15 @@
         </Setter>
     </Style>
 
-    <!-- Style cho PasswordBox Tông Trắng & Băng (Chiều cao chuẩn 42px đồng đều với Button) -->
+    <!-- Style cho PasswordBox Chuẩn Desktop LOB (Chiều cao 36px, Bo góc 4px, Viền rõ nét) -->
     <Style x:Key="ModernPasswordBoxStyle" TargetType="PasswordBox">
         <Setter Property="Background" Value="{StaticResource InputBackgroundBrush}"/>
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource InputBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="Height" Value="42"/>
-        <Setter Property="Padding" Value="12,0"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Height" Value="36"/>
+        <Setter Property="Padding" Value="10,0"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="CaretBrush" Value="{StaticResource TextCaretBrush}"/>
         <Setter Property="Template">
@@ -59,7 +59,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="8"
+                            CornerRadius="4"
                             SnapsToDevicePixels="True">
                         <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
                     </Border>

@@ -130,6 +130,103 @@ namespace SmartPS.Services.Auth
                 .ToListAsync();
         }
 
+        public async Task<bool> UpdateUserAsync(UpdateUserRequest request)
+        {
+            if (request.UserId <= 0)
+            {
+                throw new ArgumentException("Mã tài khoản không hợp lệ.");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.FullName))
+            {
+                throw new ArgumentException("Họ và tên không được để trống.");
+            }
+
+            if (request.RoleId <= 0)
+            {
+                throw new ArgumentException("Vui lòng chọn vai trò hợp lệ.");
+            }
+
+            if (!string.IsNullOrEmpty(request.NewPassword) && request.NewPassword.Length < 6)
+            {
+                throw new ArgumentException("Mật khẩu mới phải có ít nhất 6 ký tự.");
+            }
+
+            await using var db = await _contextFactory.CreateDbContextAsync();
+            var user = await db.Users.FirstOrDefaultAsync(u => u.UserId == request.UserId);
+            if (user is null)
+            {
+                throw new KeyNotFoundException("Không tìm thấy tài khoản người dùng cần cập nhật.");
+            }
+
+            var roleExists = await db.Roles.AnyAsync(r => r.RoleId == request.RoleId);
+            if (!roleExists)
+            {
+                throw new ArgumentException("Vai trò được chọn không tồn tại trong hệ thống.");
+            }
+
+            user.FullName = request.FullName.Trim();
+            user.RoleId = request.RoleId;
+            user.IsActive = request.IsActive;
+
+            // Đổi mật khẩu nếu admin có nhập mật khẩu mới
+            if (!string.IsNullOrWhiteSpace(request.NewPassword))
+            {
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            }
+
+            await db.SaveChangesAsync();
+
+            // Nếu người dùng vừa cập nhật chính là tài khoản hiện tại đang đăng nhập, cập nhật lại CurrentUser
+            if (CurrentUser != null && CurrentUser.UserId == user.UserId)
+            {
+                CurrentUser.FullName = user.FullName;
+                CurrentUser.RoleId = user.RoleId;
+                CurrentUser.IsActive = user.IsActive;
+                var updatedRole = await db.Roles.AsNoTracking().FirstOrDefaultAsync(r => r.RoleId == user.RoleId);
+                if (updatedRole != null)
+                {
+                    CurrentUser.Role = updatedRole;
+                }
+            }
+
+            return true;
+        }
+
+        public async Task<bool> DeleteUserAsync(int userId)
+        {
+            if (userId <= 0)
+            {
+                throw new ArgumentException("Mã tài khoản không hợp lệ.");
+            }
+
+            if (CurrentUser != null && CurrentUser.UserId == userId)
+            {
+                throw new InvalidOperationException("Bạn không thể tự xóa tài khoản đang đăng nhập.");
+            }
+
+            await using var db = await _contextFactory.CreateDbContextAsync();
+            var user = await db.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.UserId == userId);
+            if (user is null)
+            {
+                throw new KeyNotFoundException("Không tìm thấy tài khoản người dùng cần xóa.");
+            }
+
+            if (user.Role?.RoleName == "Admin")
+            {
+                var adminCount = await db.Users.CountAsync(u => u.Role.RoleName == "Admin");
+                if (adminCount <= 1)
+                {
+                    throw new InvalidOperationException("Không thể xóa tài khoản Quản trị viên (Admin) duy nhất còn lại trong hệ thống.");
+                }
+            }
+
+            db.Users.Remove(user);
+            await db.SaveChangesAsync();
+
+            return true;
+        }
+
         public void Logout()
         {
             CurrentUser = null;
