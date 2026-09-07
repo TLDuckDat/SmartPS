@@ -5,15 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:common="clr-namespace:SmartPS.Views.Common"
         mc:Ignorable="d"
-        Title="Chỉnh sửa thông tin người dùng"
+        Title="{DynamicResource Str_EditUser_WindowTitle}"
         Width="480"
         SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         WindowStyle="SingleBorderWindow"
         ShowInTaskbar="False"
         ResizeMode="NoResize"
-        Background="#FFFFFF"
-        KeyDown="Window_KeyDown">
+        Background="#FFFFFF">
 
     <Grid>
         <Grid.RowDefinitions>
@@ -29,11 +28,11 @@
                 BorderThickness="0,0,0,1"
                 Padding="20,16">
             <StackPanel>
-                <TextBlock Text="CẬP NHẬT THÔNG TIN TÀI KHOẢN"
+                <TextBlock Text="{DynamicResource Str_EditUser_HeaderTitle}"
                            FontSize="14"
                            FontWeight="Bold"
                            Foreground="#0F172A"/>
-                <TextBlock Text="Cập nhật họ tên, vai trò hệ thống hoặc đổi mật khẩu tài khoản"
+                <TextBlock Text="{DynamicResource Str_EditUser_HeaderSubtitle}"
                            FontSize="12"
                            Foreground="#64748B"
                            Margin="0,3,0,0"/>
@@ -52,20 +51,30 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                        <TextBlock Text="Mã User (ID)" FontSize="12" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,5"/>
-                        <TextBox x:Name="UserIdInput" Style="{StaticResource ModernTextBoxStyle}" IsEnabled="False" FontWeight="SemiBold"/>
+                        <TextBlock Text="{DynamicResource Str_EditUser_IdLabel}" FontSize="12" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,5"/>
+                        <TextBox x:Name="UserIdInput"
+                                 Text="{Binding UserId, Mode=OneWay}"
+                                 Style="{StaticResource ModernTextBoxStyle}"
+                                 IsEnabled="False"
+                                 FontWeight="SemiBold"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                        <TextBlock Text="Tên đăng nhập (Cố định)" FontSize="12" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,5"/>
-                        <TextBox x:Name="UsernameInput" Style="{StaticResource ModernTextBoxStyle}" IsEnabled="False" FontWeight="SemiBold"/>
+                        <TextBlock Text="{DynamicResource Str_EditUser_UsernameLabel}" FontSize="12" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,5"/>
+                        <TextBox x:Name="UsernameInput"
+                                 Text="{Binding Username, Mode=OneWay}"
+                                 Style="{StaticResource ModernTextBoxStyle}"
+                                 IsEnabled="False"
+                                 FontWeight="SemiBold"/>
                     </StackPanel>
                 </Grid>
 
                 <!-- Họ và tên -->
                 <StackPanel Margin="0,0,0,14">
-                    <TextBlock Text="Họ và tên (*)" FontSize="12" FontWeight="SemiBold" Foreground="#0F172A" Margin="0,0,0,5"/>
-                    <TextBox x:Name="FullNameInput" Style="{StaticResource ModernTextBoxStyle}"/>
+                    <TextBlock Text="{DynamicResource Str_EditUser_FullNameLabel}" FontSize="12" FontWeight="SemiBold" Foreground="#0F172A" Margin="0,0,0,5"/>
+                    <TextBox x:Name="FullNameInput"
+                             Text="{Binding FullName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource ModernTextBoxStyle}"/>
                 </StackPanel>
 
                 <!-- Vai trò (Role) & Trạng thái (IsActive) -->
@@ -77,27 +86,35 @@
 
                     <!-- Vai trò -->
                     <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                        <TextBlock Text="Vai trò (Role) (*)" FontSize="12" FontWeight="SemiBold" Foreground="#0F172A" Margin="0,0,0,5"/>
+                        <TextBlock Text="{DynamicResource Str_EditUser_RoleLabel}" FontSize="12" FontWeight="SemiBold" Foreground="#0F172A" Margin="0,0,0,5"/>
                         <ComboBox x:Name="RoleComboBox"
-                                  DisplayMemberPath="RoleName"
-                                  Height="36"
-                                  FontSize="13"
-                                  VerticalContentAlignment="Center"
-                                  Background="#FFFFFF"
-                                  BorderBrush="#CBD5E1"/>
-                    </StackPanel>
-
-                    <!-- Trạng thái -->
-                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                        <TextBlock Text="Trạng thái tài khoản" FontSize="12" FontWeight="SemiBold" Foreground="#0F172A" Margin="0,0,0,5"/>
-                        <ComboBox x:Name="StatusComboBox"
+                                  ItemsSource="{Binding AvailableRoles}"
+                                  SelectedItem="{Binding SelectedRole, Mode=TwoWay}"
                                   Height="36"
                                   FontSize="13"
                                   VerticalContentAlignment="Center"
                                   Background="#FFFFFF"
                                   BorderBrush="#CBD5E1">
-                            <ComboBoxItem Content="Đang hoạt động" IsSelected="True"/>
-                            <ComboBoxItem Content="Tạm khóa (Vô hiệu hóa)"/>
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding RoleName, Converter={StaticResource RoleLocalizedConverter}}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- Trạng thái -->
+                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                        <TextBlock Text="{DynamicResource Str_EditUser_StatusLabel}" FontSize="12" FontWeight="SemiBold" Foreground="#0F172A" Margin="0,0,0,5"/>
+                        <ComboBox x:Name="StatusComboBox"
+                                  SelectedIndex="{Binding StatusIndex, Mode=TwoWay}"
+                                  Height="36"
+                                  FontSize="13"
+                                  VerticalContentAlignment="Center"
+                                  Background="#FFFFFF"
+                                  BorderBrush="#CBD5E1">
+                            <ComboBoxItem Content="{DynamicResource Str_EditUser_StatusActive}"/>
+                            <ComboBoxItem Content="{DynamicResource Str_EditUser_StatusLocked}"/>
                         </ComboBox>
                     </StackPanel>
                 </Grid>
@@ -110,19 +127,20 @@
                         Padding="14,12"
                         Margin="0,4,0,0">
                     <StackPanel>
-                        <TextBlock Text="Đổi mật khẩu mới (Tùy chọn)"
+                        <TextBlock Text="{DynamicResource Str_EditUser_ChangePasswordSection}"
                                    FontSize="12.5"
                                    FontWeight="Bold"
                                    Foreground="#0F172A"/>
-                        <TextBlock Text="Nếu muốn giữ nguyên mật khẩu cũ, vui lòng để trống 2 ô bên dưới."
+                        <TextBlock Text="{DynamicResource Str_EditUser_ChangePasswordHint}"
                                    FontSize="11.5"
                                    Foreground="#64748B"
                                    Margin="0,2,0,10"/>
 
                         <!-- Mật khẩu mới (Có nút Ẩn/Hiện mật khẩu) -->
                         <StackPanel Margin="0,0,0,10">
-                            <TextBlock Text="Mật khẩu mới (Tối thiểu 6 ký tự)" FontSize="11.5" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,4"/>
+                            <TextBlock Text="{DynamicResource Str_EditUser_NewPasswordLabel}" FontSize="11.5" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,4"/>
                             <common:RevealPasswordBox x:Name="NewPasswordInput"
+                                                      Password="{Binding NewPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                       InputHeight="36"
                                                       InputCornerRadius="4"
                                                       InputBackground="#FFFFFF"
@@ -131,8 +149,9 @@
 
                         <!-- Xác nhận mật khẩu mới (Có nút Ẩn/Hiện mật khẩu) -->
                         <StackPanel>
-                            <TextBlock Text="Nhập lại mật khẩu mới" FontSize="11.5" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,4"/>
+                            <TextBlock Text="{DynamicResource Str_EditUser_ConfirmNewPasswordLabel}" FontSize="11.5" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,4"/>
                             <common:RevealPasswordBox x:Name="ConfirmPasswordInput"
+                                                      Password="{Binding ConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                       InputHeight="36"
                                                       InputCornerRadius="4"
                                                       InputBackground="#FFFFFF"
@@ -152,17 +171,19 @@
                 Padding="16,12">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Style="{StaticResource SecondaryButtonStyle}"
-                        Content="Hủy bỏ"
+                        Content="{DynamicResource Str_Btn_Cancel}"
                         MinWidth="85"
                         Margin="4,0"
-                        Click="CancelButton_Click"/>
+                        IsCancel="True"
+                        Command="{Binding CancelCommand}"/>
 
                 <Button x:Name="SaveButton"
                         Style="{StaticResource PrimaryButtonStyle}"
-                        Content="Lưu thay đổi"
+                        Content="{DynamicResource Str_Btn_Save}"
                         MinWidth="120"
                         Margin="4,0"
-                        Click="SaveButton_Click"/>
+                        IsDefault="True"
+                        Command="{Binding SaveCommand}"/>
             </StackPanel>
         </Border>
     </Grid>

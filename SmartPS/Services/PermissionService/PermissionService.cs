@@ -1,4 +1,4 @@
-﻿using SmartPS.Constants;
+using SmartPS.Constants;
 using SmartPS.Services.Auth;
 
 namespace SmartPS.Services.Authorization;
@@ -18,7 +18,9 @@ public class PermissionService : IPermissionService
 
         if (user is null) return false;
 
-        return user.Role.RolePermissions.Any(x => x.Permission.PermissionName == permission);
+        // return user.Role.RolePermissions.Any(x => x.Permission.PermissionName == permission);
+        // bổ sung toán tử ? để tránh trường hợp user.Role hoặc user.Role.RolePermissions là null, tránh lỗi NullReferenceException
+        return user?.Role?.RolePermissions?.Any(x => x.Permission?.PermissionName == permission) ?? false;
     }
 
     public bool HasAnyPermission(params string[] permissions)

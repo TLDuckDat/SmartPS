@@ -22,4 +22,8 @@ public interface IAuthService
     Task<bool> DeleteUserAsync(int userId);
 
     void Logout();
+
+    Task<bool> CanConnectToDatabaseAsync(CancellationToken cancellationToken = default);
+
+    Task<bool> EnsureDatabaseInitializedAsync();
 }

@@ -1,11 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SmartPS.Models.Auth;
 
-namespace SmartPS.Data.Configurations;
+namespace SmartPS.Data.Configurations.Auth;
 
-public class RolePermissionConfiguration
-    : IEntityTypeConfiguration<RolePermission>
+public class RolePermissionConfiguration : IEntityTypeConfiguration<RolePermission>
 {
     public void Configure(EntityTypeBuilder<RolePermission> builder)
     {
@@ -28,3 +27,4 @@ public class RolePermissionConfiguration
                .OnDelete(DeleteBehavior.Cascade);
     }
 }
+

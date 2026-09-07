@@ -1,17 +1,23 @@
 using System.Collections.ObjectModel;
-using System.Windows.Controls;
+using SmartPS.Data;
 using SmartPS.DTOs.Auth;
 using SmartPS.Models.Auth;
 using SmartPS.Services.Auth;
+using SmartPS.Services.Dialog;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.ViewModels.Dashboard;
 
 public class DashboardViewModel : ViewModelBase
 {
     private readonly IAuthService _authService;
+    private readonly IDialogService _dialogService;
+    private readonly ILocalizationService _localizationService;
+
+    public string CurrentLanguage => _localizationService.CurrentLanguage;
 
     // Thông tin người đăng nhập
-    public string CurrentUserFullName => _authService.CurrentUser?.FullName ?? "Quản trị viên Hệ thống";
+    public string CurrentUserFullName => _authService.CurrentUser?.FullName ?? _localizationService.GetString("Str_Dash_DefaultAdminName");
     public string CurrentUserRole => _authService.CurrentUser?.Role?.RoleName ?? "Admin";
 
     // Số liệu KPI tài khoản
@@ -48,7 +54,7 @@ public class DashboardViewModel : ViewModelBase
     public ObservableCollection<User> DisplayedUsers { get; } = new();
     public ObservableCollection<Role> AvailableRoles { get; } = new();
 
-    private string _currentRoleFilter = "Tất cả";
+    private string _currentRoleFilter = "All";
     public string CurrentRoleFilter
     {
         get => _currentRoleFilter;
@@ -81,7 +87,7 @@ public class DashboardViewModel : ViewModelBase
         set => SetProperty(ref _isCreatePanelVisible, value);
     }
 
-    // Form tạo tài khoản mới
+    // Form tạo tài khoản mới (Data Binding 2 chiều chuẩn MVVM)
     private string _newUsername = string.Empty;
     public string NewUsername
     {
@@ -96,6 +102,20 @@ public class DashboardViewModel : ViewModelBase
         set => SetProperty(ref _newFullName, value);
     }
 
+    private string _newPassword = string.Empty;
+    public string NewPassword
+    {
+        get => _newPassword;
+        set => SetProperty(ref _newPassword, value);
+    }
+
+    private string _confirmPassword = string.Empty;
+    public string ConfirmPassword
+    {
+        get => _confirmPassword;
+        set => SetProperty(ref _confirmPassword, value);
+    }
+
     private Role? _selectedRole;
     public Role? SelectedRole
     {
@@ -107,26 +127,69 @@ public class DashboardViewModel : ViewModelBase
     public bool IsBusy
     {
         get => _isBusy;
-        set => SetProperty(ref _isBusy, value);
+        set
+        {
+            if (SetProperty(ref _isBusy, value))
+            {
+                CreateUserCommand.RaiseCanExecuteChanged();
+                EditUserCommand.RaiseCanExecuteChanged();
+                DeleteUserCommand.RaiseCanExecuteChanged();
+            }
+        }
     }
 
-    // Các lệnh
+    // Commands thuần MVVM
     public AsyncRelayCommand CreateUserCommand { get; }
+    public AsyncRelayCommand EditUserCommand { get; }
+    public AsyncRelayCommand DeleteUserCommand { get; }
     public RelayCommand FilterRoleCommand { get; }
     public RelayCommand ToggleCreatePanelCommand { get; }
     public AsyncRelayCommand RefreshCommand { get; }
     public RelayCommand LogoutCommand { get; }
+    public RelayCommand SetLanguageCommand { get; }
 
-    // Sự kiện tương tác
+    // Sự kiện tương tác cửa sổ
     public event Action? LogoutRequested;
-    public event Action<string>? OperationSucceeded;
-    public event Action<string>? OperationFailed;
 
-    public DashboardViewModel(IAuthService authService)
+    public DashboardViewModel(IAuthService authService, IDialogService dialogService, ILocalizationService localizationService)
     {
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+        _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
+        _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
 
-        CreateUserCommand = new AsyncRelayCommand(ExecuteCreateUserAsync, _ => !IsBusy);
+        _localizationService.LanguageChanged += () =>
+        {
+            void UpdateUiLanguage()
+            {
+                OnPropertyChanged(nameof(CurrentLanguage));
+                OnPropertyChanged(nameof(CurrentUserFullName));
+                OnPropertyChanged(nameof(CurrentUserRole));
+                ApplyRoleFilter();
+
+                var currentRole = SelectedRole;
+                var tempRoles = AvailableRoles.ToList();
+                AvailableRoles.Clear();
+                foreach (var r in tempRoles)
+                {
+                    AvailableRoles.Add(r);
+                }
+                SelectedRole = currentRole;
+            }
+
+            if (System.Windows.Application.Current?.Dispatcher.CheckAccess() == false)
+            {
+                System.Windows.Application.Current.Dispatcher.Invoke(UpdateUiLanguage);
+            }
+            else
+            {
+                UpdateUiLanguage();
+            }
+        };
+
+        CreateUserCommand = new AsyncRelayCommand(ExecuteCreateUserAsync, () => !IsBusy);
+        EditUserCommand = new AsyncRelayCommand(ExecuteEditUserAsync, _ => !IsBusy);
+        DeleteUserCommand = new AsyncRelayCommand(ExecuteDeleteUserAsync, _ => !IsBusy);
+
         ToggleCreatePanelCommand = new RelayCommand(() => IsCreatePanelVisible = !IsCreatePanelVisible);
         FilterRoleCommand = new RelayCommand(param =>
         {
@@ -140,6 +203,13 @@ public class DashboardViewModel : ViewModelBase
         {
             _authService.Logout();
             LogoutRequested?.Invoke();
+        });
+        SetLanguageCommand = new RelayCommand(param =>
+        {
+            if (param is string langCode)
+            {
+                _localizationService.SetLanguage(langCode);
+            }
         });
 
         _ = LoadDataAsync();
@@ -174,7 +244,14 @@ public class DashboardViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            OperationFailed?.Invoke($"Không thể tải dữ liệu: {ex.Message}");
+            if (DbConnectionHelper.IsConnectionException(ex))
+            {
+                _dialogService.ShowError(_localizationService.GetString("Msg_Db_ConnectionLost"));
+            }
+            else
+            {
+                _dialogService.ShowWarning(_localizationService.GetString("Msg_LoadData_Error", ex.Message));
+            }
         }
         finally
         {
@@ -197,7 +274,7 @@ public class DashboardViewModel : ViewModelBase
         {
             "Admin" => _allUsers.Where(u => u.Role?.RoleName == "Admin"),
             "Manager" => _allUsers.Where(u => u.Role?.RoleName == "Manager"),
-            "Nhân viên" => _allUsers.Where(u => u.Role?.RoleName == "Operator" || u.Role?.RoleName == "Staff"),
+            "Staff" => _allUsers.Where(u => u.Role?.RoleName == "Operator" || u.Role?.RoleName == "Staff"),
             _ => _allUsers
         };
 
@@ -217,57 +294,41 @@ public class DashboardViewModel : ViewModelBase
         }
     }
 
-    private async Task ExecuteCreateUserAsync(object? parameter)
+    private async Task ExecuteCreateUserAsync()
     {
-        // 1. Kiểm tra đầu vào
         if (string.IsNullOrWhiteSpace(NewUsername))
         {
-            OperationFailed?.Invoke("Vui lòng nhập tên đăng nhập.");
+            _dialogService.ShowWarning(_localizationService.GetString("Msg_CreateUser_RequiredUsername"));
             return;
         }
 
         if (string.IsNullOrWhiteSpace(NewFullName))
         {
-            OperationFailed?.Invoke("Vui lòng nhập họ và tên.");
+            _dialogService.ShowWarning(_localizationService.GetString("Msg_CreateUser_RequiredFullName"));
             return;
         }
 
         if (SelectedRole is null)
         {
-            OperationFailed?.Invoke("Vui lòng chọn vai trò cho tài khoản.");
+            _dialogService.ShowWarning(_localizationService.GetString("Msg_CreateUser_RequiredRole"));
             return;
         }
 
-        // Lấy password và confirm password từ tham số
-        string password = string.Empty;
-        string confirmPassword = string.Empty;
-
-        if (parameter is object[] boxes && boxes.Length >= 2)
+        if (string.IsNullOrWhiteSpace(NewPassword))
         {
-            if (boxes[0] is PasswordBox p1) password = p1.Password;
-            else if (boxes[0] is SmartPS.Views.Common.RevealPasswordBox r1) password = r1.Password;
-            else if (boxes[0] is string s1) password = s1;
-
-            if (boxes[1] is PasswordBox p2) confirmPassword = p2.Password;
-            else if (boxes[1] is SmartPS.Views.Common.RevealPasswordBox r2) confirmPassword = r2.Password;
-            else if (boxes[1] is string s2) confirmPassword = s2;
-        }
-
-        if (string.IsNullOrWhiteSpace(password))
-        {
-            OperationFailed?.Invoke("Vui lòng nhập mật khẩu.");
+            _dialogService.ShowWarning(_localizationService.GetString("Msg_CreateUser_RequiredPassword"));
             return;
         }
 
-        if (password.Length < 6)
+        if (NewPassword.Length < 6)
         {
-            OperationFailed?.Invoke("Mật khẩu phải có độ dài tối thiểu 6 ký tự.");
+            _dialogService.ShowWarning(_localizationService.GetString("Msg_CreateUser_PasswordMinLength"));
             return;
         }
 
-        if (password != confirmPassword)
+        if (NewPassword != ConfirmPassword)
         {
-            OperationFailed?.Invoke("Mật khẩu xác nhận không khớp. Vui lòng nhập lại.");
+            _dialogService.ShowWarning(_localizationService.GetString("Msg_CreateUser_PasswordMismatch"));
             return;
         }
 
@@ -279,7 +340,7 @@ public class DashboardViewModel : ViewModelBase
             {
                 Username = NewUsername.Trim(),
                 FullName = NewFullName.Trim(),
-                Password = password,
+                Password = NewPassword,
                 RoleId = SelectedRole.RoleId
             };
 
@@ -287,39 +348,41 @@ public class DashboardViewModel : ViewModelBase
 
             if (success)
             {
-                OperationSucceeded?.Invoke($"Tạo tài khoản '{request.Username}' ({SelectedRole.RoleName}) thành công!");
+                _dialogService.ShowSuccess(
+                    _localizationService.GetString("Msg_CreateUser_Success", request.Username, SelectedRole.RoleName),
+                    _localizationService.GetString("Str_Dialog_Title_Success"));
 
-                // Xóa dữ liệu form
+                // Xóa form
                 NewUsername = string.Empty;
                 NewFullName = string.Empty;
-                if (parameter is object[] pBoxes)
-                {
-                    if (pBoxes[0] is PasswordBox pb1) pb1.Password = string.Empty;
-                    else if (pBoxes[0] is SmartPS.Views.Common.RevealPasswordBox rpb1) rpb1.Clear();
+                NewPassword = string.Empty;
+                ConfirmPassword = string.Empty;
 
-                    if (pBoxes[1] is PasswordBox pb2) pb2.Password = string.Empty;
-                    else if (pBoxes[1] is SmartPS.Views.Common.RevealPasswordBox rpb2) rpb2.Clear();
-                }
-
-                // Tải lại danh sách
                 await LoadDataAsync();
             }
             else
             {
-                OperationFailed?.Invoke("Tạo tài khoản không thành công. Vui lòng thử lại.");
+                _dialogService.ShowWarning(_localizationService.GetString("Msg_CreateUser_Failed"));
             }
         }
         catch (ArgumentException ex)
         {
-            OperationFailed?.Invoke(ex.Message);
+            _dialogService.ShowWarning(ex.Message);
         }
         catch (InvalidOperationException ex)
         {
-            OperationFailed?.Invoke(ex.Message);
+            _dialogService.ShowWarning(ex.Message);
         }
         catch (Exception ex)
         {
-            OperationFailed?.Invoke($"Đã xảy ra lỗi khi tạo tài khoản: {ex.Message}");
+            if (DbConnectionHelper.IsConnectionException(ex))
+            {
+                _dialogService.ShowError(_localizationService.GetString("Msg_Db_ConnectionLost"));
+            }
+            else
+            {
+                _dialogService.ShowWarning(_localizationService.GetString("Msg_CreateUser_Error", ex.Message));
+            }
         }
         finally
         {
@@ -327,23 +390,63 @@ public class DashboardViewModel : ViewModelBase
         }
     }
 
-    public async Task<bool> DeleteUserAsync(int userId)
+    private async Task ExecuteEditUserAsync(object? parameter)
     {
+        if (parameter is not User user) return;
+
+        var updated = await _dialogService.ShowEditUserDialogAsync(user, AvailableRoles);
+        if (updated)
+        {
+            await LoadDataAsync();
+            _dialogService.ShowSuccess(
+                _localizationService.GetString("Msg_EditUser_Success", user.Username),
+                _localizationService.GetString("Str_Dialog_Title_Success"));
+        }
+    }
+
+    private async Task ExecuteDeleteUserAsync(object? parameter)
+    {
+        if (parameter is not User user) return;
+
+        // Chống tự xóa chính mình
+        if (_authService.CurrentUser != null && _authService.CurrentUser.UserId == user.UserId)
+        {
+            _dialogService.ShowWarning(_localizationService.GetString("Msg_DeleteUser_PreventSelfDelete"));
+            return;
+        }
+
+        // Yêu cầu xác nhận từ DialogService
+        var confirmed = _dialogService.ShowYesNo(
+            _localizationService.GetString("Msg_DeleteUser_ConfirmPrompt", user.Username, user.FullName),
+            _localizationService.GetString("Msg_DeleteUser_ConfirmTitle"));
+        if (!confirmed) return;
+
         try
         {
             IsBusy = true;
-            var success = await _authService.DeleteUserAsync(userId);
+            var success = await _authService.DeleteUserAsync(user.UserId);
             if (success)
             {
+                _dialogService.ShowSuccess(
+                    _localizationService.GetString("Msg_DeleteUser_Success", user.Username),
+                    _localizationService.GetString("Str_Dialog_Title_Success"));
                 await LoadDataAsync();
-                return true;
             }
-            return false;
+            else
+            {
+                _dialogService.ShowWarning(_localizationService.GetString("Msg_DeleteUser_Failed"));
+            }
         }
         catch (Exception ex)
         {
-            OperationFailed?.Invoke(ex.Message);
-            return false;
+            if (DbConnectionHelper.IsConnectionException(ex))
+            {
+                _dialogService.ShowError(_localizationService.GetString("Msg_Db_ConnectionLost"));
+            }
+            else
+            {
+                _dialogService.ShowWarning(ex.Message);
+            }
         }
         finally
         {

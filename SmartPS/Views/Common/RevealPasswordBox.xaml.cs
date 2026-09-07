@@ -211,13 +211,13 @@ public partial class RevealPasswordBox : UserControl
         {
             EyeIconPath.Data = Geometry.Parse(IconDataEyeOff);
             EyeIconPath.Fill = new SolidColorBrush(Color.FromRgb(0x02, 0x84, 0xC7)); // Active highlight
-            EyeToggleButton.ToolTip = "Ẩn mật khẩu";
+            EyeToggleButton.SetResourceReference(ToolTipProperty, "Str_Password_Hide");
         }
         else
         {
             EyeIconPath.Data = Geometry.Parse(IconDataEye);
             EyeIconPath.Fill = new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)); // Neutral muted
-            EyeToggleButton.ToolTip = "Hiện mật khẩu";
+            EyeToggleButton.SetResourceReference(ToolTipProperty, "Str_Password_Show");
         }
     }
 

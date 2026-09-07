@@ -231,5 +231,36 @@ namespace SmartPS.Services.Auth
         {
             CurrentUser = null;
         }
+
+        public async Task<bool> CanConnectToDatabaseAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                cts.CancelAfter(TimeSpan.FromSeconds(4));
+
+                await using var db = await _contextFactory.CreateDbContextAsync(cts.Token);
+                return await db.Database.CanConnectAsync(cts.Token);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> EnsureDatabaseInitializedAsync()
+        {
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                await using var db = await _contextFactory.CreateDbContextAsync(cts.Token);
+                await DbInitializer.InitializeAsync(db);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }

@@ -9,6 +9,7 @@
                 <ResourceDictionary Source="Resources/Converters.xaml"/>
                 <ResourceDictionary Source="Resources/Inputs.xaml"/>
                 <ResourceDictionary Source="Resources/Buttons.xaml"/>
+                <ResourceDictionary Source="Resources/Languages/Strings.vi-VN.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SmartPS.Views.Common"
         mc:Ignorable="d"
-        Title="Thông báo hệ thống"
+        Title="{DynamicResource Str_Dialog_Title_Info}"
         Width="440"
         SizeToContent="Height"
         WindowStartupLocation="CenterOwner"

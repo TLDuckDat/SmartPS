@@ -67,7 +67,14 @@ public partial class NotificationDialog : Window
         _buttons = buttons;
         Title = title;
         TitleTextBlock.Text = title;
-        MessageTextBlock.Text = message;
+        
+        // Chuẩn hóa ký tự xuống dòng (hỗ trợ cả chuỗi thoát \n lẫn Environment.NewLine)
+        var normalizedMessage = message?
+            .Replace("\\r\\n", "\n")
+            .Replace("\\n", "\n")
+            .Replace("\r\n", "\n")
+            .Replace("\n", Environment.NewLine) ?? string.Empty;
+        MessageTextBlock.Text = normalizedMessage;
 
         ApplyTheme(type);
         ConfigureButtons(buttons, primaryButtonText, secondaryButtonText);
@@ -118,22 +125,24 @@ public partial class NotificationDialog : Window
 
     private void ConfigureButtons(NotificationButtons buttons, string? primaryText, string? secondaryText)
     {
+        string GetRes(string key, string fallback) => Application.Current?.TryFindResource(key) as string ?? fallback;
+
         switch (buttons)
         {
             case NotificationButtons.Ok:
-                PrimaryButton.Content = primaryText ?? "Đồng ý";
+                PrimaryButton.Content = primaryText ?? GetRes("Str_Btn_Confirm", "Đồng ý");
                 SecondaryButton.Visibility = Visibility.Collapsed;
                 break;
 
             case NotificationButtons.OkCancel:
-                PrimaryButton.Content = primaryText ?? "Đồng ý";
-                SecondaryButton.Content = secondaryText ?? "Hủy bỏ";
+                PrimaryButton.Content = primaryText ?? GetRes("Str_Btn_Confirm", "Đồng ý");
+                SecondaryButton.Content = secondaryText ?? GetRes("Str_Btn_Cancel", "Hủy bỏ");
                 SecondaryButton.Visibility = Visibility.Visible;
                 break;
 
             case NotificationButtons.YesNo:
-                PrimaryButton.Content = primaryText ?? "Có";
-                SecondaryButton.Content = secondaryText ?? "Không";
+                PrimaryButton.Content = primaryText ?? GetRes("Str_Btn_Yes", "Có");
+                SecondaryButton.Content = secondaryText ?? GetRes("Str_Btn_No", "Không");
                 SecondaryButton.Visibility = Visibility.Visible;
                 break;
         }

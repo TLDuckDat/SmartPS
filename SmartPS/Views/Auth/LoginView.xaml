@@ -6,7 +6,7 @@
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:common="clr-namespace:SmartPS.Views.Common"
         mc:Ignorable="d"
-        Title="Smart Parking System - Đăng nhập Hệ thống"
+        Title="{DynamicResource Str_Login_WindowTitle}"
         Height="620" Width="960"
         MinHeight="540" MinWidth="760"
         WindowStartupLocation="CenterScreen"
@@ -54,22 +54,32 @@
 
                 <!-- Tiêu đề chữ sạch sẽ bên trái -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
-                    <TextBlock Text="Smart Parking System" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextBrandBrush}" VerticalAlignment="Center"/>
+                    <TextBlock Text="{DynamicResource Str_App_Title}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextBrandBrush}" VerticalAlignment="Center"/>
                     <TextBlock Text="|" FontSize="11" Foreground="{StaticResource AppBorderBrush}" Margin="8,0" VerticalAlignment="Center"/>
-                    <TextBlock Text="Hệ thống Quản lý Bãi đỗ xe Thông minh" FontSize="12" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center"/>
+                    <TextBlock Text="{DynamicResource Str_App_Subtitle}" FontSize="12" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <!-- Các nút điều khiển cửa sổ chuẩn vector (Thu nhỏ, Phóng to/Khôi phục, Đóng) -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,5,8,0" WindowChrome.IsHitTestVisibleInChrome="True">
-                    <Button Style="{StaticResource WindowControlBtnStyle}" Click="MinimizeButton_Click" ToolTip="Thu nhỏ">
-                        <Path Data="M0 5h10v1.2H0z" Width="10" Height="10" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
-                    </Button>
-                    <Button x:Name="MaximizeButton" Style="{StaticResource WindowControlBtnStyle}" Click="MaximizeButton_Click" ToolTip="Phóng to">
-                        <Path x:Name="MaximizeIcon" Data="M1 1h8v8H1V1zm1 1.2v5.6h6V2.2H2z" Width="10" Height="10" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
-                    </Button>
-                    <Button Style="{StaticResource CloseControlBtnStyle}" Click="CloseButton_Click" ToolTip="Đóng">
-                        <Path Data="M1.2 0.2L5 4l3.8-3.8 1 1L6 5l3.8 3.8-1 1L5 6l-3.8 3.8-1-1L4 5 0.2 1.2z" Width="10" Height="10" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
-                    </Button>
+                <!-- Các nút tác vụ bên phải: Đổi ngôn ngữ & Điều khiển cửa sổ -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,5,8,0" VerticalAlignment="Center">
+                    <!-- Nút đổi ngôn ngữ (VI | EN | JA) -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0" WindowChrome.IsHitTestVisibleInChrome="True">
+                        <Button Content="🇻🇳 VI" Command="{Binding SetLanguageCommand}" CommandParameter="vi-VN" Style="{StaticResource LangButtonStyle}" ToolTip="{DynamicResource Str_Lang_VI}"/>
+                        <Button Content="🇬🇧 EN" Command="{Binding SetLanguageCommand}" CommandParameter="en-US" Style="{StaticResource LangButtonStyle}" ToolTip="{DynamicResource Str_Lang_EN}"/>
+                        <Button Content="🇯🇵 JA" Command="{Binding SetLanguageCommand}" CommandParameter="ja-JP" Style="{StaticResource LangButtonStyle}" ToolTip="{DynamicResource Str_Lang_JA}"/>
+                    </StackPanel>
+
+                    <!-- Các nút điều khiển cửa sổ chuẩn vector (Thu nhỏ, Phóng to/Khôi phục, Đóng) -->
+                    <StackPanel Orientation="Horizontal" WindowChrome.IsHitTestVisibleInChrome="True">
+                        <Button Style="{StaticResource WindowControlBtnStyle}" Command="{x:Static SystemCommands.MinimizeWindowCommand}" ToolTip="{DynamicResource Str_Window_Minimize}">
+                            <Path Data="M0 5h10v1.2H0z" Width="10" Height="10" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                        </Button>
+                        <Button x:Name="MaximizeButton" Style="{StaticResource WindowControlBtnStyle}" Command="{x:Static SystemCommands.MaximizeWindowCommand}" ToolTip="{DynamicResource Str_Window_Maximize}">
+                            <Path x:Name="MaximizeIcon" Data="M1 1h8v8H1V1zm1 1.2v5.6h6V2.2H2z" Width="10" Height="10" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                        </Button>
+                        <Button Style="{StaticResource CloseControlBtnStyle}" Command="{x:Static SystemCommands.CloseWindowCommand}" ToolTip="{DynamicResource Str_Window_Close}">
+                            <Path Data="M1.2 0.2L5 4l3.8-3.8 1 1L6 5l3.8 3.8-1 1L5 6l-3.8 3.8-1-1L4 5 0.2 1.2z" Width="10" Height="10" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                        </Button>
+                    </StackPanel>
                 </StackPanel>
             </Grid>
 
@@ -113,9 +123,9 @@
                                         Margin="0,0,0,14">
                                     <TextBlock Text="P" FontSize="24" FontWeight="Bold" Foreground="#38BDF8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
-                                <TextBlock Text="Smart Parking" FontSize="25" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,0,0,2"/>
-                                <TextBlock Text="System Enterprise" FontSize="15" FontWeight="SemiBold" Foreground="#38BDF8" Margin="0,0,0,6"/>
-                                <TextBlock Text="Giải pháp quản lý bãi đỗ xe thông minh, tự động hóa và bảo mật dữ liệu" FontSize="12.5" Foreground="#94A3B8" TextWrapping="Wrap"/>
+                                <TextBlock Text="{DynamicResource Str_Login_BrandTitle}" FontSize="25" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,0,0,2"/>
+                                <TextBlock Text="{DynamicResource Str_Login_BrandSub}" FontSize="15" FontWeight="SemiBold" Foreground="#38BDF8" Margin="0,0,0,6"/>
+                                <TextBlock Text="{DynamicResource Str_Login_BrandDesc}" FontSize="12.5" Foreground="#94A3B8" TextWrapping="Wrap"/>
                             </StackPanel>
 
                             <!-- Danh sách tính năng (Bố trí đều đặn, số thứ tự 01, 02, 03) -->
@@ -127,8 +137,8 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="01" FontSize="13" FontWeight="Bold" Foreground="#38BDF8" VerticalAlignment="Top" Margin="0,1,0,0"/>
                                     <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Giám sát vị trí đỗ xe thời gian thực" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF"/>
-                                        <TextBlock Text="Cập nhật số lượng chỗ trống và điều phối phương tiện tự động" FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{DynamicResource Str_Login_Feat1_Title}" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF"/>
+                                        <TextBlock Text="{DynamicResource Str_Login_Feat1_Desc}" FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                     </StackPanel>
                                 </Grid>
 
@@ -139,8 +149,8 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="02" FontSize="13" FontWeight="Bold" Foreground="#38BDF8" VerticalAlignment="Top" Margin="0,1,0,0"/>
                                     <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Soát vé &amp; Nhận diện biển số" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF"/>
-                                        <TextBlock Text="Quét thẻ RFID, nhận diện camera AI và tính phí linh hoạt" FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{DynamicResource Str_Login_Feat2_Title}" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF"/>
+                                        <TextBlock Text="{DynamicResource Str_Login_Feat2_Desc}" FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                     </StackPanel>
                                 </Grid>
 
@@ -151,15 +161,15 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="03" FontSize="13" FontWeight="Bold" Foreground="#38BDF8" VerticalAlignment="Top" Margin="0,1,0,0"/>
                                     <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Bảo mật &amp; Thống kê doanh thu" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF"/>
-                                        <TextBlock Text="Kiểm soát lịch sử ra vào chặt chẽ, phân quyền ca trực minh bạch" FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{DynamicResource Str_Login_Feat3_Title}" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF"/>
+                                        <TextBlock Text="{DynamicResource Str_Login_Feat3_Desc}" FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
 
                             <!-- Footer nhỏ bên banner -->
                             <StackPanel Grid.Row="2">
-                                <TextBlock Text="SmartPS Platform • Phiên bản 1.0.0" FontSize="11" Foreground="#64748B"/>
+                                <TextBlock Text="{DynamicResource Str_Login_Version}" FontSize="11" Foreground="#64748B"/>
                             </StackPanel>
                         </Grid>
                     </ScrollViewer>
@@ -193,61 +203,150 @@
                             </Grid.RowDefinitions>
 
                             <!-- Header của Form (Khoảng cách chuẩn) -->
-                            <StackPanel Grid.Row="0" Margin="0,0,0,24">
-                                <TextBlock Text="Đăng Nhập" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                <TextBlock Text="Nhập thông tin xác thực để truy cập hệ thống bãi đỗ xe"
+                            <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                                <TextBlock Text="{DynamicResource Str_Login_FormTitle}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <TextBlock Text="{DynamicResource Str_Login_FormSubtitle}"
                                            FontSize="12.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,0" TextWrapping="Wrap"/>
+
+                                <!-- Banner Cảnh Báo Mất Kết Nối Cơ Sở Dữ Liệu -->
+                                <Border Margin="0,14,0,0"
+                                        Background="#FEF2F2"
+                                        BorderBrush="#FECACA"
+                                        BorderThickness="1"
+                                        CornerRadius="6"
+                                        Padding="12,10">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDatabaseConnected}" Value="False">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Hàng 1: Icon + Thông báo ngắn gọn -->
+                                        <Grid Grid.Row="0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Path Grid.Column="0"
+                                                  Data="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
+                                                  Width="15" Height="15"
+                                                  Fill="#DC2626"
+                                                  Stretch="Uniform"
+                                                  VerticalAlignment="Top"
+                                                  Margin="0,1,8,0"/>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{DynamicResource Str_Db_ConnectionBanner_Desc}"
+                                                       FontSize="12"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="#B91C1C"
+                                                       TextWrapping="Wrap"/>
+                                        </Grid>
+
+                                        <!-- Hàng 2: Nút Thử Lại Kết Nối -->
+                                        <Button Grid.Row="1"
+                                                Margin="23,8,0,0"
+                                                HorizontalAlignment="Left"
+                                                Height="28" Padding="12,0"
+                                                Background="#FFFFFF"
+                                                BorderBrush="#FCA5A5"
+                                                BorderThickness="1"
+                                                Command="{Binding RetryConnectionCommand}"
+                                                IsEnabled="{Binding CanInteract}"
+                                                Style="{StaticResource SecondaryButtonStyle}">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Path Data="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
+                                                      Width="11" Height="11"
+                                                      Fill="#B91C1C"
+                                                      Stretch="Uniform"
+                                                      Margin="0,0,6,0"/>
+                                                <TextBlock Text="{DynamicResource Str_Db_Btn_Retry}"
+                                                           FontSize="11" FontWeight="SemiBold" Foreground="#B91C1C"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+                                </Border>
                             </StackPanel>
 
                             <!-- Username Input (Chiều cao chuẩn 42px) -->
                             <StackPanel Grid.Row="1" Margin="0,0,0,18">
-                                <TextBlock Text="Tên đăng nhập" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+                                <TextBlock Text="{DynamicResource Str_Login_UsernameLabel}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
                                 <TextBox x:Name="UsernameInput"
                                          Style="{StaticResource ModernTextBoxStyle}"
                                          Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
-                                         IsEnabled="{Binding CanInteract}"
-                                         KeyDown="UsernameInput_KeyDown"/>
+                                         IsEnabled="{Binding CanInteract}"/>
                             </StackPanel>
 
                             <!-- Password Input (Chiều cao chuẩn 42px, có nút Ẩn/Hiện mật khẩu) -->
                             <StackPanel Grid.Row="2" Margin="0,0,0,22">
-                                <TextBlock Text="Mật khẩu" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+                                <TextBlock Text="{DynamicResource Str_Login_PasswordLabel}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
                                 <common:RevealPasswordBox x:Name="PasswordInput"
+                                                          Password="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                           InputHeight="42"
                                                           InputCornerRadius="8"
                                                           InputBackground="{StaticResource InputBackgroundBrush}"
                                                           InputBorderBrush="{StaticResource InputBorderBrush}"
                                                           InputFocusedBorderBrush="{StaticResource InputFocusedBorderBrush}"
                                                           InputForeground="{StaticResource TextPrimaryBrush}"
-                                                          IsEnabled="{Binding CanInteract}"
-                                                          KeyDown="PasswordInput_KeyDown"/>
+                                                          IsEnabled="{Binding CanInteract}"/>
                             </StackPanel>
 
                             <!-- Loading Progress Bar -->
                             <StackPanel Grid.Row="3"
-                                        Margin="0,0,0,14"
-                                        Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisConverter}}">
+                                        Margin="0,0,0,14">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsLoading}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsCheckingConnection}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
                                 <ProgressBar IsIndeterminate="True" Height="3"
                                              Foreground="{StaticResource ProgressIndicatorBrush}"
                                              Background="{StaticResource ProgressTrackBrush}"
                                              BorderThickness="0"/>
-                                <TextBlock Text="Đang xử lý đăng nhập..."
-                                           FontSize="12" Foreground="{StaticResource TextBrandBrush}"
-                                           HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                                <TextBlock FontSize="12" Foreground="{StaticResource TextBrandBrush}"
+                                           HorizontalAlignment="Center" Margin="0,6,0,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="{DynamicResource Str_Login_LoadingText}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsCheckingConnection}" Value="True">
+                                                    <Setter Property="Text" Value="{DynamicResource Str_Db_CheckingConnection}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </StackPanel>
 
                             <!-- Login Button (Chiều cao chuẩn 42px đồng đều các ô nhập) -->
                             <Button Grid.Row="4"
                                     x:Name="LoginButton"
                                     Style="{StaticResource PrimaryButtonStyle}"
-                                    Content="ĐĂNG NHẬP"
+                                    Content="{DynamicResource Str_Login_BtnSubmit}"
                                     Command="{Binding LoginCommand}"
-                                    CommandParameter="{Binding ElementName=PasswordInput, Path=Password}"
+                                    IsDefault="True"
                                     IsEnabled="{Binding CanInteract}"/>
 
                             <!-- Helper Info / Liên hệ Admin -->
                             <StackPanel Grid.Row="5" Margin="0,20,0,0" HorizontalAlignment="Center">
-                                <TextBlock Text="Quên thông tin đăng nhập? Vui lòng liên hệ Quản trị viên"
+                                <TextBlock Text="{DynamicResource Str_Login_ForgotInfo}"
                                            FontSize="11.5" Foreground="{StaticResource TextDimBrush}"/>
                             </StackPanel>
                         </Grid>
