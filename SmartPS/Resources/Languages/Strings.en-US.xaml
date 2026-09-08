@@ -173,12 +173,32 @@
     <sys:String x:Key="Msg_LoadData_Error">Failed to load data: {0}</sys:String>
 
     <!-- TRẠNG THÁI KẾT NỐI CƠ SỞ DỮ LIỆU (DATABASE CONNECTION) -->
-    <sys:String x:Key="Str_Db_ConnectionBanner_Title">Cannot Connect to Database</sys:String>
+    <sys:String x:Key="Str_Db_ConnectionBanner_Title">Database Connection Error</sys:String>
     <sys:String x:Key="Str_Db_ConnectionBanner_Desc">Cannot connect to the database.</sys:String>
     <sys:String x:Key="Str_Db_Btn_Retry">Retry Connection</sys:String>
     <sys:String x:Key="Str_Db_CheckingConnection">Checking database connection...</sys:String>
     <sys:String x:Key="Msg_Db_ConnectionLost">Cannot connect to the database.</sys:String>
     <sys:String x:Key="Msg_Db_RetrySuccess">Successfully connected to PostgreSQL database!</sys:String>
 
-</ResourceDictionary>
+    <!-- SIDEBAR NAVIGATION & MODULES -->
+    <sys:String x:Key="Str_Nav_Group_Operations">PARKING OPERATIONS</sys:String>
+    <sys:String x:Key="Str_Nav_Group_Management">BUSINESS MANAGEMENT</sys:String>
+    <sys:String x:Key="Str_Nav_Group_System">SYSTEM &amp; SECURITY</sys:String>
 
+    <sys:String x:Key="Str_Menu_Overview">Overview</sys:String>
+    <sys:String x:Key="Str_Menu_GateControl">Gate &amp; Ticket Control</sys:String>
+    <sys:String x:Key="Str_Menu_ParkingMap">Parking Map &amp; Slots</sys:String>
+    <sys:String x:Key="Str_Menu_Customers">Customers &amp; Passes</sys:String>
+    <sys:String x:Key="Str_Menu_Reports">History &amp; Reports</sys:String>
+    <sys:String x:Key="Str_Menu_Incidents">Incidents &amp; Alerts</sys:String>
+    <sys:String x:Key="Str_Menu_Transactions">Transactions &amp; Payments</sys:String>
+    <sys:String x:Key="Str_Menu_UserManagement">Accounts &amp; Roles</sys:String>
+    <sys:String x:Key="Str_Menu_Pricing">Pricing Rules</sys:String>
+    <sys:String x:Key="Str_Menu_Settings">System Settings</sys:String>
+
+    <sys:String x:Key="Str_Nav_SystemStatus">System Ready</sys:String>
+    <sys:String x:Key="Str_Nav_DbConnected">PostgreSQL Online</sys:String>
+    <sys:String x:Key="Str_Nav_DbDisconnected">PostgreSQL Offline</sys:String>
+    <sys:String x:Key="Msg_Nav_AccessDenied">You do not have permission to access this module. Please contact an Administrator.</sys:String>
+
+</ResourceDictionary>

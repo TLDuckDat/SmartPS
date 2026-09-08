@@ -1,0 +1,60 @@
+<UserControl x:Class="SmartPS.Views.Incidents.IncidentsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="700" d:DesignWidth="1000">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="{StaticResource AppBackgroundBrush}">
+        <StackPanel Margin="28,24">
+            <!-- Header Phân Hệ -->
+            <Border Background="{StaticResource CardBackgroundBrush}"
+                    CornerRadius="6"
+                    BorderBrush="{StaticResource AppBorderBrush}"
+                    BorderThickness="1"
+                    Padding="24,18"
+                    Margin="0,0,0,20">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="{DynamicResource Str_Menu_Incidents}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock Text="Tiếp nhận, theo dõi và xử lý các cảnh báo an ninh, sự cố kỹ thuật và bốt trực bãi xe" FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
+                    </StackPanel>
+                    <Border Grid.Column="1" Background="{StaticResource IceBadgeBackgroundBrush}" BorderBrush="{StaticResource IceBadgeBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,5" VerticalAlignment="Center">
+                        <TextBlock Text="Phân hệ MVVM độc lập" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextBrandBrush}"/>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Khung Thông Tin Module Chuẩn Kiến Trúc -->
+            <Border Background="{StaticResource CardBackgroundBrush}"
+                    CornerRadius="6"
+                    BorderBrush="{StaticResource AppBorderBrush}"
+                    BorderThickness="1"
+                    Padding="28,24">
+                <StackPanel>
+                    <TextBlock Text="Trung Tâm Quản Lý Sự Cố &amp; Cảnh Báo Bãi Xe" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Phân hệ Sự cố &amp; cảnh báo đã được cấu hình độc lập theo mô hình MVVM, sẵn sàng tiếp nhận nhật ký và xử lý bất thường từ các thực thể cơ sở dữ liệu."
+                               FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="20" Margin="0,0,0,16"/>
+
+                    <Border Background="#F8FAFC" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="16" Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock Text="CÁC THỰC THỂ CƠ SỞ DỮ LIỆU LIÊN QUAN:" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,8"/>
+                            <TextBlock Text="• ParkingSession: Nhật ký các phiên đỗ phát sinh ngoại lệ (mất thẻ vé, biển số không khớp, cưỡng chế mở barrier)" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2"/>
+                            <TextBlock Text="• ParkingSlot: Cảnh báo ô đỗ quá hạn thời gian hoặc xe đỗ sai vị trí quy định" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2"/>
+                            <TextBlock Text="• User: Nhân sự phụ trách ca trực và người phê duyệt xử lý sự cố" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2"/>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="Giao diện sẽ được gắn kết trực tiếp với tầng Service và DbContext khi triển khai nghiệp vụ cụ thể cho phân hệ này."
+                               FontSize="12" Foreground="{StaticResource TextDimBrush}" FontStyle="Italic"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
+

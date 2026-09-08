@@ -1,0 +1,60 @@
+<UserControl x:Class="SmartPS.Views.Pricing.PricingView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="700" d:DesignWidth="1000">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="{StaticResource AppBackgroundBrush}">
+        <StackPanel Margin="28,24">
+            <!-- Header Phân Hệ -->
+            <Border Background="{StaticResource CardBackgroundBrush}"
+                    CornerRadius="6"
+                    BorderBrush="{StaticResource AppBorderBrush}"
+                    BorderThickness="1"
+                    Padding="24,18"
+                    Margin="0,0,0,20">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="{DynamicResource Str_Menu_Pricing}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock Text="Cấu hình bảng cước tính phí gửi xe theo block giờ đầu, cước phụ trội và phí qua đêm" FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
+                    </StackPanel>
+                    <Border Grid.Column="1" Background="{StaticResource IceBadgeBackgroundBrush}" BorderBrush="{StaticResource IceBadgeBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,5" VerticalAlignment="Center">
+                        <TextBlock Text="Phân hệ MVVM độc lập" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextBrandBrush}"/>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Khung Thông Tin Module Chuẩn Kiến Trúc -->
+            <Border Background="{StaticResource CardBackgroundBrush}"
+                    CornerRadius="6"
+                    BorderBrush="{StaticResource AppBorderBrush}"
+                    BorderThickness="1"
+                    Padding="28,24">
+                <StackPanel>
+                    <TextBlock Text="Thiết Lập Biểu Phí &amp; Chính Sách Giá Gửi Xe" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Phân hệ Cấu hình biểu phí đã được cấu hình độc lập theo mô hình MVVM, sẵn sàng nạp chính sách giá và công thức tính cước từ các thực thể cơ sở dữ liệu."
+                               FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="20" Margin="0,0,0,16"/>
+
+                    <Border Background="#F8FAFC" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="16" Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock Text="CÁC THỰC THỂ CƠ SỞ DỮ LIỆU LIÊN QUAN:" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,8"/>
+                            <TextBlock Text="• PricingRule: Biểu phí áp dụng (Block phút đầu tiên, đơn giá block đầu, đơn giá mỗi giờ tiếp theo, phí gửi qua đêm)" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2"/>
+                            <TextBlock Text="• VehicleType: Áp dụng biểu giá riêng biệt theo từng dòng xe (Xe máy, Xe ô tô 4-7 chỗ, Xe tải nhỏ, Xe đạp)" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2"/>
+                            <TextBlock Text="• MonthlyTicketPlan: Định mức gói cước vé tháng theo phương tiện" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2"/>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="Giao diện sẽ được gắn kết trực tiếp với tầng Service và DbContext khi triển khai nghiệp vụ cụ thể cho phân hệ này."
+                               FontSize="12" Foreground="{StaticResource TextDimBrush}" FontStyle="Italic"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
+

@@ -55,6 +55,16 @@ public partial class App : Application
         // Đăng ký ViewModels
         services.AddTransient<LoginViewModel>();
         services.AddTransient<DashboardViewModel>();
+        services.AddTransient<SmartPS.ViewModels.Overview.OverviewViewModel>();
+        services.AddTransient<SmartPS.ViewModels.GateControl.GateControlViewModel>();
+        services.AddTransient<SmartPS.ViewModels.ParkingMap.ParkingMapViewModel>();
+        services.AddTransient<SmartPS.ViewModels.Customers.CustomersViewModel>();
+        services.AddTransient<SmartPS.ViewModels.Reports.ReportsViewModel>();
+        services.AddTransient<SmartPS.ViewModels.Incidents.IncidentsViewModel>();
+        services.AddTransient<SmartPS.ViewModels.Transactions.TransactionsViewModel>();
+        services.AddTransient<SmartPS.ViewModels.UserManagement.UserManagementViewModel>();
+        services.AddTransient<SmartPS.ViewModels.Pricing.PricingViewModel>();
+        services.AddTransient<SmartPS.ViewModels.Settings.SettingsViewModel>();
 
         // Đăng ký Views
         services.AddTransient<LoginView>();

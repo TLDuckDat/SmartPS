@@ -180,5 +180,26 @@
     <sys:String x:Key="Msg_Db_ConnectionLost">Không kết nối được với cơ sở dữ liệu.</sys:String>
     <sys:String x:Key="Msg_Db_RetrySuccess">Kết nối cơ sở dữ liệu PostgreSQL thành công!</sys:String>
 
+    <!-- ĐIỀU HƯỚNG SIDEBAR & CÁC PHÂN HỆ NGHIỆP VỤ -->
+    <sys:String x:Key="Str_Nav_Group_Operations">VẬN HÀNH BÃI XE</sys:String>
+    <sys:String x:Key="Str_Nav_Group_Management">QUẢN LÝ DOANH NGHIỆP</sys:String>
+    <sys:String x:Key="Str_Nav_Group_System">HỆ THỐNG &amp; BẢO MẬT</sys:String>
+
+    <sys:String x:Key="Str_Menu_Overview">Tổng quan</sys:String>
+    <sys:String x:Key="Str_Menu_GateControl">Kiểm soát vé vào / vé ra</sys:String>
+    <sys:String x:Key="Str_Menu_ParkingMap">Sơ đồ bãi đỗ xe</sys:String>
+    <sys:String x:Key="Str_Menu_Customers">Khách hàng &amp; vé tháng</sys:String>
+    <sys:String x:Key="Str_Menu_Reports">Lịch sử &amp; báo cáo</sys:String>
+    <sys:String x:Key="Str_Menu_Incidents">Sự cố &amp; cảnh báo</sys:String>
+    <sys:String x:Key="Str_Menu_Transactions">Giao dịch &amp; thanh toán</sys:String>
+    <sys:String x:Key="Str_Menu_UserManagement">Tài khoản &amp; quyền</sys:String>
+    <sys:String x:Key="Str_Menu_Pricing">Cấu hình biểu phí</sys:String>
+    <sys:String x:Key="Str_Menu_Settings">Cài đặt hệ thống</sys:String>
+
+    <sys:String x:Key="Str_Nav_SystemStatus">Hệ thống sẵn sàng</sys:String>
+    <sys:String x:Key="Str_Nav_DbConnected">PostgreSQL Online</sys:String>
+    <sys:String x:Key="Str_Nav_DbDisconnected">PostgreSQL Offline</sys:String>
+    <sys:String x:Key="Msg_Nav_AccessDenied">Bạn không có quyền truy cập vào phân hệ này. Vui lòng liên hệ Quản trị viên.</sys:String>
+
 </ResourceDictionary>
 

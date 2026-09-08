@@ -180,5 +180,26 @@
     <sys:String x:Key="Msg_Db_ConnectionLost">データベースに接続できません。</sys:String>
     <sys:String x:Key="Msg_Db_RetrySuccess">PostgreSQLデータベースへの接続に成功しました！</sys:String>
 
+    <!-- サイドバーナビゲーション & 業務モジュール -->
+    <sys:String x:Key="Str_Nav_Group_Operations">駐車場運用業務</sys:String>
+    <sys:String x:Key="Str_Nav_Group_Management">経営・契約管理</sys:String>
+    <sys:String x:Key="Str_Nav_Group_System">システム・セキュリティ</sys:String>
+
+    <sys:String x:Key="Str_Menu_Overview">ダッシュボード概要</sys:String>
+    <sys:String x:Key="Str_Menu_GateControl">入退場・チケット管理</sys:String>
+    <sys:String x:Key="Str_Menu_ParkingMap">駐車場マップ・配置図</sys:String>
+    <sys:String x:Key="Str_Menu_Customers">顧客・定期券管理</sys:String>
+    <sys:String x:Key="Str_Menu_Reports">利用履歴・レポート</sys:String>
+    <sys:String x:Key="Str_Menu_Incidents">インシデント・警告</sys:String>
+    <sys:String x:Key="Str_Menu_Transactions">決済・取引明細</sys:String>
+    <sys:String x:Key="Str_Menu_UserManagement">アカウント・権限管理</sys:String>
+    <sys:String x:Key="Str_Menu_Pricing">料金プラン・設定</sys:String>
+    <sys:String x:Key="Str_Menu_Settings">システム環境設定</sys:String>
+
+    <sys:String x:Key="Str_Nav_SystemStatus">システム稼働中</sys:String>
+    <sys:String x:Key="Str_Nav_DbConnected">PostgreSQL 接続中</sys:String>
+    <sys:String x:Key="Str_Nav_DbDisconnected">PostgreSQL 切断</sys:String>
+    <sys:String x:Key="Msg_Nav_AccessDenied">この機能へのアクセス権限がありません。管理者にお問い合わせください。</sys:String>
+
 </ResourceDictionary>
 
