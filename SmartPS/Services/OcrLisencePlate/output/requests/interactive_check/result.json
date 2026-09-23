@@ -1,0 +1,18 @@
+{
+  "status": "success",
+  "request_id": "interactive_check",
+  "input_type": "image",
+  "output_image": "C:\\Users\\Admin\\Downloads\\LicensePlateEngine.exe\\output\\requests\\interactive_check\\annotated.jpg",
+  "processing": {
+    "total_ms": 111.2428
+  },
+  "count": 1,
+  "plates": [
+    {
+      "plate_text": "30K55555",
+      "detection_confidence": 0.739474,
+      "ocr_confidence": 0.792356,
+      "crop_path": "C:\\Users\\Admin\\Downloads\\LicensePlateEngine.exe\\output\\requests\\interactive_check\\crops\\plate_001.jpg"
+    }
+  ]
+}

@@ -1,14 +1,32 @@
-## ===================================================
-## .gitignore cho dự án .NET / C# / WPF (SmartPS)
-## ===================================================
+## =========================================================================
+## .gitignore CHUẨN DỰ ÁN .NET 10 / C# / WPF - SMARTPS ENTERPRISE
+## =========================================================================
 
-# Thư mục biên dịch (Build Results)
+# -------------------------------------------------------------------------
+# 1. THƯ MỤC BIÊN DỊCH & OUTPUTS CỦA .NET / C#
+# -------------------------------------------------------------------------
 [Bb]in/
 [Oo]bj/
-[Ll]og/
-[Ll]ogs/
+[Aa]rm/
+[Aa]rm64/
+x86/
+x64/
+build/
+Build/
+dist/
+Debug/
+Release/
 
-# Visual Studio
+# Tệp sinh tự động của WPF / XAML
+*.g.cs
+*.g.i.cs
+*.baml
+Generated\ Files/
+[Tt]emp/
+
+# -------------------------------------------------------------------------
+# 2. VISUAL STUDIO / RIDER / VS CODE (IDE & USER SPECIFIC FILES)
+# -------------------------------------------------------------------------
 .vs/
 *.user
 *.userosscache
@@ -17,46 +35,118 @@
 *.sln.docstates
 *.dbmdl
 *.jfm
-
-# Visual Studio Code & JetBrains Rider
-.vscode/
-.idea/
 *.sln.iml
+
+# JetBrains Rider & ReSharper
+.idea/
 _ReSharper*/
 *.resharper
+*.DotSettings.user
 
-# NuGet Packages & Cache
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/
+
+# -------------------------------------------------------------------------
+# 3. NUGET PACKAGES & CACHE
+# -------------------------------------------------------------------------
 *.nupkg
 *.snupkg
+**/packages/*
+!**/packages/build/
 *.nuget.props
 *.nuget.targets
 project.lock.json
 project.assets.json
 
-# CSDL cục bộ & Tệp tạm
+# -------------------------------------------------------------------------
+# 4. SMARTPS - LƯU TRỮ CỤC BỘ, CAMERA & LOGS VẬN HÀNH BÃI XE
+# -------------------------------------------------------------------------
+# Ảnh chụp camera xe vào/ra & OCR crops (Tránh commit hàng GB ảnh vào Git)
+**/Storage/Captures/
+**/Storage/offline_active_sessions.json
+**/Storage/*.jsonl
+**/Storage/*.log
+!**/Storage/.gitkeep
+
+# Thư mục hứng ảnh từ Camera IP (Cameras/In, Cameras/Out)
+**/Cameras/In/*
+**/Cameras/Out/*
+!**/Cameras/In/.gitkeep
+!**/Cameras/Out/.gitkeep
+
+# Logs hệ thống & Nhật ký kiểm toán
+[Ll]og/
+[Ll]ogs/
+*.log
+*.jsonl
+
+# -------------------------------------------------------------------------
+# 5. CƠ SỞ DỮ LIỆU CỤC BỘ & FILE DUMP
+# -------------------------------------------------------------------------
 *.mdf
 *.ldf
 *.ndf
 *.sqlite
 *.sqlite3
+*.db
+*.db-shm
+*.db-wal
+*.bak
 
-# Crash dumps & Profiling
+# Crash dumps & profiling
 *.stackdump
 *.dmp
 *.crash
 BenchmarkDotNet.Artifacts/
 
-# Cấu hình môi trường nhạy cảm (Private/Local AppSettings)
-appsettings.Development.json
+# -------------------------------------------------------------------------
+# 6. BẢO MẬT & CẤU HÌNH MÔI TRƯỜNG NHẠY CẢM (SECRETS / ENVIRONMENT)
+# -------------------------------------------------------------------------
 appsettings.Local.json
+appsettings.Development.json
+appsettings.*.local.json
 *.local.json
 .env
+.env.*
+*.pfx
+*.p12
+*.pem
+*.key
 
-# Hệ điều hành (Windows / macOS / Linux)
+# -------------------------------------------------------------------------
+# 7. AI ENGINE / PYTHON / OCR ENGINE CACHES
+# -------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+.pytest_cache/
+output/requests/
+output/crops/
+
+# -------------------------------------------------------------------------
+# 8. HỆ ĐIỀU HÀNH (WINDOWS / MACOS / LINUX)
+# -------------------------------------------------------------------------
+# Windows
 Thumbs.db
 ehthumbs.db
+ehthumbs_vista.db
 Desktop.ini
 $RECYCLE.BIN/
+
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
 .Spotlight-V100
 .Trashes
+
+# Linux
+*~
+.directory

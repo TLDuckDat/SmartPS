@@ -1,0 +1,18 @@
+{
+  "status": "success",
+  "request_id": "req_20260922082826_2",
+  "input_type": "image",
+  "output_image": "C:\\Users\\Admin\\Desktop\\github\\SmartPS\\SmartPS\\Services\\OcrLisencePlate\\output\\requests\\req_20260922082826_2\\annotated.jpg",
+  "processing": {
+    "total_ms": 113.802
+  },
+  "count": 1,
+  "plates": [
+    {
+      "plate_text": "30K55555",
+      "detection_confidence": 0.637393,
+      "ocr_confidence": 0.788747,
+      "crop_path": "C:\\Users\\Admin\\Desktop\\github\\SmartPS\\SmartPS\\Services\\OcrLisencePlate\\output\\requests\\req_20260922082826_2\\crops\\plate_001.jpg"
+    }
+  ]
+}

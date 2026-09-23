@@ -2,20 +2,6 @@ using SmartPS.ViewModels;
 
 namespace SmartPS.Models.Navigation;
 
-public enum NavigationItemType
-{
-    Overview,
-    GateControl,
-    ParkingMap,
-    Customers,
-    Reports,
-    Incidents,
-    Transactions,
-    UserManagement,
-    Pricing,
-    Settings
-}
-
 public class NavigationMenuItem : ViewModelBase
 {
     public NavigationItemType Id { get; init; }

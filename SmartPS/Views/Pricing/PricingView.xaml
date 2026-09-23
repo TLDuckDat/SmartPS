@@ -4,16 +4,17 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
-             d:DesignHeight="700" d:DesignWidth="1000">
+             d:DesignHeight="850" d:DesignWidth="1100">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="{StaticResource AppBackgroundBrush}">
         <StackPanel Margin="28,24">
-            <!-- Header Phân Hệ -->
+
+            <!-- 1. Header Phân Hệ -->
             <Border Background="{StaticResource CardBackgroundBrush}"
                     CornerRadius="6"
                     BorderBrush="{StaticResource AppBorderBrush}"
                     BorderThickness="1"
-                    Padding="24,18"
+                    Padding="24,16"
                     Margin="0,0,0,20">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -21,40 +22,97 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
-                        <TextBlock Text="{DynamicResource Str_Menu_Pricing}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <TextBlock Text="Cấu hình bảng cước tính phí gửi xe theo block giờ đầu, cước phụ trội và phí qua đêm" FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="🏷" FontSize="20" Margin="0,0,8,0"/>
+                            <TextBlock Text="{DynamicResource Str_Menu_Pricing}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        </StackPanel>
+                        <TextBlock Text="Bảng biểu phí tính cước gửi xe theo lượt, phụ thu qua đêm và các gói cước vé tháng định kỳ" 
+                                   FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
                     </StackPanel>
-                    <Border Grid.Column="1" Background="{StaticResource IceBadgeBackgroundBrush}" BorderBrush="{StaticResource IceBadgeBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,5" VerticalAlignment="Center">
-                        <TextBlock Text="Phân hệ MVVM độc lập" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextBrandBrush}"/>
-                    </Border>
                 </Grid>
             </Border>
 
-            <!-- Khung Thông Tin Module Chuẩn Kiến Trúc -->
+            <!-- 2. Danh Sách Thẻ Biểu Phí Cho Từng Phương Tiện -->
+            <ItemsControl ItemsSource="{Binding PricingRules}" Margin="0,0,0,20">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="3"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{StaticResource CardBackgroundBrush}"
+                                BorderBrush="{StaticResource AppBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="20"
+                                Margin="0,0,14,0">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,12">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding VehicleIcon}" FontSize="24" Margin="0,0,8,0"/>
+                                        <TextBlock Text="{Binding VehicleTypeName}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <TextBlock Text="{Binding Description}" FontSize="12" Foreground="{StaticResource TextDimBrush}" TextWrapping="Wrap" Margin="0,0,0,16" Height="36"/>
+
+                                <Border Background="#F8FAFC" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="4" Padding="14" Margin="0,0,0,12">
+                                    <StackPanel>
+                                        <TextBlock Text="CƯỚC THEO LƯỢT (VÃNG LAI)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,8"/>
+                                        <Grid Margin="0,4">
+                                            <TextBlock Text="Khung 2 giờ đầu:" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                            <TextBlock Text="{Binding FirstBlockPrice, StringFormat='{}{0:N0} đ'}" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}" HorizontalAlignment="Right"/>
+                                        </Grid>
+                                        <Grid Margin="0,4">
+                                            <TextBlock Text="Giờ tiếp theo:" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                            <TextBlock Text="{Binding AdditionalPricePerHour, StringFormat='{}{0:N0} đ/h'}" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}" HorizontalAlignment="Right"/>
+                                        </Grid>
+                                        <Grid Margin="0,4">
+                                            <TextBlock Text="Phụ thu qua đêm:" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                            <TextBlock Text="{Binding OvernightPrice, StringFormat='{}{0:N0} đ'}" FontSize="12.5" FontWeight="Bold" Foreground="#D97706" HorizontalAlignment="Right"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="4" Padding="14">
+                                    <StackPanel>
+                                        <TextBlock Text="GÓI THUÊ THÁNG ĐỊNH KỲ" FontSize="11" FontWeight="Bold" Foreground="#15803D" Margin="0,0,0,8"/>
+                                        <Grid Margin="0,4">
+                                            <TextBlock Text="Phí trọn gói:" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                            <TextBlock Text="{Binding MonthlyPassFormatted}" FontSize="13.5" FontWeight="Bold" Foreground="#15803D" HorizontalAlignment="Right"/>
+                                        </Grid>
+                                        <TextBlock Text="Ra vào không giới hạn lượt trong tháng" FontSize="11" Foreground="#16A34A" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- 3. Quy Tắc Tính Cước Tự Động Trong Hệ Thống -->
             <Border Background="{StaticResource CardBackgroundBrush}"
-                    CornerRadius="6"
                     BorderBrush="{StaticResource AppBorderBrush}"
                     BorderThickness="1"
-                    Padding="28,24">
+                    CornerRadius="6"
+                    Padding="22">
                 <StackPanel>
-                    <TextBlock Text="Thiết Lập Biểu Phí &amp; Chính Sách Giá Gửi Xe" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                    <TextBlock Text="Phân hệ Cấu hình biểu phí đã được cấu hình độc lập theo mô hình MVVM, sẵn sàng nạp chính sách giá và công thức tính cước từ các thực thể cơ sở dữ liệu."
-                               FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="20" Margin="0,0,0,16"/>
+                    <TextBlock Text="CÔNG THỨC &amp; QUY TRÌNH TỰ ĐỘNG TÍNH TOÁN CƯỚC PHÍ" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                    <TextBlock Text="Hệ thống tự động áp dụng công thức tính cước ngay khi camera nhận diện biển số ở làn ra:" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,12"/>
 
-                    <Border Background="#F8FAFC" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="16" Margin="0,0,0,16">
+                    <Border Background="#F8FAFC" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="16">
                         <StackPanel>
-                            <TextBlock Text="CÁC THỰC THỂ CƠ SỞ DỮ LIỆU LIÊN QUAN:" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,8"/>
-                            <TextBlock Text="• PricingRule: Biểu phí áp dụng (Block phút đầu tiên, đơn giá block đầu, đơn giá mỗi giờ tiếp theo, phí gửi qua đêm)" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2"/>
-                            <TextBlock Text="• VehicleType: Áp dụng biểu giá riêng biệt theo từng dòng xe (Xe máy, Xe ô tô 4-7 chỗ, Xe tải nhỏ, Xe đạp)" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2"/>
-                            <TextBlock Text="• MonthlyTicketPlan: Định mức gói cước vé tháng theo phương tiện" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2"/>
+                            <TextBlock Text="1. Nếu xe sở hữu Vé tháng còn hiệu lực (Active &amp; trong khoảng ngày): Cước phí = 0 đ (Tự động mở Barrier)." FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,3"/>
+                            <TextBlock Text="2. Nếu thời gian đỗ dưới 15 phút (Thời gian ân hạn đón trả khách): Cước phí = 0 đ." FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,3"/>
+                            <TextBlock Text="3. Nếu thời gian đỗ trong khung đầu: Áp dụng giá block đầu tiên (FirstBlockPrice)." FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,3"/>
+                            <TextBlock Text="4. Nếu thời gian đỗ vượt khung: Cước = Giá block đầu + (Số giờ vượt * Giá mỗi giờ)." FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,3"/>
+                            <TextBlock Text="5. Phiên gửi xe qua khung giờ đêm (23h00 - 06h00): Tự động cộng phụ thu qua đêm tương ứng." FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,3"/>
                         </StackPanel>
                     </Border>
-
-                    <TextBlock Text="Giao diện sẽ được gắn kết trực tiếp với tầng Service và DbContext khi triển khai nghiệp vụ cụ thể cho phân hệ này."
-                               FontSize="12" Foreground="{StaticResource TextDimBrush}" FontStyle="Italic"/>
                 </StackPanel>
             </Border>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>
-

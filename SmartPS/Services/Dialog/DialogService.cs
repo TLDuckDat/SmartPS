@@ -152,5 +152,22 @@ public class DialogService : IDialogService
             return dialog.ShowDialog() == true;
         }));
     }
+
+    public string? ShowOpenFileDialog(string filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp|All Files|*.*", string? title = null, string? initialDirectory = null)
+    {
+        return InvokeOnUIThread(() =>
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = filter,
+                Title = title ?? _localizationService.GetString("Str_Dialog_Title_Info"),
+                InitialDirectory = string.IsNullOrEmpty(initialDirectory) ? string.Empty : initialDirectory
+            };
+
+            var owner = GetActiveWindow();
+            var result = owner != null ? dialog.ShowDialog(owner) : dialog.ShowDialog();
+            return result == true ? dialog.FileName : null;
+        });
+    }
 }
 

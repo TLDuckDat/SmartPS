@@ -51,6 +51,12 @@ public partial class App : Application
         services.AddSingleton<IPermissionService, PermissionService>();
         services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<ILocalizationService, LocalizationService>();
+        services.AddSingleton<SmartPS.Services.Audio.IAudioAlertService, SmartPS.Services.Audio.SystemAudioAlertService>();
+        services.AddSingleton<SmartPS.Services.Storage.IImageStorageService, SmartPS.Services.Storage.ImageStorageService>();
+        services.AddSingleton<SmartPS.Services.GateControl.IParkingFeeCalculator, SmartPS.Services.GateControl.StandardParkingFeeCalculator>();
+        services.AddSingleton<SmartPS.Services.OcrLisencePlate.IOcrLicensePlateService, SmartPS.Services.OcrLisencePlate.LicensePlateOcrService>();
+        services.AddSingleton<SmartPS.Services.GateControl.IGateControlService, SmartPS.Services.GateControl.GateControlService>();
+        services.AddSingleton<SmartPS.Services.GateControl.ICameraWatcherService, SmartPS.Services.GateControl.CameraWatcherService>();
 
         // Đăng ký ViewModels
         services.AddTransient<LoginViewModel>();
@@ -97,8 +103,18 @@ public partial class App : Application
         loginView.Show();
     }
 
-    protected override void OnExit(ExitEventArgs e)
+    protected override async void OnExit(ExitEventArgs e)
     {
+        try
+        {
+            var ocrService = ServiceProvider?.GetService<SmartPS.Services.OcrLisencePlate.IOcrLicensePlateService>();
+            if (ocrService != null)
+            {
+                await ocrService.StopEngineAsync();
+            }
+        }
+        catch { }
+
         if (ServiceProvider is IDisposable disposable)
         {
             disposable.Dispose();

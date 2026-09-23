@@ -18,5 +18,7 @@ public interface IDialogService
     bool ShowYesNo(string message, string? title = null, string? yesText = null, string? noText = null);
 
     Task<bool> ShowEditUserDialogAsync(User user, IEnumerable<Role> availableRoles);
+
+    string? ShowOpenFileDialog(string filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp|All Files|*.*", string? title = null, string? initialDirectory = null);
 }
 

@@ -4,16 +4,17 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
-             d:DesignHeight="700" d:DesignWidth="1000">
+             d:DesignHeight="850" d:DesignWidth="1100">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="{StaticResource AppBackgroundBrush}">
         <StackPanel Margin="28,24">
-            <!-- Header Phân Hệ -->
+
+            <!-- 1. Header Phân Hệ -->
             <Border Background="{StaticResource CardBackgroundBrush}"
                     CornerRadius="6"
                     BorderBrush="{StaticResource AppBorderBrush}"
                     BorderThickness="1"
-                    Padding="24,18"
+                    Padding="24,16"
                     Margin="0,0,0,20">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -21,41 +22,184 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
-                        <TextBlock Text="{DynamicResource Str_Menu_Reports}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <TextBlock Text="Tra cứu lịch sử phiên đỗ xe, thống kê doanh thu ca trực và xuất file Excel đối soát" FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="📊" FontSize="20" Margin="0,0,8,0"/>
+                            <TextBlock Text="{DynamicResource Str_Menu_Reports}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        </StackPanel>
+                        <TextBlock Text="Báo cáo lưu lượng phương tiện ra vào bãi, hiệu suất sử dụng ô đỗ và tổng hợp doanh thu theo thời gian" 
+                                   FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
                     </StackPanel>
-                    <Border Grid.Column="1" Background="{StaticResource IceBadgeBackgroundBrush}" BorderBrush="{StaticResource IceBadgeBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,5" VerticalAlignment="Center">
-                        <TextBlock Text="Phân hệ MVVM độc lập" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextBrandBrush}"/>
-                    </Border>
+
+                    <!-- Nút bấm Làm mới báo cáo -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Command="{Binding RefreshCommand}"
+                                Height="36" Padding="14,0"
+                                Background="{StaticResource PrimaryButtonBrush}"
+                                BorderThickness="0"
+                                Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="🔄" FontSize="12" Margin="0,0,6,0"/>
+                                            <TextBlock Text="Cập Nhật Báo Cáo" FontSize="12" FontWeight="SemiBold" Foreground="White"/>
+                                        </StackPanel>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- Khung Thông Tin Module Chuẩn Kiến Trúc -->
+            <!-- 2. Hàng Thẻ KPI Báo Cáo (3 Cột) -->
+            <Grid Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- KPI 1: Tổng doanh thu lũy kế -->
+                <Border Grid.Column="0" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="18">
+                    <StackPanel>
+                        <Grid>
+                            <TextBlock Text="DOANH THU LŨY KẾ" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
+                            <TextBlock Text="💰" FontSize="16" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <TextBlock Text="{Binding CumulativeRevenueFormatted}" FontSize="26" FontWeight="Bold" Foreground="#7C3AED" Margin="0,8,0,2"/>
+                        <TextBlock Text="Thực thu từ các phiên hoàn tất" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- KPI 2: Tổng lượt xe phục vụ -->
+                <Border Grid.Column="2" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="18">
+                    <StackPanel>
+                        <Grid>
+                            <TextBlock Text="TỔNG LƯỢT PHỤC VỤ" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
+                            <TextBlock Text="🚗" FontSize="16" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <TextBlock Text="{Binding CumulativeVehicles, StringFormat='{}{0} lượt'}" FontSize="26" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}" Margin="0,8,0,2"/>
+                        <TextBlock Text="Bao gồm xe đang đỗ &amp; đã ra bãi" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- KPI 3: Hệ số quay vòng ô đỗ -->
+                <Border Grid.Column="4" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="18">
+                    <StackPanel>
+                        <Grid>
+                            <TextBlock Text="HỆ SỐ QUAY VÒNG Ô ĐỖ" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
+                            <TextBlock Text="🔄" FontSize="16" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <TextBlock Text="{Binding TurnoverRate, StringFormat='{}{0:0.00} lượt/ô'}" FontSize="26" FontWeight="Bold" Foreground="#15803D" Margin="0,8,0,2"/>
+                        <TextBlock Text="Hiệu suất khai thác mặt bằng 20 ô đỗ" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- 3. Bảng Báo Cáo Lưu Lượng & Doanh Thu Theo Ngày -->
             <Border Background="{StaticResource CardBackgroundBrush}"
-                    CornerRadius="6"
                     BorderBrush="{StaticResource AppBorderBrush}"
                     BorderThickness="1"
-                    Padding="28,24">
+                    CornerRadius="6"
+                    Padding="20">
                 <StackPanel>
-                    <TextBlock Text="Trung Tâm Báo Cáo Thống Kê &amp; Lịch Sử Phiên Đỗ" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                    <TextBlock Text="Phân hệ Lịch sử &amp; báo cáo đã được cấu hình độc lập theo mô hình MVVM, sẵn sàng nạp dữ liệu thống kê từ các thực thể cơ sở dữ liệu."
-                               FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="20" Margin="0,0,0,16"/>
+                    <Grid Margin="0,0,0,14">
+                        <TextBlock Text="BẢNG TỔNG HỢP HOẠT ĐỘNG THEO NGÀY" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{Binding ReportItems.Count, StringFormat='Thống kê {0} ngày gần nhất'}" FontSize="12" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Right"/>
+                    </Grid>
 
-                    <Border Background="#F8FAFC" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="16" Margin="0,0,0,16">
-                        <StackPanel>
-                            <TextBlock Text="CÁC THỰC THỂ CƠ SỞ DỮ LIỆU LIÊN QUAN:" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,8"/>
-                            <TextBlock Text="• ParkingSession: Toàn bộ thông tin lịch sử phiên gửi xe (Biển số, giờ vào/ra, cước phí, hình ảnh đối chiếu)" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2"/>
-                            <TextBlock Text="• Customer: Thông tin chủ phương tiện (khách vãng lai hoặc chủ căn hộ vé tháng)" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2"/>
-                            <TextBlock Text="• VehicleType: Thống kê phân loại theo từng nhóm phương tiện cơ giới" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2"/>
-                            <TextBlock Text="• MonthlyTicket: Thống kê hiệu suất sử dụng và gia hạn hợp đồng vé tháng" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2"/>
-                        </StackPanel>
-                    </Border>
+                    <DataGrid ItemsSource="{Binding ReportItems}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              CanUserAddRows="False"
+                              RowHeight="38"
+                              MaxHeight="450"
+                              GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="{StaticResource DividerBrush}"
+                              Background="Transparent"
+                              BorderThickness="1"
+                              BorderBrush="{StaticResource DividerBrush}"
+                              RowHeaderWidth="0"
+                              HeadersVisibility="Column"
+                              SelectionMode="Single">
 
-                    <TextBlock Text="Giao diện sẽ được gắn kết trực tiếp với tầng Service và DbContext khi triển khai nghiệp vụ cụ thể cho phân hệ này."
-                               FontSize="12" Foreground="{StaticResource TextDimBrush}" FontStyle="Italic"/>
+                        <DataGrid.Columns>
+                            <!-- Ngày -->
+                            <DataGridTextColumn Header="Ngày Hoạt Động" Binding="{Binding DateDisplay}" Width="150">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="Margin" Value="10,0"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Foreground" Value="{StaticResource PrimaryButtonBrush}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Lượt xe vào -->
+                            <DataGridTextColumn Header="Lượt Vào" Binding="{Binding TotalCheckIns, StringFormat='{}{0} xe'}" Width="130">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="Margin" Value="10,0"/>
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Lượt xe ra -->
+                            <DataGridTextColumn Header="Lượt Ra" Binding="{Binding TotalCheckOuts, StringFormat='{}{0} xe'}" Width="130">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="Margin" Value="10,0"/>
+                                        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Số lượng xe máy -->
+                            <DataGridTextColumn Header="🏍 Xe Máy" Binding="{Binding MotorbikeCount, StringFormat='{}{0} xe'}" Width="120">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="Margin" Value="10,0"/>
+                                        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Số lượng ô tô -->
+                            <DataGridTextColumn Header="🚗 Ô Tô" Binding="{Binding CarCount, StringFormat='{}{0} xe'}" Width="120">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="Margin" Value="10,0"/>
+                                        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Doanh thu trong ngày -->
+                            <DataGridTextColumn Header="Doanh Thu Ngày" Binding="{Binding RevenueFormatted}" Width="*">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="Margin" Value="10,0"/>
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                        <Setter Property="Foreground" Value="#7C3AED"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
                 </StackPanel>
             </Border>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>
-

@@ -119,7 +119,35 @@ public class DashboardViewModel : ViewModelBase
 
         RefreshCommand = new AsyncRelayCommand(async () =>
         {
-            if (CurrentViewModel is UserManagementViewModel uvm)
+            if (CurrentViewModel is OverviewViewModel ovm)
+            {
+                await ovm.LoadDataAsync();
+            }
+            else if (CurrentViewModel is ParkingMapViewModel pvm)
+            {
+                await pvm.LoadDataAsync();
+            }
+            else if (CurrentViewModel is TransactionsViewModel tvm)
+            {
+                await tvm.LoadDataAsync();
+            }
+            else if (CurrentViewModel is CustomersViewModel cvm)
+            {
+                await cvm.LoadDataAsync();
+            }
+            else if (CurrentViewModel is ReportsViewModel rvm)
+            {
+                await rvm.LoadDataAsync();
+            }
+            else if (CurrentViewModel is PricingViewModel prvm)
+            {
+                await prvm.LoadDataAsync();
+            }
+            else if (CurrentViewModel is IncidentsViewModel ivm)
+            {
+                await ivm.LoadDataAsync();
+            }
+            else if (CurrentViewModel is UserManagementViewModel uvm)
             {
                 await uvm.LoadDataAsync();
             }
@@ -257,6 +285,39 @@ public class DashboardViewModel : ViewModelBase
 
         SelectedNavItem = item;
         CurrentViewModel = ResolveViewModel(item.Id);
+
+        if (CurrentViewModel is OverviewViewModel ovm)
+        {
+            _ = ovm.LoadDataAsync();
+        }
+        else if (CurrentViewModel is ParkingMapViewModel pvm)
+        {
+            _ = pvm.LoadDataAsync();
+        }
+        else if (CurrentViewModel is TransactionsViewModel tvm)
+        {
+            _ = tvm.LoadDataAsync();
+        }
+        else if (CurrentViewModel is CustomersViewModel cvm)
+        {
+            _ = cvm.LoadDataAsync();
+        }
+        else if (CurrentViewModel is ReportsViewModel rvm)
+        {
+            _ = rvm.LoadDataAsync();
+        }
+        else if (CurrentViewModel is PricingViewModel prvm)
+        {
+            _ = prvm.LoadDataAsync();
+        }
+        else if (CurrentViewModel is IncidentsViewModel ivm)
+        {
+            _ = ivm.LoadDataAsync();
+        }
+        else if (CurrentViewModel is UserManagementViewModel uvm)
+        {
+            _ = uvm.LoadDataAsync();
+        }
     }
 
     private ViewModelBase ResolveViewModel(NavigationItemType type)

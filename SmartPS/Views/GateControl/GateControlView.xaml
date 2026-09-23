@@ -3,59 +3,812 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:SmartPS.ViewModels.GateControl"
              mc:Ignorable="d"
-             d:DesignHeight="720" d:DesignWidth="1000">
+             d:DesignHeight="950" d:DesignWidth="1200">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="{StaticResource AppBackgroundBrush}">
-        <StackPanel Margin="28,24">
-            <!-- Header Phân Hệ -->
-            <Border Background="{StaticResource CardBackgroundBrush}"
+        <Grid Margin="20,16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- Header & Banner -->
+                <RowDefinition Height="Auto"/> <!-- Thanh Chế Độ Tự Động (Smart Auto Gate) -->
+                <RowDefinition Height="Auto"/> <!-- 2 Làn Vào / Ra -->
+                <RowDefinition Height="Auto"/> <!-- Bảng Xe Đang Trong Bãi -->
+            </Grid.RowDefinitions>
+
+            <!-- ============================================== -->
+            <!-- ROW 0: HEADER PHÂN HỆ KIỂM SOÁT CỔNG           -->
+            <!-- ============================================== -->
+            <Border Grid.Row="0"
+                    Background="{StaticResource CardBackgroundBrush}"
                     CornerRadius="6"
                     BorderBrush="{StaticResource AppBorderBrush}"
                     BorderThickness="1"
-                    Padding="24,18"
-                    Margin="0,0,0,20">
+                    Padding="20,14"
+                    Margin="0,0,0,14">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
+
                     <StackPanel Grid.Column="0">
-                        <TextBlock Text="{DynamicResource Str_Menu_GateControl}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <TextBlock Text="Kiểm soát làn xe vào và làn xe ra, nhận diện biển số và điều khiển barrier tự động" FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="{DynamicResource Str_Menu_GateControl}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="4" Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Width="6" Height="6" CornerRadius="3" Background="#16A34A" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                    <TextBlock Text="AI OCR Engine: Sẵn sàng" FontSize="11" FontWeight="SemiBold" Foreground="#1D4ED8"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Hệ thống tự động kiểm soát phương tiện vào/ra không dừng, nhận diện biển số AI và đối soát barrier tự động"
+                                   FontSize="12" Foreground="{StaticResource TextDimBrush}" Margin="0,3,0,0"/>
                     </StackPanel>
-                    <Border Grid.Column="1" Background="{StaticResource IceBadgeBackgroundBrush}" BorderBrush="{StaticResource IceBadgeBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,5" VerticalAlignment="Center">
-                        <TextBlock Text="Phân hệ MVVM độc lập" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextBrandBrush}"/>
-                    </Border>
+
+                    <!-- Thống kê nhanh & Làm mới -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Background="#F1F5F9" CornerRadius="4" Padding="12,6" Margin="0,0,10,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Xe đang gửi: " FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <TextBlock Text="{Binding ActiveSessions.Count}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Button Style="{StaticResource SecondaryButtonStyle}"
+                                Height="32" Padding="10,0"
+                                Command="{Binding RefreshActiveSessionsCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🔄 Làm mới bãi" FontSize="11.5"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- Khung Thông Tin Module Chuẩn Kiến Trúc -->
-            <Border Background="{StaticResource CardBackgroundBrush}"
+            <!-- ============================================== -->
+            <!-- ROW 1: THANH ĐIỀU KHIỂN TỰ ĐỘNG HÓA (AUTO GATE) -->
+            <!-- ============================================== -->
+            <Border Grid.Row="1"
+                    Background="#0F172A"
+                    CornerRadius="6"
+                    BorderBrush="#1E293B"
+                    BorderThickness="1"
+                    Padding="16,12"
+                    Margin="0,0,0,16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Nhóm 1: Công tắc Bật/Tắt Tự Động Hóa -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Nút Toggle Chế độ Tự Động -->
+                        <Button Command="{Binding ToggleAutoModeCommand}"
+                                Cursor="Hand" BorderThickness="0" Background="Transparent">
+                            <Border CornerRadius="4" Padding="12,7"
+                                    Background="{Binding AutoModeBadgeBackground}"
+                                    BorderBrush="{Binding AutoModeBadgeBorder}"
+                                    BorderThickness="1">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="⚡" FontSize="14" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding AutoModeStatusText}" FontSize="12" FontWeight="Bold" Foreground="{Binding AutoModeBadgeForeground}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </Button>
+
+                        <!-- Tùy chọn: Tự động cho ra cả xe vãng lai -->
+                        <CheckBox Content="Tự động xuất bãi xe vãng lai (không cần dừng thu tiền)"
+                                  IsChecked="{Binding IsAutoCheckoutAllVehicles}"
+                                  Foreground="#CBD5E1" FontSize="12"
+                                  VerticalAlignment="Center" Margin="16,0,0,0"/>
+                    </StackPanel>
+
+                    <!-- Nhóm 2: Các nút kích hoạt Giám sát & Mô phỏng tự động -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Nút Bật/Tắt Giám sát Thư mục Camera -->
+                        <Button Command="{Binding ToggleCameraWatcherCommand}"
+                                Cursor="Hand" Height="34" Padding="12,0" Margin="0,0,10,0"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                ToolTip="Tự động bắt ảnh khi camera ngoài bãi chụp lưu vào thư mục Cameras/In hoặc Cameras/Out">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding CameraWatcherStatusText}" FontSize="12" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Nút Chạy Mô Phỏng Tự Động (Auto Demo) -->
+                        <Button Command="{Binding RunAutoSimulationCommand}"
+                                Cursor="Hand" Height="34" Padding="14,0"
+                                Background="#1D4ED8" BorderThickness="0">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#2563EB"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="🎬" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Chạy Mô Phỏng Tự Động (Auto Demo)" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- ============================================== -->
+            <!-- ROW 2: HAI LÀN XE (LÀN VÀO & LÀN RA SONG SONG)  -->
+            <!-- ============================================== -->
+            <Grid Grid.Row="2" Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- ========================================== -->
+                <!-- CỘT TRÁI: LÀN XE VÀO (IN GATE)             -->
+                <!-- ========================================== -->
+                <Border Grid.Column="0"
+                        Background="{StaticResource CardBackgroundBrush}"
+                        CornerRadius="6"
+                        BorderBrush="{StaticResource AppBorderBrush}"
+                        BorderThickness="1"
+                        Padding="16">
+                    <StackPanel>
+                        <!-- Header Làn Vào -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Background="#1D4ED8" Width="10" Height="10" CornerRadius="2" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="LÀN XE VÀO (IN GATE 01)" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                </StackPanel>
+                                <TextBlock Text="⚡ Tự động nhận diện biển số &amp; Mở Barrier khi có xe"
+                                           FontSize="11" Foreground="#16A34A" FontWeight="SemiBold" Margin="18,2,0,0"/>
+                            </StackPanel>
+
+                            <!-- Badge Trạng thái Barrier Vào -->
+                            <Border Grid.Column="1" CornerRadius="4" Padding="10,4" VerticalAlignment="Center">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="#FEE2E2"/>
+                                        <Setter Property="BorderBrush" Value="#FCA5A5"/>
+                                        <Setter Property="BorderThickness" Value="1"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsBarrierInOpen}" Value="True">
+                                                <Setter Property="Background" Value="#DCFCE7"/>
+                                                <Setter Property="BorderBrush" Value="#86EFAC"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock FontSize="11" FontWeight="Bold">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="BARRIER: ĐÓNG"/>
+                                            <Setter Property="Foreground" Value="#B91C1C"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsBarrierInOpen}" Value="True">
+                                                    <Setter Property="Text" Value="BARRIER: MỞ (3s)"/>
+                                                    <Setter Property="Foreground" Value="#15803D"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+                        </Grid>
+
+                        <!-- Khung Camera / Ảnh Xe Vào -->
+                        <Border Height="230" Background="#0F172A" CornerRadius="6" ClipToBounds="True" Margin="0,0,0,12">
+                            <Grid>
+                                <!-- Ảnh xe vào -->
+                                <Image Source="{Binding InAnnotatedImagePath, Converter={StaticResource ImagePathConverter}}"
+                                       Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Image.Style>
+                                        <Style TargetType="Image">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding InAnnotatedImagePath}" Value="{x:Null}">
+                                                    <Setter Property="Source" Value="{Binding InImagePath, Converter={StaticResource ImagePathConverter}}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Image.Style>
+                                </Image>
+
+                                <!-- Placeholder khi chưa có ảnh -->
+                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding InImagePath}" Value="{x:Null}"/>
+                                                        <Condition Binding="{Binding InAnnotatedImagePath}" Value="{x:Null}"/>
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </MultiDataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+                                    <TextBlock Text="📹" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                                    <TextBlock Text="Camera Làn Vào (Đang chờ phương tiện)" FontSize="12" Foreground="#94A3B8" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Bấm 'Tự động vào mẫu' hoặc chọn ảnh từ máy" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                                </StackPanel>
+
+                                <!-- Overlay thông số OCR bên góc trên -->
+                                <Border Background="#CC0F172A" CornerRadius="4" Padding="8,4" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="OCR: " FontSize="10.5" Foreground="#94A3B8"/>
+                                        <TextBlock Text="{Binding InConfidenceFormatted}" FontSize="10.5" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Thời gian: " FontSize="10.5" Foreground="#94A3B8"/>
+                                        <TextBlock Text="{Binding InProcessingTimeMs, StringFormat={}{0:0.0}ms}" FontSize="10.5" FontWeight="Bold" Foreground="#4ADE80"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <!-- Thẻ Nhận Diện Biển Số Làn Vào -->
+                        <Border Background="#F8FAFC" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="130"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Crop biển số xe phóng to -->
+                                <Border Grid.Column="0" Height="68" Background="#E2E8F0" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4" Margin="0,0,12,0" ClipToBounds="True">
+                                    <Grid>
+                                        <Image Source="{Binding InCropImagePath, Converter={StaticResource ImagePathConverter}}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Vùng biển số" FontSize="10" Foreground="#94A3B8" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding InCropImagePath}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Biển số xe & Phân loại -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="BIỂN SỐ XE NHẬN DIỆN (LÀN VÀO):" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextDimBrush}"/>
+                                    <TextBox Text="{Binding InPlateText, UpdateSourceTrigger=PropertyChanged}"
+                                             FontSize="20" FontWeight="Bold" Foreground="#1E293B"
+                                             Background="#FEF08A" BorderBrush="#FACC15" BorderThickness="2"
+                                             Height="38" Padding="10,2" Margin="0,4,0,4"
+                                             VerticalContentAlignment="Center" CharacterCasing="Upper"/>
+                                    <TextBlock Text="{Binding InCustomerBadge}" FontSize="11" FontWeight="SemiBold" Foreground="#1D4ED8"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Chi tiết ghi nhận lưu trữ phiên vào gần nhất -->
+                        <Border Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,12">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding LastInTimeFormatted}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="ĐÃ GHI NHẬN LƯU TRỮ VÀO BÃI:" FontSize="10" FontWeight="Bold" Foreground="#15803D"/>
+                                    <TextBlock FontSize="11.5" Foreground="#1E293B" Margin="0,2,0,0">
+                                        <Run Text="⏱ Giờ vào: " FontWeight="SemiBold"/>
+                                        <Run Text="{Binding LastInTimeFormatted, FallbackValue='--:--'}" FontWeight="Bold" Foreground="#047857"/>
+                                        <Run Text=" | 🎫 Vé: " FontWeight="SemiBold"/>
+                                        <Run Text="{Binding LastInTicketCode, FallbackValue='--'}" FontWeight="SemiBold"/>
+                                        <Run Text=" | 🅿 Ô đỗ: " FontWeight="SemiBold"/>
+                                        <Run Text="{Binding LastInSlotCode, FallbackValue='Tự do'}" FontWeight="Bold" Foreground="#0F766E"/>
+                                    </TextBlock>
+                                </StackPanel>
+                                <Border Grid.Column="1" Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                                    <TextBlock Text="✔ CSDL An Toàn" FontSize="10.5" FontWeight="Bold" Foreground="#15803D"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <!-- Thông Tin Phân Luồng & Ô Đỗ -->
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="1*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Loại phương tiện -->
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Loại phương tiện:" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                <ComboBox ItemsSource="{Binding VehicleTypes}"
+                                          SelectedItem="{Binding InSelectedVehicleType}"
+                                          DisplayMemberPath="TypeName"
+                                          Height="34" FontSize="12.5"/>
+                            </StackPanel>
+
+                            <!-- Ô đỗ đề xuất -->
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Ô đỗ đề xuất:" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                <Border Height="34" Background="#F1F5F9" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,0">
+                                    <TextBlock Text="{Binding InSuggestedSlotCode}" FontSize="13" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Hàng Nút Thao Tác Làn Vào -->
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Button Grid.Column="0" Style="{StaticResource SecondaryButtonStyle}"
+                                    Height="36" Padding="10,0" Margin="0,0,6,0"
+                                    Command="{Binding SelectInImageCommand}"
+                                    ToolTip="Chọn tệp ảnh phương tiện từ máy tính">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="📁 Chọn ảnh" FontSize="12"/>
+                                </StackPanel>
+                            </Button>
+
+                            <Button Grid.Column="1" Style="{StaticResource SecondaryButtonStyle}"
+                                    Height="36" Padding="10,0" Margin="0,0,6,0"
+                                    Command="{Binding QuickTestInCommand}"
+                                    ToolTip="Chụp thử ảnh mẫu biển số 30K55555 và tự động chạy quy trình vào">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="⚡ Tự động vào mẫu" FontSize="12" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Button>
+
+                            <Button Grid.Column="2" Style="{StaticResource PrimaryButtonStyle}"
+                                    Height="36" Margin="0"
+                                    Command="{Binding ConfirmCheckInCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="✅ Xác Nhận Vào &amp; Mở Cổng" FontSize="12" FontWeight="Bold"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+
+                        <!-- Thông báo trạng thái làn vào -->
+                        <TextBlock Text="{Binding InStatusMessage}" FontSize="11.5" Foreground="{StaticResource TextDimBrush}" FontStyle="Italic" Margin="2,4,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- ========================================== -->
+                <!-- CỘT PHẢI: LÀN XE RA (OUT GATE)             -->
+                <!-- ========================================== -->
+                <Border Grid.Column="2"
+                        Background="{StaticResource CardBackgroundBrush}"
+                        CornerRadius="6"
+                        BorderBrush="{StaticResource AppBorderBrush}"
+                        BorderThickness="1"
+                        Padding="16">
+                    <StackPanel>
+                        <!-- Header Làn Ra -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Background="#16A34A" Width="10" Height="10" CornerRadius="2" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="LÀN XE RA (OUT GATE 02)" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                </StackPanel>
+                                <TextBlock Text="⚡ Tự động đối soát &amp; Mở Barrier khi xe xuất bãi"
+                                           FontSize="11" Foreground="#16A34A" FontWeight="SemiBold" Margin="18,2,0,0"/>
+                            </StackPanel>
+
+                            <!-- Badge Trạng thái Barrier Ra -->
+                            <Border Grid.Column="1" CornerRadius="4" Padding="10,4" VerticalAlignment="Center">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="#FEE2E2"/>
+                                        <Setter Property="BorderBrush" Value="#FCA5A5"/>
+                                        <Setter Property="BorderThickness" Value="1"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsBarrierOutOpen}" Value="True">
+                                                <Setter Property="Background" Value="#DCFCE7"/>
+                                                <Setter Property="BorderBrush" Value="#86EFAC"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock FontSize="11" FontWeight="Bold">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="BARRIER: ĐÓNG"/>
+                                            <Setter Property="Foreground" Value="#B91C1C"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsBarrierOutOpen}" Value="True">
+                                                    <Setter Property="Text" Value="BARRIER: MỞ (3s)"/>
+                                                    <Setter Property="Foreground" Value="#15803D"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+                        </Grid>
+
+                        <!-- Khung Camera / Ảnh Xe Ra -->
+                        <Border Height="230" Background="#0F172A" CornerRadius="6" ClipToBounds="True" Margin="0,0,0,12">
+                            <Grid>
+                                <!-- Ảnh xe ra -->
+                                <Image Source="{Binding OutAnnotatedImagePath, Converter={StaticResource ImagePathConverter}}"
+                                       Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Image.Style>
+                                        <Style TargetType="Image">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding OutAnnotatedImagePath}" Value="{x:Null}">
+                                                    <Setter Property="Source" Value="{Binding OutImagePath, Converter={StaticResource ImagePathConverter}}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Image.Style>
+                                </Image>
+
+                                <!-- Placeholder khi chưa có ảnh -->
+                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding OutImagePath}" Value="{x:Null}"/>
+                                                        <Condition Binding="{Binding OutAnnotatedImagePath}" Value="{x:Null}"/>
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </MultiDataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+                                    <TextBlock Text="📹" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                                    <TextBlock Text="Camera Làn Ra (Đang chờ phương tiện xuất bãi)" FontSize="12" Foreground="#94A3B8" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Bấm 'Tự động ra mẫu' hoặc chọn ảnh từ máy" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                                </StackPanel>
+
+                                <!-- Overlay thông số OCR bên góc trên -->
+                                <Border Background="#CC0F172A" CornerRadius="4" Padding="8,4" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="OCR: " FontSize="10.5" Foreground="#94A3B8"/>
+                                        <TextBlock Text="{Binding OutConfidenceFormatted}" FontSize="10.5" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Thời gian: " FontSize="10.5" Foreground="#94A3B8"/>
+                                        <TextBlock Text="{Binding OutProcessingTimeMs, StringFormat={}{0:0.0}ms}" FontSize="10.5" FontWeight="Bold" Foreground="#4ADE80"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <!-- Thẻ Nhận Diện Biển Số Làn Ra & So Khớp -->
+                        <Border Background="#F8FAFC" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="130"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Crop biển số xe ra -->
+                                <Border Grid.Column="0" Height="68" Background="#E2E8F0" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4" Margin="0,0,12,0" ClipToBounds="True">
+                                    <Grid>
+                                        <Image Source="{Binding OutCropImagePath, Converter={StaticResource ImagePathConverter}}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Vùng biển số" FontSize="10" Foreground="#94A3B8" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding OutCropImagePath}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Biển số xe & Chỉ báo so khớp -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="BIỂN SỐ XE NHẬN DIỆN (LÀN RA):" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextDimBrush}"/>
+                                    <TextBox Text="{Binding OutPlateText, UpdateSourceTrigger=PropertyChanged}"
+                                             FontSize="20" FontWeight="Bold" Foreground="#1E293B"
+                                             Background="#FEF08A" BorderBrush="#FACC15" BorderThickness="2"
+                                             Height="38" Padding="10,2" Margin="0,4,0,4"
+                                             VerticalContentAlignment="Center" CharacterCasing="Upper"/>
+                                    <TextBlock Text="{Binding PlateMatchStatusText}" FontSize="11.5" FontWeight="Bold">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="{Binding PlateMatchBadgeColor}"/>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Thẻ Đối Chiếu Ảnh Vào vs Ra & Cước Phí -->
+                        <Border Background="#F1F5F9" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,14">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Ảnh xe lúc vào để đối soát -->
+                                <Border Grid.Column="0" Height="68" Background="#E2E8F0" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4" Margin="0,0,12,0" ClipToBounds="True">
+                                    <Grid>
+                                        <Image Source="{Binding MatchedSession.CheckInImagePath, Converter={StaticResource ImagePathConverter}}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Ảnh lúc vào" FontSize="9.5" Foreground="#64748B" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding MatchedSession.CheckInImagePath}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Thời gian gửi & Phương thức thanh toán -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                                        <TextBlock Text="Thời lượng gửi: " FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                        <TextBlock Text="{Binding DurationFormatted}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Thanh toán: " FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                        <ComboBox ItemsSource="{Binding AvailablePaymentMethods}"
+                                                  SelectedItem="{Binding SelectedPaymentMethod}"
+                                                  Height="28" Width="100" FontSize="11.5"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Tổng tiền cước -->
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                    <TextBlock Text="TỔNG CƯỚC PHÍ:" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Right"/>
+                                    <TextBlock Text="{Binding CalculatedFeeFormatted}" FontSize="20" FontWeight="Bold" Foreground="#DC2626" HorizontalAlignment="Right"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Hàng Nút Thao Tác Làn Ra -->
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Button Grid.Column="0" Style="{StaticResource SecondaryButtonStyle}"
+                                    Height="36" Padding="10,0" Margin="0,0,6,0"
+                                    Command="{Binding SelectOutImageCommand}"
+                                    ToolTip="Chọn ảnh xe xuất bãi từ máy tính">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="📁 Chọn ảnh" FontSize="12"/>
+                                </StackPanel>
+                            </Button>
+
+                            <Button Grid.Column="1" Style="{StaticResource SecondaryButtonStyle}"
+                                    Height="36" Padding="10,0" Margin="0,0,6,0"
+                                    Command="{Binding QuickTestOutCommand}"
+                                    ToolTip="Chụp thử ảnh mẫu làn ra và tự động chạy quy trình xuất bãi">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="⚡ Tự động ra mẫu" FontSize="12" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Button>
+
+                            <Button Grid.Column="2" Style="{StaticResource PrimaryButtonStyle}"
+                                    Height="36" Margin="0"
+                                    Background="#16A34A"
+                                    Command="{Binding ConfirmCheckOutCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="💳 Thu Phí &amp; Mở Cổng Cho Ra" FontSize="12" FontWeight="Bold"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+
+                        <!-- Thông báo trạng thái làn ra -->
+                        <TextBlock Text="{Binding OutStatusMessage}" FontSize="11.5" Foreground="{StaticResource TextDimBrush}" FontStyle="Italic" Margin="2,4,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ============================================== -->
+            <!-- ROW 3: DANH SÁCH CÁC XE ĐANG TRONG BÃI (LIVE)  -->
+            <!-- ============================================== -->
+            <Border Grid.Row="3"
+                    Background="{StaticResource CardBackgroundBrush}"
                     CornerRadius="6"
                     BorderBrush="{StaticResource AppBorderBrush}"
                     BorderThickness="1"
-                    Padding="28,24">
+                    Padding="18,16">
                 <StackPanel>
-                    <TextBlock Text="Bốt Soát Vé &amp; Điều Khiển Làn Xe" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                    <TextBlock Text="Phân hệ Kiểm soát vé vào / vé ra đã được cấu hình độc lập theo mô hình MVVM, sẵn sàng tích hợp các thiết bị phần cứng (Camera ANPR, Đầu đọc thẻ RFID, Barrier cổng) và liên kết với các thực thể cơ sở dữ liệu."
-                               FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="20" Margin="0,0,0,16"/>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
 
-                    <Border Background="#F8FAFC" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="16" Margin="0,0,0,16">
-                        <StackPanel>
-                            <TextBlock Text="CÁC THỰC THỂ CƠ SỞ DỮ LIỆU LIÊN QUAN:" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,8"/>
-                            <TextBlock Text="• ParkingSession: Lưu thông tin phiên gửi xe (Biển số xe, thời gian vào/ra, ảnh chụp, phí tính toán)" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2"/>
-                            <TextBlock Text="• ParkingSlot: Cập nhật trạng thái ô đỗ khi xe vào hoặc rời khỏi vị trí" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2"/>
-                            <TextBlock Text="• PricingRule: Biểu phí áp dụng để tính tiền gửi xe tự động tại làn ra" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2"/>
-                            <TextBlock Text="• VehicleType: Xác định loại phương tiện để phân luồng và tính cước" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2"/>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="DANH SÁCH XE HIỆN ĐANG ĐỖ TRONG BÃI" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <Border Background="#F1F5F9" CornerRadius="10" Padding="8,2" Margin="10,0,0,0">
+                                <TextBlock Text="{Binding ActiveSessions.Count, StringFormat={}{0} xe}" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            </Border>
                         </StackPanel>
-                    </Border>
 
-                    <TextBlock Text="Giao diện sẽ được gắn kết trực tiếp với tầng Service và DbContext khi triển khai nghiệp vụ cụ thể cho phân hệ này."
-                               FontSize="12" Foreground="{StaticResource TextDimBrush}" FontStyle="Italic"/>
+                        <TextBlock Grid.Column="1" Text="💡 Nhấp đúp vào phiên xe để nạp nhanh sang Làn Ra đối soát"
+                                   FontSize="11.5" Foreground="{StaticResource TextDimBrush}" FontStyle="Italic" VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- DataGrid Danh sách xe đang gửi -->
+                    <DataGrid ItemsSource="{Binding ActiveSessions}"
+                              SelectedItem="{Binding SelectedActiveSession}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              CanUserAddRows="False"
+                              RowHeight="36"
+                              MaxHeight="260"
+                              GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="{StaticResource DividerBrush}"
+                              Background="Transparent"
+                              BorderThickness="1"
+                              BorderBrush="{StaticResource DividerBrush}"
+                              RowHeaderWidth="0"
+                              HeadersVisibility="Column"
+                              SelectionMode="Single">
+
+                        <DataGrid.Columns>
+                            <!-- Mã vé -->
+                            <DataGridTextColumn Header="Mã Thẻ / Vé" Binding="{Binding TicketCode}" Width="140">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="Margin" Value="10,0"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Foreground" Value="{StaticResource PrimaryButtonBrush}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Biển số xe -->
+                            <DataGridTextColumn Header="Biển Số Xe" Binding="{Binding LicensePlate}" Width="130">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="Margin" Value="10,0"/>
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Loại phương tiện -->
+                            <DataGridTextColumn Header="Loại Xe" Binding="{Binding VehicleType.TypeName}" Width="120">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="Margin" Value="10,0"/>
+                                        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Vị trí ô đỗ -->
+                            <DataGridTextColumn Header="Ô Đỗ" Binding="{Binding Slot.SlotCode}" Width="90">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="Margin" Value="10,0"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Foreground" Value="#0F172A"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Thời gian vào (chính xác theo giờ máy trạm địa phương) -->
+                            <DataGridTextColumn Header="Thời Gian Vào" Binding="{Binding CheckInTimeLocal, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}}" Width="160">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="Margin" Value="10,0"/>
+                                        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Thời lượng đã gửi trong bãi -->
+                            <DataGridTextColumn Header="Thời Lượng" Binding="{Binding DurationDisplay}" Width="120">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="Margin" Value="10,0"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Foreground" Value="#0284C7"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Phân loại khách hàng -->
+                            <DataGridTemplateColumn Header="Khách Hàng" Width="*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
+                                            <Border CornerRadius="3" Padding="6,2">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="#F1F5F9"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsMonthlyPass}" Value="True">
+                                                                <Setter Property="Background" Value="#DCFCE7"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock FontSize="11" FontWeight="SemiBold">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="Vãng lai"/>
+                                                            <Setter Property="Foreground" Value="#64748B"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsMonthlyPass}" Value="True">
+                                                                    <Setter Property="Text" Value="👑 Vé tháng"/>
+                                                                    <Setter Property="Foreground" Value="#15803D"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Border>
+
+                                            <TextBlock Text="{Binding Customer.FullName}" Margin="8,0,0,0"
+                                                       FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
                 </StackPanel>
             </Border>
-        </StackPanel>
+        </Grid>
     </ScrollViewer>
 </UserControl>
-

@@ -8,4 +8,6 @@
     <!-- Chuyển đổi tên vai trò hệ thống sang ngôn ngữ địa phương hóa -->
     <conv:RoleLocalizedConverter x:Key="RoleLocalizedConverter"/>
 
+    <!-- Chuyển đổi đường dẫn ảnh sang BitmapImage không khóa file -->
+    <conv:ImagePathToBitmapConverter x:Key="ImagePathConverter"/>
 </ResourceDictionary>
