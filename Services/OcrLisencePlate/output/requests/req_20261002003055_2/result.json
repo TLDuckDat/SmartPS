@@ -1,0 +1,18 @@
+{
+  "status": "success",
+  "request_id": "req_20261002003055_2",
+  "input_type": "image",
+  "output_image": "C:\\Users\\sangn\\Downloads\\New folder\\SmartPS final shit\\SmartPS\\Services\\OcrLisencePlate\\output\\requests\\req_20261002003055_2\\annotated.jpg",
+  "processing": {
+    "total_ms": 190.558
+  },
+  "count": 1,
+  "plates": [
+    {
+      "plate_text": "30K55555",
+      "detection_confidence": 0.637393,
+      "ocr_confidence": 0.788747,
+      "crop_path": "C:\\Users\\sangn\\Downloads\\New folder\\SmartPS final shit\\SmartPS\\Services\\OcrLisencePlate\\output\\requests\\req_20261002003055_2\\crops\\plate_001.jpg"
+    }
+  ]
+}

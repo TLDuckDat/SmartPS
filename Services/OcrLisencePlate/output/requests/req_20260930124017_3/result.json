@@ -1,0 +1,18 @@
+{
+  "status": "success",
+  "request_id": "req_20260930124017_3",
+  "input_type": "image",
+  "output_image": "C:\\Users\\NCPC\\Downloads\\New folder (2)\\SmartPS\\Services\\OcrLisencePlate\\output\\requests\\req_20260930124017_3\\annotated.jpg",
+  "processing": {
+    "total_ms": 34.6004
+  },
+  "count": 1,
+  "plates": [
+    {
+      "plate_text": "30K55555",
+      "detection_confidence": 0.637393,
+      "ocr_confidence": 0.788747,
+      "crop_path": "C:\\Users\\NCPC\\Downloads\\New folder (2)\\SmartPS\\Services\\OcrLisencePlate\\output\\requests\\req_20260930124017_3\\crops\\plate_001.jpg"
+    }
+  ]
+}

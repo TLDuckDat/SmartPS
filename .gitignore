@@ -1,0 +1,62 @@
+## ===================================================
+## .gitignore cho dự án .NET / C# / WPF (SmartPS)
+## ===================================================
+
+# Thư mục biên dịch (Build Results)
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio
+.vs/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.sln.docstates
+*.dbmdl
+*.jfm
+
+# Visual Studio Code & JetBrains Rider
+.vscode/
+.idea/
+*.sln.iml
+_ReSharper*/
+*.resharper
+
+# NuGet Packages & Cache
+*.nupkg
+*.snupkg
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.assets.json
+
+# CSDL cục bộ & Tệp tạm
+*.mdf
+*.ldf
+*.ndf
+*.sqlite
+*.sqlite3
+
+# Crash dumps & Profiling
+*.stackdump
+*.dmp
+*.crash
+BenchmarkDotNet.Artifacts/
+
+# Cấu hình môi trường nhạy cảm (Private/Local AppSettings)
+appsettings.Development.json
+appsettings.Local.json
+*.local.json
+.env
+
+# Hệ điều hành (Windows / macOS / Linux)
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+.Spotlight-V100
+.Trashes
