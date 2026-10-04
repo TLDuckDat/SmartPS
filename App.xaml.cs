@@ -12,6 +12,7 @@ using SmartPS.Services.Payment;
 using SmartPS.Services.Payment.Mock;
 using SmartPS.Services.Payment.PayOS;
 using SmartPS.Services.Payment.Webhook;
+using SmartPS.Services.Shifts;
 using SmartPS.ViewModels.Auth;
 using SmartPS.ViewModels.Dashboard;
 using SmartPS.Views.Auth;
@@ -95,6 +96,7 @@ public partial class App : Application
         }
 
         services.AddSingleton<IPaymentService, PaymentService>();
+        services.AddSingleton<IShiftService, ShiftService>();
         services.AddSingleton<PaymentWebhookServer>();
 
         // Đăng ký ViewModels
@@ -107,6 +109,7 @@ public partial class App : Application
         services.AddTransient<SmartPS.ViewModels.Reports.ReportsViewModel>();
         services.AddTransient<SmartPS.ViewModels.Incidents.IncidentsViewModel>();
         services.AddTransient<SmartPS.ViewModels.Transactions.TransactionsViewModel>();
+        services.AddTransient<SmartPS.ViewModels.Shifts.ShiftsViewModel>();
         services.AddTransient<SmartPS.ViewModels.UserManagement.UserManagementViewModel>();
         services.AddTransient<SmartPS.ViewModels.Pricing.PricingViewModel>();
         services.AddTransient<SmartPS.ViewModels.Settings.SettingsViewModel>();
@@ -122,12 +125,13 @@ public partial class App : Application
         try
         {
             var dbContextFactory = ServiceProvider.GetRequiredService<IDbContextFactory<SmartPsDbContext>>();
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            await using var dbContext = await dbContextFactory.CreateDbContextAsync(cts.Token);
-            if (await dbContext.Database.CanConnectAsync(cts.Token))
+            using var connectCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            await using var dbContext = await dbContextFactory.CreateDbContextAsync(connectCts.Token);
+            if (await dbContext.Database.CanConnectAsync(connectCts.Token))
             {
+                using var initializeCts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+                await DbInitializer.InitializeAsync(dbContext, initializeCts.Token);
                 dbConnected = true;
-                await DbInitializer.InitializeAsync(dbContext);
             }
         }
         catch (Exception ex)

@@ -27,6 +27,7 @@ public interface IPaymentService
     Task<PaymentStatusResult> ConfirmManualRefundAsync(
         int paymentId,
         string? reason = null,
+        int actorUserId = 0,
         CancellationToken cancellationToken = default);
 
     Task<WebhookProcessResult> ProcessWebhookAsync(

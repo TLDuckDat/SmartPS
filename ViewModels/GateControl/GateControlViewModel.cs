@@ -1090,6 +1090,7 @@ public class GateControlViewModel : ViewModelBase
         var request = new GateCheckOutRequest
         {
             SessionId = MatchedSession.SessionId,
+            ActorUserId = _authService.CurrentUser?.UserId ?? 0,
             CheckOutImagePath = OutAnnotatedImagePath ?? OutImagePath,
             PaymentMethod = SelectedPaymentMethod,
             TotalFee = CalculatedFee
@@ -1156,6 +1157,7 @@ public class GateControlViewModel : ViewModelBase
             var req = new CreatePaymentRequest
             {
                 SessionId = MatchedSession.SessionId,
+                ActorUserId = _authService.CurrentUser?.UserId ?? 0,
                 CheckoutImagePath = OutAnnotatedImagePath ?? OutImagePath
             };
 

@@ -14,6 +14,7 @@ using SmartPS.ViewModels.Pricing;
 using SmartPS.ViewModels.Reports;
 using SmartPS.ViewModels.Settings;
 using SmartPS.ViewModels.Transactions;
+using SmartPS.ViewModels.Shifts;
 using SmartPS.ViewModels.UserManagement;
 
 namespace SmartPS.ViewModels.Dashboard;
@@ -131,6 +132,10 @@ public class DashboardViewModel : ViewModelBase
             {
                 await tvm.LoadDataAsync();
             }
+            else if (CurrentViewModel is ShiftsViewModel svm)
+            {
+                await svm.LoadDataAsync();
+            }
             else if (CurrentViewModel is CustomersViewModel cvm)
             {
                 await cvm.LoadDataAsync();
@@ -177,6 +182,15 @@ public class DashboardViewModel : ViewModelBase
             TitleKey = "Str_Menu_GateControl",
             CategoryKey = "Str_Nav_Group_Operations",
             IconData = "M4 4h16v2H4V4zm0 4h16v2H4V8zm0 4h10v2H4v-2zm0 4h10v2H4v-2zm12 0h4v6h-4v-6zm-6 2H4v2h6v-2z",
+            AllowedRoles = new[] { "Admin", "Manager", "Operator" }
+        });
+
+        NavItems.Add(new NavigationMenuItem
+        {
+            Id = NavigationItemType.Shifts,
+            TitleKey = "Str_Menu_Shifts",
+            CategoryKey = "Str_Nav_Group_Operations",
+            IconData = "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 5v5l4 2-1 2-5-3V7h2z",
             AllowedRoles = new[] { "Admin", "Manager", "Operator" }
         });
 
@@ -298,6 +312,10 @@ public class DashboardViewModel : ViewModelBase
         {
             _ = tvm.LoadDataAsync();
         }
+        else if (CurrentViewModel is ShiftsViewModel svm)
+        {
+            _ = svm.LoadDataAsync();
+        }
         else if (CurrentViewModel is CustomersViewModel cvm)
         {
             _ = cvm.LoadDataAsync();
@@ -336,6 +354,7 @@ public class DashboardViewModel : ViewModelBase
             NavigationItemType.Reports => _serviceProvider.GetRequiredService<ReportsViewModel>(),
             NavigationItemType.Incidents => _serviceProvider.GetRequiredService<IncidentsViewModel>(),
             NavigationItemType.Transactions => _serviceProvider.GetRequiredService<TransactionsViewModel>(),
+            NavigationItemType.Shifts => _serviceProvider.GetRequiredService<ShiftsViewModel>(),
             NavigationItemType.UserManagement => _serviceProvider.GetRequiredService<UserManagementViewModel>(),
             NavigationItemType.Pricing => _serviceProvider.GetRequiredService<PricingViewModel>(),
             NavigationItemType.Settings => _serviceProvider.GetRequiredService<SettingsViewModel>(),

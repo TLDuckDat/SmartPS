@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SmartPS.Models.Auth;
 using SmartPS.Models.Parking;
 using SmartPS.Models.Payment;
+using SmartPS.Models.Shifts;
 
 namespace SmartPS.Data;
 
@@ -29,6 +30,8 @@ public class SmartPsDbContext : DbContext
     public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();
     public DbSet<PaymentAttempt> PaymentAttempts => Set<PaymentAttempt>();
     public DbSet<PaymentWebhook> PaymentWebhooks => Set<PaymentWebhook>();
+    public DbSet<Shift> Shifts => Set<Shift>();
+    public DbSet<FinancialTransaction> FinancialTransactions => Set<FinancialTransaction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="SmartPS/**" />
+    <Page Remove="SmartPS/**" />
+    <ApplicationDefinition Remove="SmartPS/**" />
+    <None Remove="SmartPS/**" />
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -17,6 +21,9 @@
     </None>
     <None Update="appsettings.local.json.example">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Update="seed_data.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 

@@ -70,6 +70,7 @@ public class PaymentDetailsResult
 public class CreatePaymentRequest
 {
     public int SessionId { get; set; }
+    public int ActorUserId { get; set; }
     public string? CheckoutImagePath { get; set; }
 }
 

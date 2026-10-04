@@ -6,6 +6,8 @@ public class Payment
 {
     public int PaymentId { get; set; }
     public int SessionId { get; set; }
+    public int? ShiftId { get; set; }
+    public int? CheckoutUserId { get; set; }
     public ParkingSession? Session { get; set; }
 
     public decimal Amount { get; set; }

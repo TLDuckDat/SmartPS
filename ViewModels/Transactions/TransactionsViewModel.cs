@@ -3,6 +3,10 @@ using SmartPS.Models.Parking;
 using SmartPS.Models.Payment;
 using SmartPS.Services.GateControl;
 using SmartPS.Services.Payment;
+using SmartPS.Services.Auth;
+using SmartPS.Services.Shifts;
+using SmartPS.Models.Shifts;
+using SmartPS.ViewModels.Shifts;
 
 namespace SmartPS.ViewModels.Transactions;
 
@@ -10,8 +14,11 @@ public class TransactionsViewModel : ViewModelBase
 {
     private readonly IGateControlService _gateControlService;
     private readonly IPaymentService _paymentService;
+    private readonly IAuthService _authService;
+    private readonly IShiftService _shiftService;
     private readonly List<ParkingSession> _allSessions = new();
     private readonly List<PaymentHistoryItem> _allPayments = new();
+    private readonly List<FinancialTransaction> _allFinancialTransactions = new();
 
     private decimal _totalRevenue;
     public decimal TotalRevenue
@@ -166,6 +173,7 @@ public class TransactionsViewModel : ViewModelBase
 
     public ObservableCollection<ParkingSession> FilteredSessions { get; } = new();
     public ObservableCollection<PaymentHistoryItem> FilteredPayments { get; } = new();
+    public ObservableCollection<ShiftTransactionItemViewModel> FilteredFinancialTransactions { get; } = new();
 
     public AsyncRelayCommand RefreshCommand { get; }
     public RelayCommand ClearFilterCommand { get; }
@@ -175,10 +183,14 @@ public class TransactionsViewModel : ViewModelBase
 
     public TransactionsViewModel(
         IGateControlService gateControlService,
-        IPaymentService paymentService)
+        IPaymentService paymentService,
+        IAuthService authService,
+        IShiftService shiftService)
     {
         _gateControlService = gateControlService ?? throw new ArgumentNullException(nameof(gateControlService));
         _paymentService = paymentService ?? throw new ArgumentNullException(nameof(paymentService));
+        _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+        _shiftService = shiftService ?? throw new ArgumentNullException(nameof(shiftService));
 
         RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
         ClearFilterCommand = new RelayCommand(() =>
@@ -230,6 +242,9 @@ public class TransactionsViewModel : ViewModelBase
 
             _allPayments.Clear();
             _allPayments.AddRange(payments);
+
+            _allFinancialTransactions.Clear();
+            _allFinancialTransactions.AddRange(await _shiftService.GetTransactionsAsync());
 
             // Cập nhật số liệu thống kê tài chính
             TotalTransactions = _allSessions.Count;
@@ -313,7 +328,8 @@ public class TransactionsViewModel : ViewModelBase
             IsLoading = true;
             var result = await _paymentService.ConfirmManualRefundAsync(
                 item.PaymentId,
-                "Hoàn tiền được xác nhận từ màn hình Sổ giao dịch");
+                "Hoàn tiền được xác nhận từ màn hình Sổ giao dịch",
+                _authService.CurrentUser?.UserId ?? 0);
 
             if (result.Success)
             {
@@ -323,6 +339,7 @@ public class TransactionsViewModel : ViewModelBase
                     System.Windows.MessageBoxButton.OK,
                     System.Windows.MessageBoxImage.Information);
 
+                IsLoading = false;
                 await LoadDataAsync();
                 if (SelectedPaymentDetails?.Payment.PaymentId == item.PaymentId)
                 {
@@ -435,6 +452,18 @@ public class TransactionsViewModel : ViewModelBase
             }
 
             FilteredPayments.Add(p);
+        }
+
+        FilteredFinancialTransactions.Clear();
+        foreach (var transaction in _allFinancialTransactions)
+        {
+            if (!string.IsNullOrEmpty(kw) &&
+                !transaction.TransactionCode.ToUpperInvariant().Contains(kw) &&
+                !(transaction.ParkingSession?.LicensePlate?.ToUpperInvariant().Contains(kw) ?? false) &&
+                !(transaction.ReferenceCode?.ToUpperInvariant().Contains(kw) ?? false)) continue;
+            if (SelectedPaymentFilter == "Tiền mặt" && transaction.PaymentMethod != PaymentMethod.Cash) continue;
+            if (SelectedPaymentFilter == "VietQR" && transaction.PaymentMethod != PaymentMethod.VietQR) continue;
+            FilteredFinancialTransactions.Add(new ShiftTransactionItemViewModel(transaction));
         }
     }
 }
