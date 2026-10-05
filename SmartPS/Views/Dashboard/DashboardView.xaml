@@ -17,6 +17,8 @@
         xmlns:vInc="clr-namespace:SmartPS.Views.Incidents"
         xmlns:vmTx="clr-namespace:SmartPS.ViewModels.Transactions"
         xmlns:vTx="clr-namespace:SmartPS.Views.Transactions"
+        xmlns:vmShifts="clr-namespace:SmartPS.ViewModels.Shifts"
+        xmlns:vShifts="clr-namespace:SmartPS.Views.Shifts"
         xmlns:vmUser="clr-namespace:SmartPS.ViewModels.UserManagement"
         xmlns:vUser="clr-namespace:SmartPS.Views.UserManagement"
         xmlns:vmPrice="clr-namespace:SmartPS.ViewModels.Pricing"
@@ -53,6 +55,9 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmTx:TransactionsViewModel}">
             <vTx:TransactionsView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmShifts:ShiftsViewModel}">
+            <vShifts:ShiftsView/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmUser:UserManagementViewModel}">
             <vUser:UserManagementView/>
@@ -106,7 +111,7 @@
                     </StackPanel>
                 </Border>
 
-                <!-- 2. DANH SÁCH 10 MỤC MENU THEO PHÂN QUYỀN -->
+                <!-- 2. DANH SÁCH MỤC MENU THEO PHÂN QUYỀN -->
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="10,12">
                     <ItemsControl ItemsSource="{Binding NavItems}">
                         <ItemsControl.ItemTemplate>
@@ -223,6 +228,9 @@
                                                             <DataTrigger Binding="{Binding Id}" Value="Transactions">
                                                                 <Setter Property="Text" Value="{DynamicResource Str_Menu_Transactions}"/>
                                                             </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Id}" Value="Shifts">
+                                                                <Setter Property="Text" Value="{DynamicResource Str_Menu_Shifts}"/>
+                                                            </DataTrigger>
                                                             <DataTrigger Binding="{Binding Id}" Value="UserManagement">
                                                                 <Setter Property="Text" Value="{DynamicResource Str_Menu_UserManagement}"/>
                                                             </DataTrigger>
@@ -311,6 +319,9 @@
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding SelectedNavItem.Id}" Value="Transactions">
                                             <Setter Property="Text" Value="{DynamicResource Str_Menu_Transactions}"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding SelectedNavItem.Id}" Value="Shifts">
+                                            <Setter Property="Text" Value="{DynamicResource Str_Menu_Shifts}"/>
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding SelectedNavItem.Id}" Value="UserManagement">
                                             <Setter Property="Text" Value="{DynamicResource Str_Menu_UserManagement}"/>

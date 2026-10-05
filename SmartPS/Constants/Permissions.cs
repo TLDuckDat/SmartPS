@@ -25,6 +25,12 @@ public static class Permissions
     public const string ReportView = "Report.View";
     public const string ReportExport = "Report.Export";
 
+    public const string ShiftView = "Shift.View";
+    public const string ShiftOpen = "Shift.Open";
+    public const string ShiftClose = "Shift.Close";
+    public const string ShiftReview = "Shift.Review";
+    public const string ShiftAdjust = "Shift.Adjust";
+
     public static IReadOnlyList<string> GetAll()
     {
         return typeof(Permissions)

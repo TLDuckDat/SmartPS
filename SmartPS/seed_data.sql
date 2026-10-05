@@ -3,8 +3,8 @@
 -- File: seed_data.sql
 -- Mô tả: Dữ liệu khởi tạo mặc định cho Phân quyền, Tài khoản Admin, Nghiệp vụ Bãi xe.
 -- Cách chạy: 
---   1. Qua Docker CLI: 
---      docker exec -i smartps-postgres psql -U smartps -d SmartPS < seed_data.sql
+--   1. PowerShell + Docker (sau khi chạy migrations):
+--      Get-Content -Raw -Encoding UTF8 .\seed_data.sql | docker exec -i smartps-postgres psql -v ON_ERROR_STOP=1 -U smartps -d SmartPS
 --   2. Hoặc mở trong pgAdmin / DBeaver / Navicat / DataGrip và Execute Script.
 -- ===================================================================================
 
@@ -14,19 +14,24 @@ BEGIN;
 -- 1. DANH MỤC QUYỀN HẠN (Permissions)
 -- -----------------------------------------------------------------------------------
 INSERT INTO "Permissions" ("PermissionName", "Description") VALUES
-('UserView', 'Xem danh sách người dùng'),
-('UserCreate', 'Tạo người dùng mới'),
-('UserEdit', 'Chỉnh sửa thông tin người dùng'),
-('UserDelete', 'Xóa người dùng'),
-('RoleView', 'Xem danh sách vai trò'),
-('RoleManage', 'Quản lý phân quyền vai trò'),
-('ParkingView', 'Xem trạng thái bãi đỗ xe'),
-('ParkingCheckIn', 'Soát vé xe vào'),
-('ParkingCheckOut', 'Soát vé xe ra & tính phí'),
-('ParkingConfigure', 'Cấu hình khu vực & vị trí đỗ'),
-('PricingManage', 'Cấu hình bảng giá gửi xe'),
-('ReportView', 'Xem báo cáo doanh thu & lượt xe'),
-('ReportExport', 'Xuất báo cáo dữ liệu')
+('User.View', 'Xem danh sách người dùng'),
+('User.Create', 'Tạo người dùng mới'),
+('User.Edit', 'Chỉnh sửa thông tin người dùng'),
+('User.Delete', 'Xóa người dùng'),
+('Role.View', 'Xem danh sách vai trò'),
+('Role.Manage', 'Quản lý phân quyền vai trò'),
+('Parking.View', 'Xem trạng thái bãi đỗ xe'),
+('Parking.CheckIn', 'Soát vé xe vào'),
+('Parking.CheckOut', 'Soát vé xe ra & tính phí'),
+('Parking.Configure', 'Cấu hình khu vực & vị trí đỗ'),
+('Pricing.Manage', 'Cấu hình bảng giá gửi xe'),
+('Report.View', 'Xem báo cáo doanh thu & lượt xe'),
+('Report.Export', 'Xuất báo cáo dữ liệu'),
+('Shift.View', 'Xem ca trực và lịch sử đối soát'),
+('Shift.Open', 'Mở ca trực'),
+('Shift.Close', 'Đóng ca trực'),
+('Shift.Review', 'Quản lý xác nhận ca'),
+('Shift.Adjust', 'Điều chỉnh ca đã khóa')
 ON CONFLICT ("PermissionName") DO NOTHING;
 
 -- -----------------------------------------------------------------------------------
@@ -53,8 +58,20 @@ ON CONFLICT ("RoleId", "PermissionId") DO NOTHING;
 INSERT INTO "RolePermissions" ("RoleId", "PermissionId")
 SELECT r."RoleId", p."PermissionId"
 FROM "Roles" r
-JOIN "Permissions" p ON p."PermissionName" IN ('ParkingView', 'ParkingCheckIn', 'ParkingCheckOut', 'ReportView')
+JOIN "Permissions" p ON p."PermissionName" IN ('Parking.View', 'Parking.CheckIn', 'Parking.CheckOut', 'Report.View')
 WHERE r."RoleName" = 'Operator'
+ON CONFLICT ("RoleId", "PermissionId") DO NOTHING;
+
+INSERT INTO "RolePermissions" ("RoleId", "PermissionId")
+SELECT r."RoleId", p."PermissionId"
+FROM "Roles" r JOIN "Permissions" p ON p."PermissionName" IN ('Shift.View', 'Shift.Open', 'Shift.Close')
+WHERE r."RoleName" = 'Operator'
+ON CONFLICT ("RoleId", "PermissionId") DO NOTHING;
+
+INSERT INTO "RolePermissions" ("RoleId", "PermissionId")
+SELECT r."RoleId", p."PermissionId"
+FROM "Roles" r JOIN "Permissions" p ON p."PermissionName" LIKE 'Shift.%'
+WHERE r."RoleName" = 'Manager'
 ON CONFLICT ("RoleId", "PermissionId") DO NOTHING;
 
 -- -----------------------------------------------------------------------------------

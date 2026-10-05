@@ -8,4 +8,8 @@
     <!-- Chuyển đổi tên vai trò hệ thống sang ngôn ngữ địa phương hóa -->
     <conv:RoleLocalizedConverter x:Key="RoleLocalizedConverter"/>
 
+    <!-- Chuyển đổi đường dẫn ảnh sang BitmapImage không khóa file -->
+    <conv:ImagePathToBitmapConverter x:Key="ImagePathConverter"/>
+    <!-- Chuyển đổi thời gian UTC sang giờ Việt Nam -->
+    <conv:UtcToVietnamTimeConverter x:Key="UtcToVietnamTimeConverter"/>
 </ResourceDictionary>

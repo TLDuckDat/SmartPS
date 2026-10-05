@@ -1,0 +1,525 @@
+<UserControl x:Class="SmartPS.Views.Shifts.ShiftsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="850" d:DesignWidth="1100">
+
+    <UserControl.Resources>
+        <Style x:Key="ShiftKpiCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource AppBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14"/>
+            <Setter Property="Margin" Value="0,0,10,10"/>
+            <Setter Property="Width" Value="205"/>
+        </Style>
+        <Style x:Key="ShiftLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
+        </Style>
+        <Style x:Key="ShiftValueStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="Margin" Value="0,6,0,0"/>
+        </Style>
+        <Style x:Key="ShiftGridHeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#F8FAFC"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="BorderBrush" Value="{StaticResource DividerBrush}"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        </Style>
+        <Style x:Key="ShiftGridCellStyle" TargetType="DataGridCell">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="ShiftFormLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,5"/>
+        </Style>
+        <Style x:Key="ShiftFormHintStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,4,0,0"/>
+        </Style>
+        <Style x:Key="ShiftPreviewLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="10.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
+        </Style>
+        <Style x:Key="ShiftPreviewValueStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="Margin" Value="0,4,0,0"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Background="{StaticResource AppBackgroundBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0"
+                Background="{StaticResource CardBackgroundBrush}"
+                BorderBrush="{StaticResource AppBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="6"
+                Margin="28,24,28,0"
+                Padding="24,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="🕒" FontSize="20" Margin="0,0,8,0"/>
+                        <TextBlock Text="{DynamicResource Str_Menu_Shifts}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    </StackPanel>
+                    <TextBlock Text="{DynamicResource Str_Shifts_Description}"
+                               FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Button Grid.Column="1" Command="{Binding RefreshCommand}" Style="{StaticResource PrimaryButtonStyle}" Content="{DynamicResource Str_Shifts_Refresh}" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <TabControl Grid.Row="1" Margin="28,18,28,24" Background="Transparent" BorderThickness="0">
+            <TabItem Header="{DynamicResource Str_Shifts_CurrentTab}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="0,16,0,0">
+
+                        <!-- Mở ca: chỉ hiện khi chưa có Active Shift -->
+                        <Border Background="{StaticResource CardBackgroundBrush}"
+                                BorderBrush="{StaticResource AppBorderBrush}"
+                                BorderThickness="1" CornerRadius="6" Padding="24" Margin="0,0,0,16">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasActiveShift}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="280"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center" Margin="0,0,30,0">
+                                    <TextBlock Text="{DynamicResource Str_Shifts_NoActiveTitle}" FontSize="19" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="{DynamicResource Str_Shifts_NoActiveDescription}"
+                                               TextWrapping="Wrap" FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,8,0,0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{DynamicResource Str_Shifts_BeginningCash}" Style="{StaticResource ShiftLabelStyle}" Margin="0,0,0,6"/>
+                                    <TextBox Text="{Binding BeginningCashInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
+                                    <Button Command="{Binding OpenShiftCommand}" Style="{StaticResource PrimaryButtonStyle}" Content="{DynamicResource Str_Shifts_Open}" Margin="0,12,0,0"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Dashboard ca Active -->
+                        <StackPanel Visibility="{Binding HasActiveShift, Converter={StaticResource BoolToVisConverter}}">
+                            <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="18" Margin="0,0,0,16">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding CurrentShiftCode}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                            <Border Background="{StaticResource SuccessBackgroundBrush}" BorderBrush="{StaticResource SuccessBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="8,3" Margin="10,0,0,0">
+                                                <TextBlock Text="{DynamicResource Str_Shifts_Active}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource SuccessTextBrush}"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock FontSize="12" Foreground="{StaticResource TextDimBrush}" Margin="0,5,0,0"><Run Text="{DynamicResource Str_Shifts_OpenedAtPrefix}"/><Run Text="{Binding CurrentShiftOpenedAt, Mode=OneWay}"/></TextBlock>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="1" Text="{DynamicResource Str_Shifts_CheckoutHint}" Foreground="{StaticResource TextDimBrush}" FontSize="11.5" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+
+                            <WrapPanel Margin="0,0,0,6">
+                                <Border Style="{StaticResource ShiftKpiCardStyle}"><StackPanel><TextBlock Text="{DynamicResource Str_Shifts_BeginningCash}" Style="{StaticResource ShiftLabelStyle}"/><TextBlock Text="{Binding BeginningCashFormatted}" Style="{StaticResource ShiftValueStyle}"/></StackPanel></Border>
+                                <Border Style="{StaticResource ShiftKpiCardStyle}"><StackPanel><TextBlock Text="{DynamicResource Str_Shifts_CashRevenue}" Style="{StaticResource ShiftLabelStyle}"/><TextBlock Text="{Binding CashRevenueFormatted}" Style="{StaticResource ShiftValueStyle}" Foreground="#15803D"/></StackPanel></Border>
+                                <Border Style="{StaticResource ShiftKpiCardStyle}"><StackPanel><TextBlock Text="{DynamicResource Str_Shifts_QrRevenue}" Style="{StaticResource ShiftLabelStyle}"/><TextBlock Text="{Binding QrRevenueFormatted}" Style="{StaticResource ShiftValueStyle}" Foreground="#0284C7"/></StackPanel></Border>
+                                <Border Style="{StaticResource ShiftKpiCardStyle}"><StackPanel><TextBlock Text="{DynamicResource Str_Shifts_TotalRevenue}" Style="{StaticResource ShiftLabelStyle}"/><TextBlock Text="{Binding TotalRevenueFormatted}" Style="{StaticResource ShiftValueStyle}" Foreground="#7C3AED"/></StackPanel></Border>
+                                <Border Style="{StaticResource ShiftKpiCardStyle}"><StackPanel><TextBlock Text="{DynamicResource Str_Shifts_TransactionCount}" Style="{StaticResource ShiftLabelStyle}"/><TextBlock Text="{Binding TransactionCount}" Style="{StaticResource ShiftValueStyle}"/></StackPanel></Border>
+                                <Border Style="{StaticResource ShiftKpiCardStyle}"><StackPanel><TextBlock Text="{DynamicResource Str_Shifts_Refund}" Style="{StaticResource ShiftLabelStyle}"/><TextBlock Text="{Binding RefundFormatted}" Style="{StaticResource ShiftValueStyle}" Foreground="#B91C1C"/></StackPanel></Border>
+                                <Border Style="{StaticResource ShiftKpiCardStyle}"><StackPanel><TextBlock Text="{DynamicResource Str_Shifts_Adjustment}" Style="{StaticResource ShiftLabelStyle}"/><TextBlock Text="{Binding AdjustmentFormatted}" Style="{StaticResource ShiftValueStyle}" Foreground="#B45309"/></StackPanel></Border>
+                                <Border Style="{StaticResource ShiftKpiCardStyle}"><StackPanel><TextBlock Text="{DynamicResource Str_Shifts_ExpectedCash}" Style="{StaticResource ShiftLabelStyle}"/><TextBlock Text="{Binding ExpectedCashFormatted}" Style="{StaticResource ShiftValueStyle}" Foreground="#1D4ED8"/></StackPanel></Border>
+                            </WrapPanel>
+
+                            <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0,0,0,16">
+                                <StackPanel>
+                                    <TextBlock Text="{DynamicResource Str_Shifts_TransactionsTitle}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="16,14,16,8"/>
+                                    <DataGrid ItemsSource="{Binding CurrentTransactions}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False"
+                                              HeadersVisibility="Column" GridLinesVisibility="Horizontal" Height="250"
+                                              BorderThickness="0" Background="White" RowBackground="White" AlternatingRowBackground="#F8FAFC"
+                                              ColumnHeaderStyle="{StaticResource ShiftGridHeaderStyle}" CellStyle="{StaticResource ShiftGridCellStyle}">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_TransactionCode}" Binding="{Binding TransactionCode}" Width="170"/>
+                                            <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Time}" Binding="{Binding CreatedAtLocal, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}}" Width="145"/>
+                                            <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_LicensePlate}" Binding="{Binding LicensePlate}" Width="100"/>
+                                            <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Type}" Binding="{Binding LocalizedTypeText}" Width="120"/>
+                                            <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Payment}" Binding="{Binding LocalizedPaymentMethodText}" Width="100"/>
+                                            <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Amount}" Binding="{Binding LocalizedAmountFormatted}" Width="110"/>
+                                            <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Employee}" Binding="{Binding CreatedBy}" Width="*"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="18">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="260"/>
+                                        <ColumnDefinition Width="180"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel VerticalAlignment="Center" Margin="0,0,20,0">
+                                        <TextBlock Text="{DynamicResource Str_Shifts_CloseTitle}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="{DynamicResource Str_Shifts_CloseDescription}"
+                                                   TextWrapping="Wrap" Foreground="{StaticResource TextDimBrush}" FontSize="12" Margin="0,5,0,0"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Margin="0,0,14,0">
+                                        <TextBlock Text="{DynamicResource Str_Shifts_ActualCash}" Style="{StaticResource ShiftLabelStyle}" Margin="0,0,0,5"/>
+                                        <TextBox Text="{Binding ActualCashInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
+                                        <TextBlock FontSize="11.5" Foreground="{StaticResource TextDimBrush}" Margin="0,5,0,0"><Run Text="{DynamicResource Str_Shifts_DifferencePreview}"/><Run Text="{Binding DifferencePreviewFormatted, Mode=OneWay}"/></TextBlock>
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Command="{Binding CloseShiftCommand}" Style="{StaticResource PrimaryButtonStyle}" Content="{DynamicResource Str_Shifts_Close}" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="{DynamicResource Str_Shifts_HistoryTab}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="0,16,0,0">
+                        <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16" Margin="0,0,0,16">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="220"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="160"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="160"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="170"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{DynamicResource Str_Shifts_Column_Employee}" Style="{StaticResource ShiftFormLabelStyle}"/>
+                                    <ComboBox ItemsSource="{Binding UserFilterOptions}" SelectedItem="{Binding SelectedUserFilter}" DisplayMemberPath="DisplayName" Height="36" VerticalContentAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="{DynamicResource Str_Shifts_FromDate}" Style="{StaticResource ShiftFormLabelStyle}"/>
+                                    <DatePicker SelectedDate="{Binding FilterFromDate}" Height="36" VerticalContentAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="4">
+                                    <TextBlock Text="{DynamicResource Str_Shifts_ToDate}" Style="{StaticResource ShiftFormLabelStyle}"/>
+                                    <DatePicker SelectedDate="{Binding FilterToDate}" Height="36" VerticalContentAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="6">
+                                    <TextBlock Text="{DynamicResource Str_Shifts_Column_Status}" Style="{StaticResource ShiftFormLabelStyle}"/>
+                                    <ComboBox ItemsSource="{Binding StatusFilterOptions}" SelectedItem="{Binding SelectedStatusFilter}" DisplayMemberPath="DisplayName" Height="36" VerticalContentAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="1" Grid.Column="8" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,12,0,0">
+                                    <Button Command="{Binding ApplyHistoryFilterCommand}" Style="{StaticResource PrimaryButtonStyle}" Content="{DynamicResource Str_Shifts_Filter}"/>
+                                    <Button Command="{Binding ClearHistoryFilterCommand}" Style="{StaticResource SecondaryButtonStyle}" Content="{DynamicResource Str_Shifts_ClearFilter}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="{DynamicResource Str_Shifts_HistoryTitle}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="16,14,16,8"/>
+                                <DataGrid ItemsSource="{Binding ShiftHistory}" SelectedItem="{Binding SelectedHistoryShift, Mode=TwoWay}"
+                                          AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="270"
+                                          GridLinesVisibility="Horizontal" BorderThickness="0" Background="White" RowBackground="White" AlternatingRowBackground="#F8FAFC"
+                                          ColumnHeaderStyle="{StaticResource ShiftGridHeaderStyle}" CellStyle="{StaticResource ShiftGridCellStyle}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_ShiftCode}" Binding="{Binding ShiftCode}" Width="110"/>
+                                        <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Employee}" Binding="{Binding EmployeeName}" Width="*"/>
+                                        <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_OpenedAt}" Binding="{Binding OpenedAtLocal, StringFormat={}{0:dd/MM/yyyy HH:mm}}" Width="125"/>
+                                        <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_ClosedAt}" Binding="{Binding ClosedAtLocal, StringFormat={}{0:dd/MM/yyyy HH:mm}, TargetNullValue=--}" Width="125"/>
+                                        <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Expected}" Binding="{Binding ExpectedCashFormatted}" Width="110"/>
+                                        <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Actual}" Binding="{Binding ActualCashFormatted}" Width="110"/>
+                                        <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Difference}" Binding="{Binding DifferenceFormatted}" Width="110"/>
+                                        <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Status}" Binding="{Binding StatusText}" Width="95"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <StackPanel Visibility="{Binding HasSelectedHistoryShift, Converter={StaticResource BoolToVisConverter}}">
+                            <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16" Margin="0,0,0,16">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="{DynamicResource Str_Shifts_DetailTitle}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                            <TextBlock FontSize="12" Foreground="{StaticResource TextDimBrush}" Margin="0,5,0,0">
+                                                <Run Text="{Binding SelectedHistoryShift.ShiftCode, Mode=OneWay}"/>
+                                                <Run Text="  ·  "/>
+                                                <Run Text="{Binding SelectedHistoryShift.EmployeeName, Mode=OneWay}"/>
+                                                <Run Text="  ·  "/>
+                                                <Run Text="{Binding SelectedHistoryShift.OpenedAtLocal, Mode=OneWay, StringFormat={}{0:dd/MM/yyyy HH:mm}}"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <Border Grid.Column="1" Background="{StaticResource IceBadgeBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,5" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding SelectedHistoryShift.StatusText}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                        </Border>
+                                    </Grid>
+                                    <WrapPanel>
+                                        <Border Style="{StaticResource ShiftKpiCardStyle}"><StackPanel><TextBlock Text="{DynamicResource Str_Shifts_Beginning}" Style="{StaticResource ShiftLabelStyle}"/><TextBlock Text="{Binding SelectedBeginningCashFormatted}" Style="{StaticResource ShiftValueStyle}"/></StackPanel></Border>
+                                        <Border Style="{StaticResource ShiftKpiCardStyle}"><StackPanel><TextBlock Text="{DynamicResource Str_Shifts_CashRevenue}" Style="{StaticResource ShiftLabelStyle}"/><TextBlock Text="{Binding SelectedCashRevenueFormatted}" Style="{StaticResource ShiftValueStyle}"/></StackPanel></Border>
+                                        <Border Style="{StaticResource ShiftKpiCardStyle}"><StackPanel><TextBlock Text="{DynamicResource Str_Shifts_QrRevenue}" Style="{StaticResource ShiftLabelStyle}"/><TextBlock Text="{Binding SelectedQrRevenueFormatted}" Style="{StaticResource ShiftValueStyle}"/></StackPanel></Border>
+                                        <Border Style="{StaticResource ShiftKpiCardStyle}"><StackPanel><TextBlock Text="{DynamicResource Str_Shifts_TotalRevenue}" Style="{StaticResource ShiftLabelStyle}"/><TextBlock Text="{Binding SelectedTotalRevenueFormatted}" Style="{StaticResource ShiftValueStyle}"/></StackPanel></Border>
+                                        <Border Style="{StaticResource ShiftKpiCardStyle}"><StackPanel><TextBlock Text="{DynamicResource Str_Shifts_ExpectedCash}" Style="{StaticResource ShiftLabelStyle}"/><TextBlock Text="{Binding SelectedExpectedCashFormatted}" Style="{StaticResource ShiftValueStyle}"/></StackPanel></Border>
+                                        <Border Style="{StaticResource ShiftKpiCardStyle}"><StackPanel><TextBlock Text="{DynamicResource Str_Shifts_Column_Actual}" Style="{StaticResource ShiftLabelStyle}"/><TextBlock Text="{Binding SelectedActualCashFormatted}" Style="{StaticResource ShiftValueStyle}"/></StackPanel></Border>
+                                        <Border Style="{StaticResource ShiftKpiCardStyle}"><StackPanel><TextBlock Text="{DynamicResource Str_Shifts_Column_Difference}" Style="{StaticResource ShiftLabelStyle}"/><TextBlock Text="{Binding SelectedDifferenceFormatted}" Style="{StaticResource ShiftValueStyle}" Foreground="#B45309"/></StackPanel></Border>
+                                    </WrapPanel>
+
+                                    <DataGrid ItemsSource="{Binding SelectedShiftTransactions}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="230"
+                                              GridLinesVisibility="Horizontal" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" Background="White" RowBackground="White" AlternatingRowBackground="#F8FAFC"
+                                              ColumnHeaderStyle="{StaticResource ShiftGridHeaderStyle}" CellStyle="{StaticResource ShiftGridCellStyle}">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_TransactionCode}" Binding="{Binding TransactionCode}" Width="165"/>
+                                            <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Time}" Binding="{Binding CreatedAtLocal, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}}" Width="145"/>
+                                            <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_LicensePlate}" Binding="{Binding LicensePlate}" Width="95"/>
+                                            <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Type}" Binding="{Binding LocalizedTypeText}" Width="120"/>
+                                            <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_PaymentMethod}" Binding="{Binding LocalizedPaymentMethodText}" Width="100"/>
+                                            <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Amount}" Binding="{Binding LocalizedAmountFormatted}" Width="100"/>
+                                            <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Reference}" Binding="{Binding ReferenceCode}" Width="120"/>
+                                            <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Note}" Binding="{Binding Note}" Width="*"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Phát sinh trong ca đang mở: Refund / Adjustment / Incident -->
+                            <Border Visibility="{Binding CanCreateManualTransaction, Converter={StaticResource BoolToVisConverter}}"
+                                    Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16" Margin="0,0,0,16">
+                                <StackPanel>
+                                    <TextBlock Text="{DynamicResource Str_Shifts_ManualTitle}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="{DynamicResource Str_Shifts_ManualDescription}"
+                                               TextWrapping="Wrap" FontSize="11.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,10"/>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="140"/>
+                                            <ColumnDefinition Width="10"/>
+                                            <ColumnDefinition Width="125"/>
+                                            <ColumnDefinition Width="10"/>
+                                            <ColumnDefinition Width="120"/>
+                                            <ColumnDefinition Width="10"/>
+                                            <ColumnDefinition Width="150"/>
+                                            <ColumnDefinition Width="10"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="{DynamicResource Str_Shifts_ManualType}" Style="{StaticResource ShiftFormLabelStyle}"/>
+                                            <ComboBox ItemsSource="{Binding ManualTransactionTypes}" SelectedItem="{Binding SelectedManualTransactionType}" Height="36" VerticalContentAlignment="Center">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock>
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding}" Value="Refund"><Setter Property="Text" Value="{DynamicResource Str_Shifts_TypeRefund}"/></DataTrigger>
+                                                                        <DataTrigger Binding="{Binding}" Value="Adjustment"><Setter Property="Text" Value="{DynamicResource Str_Shifts_TypeAdjustment}"/></DataTrigger>
+                                                                        <DataTrigger Binding="{Binding}" Value="Incident"><Setter Property="Text" Value="{DynamicResource Str_Shifts_TypeIncident}"/></DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="{DynamicResource Str_Shifts_PaymentMethod}" Style="{StaticResource ShiftFormLabelStyle}"/>
+                                            <ComboBox ItemsSource="{Binding AdjustmentPaymentMethods}" SelectedItem="{Binding SelectedManualPaymentMethod}" Height="36" VerticalContentAlignment="Center">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock>
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding}" Value="Cash"><Setter Property="Text" Value="{DynamicResource Str_Shifts_PaymentCash}"/></DataTrigger>
+                                                                        <DataTrigger Binding="{Binding}" Value="VietQR"><Setter Property="Text" Value="{DynamicResource Str_Shifts_PaymentVietQr}"/></DataTrigger>
+                                                                        <DataTrigger Binding="{Binding}" Value="Card"><Setter Property="Text" Value="{DynamicResource Str_Shifts_PaymentCard}"/></DataTrigger>
+                                                                        <DataTrigger Binding="{Binding}" Value="Free"><Setter Property="Text" Value="{DynamicResource Str_Shifts_PaymentFree}"/></DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="4">
+                                            <TextBlock Text="{DynamicResource Str_Shifts_Amount}" Style="{StaticResource ShiftFormLabelStyle}"/>
+                                            <TextBox Text="{Binding ManualAmountInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="6" Grid.ColumnSpan="3">
+                                            <TextBlock Text="{DynamicResource Str_Shifts_ReferenceIncident}" Style="{StaticResource ShiftFormLabelStyle}"/>
+                                            <TextBox Text="{Binding ManualReferenceCode, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="9" Margin="0,12,0,0">
+                                            <TextBlock Text="{DynamicResource Str_Shifts_Note}" Style="{StaticResource ShiftFormLabelStyle}"/>
+                                            <TextBox Text="{Binding ManualNote, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Height="64" VerticalContentAlignment="Top" Padding="10,8" TextWrapping="Wrap" AcceptsReturn="True"/>
+                                        </StackPanel>
+                                        <Button Grid.Row="1" Grid.Column="9" Command="{Binding CreateManualTransactionCommand}" Style="{StaticResource PrimaryButtonStyle}" Content="{DynamicResource Str_Shifts_Record}" Margin="12,12,0,0" VerticalAlignment="Bottom"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Workflow Adjustment: không sửa transaction cũ -->
+                            <Border Visibility="{Binding CanAdjustSelectedShift, Converter={StaticResource BoolToVisConverter}}"
+                                    Background="{StaticResource WarningBackgroundBrush}" BorderBrush="{StaticResource WarningBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16" Margin="0,0,0,16">
+                                <StackPanel>
+                                    <TextBlock Text="{DynamicResource Str_Shifts_ManagerAdjustment}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource WarningTextBrush}"/>
+                                    <TextBlock Text="{DynamicResource Str_Shifts_AdjustmentDescription}"
+                                               TextWrapping="Wrap" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,10"/>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="160"/>
+                                            <ColumnDefinition Width="12"/>
+                                            <ColumnDefinition Width="150"/>
+                                            <ColumnDefinition Width="12"/>
+                                            <ColumnDefinition Width="180"/>
+                                            <ColumnDefinition Width="12"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="12"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="{DynamicResource Str_Shifts_AdjustmentDirection}" Style="{StaticResource ShiftFormLabelStyle}"/>
+                                            <ComboBox ItemsSource="{Binding AdjustmentDirectionOptions}" SelectedValue="{Binding SelectedAdjustmentDirection}" SelectedValuePath="Direction" DisplayMemberPath="DisplayName" Height="36" VerticalContentAlignment="Center"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="{DynamicResource Str_Shifts_AmountPlusMinus}" Style="{StaticResource ShiftFormLabelStyle}"/>
+                                            <TextBox Text="{Binding AdjustmentAmountInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
+                                            <TextBlock Text="{DynamicResource Str_Shifts_AdjustmentAmountHint}" Style="{StaticResource ShiftFormHintStyle}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="4">
+                                            <TextBlock Text="{DynamicResource Str_Shifts_PaymentMethod}" Style="{StaticResource ShiftFormLabelStyle}"/>
+                                            <ComboBox ItemsSource="{Binding AdjustmentPaymentMethods}" SelectedItem="{Binding SelectedAdjustmentPaymentMethod}" Height="36" VerticalContentAlignment="Center">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock>
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding}" Value="Cash"><Setter Property="Text" Value="{DynamicResource Str_Shifts_PaymentCash}"/></DataTrigger>
+                                                                    <DataTrigger Binding="{Binding}" Value="VietQR"><Setter Property="Text" Value="{DynamicResource Str_Shifts_PaymentVietQr}"/></DataTrigger>
+                                                                    <DataTrigger Binding="{Binding}" Value="Card"><Setter Property="Text" Value="{DynamicResource Str_Shifts_PaymentCard}"/></DataTrigger>
+                                                                    <DataTrigger Binding="{Binding}" Value="Free"><Setter Property="Text" Value="{DynamicResource Str_Shifts_PaymentFree}"/></DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="6">
+                                            <TextBlock Text="{DynamicResource Str_Shifts_ReferenceCode}" Style="{StaticResource ShiftFormLabelStyle}"/>
+                                            <TextBox Text="{Binding AdjustmentReferenceCode, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
+                                            <TextBlock Text="{DynamicResource Str_Shifts_AdjustmentReferenceHint}" Style="{StaticResource ShiftFormHintStyle}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="7" Margin="0,12,0,0">
+                                            <TextBlock Text="{DynamicResource Str_Shifts_AdjustmentNote}" Style="{StaticResource ShiftFormLabelStyle}"/>
+                                            <TextBox Text="{Binding AdjustmentNote, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Height="64" VerticalContentAlignment="Top" Padding="10,8" TextWrapping="Wrap" AcceptsReturn="True"/>
+                                            <TextBlock Text="{DynamicResource Str_Shifts_AdjustmentNoteHint}" Style="{StaticResource ShiftFormHintStyle}"/>
+                                        </StackPanel>
+                                        <Button Grid.Row="1" Grid.Column="8" Command="{Binding AddAdjustmentCommand}" Style="{StaticResource PrimaryButtonStyle}" Content="{DynamicResource Str_Shifts_CreateAdjustment}" Margin="12,12,0,0" VerticalAlignment="Bottom"/>
+                                        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="9" Background="#FFFDF2" BorderBrush="{StaticResource WarningBorderBrush}" BorderThickness="1" CornerRadius="5" Padding="12" Margin="0,14,0,0">
+                                            <StackPanel>
+                                                <TextBlock Text="{DynamicResource Str_Shifts_AdjustmentEffect}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource WarningTextBrush}"/>
+                                                <UniformGrid Columns="5" Margin="0,10,0,0">
+                                                    <StackPanel>
+                                                        <TextBlock Text="{DynamicResource Str_Shifts_AdjustmentExpectedBefore}" Style="{StaticResource ShiftPreviewLabelStyle}"/>
+                                                        <TextBlock Text="{Binding AdjustmentExpectedCashBeforeFormatted}" Style="{StaticResource ShiftPreviewValueStyle}"/>
+                                                    </StackPanel>
+                                                    <StackPanel>
+                                                        <TextBlock Text="{DynamicResource Str_Shifts_AdjustmentExpectedAfter}" Style="{StaticResource ShiftPreviewLabelStyle}"/>
+                                                        <TextBlock Text="{Binding AdjustmentExpectedCashAfterFormatted}" Style="{StaticResource ShiftPreviewValueStyle}" Foreground="#1D4ED8"/>
+                                                    </StackPanel>
+                                                    <StackPanel>
+                                                        <TextBlock Text="{DynamicResource Str_Shifts_AdjustmentDifferenceBefore}" Style="{StaticResource ShiftPreviewLabelStyle}"/>
+                                                        <TextBlock Text="{Binding AdjustmentDifferenceBeforeFormatted}" Style="{StaticResource ShiftPreviewValueStyle}"/>
+                                                    </StackPanel>
+                                                    <StackPanel>
+                                                        <TextBlock Text="{DynamicResource Str_Shifts_AdjustmentDifferenceAfter}" Style="{StaticResource ShiftPreviewLabelStyle}"/>
+                                                        <TextBlock Text="{Binding AdjustmentDifferenceAfterFormatted}" Style="{StaticResource ShiftPreviewValueStyle}" Foreground="#B45309"/>
+                                                    </StackPanel>
+                                                    <StackPanel>
+                                                        <TextBlock Text="{DynamicResource Str_Shifts_AdjustmentCashImpact}" Style="{StaticResource ShiftPreviewLabelStyle}"/>
+                                                        <TextBlock Text="{Binding AdjustmentCashImpactFormatted}" Style="{StaticResource ShiftPreviewValueStyle}" Foreground="#15803D"/>
+                                                    </StackPanel>
+                                                </UniformGrid>
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Visibility="{Binding CanReviewSelectedShift, Converter={StaticResource BoolToVisConverter}}"
+                                    Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="180"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Margin="0,0,16,0">
+                                        <TextBlock Text="{DynamicResource Str_Shifts_ManagerReview}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,6"/>
+                                        <TextBlock Text="{DynamicResource Str_Shifts_ManagerNote}" Style="{StaticResource ShiftFormLabelStyle}"/>
+                                        <TextBox Text="{Binding ReviewNote, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Height="64" VerticalContentAlignment="Top" Padding="10,8" TextWrapping="Wrap" AcceptsReturn="True"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Command="{Binding ReviewShiftCommand}" Style="{StaticResource PrimaryButtonStyle}" Content="{DynamicResource Str_Shifts_Confirm}" VerticalAlignment="Bottom"/>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

@@ -252,9 +252,9 @@ namespace SmartPS.Services.Auth
         {
             try
             {
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
                 await using var db = await _contextFactory.CreateDbContextAsync(cts.Token);
-                await DbInitializer.InitializeAsync(db);
+                await DbInitializer.InitializeAsync(db, cts.Token);
                 return true;
             }
             catch
