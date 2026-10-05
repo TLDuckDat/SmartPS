@@ -5,12 +5,16 @@ using System.Windows.Threading;
 using SmartPS.Models.GateControl;
 using SmartPS.Models.Ocr;
 using SmartPS.Models.Parking;
+using SmartPS.Models.Payment;
 using SmartPS.Services.Audio;
 using SmartPS.Services.Auth;
 using SmartPS.Services.Dialog;
 using SmartPS.Services.GateControl;
 using SmartPS.Services.Localization;
 using SmartPS.Services.OcrLisencePlate;
+using SmartPS.Services.Payment;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace SmartPS.ViewModels.GateControl;
 
@@ -23,9 +27,11 @@ public class GateControlViewModel : ViewModelBase
     private readonly ILocalizationService _localizationService;
     private readonly IAuthService _authService;
     private readonly IAudioAlertService _audioAlertService;
+    private readonly IPaymentService? _paymentService;
 
     private readonly DispatcherTimer _barrierInTimer;
     private readonly DispatcherTimer _barrierOutTimer;
+    private readonly DispatcherTimer _vietQrPollTimer;
 
     // Danh sách loại xe và phiên gửi xe đang hoạt động trong bãi
     public ObservableCollection<VehicleType> VehicleTypes { get; } = new();
@@ -388,6 +394,80 @@ public class GateControlViewModel : ViewModelBase
 
     #endregion
 
+    #region VietQR Payment Modal Properties
+
+    private bool _isVietQrModalOpen;
+    public bool IsVietQrModalOpen
+    {
+        get => _isVietQrModalOpen;
+        set => SetProperty(ref _isVietQrModalOpen, value);
+    }
+
+    private bool _isVietQrLoading;
+    public bool IsVietQrLoading
+    {
+        get => _isVietQrLoading;
+        set => SetProperty(ref _isVietQrLoading, value);
+    }
+
+    private bool _isVietQrPaidSuccess;
+    public bool IsVietQrPaidSuccess
+    {
+        get => _isVietQrPaidSuccess;
+        set => SetProperty(ref _isVietQrPaidSuccess, value);
+    }
+
+    private int _vietQrPaymentId;
+    public int VietQrPaymentId
+    {
+        get => _vietQrPaymentId;
+        set => SetProperty(ref _vietQrPaymentId, value);
+    }
+
+    private string _vietQrTransactionReference = string.Empty;
+    public string VietQrTransactionReference
+    {
+        get => _vietQrTransactionReference;
+        set => SetProperty(ref _vietQrTransactionReference, value);
+    }
+
+    private decimal _vietQrAmount;
+    public decimal VietQrAmount
+    {
+        get => _vietQrAmount;
+        set
+        {
+            if (SetProperty(ref _vietQrAmount, value))
+            {
+                OnPropertyChanged(nameof(VietQrAmountFormatted));
+            }
+        }
+    }
+    public string VietQrAmountFormatted => $"{VietQrAmount:N0} đ";
+
+    private string _vietQrStatusText = "Đang tạo mã VietQR...";
+    public string VietQrStatusText
+    {
+        get => _vietQrStatusText;
+        set => SetProperty(ref _vietQrStatusText, value);
+    }
+
+    private ImageSource? _vietQrImageSource;
+    public ImageSource? VietQrImageSource
+    {
+        get => _vietQrImageSource;
+        set => SetProperty(ref _vietQrImageSource, value);
+    }
+
+    private string _vietQrDescription = string.Empty;
+    public string VietQrDescription
+    {
+        get => _vietQrDescription;
+        set => SetProperty(ref _vietQrDescription, value);
+    }
+
+    #endregion
+
     private ParkingSession? _selectedActiveSession;
     public ParkingSession? SelectedActiveSession
     {
@@ -421,6 +501,9 @@ public class GateControlViewModel : ViewModelBase
 
     public AsyncRelayCommand RefreshActiveSessionsCommand { get; }
 
+    public AsyncRelayCommand CancelVietQrPaymentCommand { get; }
+    public AsyncRelayCommand RefreshVietQrStatusCommand { get; }
+
     #endregion
 
     public GateControlViewModel(
@@ -430,7 +513,8 @@ public class GateControlViewModel : ViewModelBase
         IDialogService dialogService,
         ILocalizationService localizationService,
         IAuthService authService,
-        IAudioAlertService? audioAlertService = null)
+        IAudioAlertService? audioAlertService = null,
+        IPaymentService? paymentService = null)
     {
         _ocrService = ocrService ?? throw new ArgumentNullException(nameof(ocrService));
         _gateControlService = gateControlService ?? throw new ArgumentNullException(nameof(gateControlService));
@@ -439,6 +523,14 @@ public class GateControlViewModel : ViewModelBase
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _audioAlertService = audioAlertService ?? new SystemAudioAlertService();
+        _paymentService = paymentService;
+
+        // Lắng nghe sự kiện kết thúc phiên gửi xe (qua Webhook hoặc thanh toán)
+        _gateControlService.SessionCompleted += OnSessionCompleted;
+
+        // Timer polling kiểm tra trạng thái thanh toán VietQR
+        _vietQrPollTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2.5) };
+        _vietQrPollTimer.Tick += OnVietQrPollTick;
 
         // Lắng nghe sự kiện ảnh từ Camera Watcher
         _cameraWatcherService.ImageArrivedAtInLane += OnCameraImageIn;
@@ -477,6 +569,10 @@ public class GateControlViewModel : ViewModelBase
         RunOutOcrCommand = new AsyncRelayCommand(ExecuteRunOutOcrAsync);
         ConfirmCheckOutCommand = new AsyncRelayCommand(ExecuteConfirmCheckOutAsync);
         ToggleBarrierOutCommand = new RelayCommand(() => IsBarrierOutOpen = !IsBarrierOutOpen);
+
+        // Commands Thanh Toán VietQR
+        CancelVietQrPaymentCommand = new AsyncRelayCommand(ExecuteCancelVietQrPaymentAsync);
+        RefreshVietQrStatusCommand = new AsyncRelayCommand(ExecuteRefreshVietQrStatusAsync);
 
         RefreshActiveSessionsCommand = new AsyncRelayCommand(LoadActiveSessionsAsync);
 
@@ -822,12 +918,21 @@ public class GateControlViewModel : ViewModelBase
                 // 2. Hoặc nếu IsAutoCheckoutAllVehicles == true: TỰ ĐỘNG CHO RA TOÀN BỘ!
                 if ((isAutoTrigger || IsAutoModeEnabled) && MatchedSession != null)
                 {
-                    if (IsMonthlyTicketOut || IsAutoCheckoutAllVehicles)
+                    var requiresPayment = SelectedPaymentMethod == PaymentMethod.VietQR &&
+                                          CalculatedFee > 0 &&
+                                          !IsMonthlyTicketOut;
+
+                    if ((IsMonthlyTicketOut || IsAutoCheckoutAllVehicles) && !requiresPayment)
                     {
                         OutStatusMessage = $"⚡ [TỰ ĐỘNG] Khớp biển số {OutPlateText} -> Tự động hoàn tất xuất bãi & Mở Barrier...";
                         await Task.Delay(200); // Đệm mượt
                         var checkOutSuccess = await PerformCheckOutAsync(silent: true);
                         return checkOutSuccess;
+                    }
+
+                    if (requiresPayment)
+                    {
+                        OutStatusMessage = $"🟡 [CHỜ THANH TOÁN] Khớp biển số {OutPlateText} | Cước {CalculatedFee:N0} đ. Vui lòng xác nhận VietQR.";
                     }
                 }
                 return true;
@@ -855,13 +960,28 @@ public class GateControlViewModel : ViewModelBase
     {
         if (string.IsNullOrWhiteSpace(plate))
         {
-            MatchedSession = null;
-            IsPlateMatched = null;
-            DurationFormatted = "--:--";
-            CalculatedFee = 0;
+            IsPlateMatched = MatchedSession == null ? null : false;
+            if (MatchedSession == null)
+            {
+                DurationFormatted = "--:--";
+                CalculatedFee = 0;
+            }
             return;
         }
 
+        // Nếu người dùng đã chọn một xe trong danh sách, KHÔNG thay MatchedSession
+        // bằng kết quả OCR. Khi đó biển OCR phải được so sánh với xe đã chọn.
+        if (MatchedSession != null && SelectedActiveSession != null &&
+            MatchedSession.SessionId == SelectedActiveSession.SessionId)
+        {
+            EvaluatePlateMatch();
+            OutStatusMessage = IsPlateMatched == true
+                ? $"Khớp biển số: {MatchedSession.LicensePlate}"
+                : $"CẢNH BÁO: Biển số vào '{MatchedSession.LicensePlate}' khác biển số ra '{plate}'!";
+            return;
+        }
+
+        // Chưa chọn xe thủ công: dùng biển OCR để tìm phiên đang gửi.
         var calcResult = await _gateControlService.CalculateCheckOutAsync(plate);
         if (calcResult.Success && calcResult.ActiveSession != null)
         {
@@ -869,6 +989,7 @@ public class GateControlViewModel : ViewModelBase
             DurationFormatted = calcResult.DurationFormatted;
             CalculatedFee = calcResult.TotalFee;
             IsMonthlyTicketOut = calcResult.IsMonthlyTicket;
+            EvaluatePlateMatch();
             OutStatusMessage = calcResult.Message;
         }
         else
@@ -901,11 +1022,35 @@ public class GateControlViewModel : ViewModelBase
         return System.Text.RegularExpressions.Regex.Replace(text, @"[^a-zA-Z0-9]", "").ToUpperInvariant();
     }
 
-    private void LoadSessionToOutLane(ParkingSession session)
+    private async void LoadSessionToOutLane(ParkingSession session)
     {
+        // Chỉ nạp xe được chọn làm xe cần đối soát.
+        // Không ghi đè OutPlateText vì đây phải là biển số thực tế nhận từ OCR làn ra.
         MatchedSession = session;
-        OutPlateText = session.LicensePlate;
-        _ = MatchSessionOutAsync(session.LicensePlate);
+
+        var calcResult = await _gateControlService.CalculateCheckOutAsync(session.LicensePlate);
+        if (calcResult.Success && calcResult.ActiveSession != null)
+        {
+            MatchedSession = calcResult.ActiveSession;
+            DurationFormatted = calcResult.DurationFormatted;
+            CalculatedFee = calcResult.TotalFee;
+            IsMonthlyTicketOut = calcResult.IsMonthlyTicket;
+        }
+
+        EvaluatePlateMatch();
+
+        if (string.IsNullOrWhiteSpace(OutPlateText))
+        {
+            OutStatusMessage = $"Đã chọn xe {session.LicensePlate}. Vui lòng nhận diện biển số xe đang ra để đối soát.";
+        }
+        else if (IsPlateMatched == true)
+        {
+            OutStatusMessage = $"Khớp biển số: {session.LicensePlate}";
+        }
+        else
+        {
+            OutStatusMessage = $"CẢNH BÁO: Biển số vào '{session.LicensePlate}' khác biển số ra '{OutPlateText}'!";
+        }
     }
 
     private async Task ExecuteConfirmCheckOutAsync()
@@ -921,6 +1066,15 @@ public class GateControlViewModel : ViewModelBase
             return false;
         }
 
+        // Nếu đã có biển số OCR thì bắt buộc phải khớp với biển số lúc vào.
+        if (!string.IsNullOrWhiteSpace(OutPlateText) && IsPlateMatched != true)
+        {
+            var message = $"Không thể xuất bãi: biển số vào '{MatchedSession.LicensePlate}' không khớp biển số ra '{OutPlateText}'.";
+            OutStatusMessage = $"🔴 [TỪ CHỐI RA] {message}";
+            if (!silent) _dialogService.ShowWarning(message);
+            return false;
+        }
+
         var targetPlate = MatchedSession.LicensePlate;
         var inTimeStr = MatchedSession.CheckInTimeLocal.ToString("dd/MM/yyyy HH:mm:ss");
         var outTimeStr = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
@@ -928,9 +1082,15 @@ public class GateControlViewModel : ViewModelBase
         var feeStr = CalculatedFeeFormatted;
         var paymentStr = SelectedPaymentMethod.ToString();
 
+        if (SelectedPaymentMethod == PaymentMethod.VietQR && CalculatedFee > 0 && !IsMonthlyTicketOut)
+        {
+            return await InitiateVietQrPaymentAsync(silent);
+        }
+
         var request = new GateCheckOutRequest
         {
             SessionId = MatchedSession.SessionId,
+            ActorUserId = _authService.CurrentUser?.UserId ?? 0,
             CheckOutImagePath = OutAnnotatedImagePath ?? OutImagePath,
             PaymentMethod = SelectedPaymentMethod,
             TotalFee = CalculatedFee
@@ -973,6 +1133,222 @@ public class GateControlViewModel : ViewModelBase
             OutStatusMessage = $"🔴 [TỪ CHỐI RA] {result.Message}";
             if (!silent) _dialogService.ShowError(result.Message);
             return false;
+        }
+    }
+
+    private async Task<bool> InitiateVietQrPaymentAsync(bool silent)
+    {
+        if (MatchedSession == null) return false;
+        if (_paymentService == null)
+        {
+            if (!silent) _dialogService.ShowError("Dịch vụ thanh toán VietQR chưa được cấu hình.");
+            return false;
+        }
+
+        IsVietQrModalOpen = true;
+        IsVietQrLoading = true;
+        IsVietQrPaidSuccess = false;
+        VietQrImageSource = null;
+        VietQrStatusText = "Đang kết nối cổng thanh toán để tạo mã QR...";
+        VietQrAmount = CalculatedFee;
+
+        try
+        {
+            var req = new CreatePaymentRequest
+            {
+                SessionId = MatchedSession.SessionId,
+                ActorUserId = _authService.CurrentUser?.UserId ?? 0,
+                CheckoutImagePath = OutAnnotatedImagePath ?? OutImagePath
+            };
+
+            var result = await _paymentService.CreatePaymentAsync(req);
+            if (!result.Success)
+            {
+                IsVietQrModalOpen = false;
+                IsVietQrLoading = false;
+                OutStatusMessage = $"🔴 [LỖI TẠO VIETQR] {result.Message}";
+                if (!silent) _dialogService.ShowError(result.Message);
+                return false;
+            }
+
+            VietQrPaymentId = result.PaymentId;
+            VietQrTransactionReference = result.TransactionReference;
+            VietQrAmount = result.Amount;
+            VietQrDescription = result.Description;
+            VietQrStatusText = "Đang chờ thanh toán... Khách vui lòng quét mã VietQR.";
+
+            if (result.QrImagePng != null && result.QrImagePng.Length > 0)
+            {
+                VietQrImageSource = LoadBitmapFromBytes(result.QrImagePng);
+            }
+
+            IsVietQrLoading = false;
+            _vietQrPollTimer.Stop();
+            _vietQrPollTimer.Start();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            IsVietQrModalOpen = false;
+            IsVietQrLoading = false;
+            OutStatusMessage = $"🔴 [LỖI THANH TOÁN] {ex.Message}";
+            if (!silent) _dialogService.ShowError(ex.Message);
+            return false;
+        }
+    }
+
+    private void OnSessionCompleted(object? sender, ParkingSession session)
+    {
+        if (session == null) return;
+
+        Application.Current?.Dispatcher?.InvokeAsync(async () =>
+        {
+            if (MatchedSession != null && MatchedSession.SessionId == session.SessionId)
+            {
+                if (IsVietQrModalOpen)
+                {
+                    _vietQrPollTimer.Stop();
+                    IsVietQrPaidSuccess = true;
+                    VietQrStatusText = "Thanh toán VietQR thành công! Đang mở barrier xuất bãi...";
+
+                    IsBarrierOutOpen = true;
+                    _barrierOutTimer.Stop();
+                    _barrierOutTimer.Start();
+                    PlayNotificationSound();
+
+                    OutStatusMessage = $"🟢 [RA THÀNH CÔNG] Biển số: {session.LicensePlate} | Đã thanh toán VietQR: {session.TotalFee:N0} đ";
+
+                    await Task.Delay(1500);
+                    IsVietQrModalOpen = false;
+
+                    MatchedSession = null;
+                    OutPlateText = string.Empty;
+                    OutImagePath = null;
+                    OutAnnotatedImagePath = null;
+                    OutCropImagePath = null;
+                    IsPlateMatched = null;
+                    CalculatedFee = 0;
+                    DurationFormatted = "--:--";
+                }
+            }
+
+            await LoadActiveSessionsAsync();
+        });
+    }
+
+    private async void OnVietQrPollTick(object? sender, EventArgs e)
+    {
+        if (!IsVietQrModalOpen || VietQrPaymentId <= 0 || _paymentService == null)
+        {
+            _vietQrPollTimer.Stop();
+            return;
+        }
+
+        try
+        {
+            var status = await _paymentService.GetPaymentStatusAsync(VietQrPaymentId);
+            if (status.Success && status.Status == PaymentStatus.Paid && !IsVietQrPaidSuccess)
+            {
+                _vietQrPollTimer.Stop();
+                IsVietQrPaidSuccess = true;
+                VietQrStatusText = "Xác nhận thanh toán thành công qua VietQR!";
+
+                IsBarrierOutOpen = true;
+                _barrierOutTimer.Stop();
+                _barrierOutTimer.Start();
+                PlayNotificationSound();
+
+                if (MatchedSession != null)
+                {
+                    OutStatusMessage = $"🟢 [RA THÀNH CÔNG] Biển số: {MatchedSession.LicensePlate} | Đã thanh toán: {status.Amount:N0} đ";
+                }
+
+                await LoadActiveSessionsAsync();
+
+                await Task.Delay(1500);
+                IsVietQrModalOpen = false;
+
+                MatchedSession = null;
+                OutPlateText = string.Empty;
+                OutImagePath = null;
+                OutAnnotatedImagePath = null;
+                OutCropImagePath = null;
+                IsPlateMatched = null;
+                CalculatedFee = 0;
+                DurationFormatted = "--:--";
+            }
+        }
+        catch
+        {
+            // Bỏ qua lỗi mạng trong quá trình polling
+        }
+    }
+
+    private async Task ExecuteRefreshVietQrStatusAsync()
+    {
+        if (VietQrPaymentId <= 0 || _paymentService == null) return;
+        VietQrStatusText = "Đang kiểm tra đối soát với cổng...";
+
+        var status = await _paymentService.RefreshFromGatewayAsync(VietQrPaymentId);
+        if (status.Success && status.Status == PaymentStatus.Paid && !IsVietQrPaidSuccess)
+        {
+            _vietQrPollTimer.Stop();
+            IsVietQrPaidSuccess = true;
+            VietQrStatusText = "Cổng xác nhận đã thanh toán thành công!";
+            IsBarrierOutOpen = true;
+            _barrierOutTimer.Stop();
+            _barrierOutTimer.Start();
+            PlayNotificationSound();
+
+            await LoadActiveSessionsAsync();
+            await Task.Delay(1500);
+            IsVietQrModalOpen = false;
+
+            MatchedSession = null;
+            OutPlateText = string.Empty;
+            OutImagePath = null;
+            OutAnnotatedImagePath = null;
+            OutCropImagePath = null;
+            IsPlateMatched = null;
+            CalculatedFee = 0;
+            DurationFormatted = "--:--";
+        }
+        else
+        {
+            VietQrStatusText = "Chưa nhận được giao dịch từ khách. Vui lòng thử lại sau khi chuyển tiền.";
+        }
+    }
+
+    private async Task ExecuteCancelVietQrPaymentAsync()
+    {
+        _vietQrPollTimer.Stop();
+        if (VietQrPaymentId > 0 && _paymentService != null)
+        {
+            await _paymentService.CancelPaymentAsync(VietQrPaymentId);
+        }
+
+        IsVietQrModalOpen = false;
+        IsVietQrLoading = false;
+        OutStatusMessage = "Đã hủy giao dịch thanh toán VietQR.";
+    }
+
+    private static BitmapImage? LoadBitmapFromBytes(byte[]? bytes)
+    {
+        if (bytes == null || bytes.Length == 0) return null;
+        try
+        {
+            using var stream = new MemoryStream(bytes);
+            var image = new BitmapImage();
+            image.BeginInit();
+            image.CacheOption = BitmapCacheOption.OnLoad;
+            image.StreamSource = stream;
+            image.EndInit();
+            image.Freeze();
+            return image;
+        }
+        catch
+        {
+            return null;
         }
     }
 
@@ -1053,10 +1429,10 @@ public class GateControlViewModel : ViewModelBase
         var dirInfo = new DirectoryInfo(baseDir);
         for (int i = 0; i < 5 && dirInfo != null; i++)
         {
-            var p1 = Path.Combine(dirInfo.FullName, "SmartPS", "Services", "OcrLisencePlate", "output", "requests", "interactive_check", "annotated.jpg");
+            var p1 = Path.Combine(dirInfo.FullName, "Services", "OcrLisencePlate", "output", "requests", "interactive_check", "annotated.jpg");
             if (File.Exists(p1)) return p1;
 
-            var p2 = Path.Combine(dirInfo.FullName, "SmartPS", "Services", "OcrLisencePlate", "output", "requests", "test_image_1", "annotated.jpg");
+            var p2 = Path.Combine(dirInfo.FullName, "Services", "OcrLisencePlate", "output", "requests", "test_image_1", "annotated.jpg");
             if (File.Exists(p2)) return p2;
 
             dirInfo = dirInfo.Parent;
@@ -1065,7 +1441,7 @@ public class GateControlViewModel : ViewModelBase
         var cur1 = Path.Combine(Directory.GetCurrentDirectory(), "Services", "OcrLisencePlate", "output", "requests", "interactive_check", "annotated.jpg");
         if (File.Exists(cur1)) return cur1;
 
-        var cur2 = Path.Combine(Directory.GetCurrentDirectory(), "SmartPS", "Services", "OcrLisencePlate", "output", "requests", "interactive_check", "annotated.jpg");
+        var cur2 = Path.Combine(Directory.GetCurrentDirectory(), "Services", "OcrLisencePlate", "output", "requests", "test_image_1", "annotated.jpg");
         if (File.Exists(cur2)) return cur2;
 
         return null;

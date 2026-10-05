@@ -18,7 +18,8 @@ public enum PaymentMethod
 {
     Cash = 0,        // Tiền mặt
     VietQR = 1,      // Chuyển khoản VietQR
-    Card = 2         // Thẻ / Ví điện tử
+    Card = 2,        // Thẻ / Ví điện tử
+    Free = 3         // Miễn phí / vé tháng
 }
 
 public enum CustomerType

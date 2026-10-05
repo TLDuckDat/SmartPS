@@ -60,3 +60,7 @@ $RECYCLE.BIN/
 .DS_Store
 .Spotlight-V100
 .Trashes
+
+
+# OCR output
+**/Services/OcrLisencePlate/output/

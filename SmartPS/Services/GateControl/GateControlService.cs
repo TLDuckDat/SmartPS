@@ -3,6 +3,7 @@ using SmartPS.Data;
 using SmartPS.Models.GateControl;
 using SmartPS.Models.Parking;
 using SmartPS.Services.Storage;
+using SmartPS.Services.Shifts;
 using System.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -467,87 +468,48 @@ public class GateControlService : IGateControlService
 
     public async Task<GateCheckOutResult> CompleteCheckOutAsync(GateCheckOutRequest request, CancellationToken cancellationToken = default)
     {
-        ParkingSession? session = null;
+        if (_dbContextFactory == null || request.ActorUserId <= 0)
+            return new GateCheckOutResult { Success = false, Message = "Cần đăng nhập và kết nối cơ sở dữ liệu để thu tiền." };
 
-        if (_dbContextFactory != null)
+        try
         {
-            try
+            await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+            await using var transaction = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken);
+            var shift = await ShiftAccounting.FindActiveShiftAsync(db, request.ActorUserId, cancellationToken);
+            if (shift == null)
+                return new GateCheckOutResult { Success = false, Message = "Bạn cần mở ca trực trước khi checkout." };
+
+            var session = await db.ParkingSessions.Include(s => s.Slot)
+                .FirstOrDefaultAsync(s => s.SessionId == request.SessionId, cancellationToken);
+            if (session == null || session.Status != SessionStatus.Active)
+                return new GateCheckOutResult { Success = false, Message = "Phiên gửi xe không còn hoạt động." };
+
+            var method = request.TotalFee <= 0 ? PaymentMethod.Free : request.PaymentMethod;
+            if (request.TotalFee < 0 || (request.TotalFee > 0 && method == PaymentMethod.Free))
+                return new GateCheckOutResult { Success = false, Message = "Số tiền hoặc phương thức thanh toán không hợp lệ." };
+            if (request.TotalFee > 0 && method == PaymentMethod.VietQR)
+                return new GateCheckOutResult { Success = false, Message = "Thanh toán VietQR phải được xác nhận qua cổng thanh toán." };
+
+            await ShiftAccounting.AddParkingFeeAsync(db, shift, request.ActorUserId,
+                session.SessionId, method, request.TotalFee, null, cancellationToken);
+            var archivedOutImage = await _imageStorageService.ArchiveCaptureAsync(
+                request.CheckOutImagePath, "CheckOut", session.LicensePlate);
+            session.CheckOutTime = DateTime.UtcNow;
+            session.CheckOutImagePath = archivedOutImage ?? request.CheckOutImagePath;
+            session.TotalFee = request.TotalFee;
+            session.PaymentMethod = method;
+            session.Status = SessionStatus.Completed;
+            if (session.Slot != null)
             {
-                await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
-                session = await db.ParkingSessions
-                    .Include(s => s.Slot)
-                    .FirstOrDefaultAsync(s => s.SessionId == request.SessionId, cancellationToken);
-
-                if (session != null)
-                {
-                    var archivedOutImage = await _imageStorageService.ArchiveCaptureAsync(request.CheckOutImagePath, "CheckOut", session.LicensePlate);
-
-                    session.CheckOutTime = DateTime.UtcNow;
-                    session.CheckOutImagePath = archivedOutImage ?? request.CheckOutImagePath;
-                    session.TotalFee = request.TotalFee;
-                    session.PaymentMethod = request.PaymentMethod;
-                    session.Status = SessionStatus.Completed;
-
-                    if (session.Slot != null)
-                    {
-                        session.Slot.Status = SlotStatus.Available;
-                        session.Slot.CurrentLicensePlate = null;
-                    }
-                    else if (session.SlotId.HasValue)
-                    {
-                        var slot = await db.ParkingSlots.FindAsync(new object[] { session.SlotId.Value }, cancellationToken);
-                        if (slot != null)
-                        {
-                            slot.Status = SlotStatus.Available;
-                            slot.CurrentLicensePlate = null;
-                        }
-                    }
-
-                    await db.SaveChangesAsync(cancellationToken);
-
-                    // Đồng bộ bộ nhớ đệm và tệp ngoại tuyến
-                    lock (_syncLock)
-                    {
-                        _memorySessions.RemoveAll(s => s.SessionId == session.SessionId);
-                        if (session.SlotId.HasValue)
-                        {
-                            var memSlot = _memorySlots.FirstOrDefault(s => s.SlotId == session.SlotId.Value);
-                            if (memSlot != null)
-                            {
-                                memSlot.Status = SlotStatus.Available;
-                                memSlot.CurrentLicensePlate = null;
-                            }
-                        }
-                        SaveOfflineSessions();
-                        AppendAuditLog("CHECK_OUT", session, request.TotalFee, request.PaymentMethod.ToString());
-                    }
-
-                    return new GateCheckOutResult
-                    {
-                        Success = true,
-                        Message = "Xuất bãi và thanh toán hoàn tất.",
-                        CompletedSession = session
-                    };
-                }
+                session.Slot.Status = SlotStatus.Available;
+                session.Slot.CurrentLicensePlate = null;
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[GateControlService CompleteCheckOut DB Error]: {ex.Message}");
-            }
-        }
+            await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
-        // Fallback InMemory (đồng bộ luồng)
-        lock (_syncLock)
-        {
-            session = _memorySessions.FirstOrDefault(s => s.SessionId == request.SessionId);
-            if (session != null)
+            lock (_syncLock)
             {
-                session.CheckOutTime = DateTime.UtcNow;
-                session.CheckOutImagePath = request.CheckOutImagePath;
-                session.TotalFee = request.TotalFee;
-                session.PaymentMethod = request.PaymentMethod;
-                session.Status = SessionStatus.Completed;
-
+                _memorySessions.RemoveAll(s => s.SessionId == session.SessionId);
                 if (session.SlotId.HasValue)
                 {
                     var memSlot = _memorySlots.FirstOrDefault(s => s.SlotId == session.SlotId.Value);
@@ -557,21 +519,16 @@ public class GateControlService : IGateControlService
                         memSlot.CurrentLicensePlate = null;
                     }
                 }
-
-                _memorySessions.Remove(session);
                 SaveOfflineSessions();
-                AppendAuditLog("CHECK_OUT", session, request.TotalFee, request.PaymentMethod.ToString());
-
-                return new GateCheckOutResult
-                {
-                    Success = true,
-                    Message = "Xuất bãi và thanh toán hoàn tất.",
-                    CompletedSession = session
-                };
+                AppendAuditLog("CHECK_OUT", session, request.TotalFee, method.ToString());
             }
+            return new GateCheckOutResult { Success = true, Message = "Xuất bãi và thanh toán hoàn tất.", CompletedSession = session };
         }
-
-        return new GateCheckOutResult { Success = false, Message = "Không tìm thấy phiên gửi xe hợp lệ." };
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[GateControlService CompleteCheckOut DB Error]: {ex}");
+            return new GateCheckOutResult { Success = false, Message = $"Không thể hoàn tất checkout: {ex.Message}" };
+        }
     }
 
     public async Task<List<ParkingSession>> GetActiveSessionsAsync(CancellationToken cancellationToken = default)
@@ -711,6 +668,31 @@ public class GateControlService : IGateControlService
             MonthlyParkedCount = monthlyCount,
             RegularParkedCount = regularCount
         };
+    }
+
+    public event EventHandler<ParkingSession>? SessionCompleted;
+
+    public void NotifySessionCompleted(ParkingSession session)
+    {
+        if (session == null) return;
+
+        lock (_syncLock)
+        {
+            _memorySessions.RemoveAll(s => s.SessionId == session.SessionId);
+            if (session.SlotId.HasValue)
+            {
+                var memSlot = _memorySlots.FirstOrDefault(s => s.SlotId == session.SlotId.Value);
+                if (memSlot != null)
+                {
+                    memSlot.Status = SlotStatus.Available;
+                    memSlot.CurrentLicensePlate = null;
+                }
+            }
+            SaveOfflineSessions();
+            AppendAuditLog("CHECK_OUT_PAYMENT", session, session.TotalFee, session.PaymentMethod.ToString());
+        }
+
+        SessionCompleted?.Invoke(this, session);
     }
 }
 

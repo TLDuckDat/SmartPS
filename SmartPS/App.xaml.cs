@@ -8,6 +8,11 @@ using SmartPS.Services.Auth;
 using SmartPS.Services.Authorization;
 using SmartPS.Services.Dialog;
 using SmartPS.Services.Localization;
+using SmartPS.Services.Payment;
+using SmartPS.Services.Payment.Mock;
+using SmartPS.Services.Payment.PayOS;
+using SmartPS.Services.Payment.Webhook;
+using SmartPS.Services.Shifts;
 using SmartPS.ViewModels.Auth;
 using SmartPS.ViewModels.Dashboard;
 using SmartPS.Views.Auth;
@@ -30,6 +35,8 @@ public partial class App : Application
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+            .AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true)
+            .AddEnvironmentVariables("SMARTPS_")
             .Build();
 
         // 2. Cấu hình Service Collection (Dependency Injection)
@@ -58,6 +65,40 @@ public partial class App : Application
         services.AddSingleton<SmartPS.Services.GateControl.IGateControlService, SmartPS.Services.GateControl.GateControlService>();
         services.AddSingleton<SmartPS.Services.GateControl.ICameraWatcherService, SmartPS.Services.GateControl.CameraWatcherService>();
 
+        // Cấu hình thanh toán điện tử (VietQR / PayOS)
+        services.Configure<PayOSPaymentGatewayOptions>(configuration.GetSection("PayOS"));
+        services.AddHttpClient("PayOS");
+
+        // Kiểm tra PayOS có đủ 3 key hay không
+        var payOsSection = configuration.GetSection("PayOS");
+
+        var clientId = payOsSection["ClientId"];
+        var apiKey = payOsSection["ApiKey"];
+        var checksumKey = payOsSection["ChecksumKey"];
+
+        var hasPayOsKeys =
+            !string.IsNullOrWhiteSpace(clientId) &&
+            !string.IsNullOrWhiteSpace(apiKey) &&
+            !string.IsNullOrWhiteSpace(checksumKey);
+
+        if (hasPayOsKeys)
+        {
+            // Có Key → dùng PayOS thật
+            services.AddSingleton<IPaymentGateway, PayOSPaymentGateway>();
+        }
+        else
+        {
+            // Không có Key → dùng Demo
+            services.AddSingleton<IPaymentGateway, MockPaymentGateway>();
+
+            System.Diagnostics.Debug.WriteLine(
+                "[SmartPS Payment] Không có PayOS Key → đang sử dụng DEMO/MOCK.");
+        }
+
+        services.AddSingleton<IPaymentService, PaymentService>();
+        services.AddSingleton<IShiftService, ShiftService>();
+        services.AddSingleton<PaymentWebhookServer>();
+
         // Đăng ký ViewModels
         services.AddTransient<LoginViewModel>();
         services.AddTransient<DashboardViewModel>();
@@ -68,6 +109,7 @@ public partial class App : Application
         services.AddTransient<SmartPS.ViewModels.Reports.ReportsViewModel>();
         services.AddTransient<SmartPS.ViewModels.Incidents.IncidentsViewModel>();
         services.AddTransient<SmartPS.ViewModels.Transactions.TransactionsViewModel>();
+        services.AddTransient<SmartPS.ViewModels.Shifts.ShiftsViewModel>();
         services.AddTransient<SmartPS.ViewModels.UserManagement.UserManagementViewModel>();
         services.AddTransient<SmartPS.ViewModels.Pricing.PricingViewModel>();
         services.AddTransient<SmartPS.ViewModels.Settings.SettingsViewModel>();
@@ -83,12 +125,13 @@ public partial class App : Application
         try
         {
             var dbContextFactory = ServiceProvider.GetRequiredService<IDbContextFactory<SmartPsDbContext>>();
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            await using var dbContext = await dbContextFactory.CreateDbContextAsync(cts.Token);
-            if (await dbContext.Database.CanConnectAsync(cts.Token))
+            using var connectCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            await using var dbContext = await dbContextFactory.CreateDbContextAsync(connectCts.Token);
+            if (await dbContext.Database.CanConnectAsync(connectCts.Token))
             {
+                using var initializeCts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+                await DbInitializer.InitializeAsync(dbContext, initializeCts.Token);
                 dbConnected = true;
-                await DbInitializer.InitializeAsync(dbContext);
             }
         }
         catch (Exception ex)
@@ -97,7 +140,18 @@ public partial class App : Application
             System.Diagnostics.Debug.WriteLine($"[SmartPS PostgreSQL Auto-DB Warning]: {ex.Message}");
         }
 
-        // 4. Khởi tạo và hiển thị màn hình Đăng nhập
+        // 4. Khởi động Webhook HTTP Server nền cho cổng thanh toán
+        try
+        {
+            var webhookServer = ServiceProvider.GetRequiredService<PaymentWebhookServer>();
+            _ = webhookServer.StartAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SmartPS Webhook Server Warning]: {ex.Message}");
+        }
+
+        // 5. Khởi tạo và hiển thị màn hình Đăng nhập
         var loginView = ServiceProvider.GetRequiredService<LoginView>();
         loginView.ViewModel.SetInitialDbStatus(dbConnected);
         loginView.Show();
@@ -105,6 +159,16 @@ public partial class App : Application
 
     protected override async void OnExit(ExitEventArgs e)
     {
+        try
+        {
+            var webhookServer = ServiceProvider?.GetService<PaymentWebhookServer>();
+            if (webhookServer != null)
+            {
+                await webhookServer.StopAsync();
+            }
+        }
+        catch { }
+
         try
         {
             var ocrService = ServiceProvider?.GetService<SmartPS.Services.OcrLisencePlate.IOcrLicensePlateService>();

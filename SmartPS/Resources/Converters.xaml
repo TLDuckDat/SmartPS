@@ -10,4 +10,6 @@
 
     <!-- Chuyển đổi đường dẫn ảnh sang BitmapImage không khóa file -->
     <conv:ImagePathToBitmapConverter x:Key="ImagePathConverter"/>
+    <!-- Chuyển đổi thời gian UTC sang giờ Việt Nam -->
+    <conv:UtcToVietnamTimeConverter x:Key="UtcToVietnamTimeConverter"/>
 </ResourceDictionary>

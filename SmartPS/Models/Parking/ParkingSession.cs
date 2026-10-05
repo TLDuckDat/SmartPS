@@ -1,4 +1,5 @@
 using SmartPS.Models.Auth;
+using SmartPS.Models.Payment;
 
 namespace SmartPS.Models.Parking;
 
@@ -31,6 +32,8 @@ public class ParkingSession
 
     public int? CreatedByUserId { get; set; }
     public User? CreatedByUser { get; set; }
+
+    public ICollection<SmartPS.Models.Payment.Payment> Payments { get; set; } = new List<SmartPS.Models.Payment.Payment>();
 
     /// <summary>
     /// Thời gian xe vào quy đổi theo múi giờ máy trạm địa phương phục vụ hiển thị chính xác

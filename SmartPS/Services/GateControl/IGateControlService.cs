@@ -15,4 +15,6 @@ public interface IGateControlService
     Task<List<ParkingSlot>> GetAllSlotsAsync(CancellationToken cancellationToken = default);
     Task<List<ParkingSession>> GetAllSessionsHistoryAsync(CancellationToken cancellationToken = default);
     Task<OverviewKpiData> GetOverviewKpiAsync(CancellationToken cancellationToken = default);
+    event EventHandler<ParkingSession>? SessionCompleted;
+    void NotifySessionCompleted(ParkingSession session);
 }
