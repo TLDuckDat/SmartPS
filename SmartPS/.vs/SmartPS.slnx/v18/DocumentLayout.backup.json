@@ -1,0 +1,69 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\NCPC\\Downloads\\New folder (2)\\SmartPS\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{24723190-B13E-E985-825D-EA3AA4811DEB}|SmartPS.csproj|c:\\users\\ncpc\\downloads\\new folder (2)\\smartps\\views\\transactions\\transactionsview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{24723190-B13E-E985-825D-EA3AA4811DEB}|SmartPS.csproj|solutionrelative:views\\transactions\\transactionsview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{24723190-B13E-E985-825D-EA3AA4811DEB}|SmartPS.csproj|c:\\users\\ncpc\\downloads\\new folder (2)\\smartps\\resources\\converters.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{24723190-B13E-E985-825D-EA3AA4811DEB}|SmartPS.csproj|solutionrelative:resources\\converters.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{24723190-B13E-E985-825D-EA3AA4811DEB}|SmartPS.csproj|c:\\users\\ncpc\\downloads\\new folder (2)\\smartps\\resources\\converters\\utctovietnamtimeconverter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{24723190-B13E-E985-825D-EA3AA4811DEB}|SmartPS.csproj|solutionrelative:resources\\converters\\utctovietnamtimeconverter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Converters.xaml",
+              "DocumentMoniker": "C:\\Users\\NCPC\\Downloads\\New folder (2)\\SmartPS\\Resources\\Converters.xaml",
+              "RelativeDocumentMoniker": "Resources\\Converters.xaml",
+              "ToolTip": "C:\\Users\\NCPC\\Downloads\\New folder (2)\\SmartPS\\Resources\\Converters.xaml",
+              "RelativeToolTip": "Resources\\Converters.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-09-30T12:55:30.937Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "TransactionsView.xaml",
+              "DocumentMoniker": "C:\\Users\\NCPC\\Downloads\\New folder (2)\\SmartPS\\Views\\Transactions\\TransactionsView.xaml",
+              "RelativeDocumentMoniker": "Views\\Transactions\\TransactionsView.xaml",
+              "ToolTip": "C:\\Users\\NCPC\\Downloads\\New folder (2)\\SmartPS\\Views\\Transactions\\TransactionsView.xaml",
+              "RelativeToolTip": "Views\\Transactions\\TransactionsView.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-09-30T12:56:19.842Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "UtcToVietnamTimeConverter.cs",
+              "DocumentMoniker": "C:\\Users\\NCPC\\Downloads\\New folder (2)\\SmartPS\\Resources\\Converters\\UtcToVietnamTimeConverter.cs",
+              "RelativeDocumentMoniker": "Resources\\Converters\\UtcToVietnamTimeConverter.cs",
+              "ToolTip": "C:\\Users\\NCPC\\Downloads\\New folder (2)\\SmartPS\\Resources\\Converters\\UtcToVietnamTimeConverter.cs",
+              "RelativeToolTip": "Resources\\Converters\\UtcToVietnamTimeConverter.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAA5AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-30T12:55:03.39Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
