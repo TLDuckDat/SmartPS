@@ -413,4 +413,26 @@
     <sys:String x:Key="Msg_Audit_LoadError">Không thể tải nhật ký hệ thống: {0}</sys:String>
     <sys:String x:Key="Msg_Audit_VerifyError">Không thể kiểm tra toàn vẹn nhật ký: {0}</sys:String>
 
+    <!-- GATE CONTROL: RESIDENT / VISITOR FLOW -->
+    <sys:String x:Key="Str_Gate_Badge_Visitor">Khách vãng lai</sys:String>
+    <sys:String x:Key="Str_Gate_Badge_Resident">🏠 CƯ DÂN: {0} · Căn {1} · Hạn đến {2}</sys:String>
+    <sys:String x:Key="Str_Gate_Badge_MonthlyPass">👑 VÉ THÁNG: {0} (Hiệu lực đến {1})</sys:String>
+    <sys:String x:Key="Str_Gate_Badge_Blacklisted">⛔ DANH SÁCH ĐEN: {0}</sys:String>
+    <sys:String x:Key="Str_Gate_Badge_CustomerLocked">khách bị khóa, tính như khách vãng lai</sys:String>
+    <sys:String x:Key="Str_Gate_Group_Resident">cư dân</sys:String>
+    <sys:String x:Key="Str_Gate_Group_Visitor">khách vãng lai</sys:String>
+    <sys:String x:Key="Str_Gate_Group_MonthlyPass">khách vé tháng</sys:String>
+    <sys:String x:Key="Msg_Gate_BlacklistBlocked">Biển số nằm trong danh sách đen: {0}. Barrier giữ nguyên đóng.</sys:String>
+    <sys:String x:Key="Msg_Gate_NoSlotFor">Hết chỗ cho {0}.</sys:String>
+    <sys:String x:Key="Msg_Gate_SlotNotFound">Không tìm thấy ô đỗ được chỉ định.</sys:String>
+    <sys:String x:Key="Msg_Gate_SlotVehicleTypeMismatch">Ô đỗ được chỉ định không dành cho loại xe này.</sys:String>
+    <sys:String x:Key="Msg_Gate_SlotAudienceNotAllowed">Ô đỗ được chỉ định thuộc khu không dành cho nhóm xe này.</sys:String>
+    <sys:String x:Key="Msg_Gate_SlotNotAvailable">Ô đỗ được chỉ định không còn trống.</sys:String>
+    <sys:String x:Key="Msg_Gate_TicketExpiredDuringStay">Vé tháng đã hết hạn lúc {0} trong thời gian gửi. Chỉ tính phí vãng lai cho phần sau khi hết hạn.</sys:String>
+    <sys:String x:Key="Msg_Gate_TicketNoLongerValid">Vé tháng không còn hiệu lực (tạm ngưng, đổi xe hoặc khách bị khóa). Tính phí vãng lai cho toàn bộ thời gian gửi.</sys:String>
+    <sys:String x:Key="Msg_Gate_BlacklistExitWarning">CẢNH BÁO: xe thuộc danh sách đen ({0}). Vẫn cho ra theo quy trình bình thường.</sys:String>
+    <sys:String x:Key="Msg_Gate_CheckInResident">Cư dân vào bãi thành công.</sys:String>
+    <sys:String x:Key="Msg_Gate_CheckInMonthly">Xe vé tháng vào bãi thành công.</sys:String>
+    <sys:String x:Key="Msg_Gate_CheckInVisitor">Xe vãng lai vào bãi thành công.</sys:String>
+
 </ResourceDictionary>

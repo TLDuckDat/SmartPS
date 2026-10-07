@@ -413,4 +413,26 @@
     <sys:String x:Key="Msg_Audit_LoadError">監査ログを読み込めませんでした: {0}</sys:String>
     <sys:String x:Key="Msg_Audit_VerifyError">監査ログの整合性を検証できませんでした: {0}</sys:String>
 
+    <!-- GATE CONTROL: RESIDENT / VISITOR FLOW -->
+    <sys:String x:Key="Str_Gate_Badge_Visitor">一般利用者</sys:String>
+    <sys:String x:Key="Str_Gate_Badge_Resident">🏠 居住者: {0} · {1}号室 · 有効期限 {2}</sys:String>
+    <sys:String x:Key="Str_Gate_Badge_MonthlyPass">👑 月極券: {0}（有効期限 {1}）</sys:String>
+    <sys:String x:Key="Str_Gate_Badge_Blacklisted">⛔ ブラックリスト: {0}</sys:String>
+    <sys:String x:Key="Str_Gate_Badge_CustomerLocked">顧客がロックされているため一般利用者として扱います</sys:String>
+    <sys:String x:Key="Str_Gate_Group_Resident">居住者</sys:String>
+    <sys:String x:Key="Str_Gate_Group_Visitor">一般利用者</sys:String>
+    <sys:String x:Key="Str_Gate_Group_MonthlyPass">月極券利用者</sys:String>
+    <sys:String x:Key="Msg_Gate_BlacklistBlocked">このナンバーはブラックリストに登録されています: {0}。ゲートは閉じたままです。</sys:String>
+    <sys:String x:Key="Msg_Gate_NoSlotFor">{0}向けの空きがありません。</sys:String>
+    <sys:String x:Key="Msg_Gate_SlotNotFound">指定された区画が見つかりません。</sys:String>
+    <sys:String x:Key="Msg_Gate_SlotVehicleTypeMismatch">指定された区画はこの車種に対応していません。</sys:String>
+    <sys:String x:Key="Msg_Gate_SlotAudienceNotAllowed">指定された区画のエリアはこの利用者区分では使用できません。</sys:String>
+    <sys:String x:Key="Msg_Gate_SlotNotAvailable">指定された区画は空いていません。</sys:String>
+    <sys:String x:Key="Msg_Gate_TicketExpiredDuringStay">駐車中の {0} に月極券の有効期限が切れました。期限後の時間のみ一般料金で請求します。</sys:String>
+    <sys:String x:Key="Msg_Gate_TicketNoLongerValid">月極券は無効です（停止、車両変更、または顧客ロック）。駐車時間全体を一般料金で請求します。</sys:String>
+    <sys:String x:Key="Msg_Gate_BlacklistExitWarning">警告: この車両はブラックリストに登録されています（{0}）。通常どおり出庫できます。</sys:String>
+    <sys:String x:Key="Msg_Gate_CheckInResident">居住者の入庫が完了しました。</sys:String>
+    <sys:String x:Key="Msg_Gate_CheckInMonthly">月極券車両の入庫が完了しました。</sys:String>
+    <sys:String x:Key="Msg_Gate_CheckInVisitor">一般車両の入庫が完了しました。</sys:String>
+
 </ResourceDictionary>

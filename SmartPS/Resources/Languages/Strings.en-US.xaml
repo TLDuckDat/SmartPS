@@ -413,4 +413,26 @@
     <sys:String x:Key="Msg_Audit_LoadError">Unable to load the audit log: {0}</sys:String>
     <sys:String x:Key="Msg_Audit_VerifyError">Unable to verify audit log integrity: {0}</sys:String>
 
+    <!-- GATE CONTROL: RESIDENT / VISITOR FLOW -->
+    <sys:String x:Key="Str_Gate_Badge_Visitor">Visitor</sys:String>
+    <sys:String x:Key="Str_Gate_Badge_Resident">🏠 RESIDENT: {0} · Apt {1} · Valid until {2}</sys:String>
+    <sys:String x:Key="Str_Gate_Badge_MonthlyPass">👑 MONTHLY PASS: {0} (valid until {1})</sys:String>
+    <sys:String x:Key="Str_Gate_Badge_Blacklisted">⛔ BLACKLISTED: {0}</sys:String>
+    <sys:String x:Key="Str_Gate_Badge_CustomerLocked">customer locked, treated as a visitor</sys:String>
+    <sys:String x:Key="Str_Gate_Group_Resident">residents</sys:String>
+    <sys:String x:Key="Str_Gate_Group_Visitor">visitors</sys:String>
+    <sys:String x:Key="Str_Gate_Group_MonthlyPass">monthly pass holders</sys:String>
+    <sys:String x:Key="Msg_Gate_BlacklistBlocked">This plate is blacklisted: {0}. The barrier stays closed.</sys:String>
+    <sys:String x:Key="Msg_Gate_NoSlotFor">No free slot for {0}.</sys:String>
+    <sys:String x:Key="Msg_Gate_SlotNotFound">The selected slot was not found.</sys:String>
+    <sys:String x:Key="Msg_Gate_SlotVehicleTypeMismatch">The selected slot is not for this vehicle type.</sys:String>
+    <sys:String x:Key="Msg_Gate_SlotAudienceNotAllowed">The selected slot is in a zone not allowed for this vehicle group.</sys:String>
+    <sys:String x:Key="Msg_Gate_SlotNotAvailable">The selected slot is no longer free.</sys:String>
+    <sys:String x:Key="Msg_Gate_TicketExpiredDuringStay">The monthly ticket expired at {0} during the stay. Only the time after expiry is charged at the visitor rate.</sys:String>
+    <sys:String x:Key="Msg_Gate_TicketNoLongerValid">The monthly ticket is no longer valid (suspended, vehicle changed or customer locked). The whole stay is charged at the visitor rate.</sys:String>
+    <sys:String x:Key="Msg_Gate_BlacklistExitWarning">WARNING: this vehicle is blacklisted ({0}). Exit continues as normal.</sys:String>
+    <sys:String x:Key="Msg_Gate_CheckInResident">Resident checked in successfully.</sys:String>
+    <sys:String x:Key="Msg_Gate_CheckInMonthly">Monthly pass vehicle checked in successfully.</sys:String>
+    <sys:String x:Key="Msg_Gate_CheckInVisitor">Visitor checked in successfully.</sys:String>
+
 </ResourceDictionary>
