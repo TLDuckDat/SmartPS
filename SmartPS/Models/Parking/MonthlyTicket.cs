@@ -25,5 +25,8 @@ public class MonthlyTicket
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public bool IsCurrentlyValid => Status == MonthlyTicketStatus.Active && DateTime.UtcNow >= StartDate && DateTime.UtcNow <= EndDate;
+    public ICollection<MonthlyTicketPurchase> Purchases { get; set; } = new List<MonthlyTicketPurchase>();
+
+    // Hiệu lực theo khoảng nửa mở [StartDate, EndDate)
+    public bool IsCurrentlyValid => Status == MonthlyTicketStatus.Active && DateTime.UtcNow >= StartDate && DateTime.UtcNow < EndDate;
 }

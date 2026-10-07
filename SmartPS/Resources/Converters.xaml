@@ -12,4 +12,8 @@
     <conv:ImagePathToBitmapConverter x:Key="ImagePathConverter"/>
     <!-- Chuyển đổi thời gian UTC sang giờ Việt Nam -->
     <conv:UtcToVietnamTimeConverter x:Key="UtcToVietnamTimeConverter"/>
+    <!-- Báo cáo & BI: định dạng tiền VND, ngày VN, ẩn/hiện lớp phủ rỗng -->
+    <conv:VndCurrencyConverter x:Key="VndCurrencyConverter"/>
+    <conv:DateOnlyVnConverter x:Key="DateOnlyVnConverter"/>
+    <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
 </ResourceDictionary>

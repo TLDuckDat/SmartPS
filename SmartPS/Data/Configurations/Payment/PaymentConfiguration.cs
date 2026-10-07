@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SmartPS.Models.Payment;
+using SmartPS.Models.Shifts;
+using SmartPS.Models.Auth;
 
 namespace SmartPS.Data.Configurations.Payment;
 
@@ -32,6 +34,10 @@ public static class PaymentConfiguration
             .HasDatabaseName("IX_Payments_SessionId_Active");
         b.HasOne(x => x.Session).WithMany(s => s.Payments)
             .HasForeignKey(x => x.SessionId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<Shift>().WithMany().HasForeignKey(x => x.ShiftId)
+            .OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<User>().WithMany().HasForeignKey(x => x.CheckoutUserId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 
     private static void ConfigureTransaction(EntityTypeBuilder<PaymentTransaction> b)

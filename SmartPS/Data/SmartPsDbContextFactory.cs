@@ -14,6 +14,8 @@ public class SmartPsDbContextFactory : IDesignTimeDbContextFactory<SmartPsDbCont
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: true)
+            .AddJsonFile("appsettings.local.json", optional: true)
+            .AddEnvironmentVariables("SMARTPS_")
             .Build();
 
         var connectionString = configuration.GetConnectionString("DefaultConnection")

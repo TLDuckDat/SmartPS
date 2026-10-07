@@ -1,23 +1,24 @@
 using Microsoft.EntityFrameworkCore;
+using System.IO;
 
 namespace SmartPS.Data;
 
 /// <summary>
-/// Khởi tạo cơ sở dữ liệu Code First: Tự động kiểm tra và áp dụng toàn bộ Migrations
+/// Áp dụng migrations rồi nạp dữ liệu mặc định bằng script seed có thể chạy lại.
 /// </summary>
 public static class DbInitializer
 {
-    public static async Task InitializeAsync(SmartPsDbContext context)
+    public static async Task InitializeAsync(SmartPsDbContext context, CancellationToken cancellationToken = default)
     {
-        try
-        {
-            // 1. Tự động áp dụng Migration và tạo Database nếu chưa tồn tại
-            await context.Database.MigrateAsync();
-        }
-        catch (Exception ex)
-        {
-            // Bắt lỗi nếu bảng hoặc đối tượng đã tồn tại sẵn, ghi nhận log nhưng không cản trở ứng dụng
-            System.Diagnostics.Debug.WriteLine($"[SmartPS DbInitializer Warning]: {ex.Message}");
-        }
+        ArgumentNullException.ThrowIfNull(context);
+
+        await context.Database.MigrateAsync(cancellationToken);
+
+        var seedPath = Path.Combine(AppContext.BaseDirectory, "seed_data.sql");
+        if (!File.Exists(seedPath))
+            throw new FileNotFoundException("Không tìm thấy seed_data.sql để khởi tạo dữ liệu mặc định.", seedPath);
+
+        var seedSql = await File.ReadAllTextAsync(seedPath, cancellationToken);
+        await context.Database.ExecuteSqlRawAsync(seedSql, cancellationToken);
     }
 }

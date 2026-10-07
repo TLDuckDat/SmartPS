@@ -14,7 +14,11 @@ public class Customer
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public bool IsActive { get; set; } = true;
     public string? Notes { get; set; }
+    public bool IsResident { get; set; } // Cư dân toà nhà
+    public string? ApartmentCode { get; set; } // Mã căn hộ, ví dụ A-1205
+    public string? Building { get; set; }
 
     public ICollection<MonthlyTicket> MonthlyTickets { get; set; } = new List<MonthlyTicket>();
     public ICollection<ParkingSession> ParkingSessions { get; set; } = new List<ParkingSession>();
+    public ICollection<CustomerVehicle> Vehicles { get; set; } = new List<CustomerVehicle>();
 }

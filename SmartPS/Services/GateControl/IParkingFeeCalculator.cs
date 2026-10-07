@@ -13,6 +13,11 @@ public class ParkingFeeCalculationResult
     public decimal TotalFee { get; set; }
     public bool IsMonthlyTicket { get; set; }
     public string Message { get; set; } = string.Empty;
+
+    // Chi tiết phần vé tháng (R15): lý do tính phí, thời điểm bắt đầu tính phí vãng lai và thời điểm vé hết hiệu lực
+    public MonthlyChargeReason ChargeReason { get; set; }
+    public DateTime? ChargeFromUtc { get; set; }
+    public DateTime? TicketValidUntilUtc { get; set; }
 }
 
 /// <summary>
@@ -23,5 +28,9 @@ public class ParkingFeeCalculationResult
 /// </summary>
 public interface IParkingFeeCalculator
 {
+    /// <summary>Tương đương gọi với coverage = null (không tra cứu được vé tháng): xe vé tháng được miễn phí.</summary>
     ParkingFeeCalculationResult CalculateFee(ParkingSession session, PricingRule? pricingRule, DateTime checkOutTime);
+
+    /// <summary>Xe vé tháng chỉ miễn phí trong phần thời gian được vé bao phủ; phần sau khi hết hạn tính theo giá vãng lai.</summary>
+    ParkingFeeCalculationResult CalculateFee(ParkingSession session, PricingRule? pricingRule, DateTime checkOutTime, MonthlyCoverage? coverage);
 }

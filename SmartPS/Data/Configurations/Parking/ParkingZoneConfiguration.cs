@@ -26,6 +26,9 @@ public class ParkingZoneConfiguration : IEntityTypeConfiguration<ParkingZone>
         builder.Property(x => x.TotalCapacity)
                .HasDefaultValue(0);
 
+        builder.Property(x => x.Audience)
+               .HasDefaultValue(ZoneAudience.Mixed);
+
         builder.HasIndex(x => x.ZoneCode)
                .IsUnique();
 

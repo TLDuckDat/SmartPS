@@ -25,6 +25,29 @@ public static class Permissions
     public const string ReportView = "Report.View";
     public const string ReportExport = "Report.Export";
 
+    public const string ShiftView = "Shift.View";
+    public const string ShiftOpen = "Shift.Open";
+    public const string ShiftClose = "Shift.Close";
+    public const string ShiftReview = "Shift.Review";
+    public const string ShiftAdjust = "Shift.Adjust";
+
+    // Hoàn tiền, nhật ký hệ thống, cài đặt, sự cố
+    public const string PaymentRefund = "Payment.Refund";
+    public const string AuditView = "Audit.View";
+    public const string AuditVerify = "Audit.Verify";
+    public const string SettingsManage = "Settings.Manage";
+    public const string IncidentManage = "Incident.Manage";
+
+    // Khách hàng, vé tháng & danh sách đen
+    public const string CustomerView = "Customer.View";
+    public const string CustomerManage = "Customer.Manage";
+    public const string BlacklistManage = "Blacklist.Manage";
+
+    public static readonly IReadOnlyList<string> ModuleOrder = new[]
+    {
+        "User", "Role", "Parking", "Pricing", "Report", "Shift", "Payment", "Audit", "Settings", "Incident", "Customer", "Blacklist"
+    };
+
     public static IReadOnlyList<string> GetAll()
     {
         return typeof(Permissions)
@@ -32,5 +55,16 @@ public static class Permissions
             .Where(fi => fi.IsLiteral && !fi.IsInitOnly && fi.FieldType == typeof(string))
             .Select(fi => (string)fi.GetValue(null)!)
             .ToList();
+    }
+
+    public static string GetModule(string permissionName)
+    {
+        var dot = permissionName?.IndexOf('.') ?? -1;
+        if (dot <= 0)
+        {
+            throw new ArgumentException("Permission name must have the form 'Module.Action'.", nameof(permissionName));
+        }
+
+        return permissionName![..dot];
     }
 }

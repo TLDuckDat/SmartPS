@@ -9,7 +9,10 @@ public enum NavigationItemType
     Reports,
     Incidents,
     Transactions,
+    Shifts,
     UserManagement,
     Pricing,
-    Settings
+    Settings,
+    RolePermissions,
+    AuditLog
 }
