@@ -36,7 +36,10 @@ INSERT INTO "Permissions" ("PermissionName", "Description") VALUES
 ('Audit.Verify', 'Kiểm tra toàn vẹn nhật ký'),
 ('Payment.Refund', 'Hoàn tiền / huỷ thanh toán'),
 ('Settings.Manage', 'Quản lý cài đặt hệ thống'),
-('Incident.Manage', 'Xử lý sự cố')
+('Incident.Manage', 'Xử lý sự cố'),
+('Customer.View', 'Xem khách hàng, vé tháng và danh sách đen'),
+('Customer.Manage', 'Quản lý khách hàng, phương tiện và vé tháng'),
+('Blacklist.Manage', 'Quản lý danh sách đen biển số')
 ON CONFLICT ("PermissionName") DO NOTHING;
 
 -- -----------------------------------------------------------------------------------
@@ -56,7 +59,7 @@ op AS (
     SELECT nr."RoleId", p."PermissionId"
     FROM new_roles nr
     JOIN "Permissions" p
-      ON p."PermissionName" IN ('Parking.View', 'Parking.CheckIn', 'Parking.CheckOut', 'Report.View', 'Shift.View', 'Shift.Open', 'Shift.Close')
+      ON p."PermissionName" IN ('Parking.View', 'Parking.CheckIn', 'Parking.CheckOut', 'Report.View', 'Shift.View', 'Shift.Open', 'Shift.Close', 'Customer.View')
     WHERE nr."RoleName" = 'Operator'
     ON CONFLICT DO NOTHING
     RETURNING 1)
@@ -65,7 +68,8 @@ SELECT nr."RoleId", p."PermissionId"
 FROM new_roles nr
 JOIN "Permissions" p
   ON (p."PermissionName" IN ('Report.View', 'Report.Export', 'Pricing.Manage', 'Parking.View', 'Parking.CheckIn', 'Parking.CheckOut',
-                             'Parking.Configure', 'Payment.Refund', 'User.View', 'Role.View', 'Audit.View', 'Incident.Manage')
+                             'Parking.Configure', 'Payment.Refund', 'User.View', 'Role.View', 'Audit.View', 'Incident.Manage',
+                             'Customer.View', 'Customer.Manage', 'Blacklist.Manage')
       OR p."PermissionName" LIKE 'Shift.%')
 WHERE nr."RoleName" = 'Manager'
 ON CONFLICT DO NOTHING;

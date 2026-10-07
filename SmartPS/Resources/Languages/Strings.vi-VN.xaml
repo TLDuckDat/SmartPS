@@ -348,6 +348,8 @@
     <sys:String x:Key="Str_Perm_Module_Audit">Nhật ký hệ thống</sys:String>
     <sys:String x:Key="Str_Perm_Module_Settings">Cài đặt</sys:String>
     <sys:String x:Key="Str_Perm_Module_Incident">Sự cố</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Customer">Khách hàng</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Blacklist">Danh sách đen</sys:String>
 
     <!-- PERMISSION NAMES -->
     <sys:String x:Key="Str_Perm_User_View">Xem người dùng</sys:String>
@@ -373,6 +375,9 @@
     <sys:String x:Key="Str_Perm_Audit_Verify">Kiểm tra toàn vẹn nhật ký</sys:String>
     <sys:String x:Key="Str_Perm_Settings_Manage">Quản lý cài đặt hệ thống</sys:String>
     <sys:String x:Key="Str_Perm_Incident_Manage">Xử lý sự cố</sys:String>
+    <sys:String x:Key="Str_Perm_Customer_View">Xem khách hàng, vé tháng và danh sách đen</sys:String>
+    <sys:String x:Key="Str_Perm_Customer_Manage">Quản lý khách hàng, phương tiện và vé tháng</sys:String>
+    <sys:String x:Key="Str_Perm_Blacklist_Manage">Quản lý danh sách đen biển số</sys:String>
 
     <!-- AUDIT LOG SCREEN -->
     <sys:String x:Key="Str_Audit_Title">Nhật ký hệ thống</sys:String>

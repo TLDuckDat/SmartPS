@@ -348,6 +348,8 @@
     <sys:String x:Key="Str_Perm_Module_Audit">監査ログ</sys:String>
     <sys:String x:Key="Str_Perm_Module_Settings">設定</sys:String>
     <sys:String x:Key="Str_Perm_Module_Incident">インシデント</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Customer">顧客</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Blacklist">ブラックリスト</sys:String>
 
     <!-- PERMISSION NAMES -->
     <sys:String x:Key="Str_Perm_User_View">ユーザーの閲覧</sys:String>
@@ -373,6 +375,9 @@
     <sys:String x:Key="Str_Perm_Audit_Verify">監査ログの整合性検証</sys:String>
     <sys:String x:Key="Str_Perm_Settings_Manage">システム設定の管理</sys:String>
     <sys:String x:Key="Str_Perm_Incident_Manage">インシデントの処理</sys:String>
+    <sys:String x:Key="Str_Perm_Customer_View">顧客・月極券・ブラックリストの閲覧</sys:String>
+    <sys:String x:Key="Str_Perm_Customer_Manage">顧客・車両・月極券の管理</sys:String>
+    <sys:String x:Key="Str_Perm_Blacklist_Manage">ナンバープレートのブラックリスト管理</sys:String>
 
     <!-- AUDIT LOG SCREEN -->
     <sys:String x:Key="Str_Audit_Title">システム監査ログ</sys:String>

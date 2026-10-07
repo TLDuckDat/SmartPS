@@ -348,6 +348,8 @@
     <sys:String x:Key="Str_Perm_Module_Audit">Audit log</sys:String>
     <sys:String x:Key="Str_Perm_Module_Settings">Settings</sys:String>
     <sys:String x:Key="Str_Perm_Module_Incident">Incidents</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Customer">Customers</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Blacklist">Blacklist</sys:String>
 
     <!-- PERMISSION NAMES -->
     <sys:String x:Key="Str_Perm_User_View">View users</sys:String>
@@ -373,6 +375,9 @@
     <sys:String x:Key="Str_Perm_Audit_Verify">Verify audit log integrity</sys:String>
     <sys:String x:Key="Str_Perm_Settings_Manage">Manage system settings</sys:String>
     <sys:String x:Key="Str_Perm_Incident_Manage">Handle incidents</sys:String>
+    <sys:String x:Key="Str_Perm_Customer_View">View customers, monthly tickets and blacklist</sys:String>
+    <sys:String x:Key="Str_Perm_Customer_Manage">Manage customers, vehicles and monthly tickets</sys:String>
+    <sys:String x:Key="Str_Perm_Blacklist_Manage">Manage plate blacklist</sys:String>
 
     <!-- AUDIT LOG SCREEN -->
     <sys:String x:Key="Str_Audit_Title">Audit Log</sys:String>
