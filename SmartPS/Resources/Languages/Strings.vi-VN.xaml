@@ -312,5 +312,12 @@
     <sys:String x:Key="Str_Shifts_TypeParkingFee">Phí gửi xe</sys:String>
     <sys:String x:Key="Str_Shifts_TypeRefund">Hoàn tiền</sys:String>
 
-</ResourceDictionary>
+    <!-- AUTHORIZATION & USER PROTECTION -->
+    <sys:String x:Key="Msg_Auth_PermissionDenied">Bạn không có quyền thực hiện thao tác này.</sys:String>
+    <sys:String x:Key="Msg_User_LastAdminProtected">Không thể hạ quyền, khóa hoặc xóa tài khoản Quản trị viên (Admin) đang hoạt động cuối cùng.</sys:String>
+    <sys:String x:Key="Msg_User_CannotLockSelf">Bạn không thể tự khóa tài khoản đang đăng nhập.</sys:String>
+    <sys:String x:Key="Msg_User_CannotChangeOwnRole">Bạn không thể tự thay đổi vai trò của tài khoản đang đăng nhập.</sys:String>
+    <sys:String x:Key="Msg_User_AdminRoleRequiresAdmin">Chỉ Quản trị viên (Admin) mới được gán, gỡ hoặc xóa tài khoản mang vai trò Admin.</sys:String>
+    <sys:String x:Key="Msg_DeleteUser_HasHistory">Không thể xóa tài khoản đã có lịch sử hoạt động (ca trực, giao dịch...). Hãy khóa tài khoản thay vì xóa.</sys:String>
 
+</ResourceDictionary>

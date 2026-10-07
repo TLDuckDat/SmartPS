@@ -312,4 +312,12 @@
     <sys:String x:Key="Str_Shifts_TypeParkingFee">Parking fee</sys:String>
     <sys:String x:Key="Str_Shifts_TypeRefund">Refund</sys:String>
 
+    <!-- AUTHORIZATION & USER PROTECTION -->
+    <sys:String x:Key="Msg_Auth_PermissionDenied">You do not have permission to perform this action.</sys:String>
+    <sys:String x:Key="Msg_User_LastAdminProtected">The last active Administrator account cannot be demoted, locked or deleted.</sys:String>
+    <sys:String x:Key="Msg_User_CannotLockSelf">You cannot lock the account that is currently signed in.</sys:String>
+    <sys:String x:Key="Msg_User_CannotChangeOwnRole">You cannot change the role of the account that is currently signed in.</sys:String>
+    <sys:String x:Key="Msg_User_AdminRoleRequiresAdmin">Only an Administrator can assign, remove or delete the Administrator role.</sys:String>
+    <sys:String x:Key="Msg_DeleteUser_HasHistory">This account has activity history (shifts, transactions...) and cannot be deleted. Lock the account instead.</sys:String>
+
 </ResourceDictionary>

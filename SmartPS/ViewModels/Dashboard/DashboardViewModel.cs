@@ -66,7 +66,7 @@ public class DashboardViewModel : ViewModelBase
     // Commands
     public RelayCommand<NavigationMenuItem> NavigateCommand { get; }
     public RelayCommand<string> SetLanguageCommand { get; }
-    public RelayCommand LogoutCommand { get; }
+    public AsyncRelayCommand LogoutCommand { get; }
     public AsyncRelayCommand RefreshCommand { get; }
 
     public event Action? LogoutRequested;
@@ -112,9 +112,9 @@ public class DashboardViewModel : ViewModelBase
             }
         });
 
-        LogoutCommand = new RelayCommand(() =>
+        LogoutCommand = new AsyncRelayCommand(async () =>
         {
-            _authService.Logout();
+            await _authService.LogoutAsync();
             LogoutRequested?.Invoke();
         });
 
