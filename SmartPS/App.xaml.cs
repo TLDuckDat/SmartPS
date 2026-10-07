@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SmartPS.Data;
 using SmartPS.Services.Auth;
 using SmartPS.Services.Authorization;
+using SmartPS.Services.Customers;
 using SmartPS.Services.Dialog;
 using SmartPS.Services.Localization;
 using SmartPS.Services.Payment;
@@ -103,6 +104,9 @@ public partial class App : Application
 
         services.AddSingleton<IPaymentService, PaymentService>();
         services.AddSingleton<IShiftService, ShiftService>();
+        services.AddSingleton<ICustomerService, CustomerService>();
+        services.AddSingleton<IMonthlyTicketService, MonthlyTicketService>();
+        services.AddSingleton<IBlacklistService, BlacklistService>();
         services.AddSingleton<PaymentWebhookServer>();
 
         // Đăng ký ViewModels
