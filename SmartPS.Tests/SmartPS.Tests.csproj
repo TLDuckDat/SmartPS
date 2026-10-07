@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <OutputType>Exe</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!--
+      xunit.v3 4.x defaults to Microsoft.Testing.Platform, which the .NET 10 SDK only runs under the new
+      "dotnet test" mode (global.json opt-in). Run through VSTest + xunit.runner.visualstudio instead so that
+      the VSTest-style trait filter from the plan (Category!=Integration) keeps working with dotnet test.
+    -->
+    <IsTestingPlatformApplication>false</IsTestingPlatformApplication>
+    <RootNamespace>SmartPS.Tests</RootNamespace>
+    <!-- Tests pass explicit tokens where it matters; the analyzer would otherwise flag every async call. -->
+    <NoWarn>$(NoWarn);xUnit1051</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageReference Include="xunit.v3" Version="4.0.1" />
+    <!--
+      The app gets EF Core 10.0.11 through Microsoft.EntityFrameworkCore.Tools (PrivateAssets=all), which does not flow
+      to referencing projects; without this pin the test project resolves EF Core 10.0.4 from Npgsql and fails with CS1705.
+    -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.11" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SmartPS\SmartPS.csproj" />
+  </ItemGroup>
+
+</Project>
