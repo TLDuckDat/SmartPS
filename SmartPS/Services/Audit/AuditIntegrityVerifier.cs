@@ -27,13 +27,26 @@ public sealed class AuditIntegrityVerifier : IAuditIntegrityVerifier
         await _guard.DemandAsync(Permissions.AuditVerify, "AuditLog", null, cancellationToken);
 
         AuditVerificationResult result;
-        await using (var db = await _contextFactory.CreateDbContextAsync(cancellationToken))
+        try
         {
+            await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken);
             var entries = db.AuditLogs
                 .AsNoTracking()
                 .OrderBy(a => a.AuditLogId)
                 .AsAsyncEnumerable();
             result = await AuditChainVerifier.VerifyAsync(entries, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            // Vẫn ghi lại việc kiểm tra thất bại rồi báo lỗi cho người gọi
+            await _audit.LogAsync(new AuditEntry(
+                AuditActions.AuditVerify, AuditOutcome.Failed, "AuditLog", null,
+                new { IsValid = false, Error = ex.GetType().Name }), CancellationToken.None);
+            throw;
         }
 
         // Ghi lại chính thao tác kiểm tra sau khi đã đọc xong (không nằm trong phạm vi chuỗi vừa kiểm tra)
