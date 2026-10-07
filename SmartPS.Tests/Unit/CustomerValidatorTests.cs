@@ -134,4 +134,12 @@ public class CustomerValidatorTests
         Assert.Equal("^0[35789][0-9]{8}$", CustomerValidator.PhonePattern);
         Assert.Equal("^[A-Z0-9]{1,6}(-[A-Z0-9]{1,6}){0,2}$", CustomerValidator.ApartmentPattern);
     }
+    [Fact]
+    public void G3_full_width_or_cyrillic_vehicle_plates_are_invalid()
+    {
+        Assert.Contains(CustomerValidationError.PlateInvalid,
+            CustomerValidator.Validate(Valid() with { Vehicles = new[] { new NewVehicle("５１Ｆ１２３４５", 1) } }));
+        Assert.Contains(CustomerValidationError.PlateInvalid,
+            CustomerValidator.Validate(Valid() with { Vehicles = new[] { new NewVehicle("51F-12З.45", 1) } }));
+    }
 }

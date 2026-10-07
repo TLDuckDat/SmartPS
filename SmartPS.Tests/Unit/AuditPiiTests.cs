@@ -19,4 +19,40 @@ public class AuditPiiTests
     {
         Assert.Equal(expected, AuditPii.MaskPhone(input));
     }
+    // ---- Fix round 1, G8 (CH1-07, review F3): digit runs with separators are masked in free text --------------------
+
+    [Theory]
+    [InlineData("Nguyen Van A 0988 123 456", "0988 123 456")]
+    [InlineData("SĐT 0988.123.456 gọi trước", "0988.123.456")]
+    [InlineData("SĐT 0988-123-456", "0988-123-456")]
+    [InlineData("CCCD 079123456789 nợ phí", "079123456789")]
+    [InlineData("CMND 0791 2345 6789", "0791 2345 6789")]
+    [InlineData("liên hệ 0905123456", "0905123456")]
+    public void G8_MaskPhoneNumbersInText_masks_separated_digit_runs(string text, string secret)
+    {
+        var masked = AuditPii.MaskPhoneNumbersInText(text);
+
+        Assert.DoesNotContain(secret, masked, StringComparison.Ordinal);
+        Assert.DoesNotMatch(@"(?:\d[\s.\-]?){9,}", masked);
+        Assert.Contains("*", masked, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("Nợ phí 3 lần")]
+    [InlineData("Căn A-1205, tầng 12")]
+    [InlineData("Biển 51F-123.45")]   // 7 digits: not a phone
+    [InlineData("")]
+    public void G8_MaskPhoneNumbersInText_keeps_short_numbers(string text)
+    {
+        Assert.Equal(text, AuditPii.MaskPhoneNumbersInText(text));
+    }
+
+    [Fact]
+    public void G8_MaskPhoneNumbersInText_keeps_the_surrounding_words()
+    {
+        var masked = AuditPii.MaskPhoneNumbersInText("Chủ xe Trần B, SĐT 0905 123 456, nợ phí");
+
+        Assert.StartsWith("Chủ xe Trần B, SĐT ", masked, StringComparison.Ordinal);
+        Assert.EndsWith(", nợ phí", masked, StringComparison.Ordinal);
+    }
 }

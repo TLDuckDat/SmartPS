@@ -19,15 +19,19 @@ public sealed class CommandHookInterceptor : DbCommandInterceptor
     private readonly int _occurrence;
     private readonly Func<Task>? _before;
     private readonly bool _throwInstead;
+    private readonly Func<Exception>? _exceptionFactory;
     private int _seen;
     private int _fired;
 
-    public CommandHookInterceptor(string match, int occurrence = 1, Func<Task>? before = null, bool throwInstead = false)
+    /// <param name="exceptionFactory">With <paramref name="throwInstead"/>: the exception to throw instead of the default
+    /// connection-style <see cref="NpgsqlException"/> (e.g. a non-connection failure for fail-closed tests).</param>
+    public CommandHookInterceptor(string match, int occurrence = 1, Func<Task>? before = null, bool throwInstead = false, Func<Exception>? exceptionFactory = null)
     {
         _match = match;
         _occurrence = occurrence;
         _before = before;
         _throwInstead = throwInstead;
+        _exceptionFactory = exceptionFactory;
     }
 
     /// <summary>Number of times the hook fired (0 or 1).</summary>
@@ -53,6 +57,11 @@ public sealed class CommandHookInterceptor : DbCommandInterceptor
         if (_before is not null)
         {
             await _before();
+        }
+
+        if (_throwInstead && _exceptionFactory is not null)
+        {
+            throw _exceptionFactory();
         }
 
         if (_throwInstead)

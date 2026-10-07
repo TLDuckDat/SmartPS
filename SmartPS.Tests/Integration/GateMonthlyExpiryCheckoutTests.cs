@@ -206,14 +206,36 @@ public class GateMonthlyExpiryCheckoutTests : IClassFixture<PostgresDatabaseFixt
     }
 
     [Fact]
-    public async Task M2_vehicle_moved_to_another_customer_during_the_stay_charges_the_whole_stay()
+    public async Task G4_vehicle_moved_to_another_customer_after_check_in_keeps_the_coverage_of_the_owner_at_check_in()
     {
+        // Fix round 1, G4: coverage comes from tickets whose customer owned the plate (active CustomerVehicle) AT CHECK-IN
+        // time, so a reassignment after check-in (only possible through data drift: A8 blocks removing a vehicle with an
+        // active ticket) does not change the fee. Suspension / customer lock during the stay still charge the whole stay (A7).
         _db.RequireAvailable();
         var s = await CheckedInSubscriberAsync();
         using var spScope = s.Sp;
         await _data.DeactivateVehicleAsync(s.Subscriber.CustomerVehicleId);
         var other = await _data.CreateCustomerAsync(isResident: false);
-        await _data.AddVehicleAsync(other, s.Subscriber.Plate, s.VehicleTypeId);
+        await _data.AddVehicleAsync(other, s.Subscriber.Plate, s.VehicleTypeId, createdAtUtc: DateTime.UtcNow);
+
+        var calc = await s.Sp.GetRequiredService<IGateControlService>().CalculateCheckOutAsync(s.Subscriber.Plate);
+
+        Assert.True(calc.Success, calc.Message);
+        Assert.Equal(0m, calc.TotalFee);
+        Assert.True(calc.IsMonthlyTicket);
+        Assert.False(calc.TicketNoLongerValid);
+    }
+
+    [Fact]
+    public async Task G4_vehicle_added_to_the_ticket_owner_only_after_check_in_gives_no_coverage()
+    {
+        // The owner-at-check-in rule also works the other way round: a vehicle row created after check-in does not
+        // retroactively cover the stay (the session was a monthly pass at check-in through the earlier vehicle row).
+        _db.RequireAvailable();
+        var s = await CheckedInSubscriberAsync();
+        using var spScope = s.Sp;
+        await _db.ExecuteAsync("UPDATE \"CustomerVehicles\" SET \"CreatedAt\" = now() WHERE \"CustomerVehicleId\" = @id",
+            ("id", s.Subscriber.CustomerVehicleId));
 
         var calc = await s.Sp.GetRequiredService<IGateControlService>().CalculateCheckOutAsync(s.Subscriber.Plate);
 

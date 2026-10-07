@@ -46,4 +46,25 @@ public class LicensePlateNormalizerTests
     {
         Assert.Equal(expected, LicensePlateNormalizer.IsValid(input));
     }
+    // ---- Fix round 1, G3 (CH1-02): non-ASCII letters/digits make a plate invalid instead of silently disappearing ------
+
+    [Theory]
+    [InlineData("１２３４５")]          // full-width digits
+    [InlineData("５１Ｆ１２３４５")]
+    [InlineData("RВ3A9F1C2")]          // Cyrillic VE
+    [InlineData("51F-12З.45")]         // Cyrillic ZE
+    [InlineData("51F12345é")]
+    public void G3_non_ascii_letters_or_digits_are_invalid(string plate)
+    {
+        Assert.False(LicensePlateNormalizer.IsValid(plate));
+    }
+
+    [Theory]
+    [InlineData("51F\u200B12345")]    // zero-width space is a separator
+    [InlineData("51F\u00A0123\t45")]  // NBSP and tab are separators
+    public void G3_invisible_separators_are_ignored(string plate)
+    {
+        Assert.True(LicensePlateNormalizer.IsValid(plate));
+        Assert.Equal("51F12345", LicensePlateNormalizer.Normalize(plate));
+    }
 }
