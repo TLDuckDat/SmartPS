@@ -38,6 +38,7 @@ public class AuditEventsCatalogTests : IClassFixture<PostgresDatabaseFixture>
         [AuditActions.ShiftReview] = new(AuditOutcome.Success, "Shift", new[] { "note" }),
         [AuditActions.ShiftAdjustment] = new(AuditOutcome.Success, "FinancialTransaction", new[] { "shiftId", "type", "paymentMethod", "amount", "transactionCode" }),
         [AuditActions.AuditVerify] = new(AuditOutcome.Success, null, Array.Empty<string>()),
+        [AuditActions.ReportExport] = new(AuditOutcome.Success, "Report", new[] { "from", "to", "customerGroup", "rowCounts", "fileName" }),
     };
 
     private readonly PostgresDatabaseFixture _db;
@@ -65,7 +66,7 @@ public class AuditEventsCatalogTests : IClassFixture<PostgresDatabaseFixture>
         Assert.Equal(
             AuditActions.All.Except(ResidentVisitorAuditActions.All).OrderBy(a => a, StringComparer.Ordinal),
             Catalogue.Keys.OrderBy(a => a, StringComparer.Ordinal));
-        Assert.Equal(17, Catalogue.Count);
+        Assert.Equal(18, Catalogue.Count);
     }
 
     [Theory]
@@ -298,6 +299,18 @@ public class AuditEventsCatalogTests : IClassFixture<PostgresDatabaseFixture>
                 var id = await Mark();
                 Assert.True((await sp.GetRequiredService<IAuditIntegrityVerifier>().VerifyAsync()).IsValid);
                 return (id, Array.Empty<string>());
+            }
+
+            case AuditActions.ReportExport:
+            {
+                await sp.LoginAdminAsync();
+                var tempDir = Directory.CreateTempSubdirectory("smartps-catalog-").FullName;
+                var range = ReportPeriodCalculator.Resolve(ReportPeriodPreset.Last7Days, ReportPeriodCalculator.TodayVn(DateTime.UtcNow));
+                var id = await Mark();
+                var export = await sp.GetRequiredService<IReportExportService>().ExportAsync(
+                    new ReportFilter(range, Preset: ReportPeriodPreset.Last7Days), Path.Combine(tempDir, "catalog.xlsx"));
+                Assert.Equal(ReportExportStatus.Success, export.Status);
+                return (id, new[] { tempDir });
             }
 
             default:

@@ -17,6 +17,9 @@ public sealed class FakeAuditService : IAuditService
 
     public bool LogResult { get; set; } = true;
 
+    /// <summary>Called for every LogAsync entry before it is recorded (lets a test inspect state at audit time).</summary>
+    public Action<AuditEntry>? OnLog { get; set; }
+
     public Task<AuditedTransaction> BeginAuditedTransactionAsync(
         SmartPsDbContext db,
         IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
@@ -29,6 +32,7 @@ public sealed class FakeAuditService : IAuditService
     public Task<bool> LogAsync(AuditEntry entry, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entry);
+        OnLog?.Invoke(entry);
         _entries.Enqueue(entry);
         return Task.FromResult(LogResult);
     }

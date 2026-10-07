@@ -46,6 +46,9 @@ public class LocalizationKeyParityTests
         keys.AddRange(new[] { "Details", "PrevPage", "NextPage", "PageInfo", "Verify" }.Select(s => $"Str_Audit_{s}"));
         keys.AddRange(new[] { "Success", "Denied", "Failed" }.Select(s => $"Str_Audit_Outcome_{s}"));
         keys.AddRange(new[] { "VerifyOk", "VerifyBroken", "LoadError", "VerifyError" }.Select(s => $"Msg_Audit_{s}"));
+
+        // Reporting & BI (plan §3.3)
+        keys.AddRange(ReportTextKeys.All);
         return keys;
     }
 
