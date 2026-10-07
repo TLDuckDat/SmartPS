@@ -231,7 +231,7 @@ public class GateControlService : IGateControlService
 
     private async Task<List<VehicleType>> GetVehicleTypesAsync(CancellationToken cancellationToken, DbProbe? probe)
     {
-        if (_dbContextFactory != null)
+        if (_dbContextFactory != null && probe?.Failed != true)
         {
             try
             {
@@ -239,6 +239,7 @@ public class GateControlService : IGateControlService
                 var list = await db.VehicleTypes.AsNoTracking().ToListAsync(cancellationToken);
                 if (list.Any()) return list;
             }
+            catch (OperationCanceledException) { throw; }
             catch { probe?.MarkFailed(); }
         }
         lock (_syncLock)
@@ -252,7 +253,7 @@ public class GateControlService : IGateControlService
 
     private async Task<ParkingSlot?> SuggestAvailableSlotAsync(int vehicleTypeId, CancellationToken cancellationToken, DbProbe? probe)
     {
-        if (_dbContextFactory != null)
+        if (_dbContextFactory != null && probe?.Failed != true)
         {
             try
             {
@@ -265,6 +266,7 @@ public class GateControlService : IGateControlService
 
                 if (slot != null) return slot;
             }
+            catch (OperationCanceledException) { throw; }
             catch { probe?.MarkFailed(); }
         }
 
@@ -282,7 +284,7 @@ public class GateControlService : IGateControlService
         var norm = NormalizePlate(licensePlate);
         if (string.IsNullOrEmpty(norm)) return null;
 
-        if (_dbContextFactory != null)
+        if (_dbContextFactory != null && probe?.Failed != true)
         {
             try
             {
@@ -297,6 +299,7 @@ public class GateControlService : IGateControlService
                 var matched = tickets.FirstOrDefault(t => NormalizePlate(t.RegisteredLicensePlate) == norm);
                 if (matched != null) return matched;
             }
+            catch (OperationCanceledException) { throw; }
             catch { probe?.MarkFailed(); }
         }
 
@@ -455,6 +458,10 @@ public class GateControlService : IGateControlService
                     session.SessionId = dbSession.SessionId;
                     dbAuditWritten = true;
                 }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex) when (DbConnectionHelper.IsConnectionException(ex))
             {
@@ -655,7 +662,7 @@ public class GateControlService : IGateControlService
 
     private async Task<List<ParkingSession>> GetActiveSessionsAsync(CancellationToken cancellationToken, DbProbe? probe)
     {
-        if (_dbContextFactory != null)
+        if (_dbContextFactory != null && probe?.Failed != true)
         {
             try
             {
@@ -671,6 +678,7 @@ public class GateControlService : IGateControlService
 
                 return list;
             }
+            catch (OperationCanceledException) { throw; }
             catch { probe?.MarkFailed(); }
         }
 
