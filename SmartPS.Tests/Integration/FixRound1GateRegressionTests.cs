@@ -498,4 +498,33 @@ public class FixRound1GateRegressionTests : IClassFixture<PostgresDatabaseFixtur
         var retry = await Gate(sp2).ProcessCheckInAsync(Req(plate, vt));
         Assert.True(retry.Success, retry.Message);
     }
+
+    // ---------------------------------------------------------------- Fix round 2, H1 (N2) --------------------------
+
+    [Theory]
+    [InlineData("\u2460")]          // ①
+    [InlineData("\u2160")]          // Ⅰ
+    [InlineData("\u00B9")]          // ¹
+    [InlineData("\U0001D7CF")]      // 𝟏
+    public async Task H1_blacklisted_plate_with_an_appended_unicode_number_is_rejected_as_invalid(string suffix)
+    {
+        _db.RequireAvailable();
+        var vt = await _data.CreateIsolatedVehicleTypeAsync();
+        var zone = await _data.CreateZoneAsync(ZoneAudience.Mixed, vt, 2);
+        var plate = ResidentVisitorData.UniqueNormalizedPlate();
+        await _data.AddBlacklistAsync(plate, "challenge r2");
+        var (sp, _) = await LoginAsync("Operator");
+        using var scope = sp;
+        var idBefore = await AuditDb.MaxIdAsync(_db.Factory);
+
+        var result = await Gate(sp).ProcessCheckInAsync(Req(plate + suffix, vt));
+
+        Assert.False(result.Success);
+        Assert.Equal(CheckInRejectReason.PlateInvalid, result.RejectReason);
+        Assert.Null(result.Session);
+        Assert.Equal(0, await _data.SessionCountForPlateAsync(plate));
+        Assert.Equal(0, await _data.ActiveSessionCountForVehicleTypeAsync(vt));
+        Assert.Equal(0, await _data.CountAsync("SELECT count(*) FROM \"ParkingSlots\" WHERE \"ZoneId\" = @z AND \"Status\" <> 0", ("z", zone.ZoneId)));
+        Assert.Empty(await AuditDb.RowsAfterAsync(_db.Factory, idBefore, AuditActions.ParkingCheckIn));
+    }
 }

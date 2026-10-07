@@ -55,4 +55,20 @@ public class AuditPiiTests
         Assert.StartsWith("Chủ xe Trần B, SĐT ", masked, StringComparison.Ordinal);
         Assert.EndsWith(", nợ phí", masked, StringComparison.Ordinal);
     }
+
+    // ---- Fix round 2, H2 (N7): '/', '_' and parentheses are separators inside digit runs too ------------------------
+
+    [Theory]
+    [InlineData("SĐT 098/812/3456 nhà riêng", "098/812/3456")]
+    [InlineData("SĐT 0988_123_456", "0988_123_456")]
+    [InlineData("gọi (0988) 123 456 sau 18h", "(0988) 123 456")]
+    [InlineData("CCCD 079/123/456/789", "079/123/456/789")]
+    public void H2_MaskPhoneNumbersInText_masks_digit_runs_with_slash_underscore_and_parentheses(string text, string secret)
+    {
+        var masked = AuditPii.MaskPhoneNumbersInText(text);
+
+        Assert.DoesNotContain(secret, masked, StringComparison.Ordinal);
+        Assert.DoesNotMatch(@"(?:\d[\s.\-/_()]?){9,}", masked);
+        Assert.Contains("*", masked, StringComparison.Ordinal);
+    }
 }

@@ -67,4 +67,29 @@ public class LicensePlateNormalizerTests
         Assert.True(LicensePlateNormalizer.IsValid(plate));
         Assert.Equal("51F12345", LicensePlateNormalizer.Normalize(plate));
     }
+
+    // ---- Fix round 2, H1 (N2): any non-ASCII character that is not a separator makes the plate invalid -------------
+
+    [Theory]
+    [InlineData("51F12345\u2460")]        // ① circled digit one (No)
+    [InlineData("51F\u2460\u2461345")]
+    [InlineData("51F12345\u2160")]        // Ⅰ roman numeral one (Nl)
+    [InlineData("51F12345\u00B9")]        // ¹ superscript one (No)
+    [InlineData("51F12345\U0001D7CF")]    // 𝟏 mathematical bold digit one (surrogate pair, Nd)
+    [InlineData("\u2460\u2461\u2462\u2463\u2464")]
+    public void H1_unicode_numbers_and_surrogate_digits_are_invalid(string plate)
+    {
+        Assert.False(LicensePlateNormalizer.IsValid(plate));
+    }
+
+    [Theory]
+    [InlineData("51F\u200B12345")]        // zero-width space (Cf)
+    [InlineData("51F\u00A0123\t45")]      // NBSP (Zs) and tab (Cc)
+    [InlineData("51F\u200D123\u2009" + "45")] // zero-width joiner (Cf) and thin space (Zs)
+    [InlineData(" 51F-123.45 ")]
+    public void H1_separators_remain_valid(string plate)
+    {
+        Assert.True(LicensePlateNormalizer.IsValid(plate));
+        Assert.Equal("51F12345", LicensePlateNormalizer.Normalize(plate));
+    }
 }
