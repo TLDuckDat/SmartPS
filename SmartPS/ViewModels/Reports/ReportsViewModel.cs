@@ -33,6 +33,8 @@ public class ReportsViewModel : ViewModelBase
     private int _loadVersion;
     private bool _suppressReload;
     private bool _optionsLoaded;
+    private bool _reloadPending;
+    private bool _rangeInvalid;
     private ReportFilterOptions? _options;
 
     private IReadOnlyList<ReportPresetOption> _presets;
@@ -296,7 +298,15 @@ public class ReportsViewModel : ViewModelBase
     /// <summary>Tooltip of the disabled export button; null when the user may export.</summary>
     public string? ExportToolTip => HasExportPermission ? null : L("Msg_Auth_PermissionDenied");
 
-    public bool CanExport => HasExportPermission && !IsExporting && !IsLoading && CurrentResult is not null;
+    public bool CanExport => HasExportPermission && !IsExporting && !IsLoading && !_reloadPending && !_rangeInvalid && CurrentResult is not null;
+
+    private void SetExportGate(bool? pending = null, bool? invalid = null)
+    {
+        _reloadPending = pending ?? _reloadPending;
+        _rangeInvalid = invalid ?? _rangeInvalid;
+        OnPropertyChanged(nameof(CanExport));
+        ExportCommand?.RaiseCanExecuteChanged();
+    }
 
     // ---- KPIs, charts, tables --------------------------------------------------------------------------------------
 
@@ -375,6 +385,7 @@ public class ReportsViewModel : ViewModelBase
         }
 
         CancelPendingReload();
+        SetExportGate(pending: true);
         var cts = new CancellationTokenSource();
         _reloadCts = cts;
         _ = ReloadAfterDelayAsync(cts.Token);
@@ -418,6 +429,7 @@ public class ReportsViewModel : ViewModelBase
         var version = Interlocked.Increment(ref _loadVersion);
         try
         {
+            SetExportGate(pending: false);
             IsLoading = true;
 
             if (loadOptions && !_optionsLoaded)
@@ -430,10 +442,12 @@ public class ReportsViewModel : ViewModelBase
 
             if (!TryBuildFilter(out var filter, out var invalidMessageKey))
             {
+                SetExportGate(invalid: true);
                 ErrorMessage = L(invalidMessageKey!);
                 return;
             }
 
+            SetExportGate(invalid: false);
             ErrorMessage = null;
             var result = await _reportService.GetReportAsync(filter!, token);
             if (version != _loadVersion || token.IsCancellationRequested)
@@ -482,7 +496,7 @@ public class ReportsViewModel : ViewModelBase
         {
             DateOnly? from = _customFrom is { } f ? DateOnly.FromDateTime(f) : null;
             DateOnly? to = _customTo is { } t ? DateOnly.FromDateTime(t) : null;
-            switch (ReportPeriodCalculator.Validate(from, to))
+            switch (ReportPeriodCalculator.Validate(from, to, today))
             {
                 case ReportRangeValidation.Valid:
                     break;
@@ -768,6 +782,11 @@ public class ReportsViewModel : ViewModelBase
                 default:
                     _dialogService.ShowError(L(ReportTextKeys.MsgExportError));
                     break;
+            }
+
+            if (export.Status != ReportExportStatus.Success && !export.AuditWritten)
+            {
+                _dialogService.ShowWarning(L(ReportTextKeys.MsgExportAuditNotWritten));
             }
         }
         catch (PermissionDeniedException)

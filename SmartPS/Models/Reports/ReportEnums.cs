@@ -7,7 +7,7 @@ public enum ReportCustomerGroup { All = 0, Resident = 1, MonthlyPass = 2, Visito
 
 public enum KpiTrend { None = 0, Up = 1, Down = 2, Flat = 3 }
 
-public enum ReportRangeValidation { Valid, Missing, FromAfterTo, TooLong }
+public enum ReportRangeValidation { Valid, Missing, FromAfterTo, TooLong, OutOfBounds }
 
 public enum ReportExportStatus { Success, FileLocked, IoError }
 

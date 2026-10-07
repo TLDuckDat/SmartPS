@@ -225,10 +225,10 @@ public sealed class ReportService : IReportService
             .ToListAsync(cancellationToken);
     }
 
-    private static void ValidateRange(ReportFilter filter)
+    private void ValidateRange(ReportFilter filter)
     {
         ArgumentNullException.ThrowIfNull(filter);
-        var validation = ReportPeriodCalculator.Validate(filter.Range.FromVn, filter.Range.ToVn);
+        var validation = ReportPeriodCalculator.Validate(filter.Range.FromVn, filter.Range.ToVn, ReportPeriodCalculator.TodayVn(_timeProvider.GetUtcNow().UtcDateTime));
         if (validation != ReportRangeValidation.Valid)
         {
             throw new ArgumentException($"Invalid report range: {validation}.", nameof(filter));

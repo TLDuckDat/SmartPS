@@ -12,7 +12,20 @@ public static class ReportPeriodCalculator
 
     public static DateOnly TodayVn(DateTime utcNow) => ToVietnamDate(utcNow);
 
+    /// <summary>Earliest day a report may start on.</summary>
+    public static readonly DateOnly MinimumDay = new(2000, 1, 1);
+
+    /// <summary>Days past today a range may end on.</summary>
+    public const int MaxDaysAfterToday = 366;
+
     public static ReportRangeValidation Validate(DateOnly? from, DateOnly? to)
+        => ValidateCore(from, to, null);
+
+    /// <summary>Also rejects ranges ending more than <see cref="MaxDaysAfterToday"/> days after <paramref name="todayVn"/>.</summary>
+    public static ReportRangeValidation Validate(DateOnly? from, DateOnly? to, DateOnly todayVn)
+        => ValidateCore(from, to, todayVn);
+
+    private static ReportRangeValidation ValidateCore(DateOnly? from, DateOnly? to, DateOnly? todayVn)
     {
         if (from is null || to is null)
         {
@@ -22,6 +35,11 @@ public static class ReportPeriodCalculator
         if (from.Value > to.Value)
         {
             return ReportRangeValidation.FromAfterTo;
+        }
+
+        if (from.Value < MinimumDay || (todayVn is { } today && to.Value > today.AddDays(MaxDaysAfterToday)))
+        {
+            return ReportRangeValidation.OutOfBounds;
         }
 
         return to.Value.DayNumber - from.Value.DayNumber + 1 > ReportLimits.MaxRangeDays
