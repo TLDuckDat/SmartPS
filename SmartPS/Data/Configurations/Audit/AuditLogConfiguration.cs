@@ -38,6 +38,12 @@ public class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
         builder.HasIndex(x => x.PrevHash).IsUnique().HasDatabaseName("IX_AuditLogs_PrevHash");
     }
 
-    private static AuditOutcome ParseOutcome(string value)
-        => Enum.TryParse<AuditOutcome>(value, out var outcome) && Enum.IsDefined(outcome) ? outcome : (AuditOutcome)(-1);
+    // Only the exact enum names are valid: numbers, flags, whitespace or different casing are treated as tampering.
+    private static AuditOutcome ParseOutcome(string value) => value switch
+    {
+        "Success" => AuditOutcome.Success,
+        "Denied" => AuditOutcome.Denied,
+        "Failed" => AuditOutcome.Failed,
+        _ => (AuditOutcome)(-1)
+    };
 }
