@@ -160,7 +160,7 @@ public sealed class AuditService : IAuditService
             }
             catch (Exception) when (timeoutSource.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
             {
-                throw new TimeoutException("Timed out waiting for the audit chain lock.");
+                throw new AuditLockTimeoutException("Không lấy được khóa nhật ký kiểm toán trong thời gian cho phép.");
             }
 
             var transaction = await db.Database.BeginTransactionAsync(isolationLevel, cancellationToken);

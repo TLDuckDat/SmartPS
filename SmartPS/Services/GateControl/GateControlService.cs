@@ -226,7 +226,10 @@ public class GateControlService : IGateControlService
         }
     }
 
-    public async Task<List<VehicleType>> GetVehicleTypesAsync(CancellationToken cancellationToken = default)
+    public Task<List<VehicleType>> GetVehicleTypesAsync(CancellationToken cancellationToken = default)
+        => GetVehicleTypesAsync(cancellationToken, null);
+
+    private async Task<List<VehicleType>> GetVehicleTypesAsync(CancellationToken cancellationToken, DbProbe? probe)
     {
         if (_dbContextFactory != null)
         {
@@ -236,7 +239,7 @@ public class GateControlService : IGateControlService
                 var list = await db.VehicleTypes.AsNoTracking().ToListAsync(cancellationToken);
                 if (list.Any()) return list;
             }
-            catch { /* Dùng fallback */ }
+            catch { probe?.MarkFailed(); }
         }
         lock (_syncLock)
         {
@@ -244,7 +247,10 @@ public class GateControlService : IGateControlService
         }
     }
 
-    public async Task<ParkingSlot?> SuggestAvailableSlotAsync(int vehicleTypeId, CancellationToken cancellationToken = default)
+    public Task<ParkingSlot?> SuggestAvailableSlotAsync(int vehicleTypeId, CancellationToken cancellationToken = default)
+        => SuggestAvailableSlotAsync(vehicleTypeId, cancellationToken, null);
+
+    private async Task<ParkingSlot?> SuggestAvailableSlotAsync(int vehicleTypeId, CancellationToken cancellationToken, DbProbe? probe)
     {
         if (_dbContextFactory != null)
         {
@@ -259,7 +265,7 @@ public class GateControlService : IGateControlService
 
                 if (slot != null) return slot;
             }
-            catch { /* Dùng fallback */ }
+            catch { probe?.MarkFailed(); }
         }
 
         lock (_syncLock)
@@ -268,7 +274,10 @@ public class GateControlService : IGateControlService
         }
     }
 
-    public async Task<MonthlyTicket?> FindActiveMonthlyTicketAsync(string licensePlate, CancellationToken cancellationToken = default)
+    public Task<MonthlyTicket?> FindActiveMonthlyTicketAsync(string licensePlate, CancellationToken cancellationToken = default)
+        => FindActiveMonthlyTicketAsync(licensePlate, cancellationToken, null);
+
+    private async Task<MonthlyTicket?> FindActiveMonthlyTicketAsync(string licensePlate, CancellationToken cancellationToken, DbProbe? probe)
     {
         var norm = NormalizePlate(licensePlate);
         if (string.IsNullOrEmpty(norm)) return null;
@@ -288,13 +297,21 @@ public class GateControlService : IGateControlService
                 var matched = tickets.FirstOrDefault(t => NormalizePlate(t.RegisteredLicensePlate) == norm);
                 if (matched != null) return matched;
             }
-            catch { /* Dùng fallback */ }
+            catch { probe?.MarkFailed(); }
         }
 
         lock (_syncLock)
         {
             return _memoryMonthlyTickets.FirstOrDefault(t => NormalizePlate(t.RegisteredLicensePlate) == norm && t.IsCurrentlyValid);
         }
+    }
+
+    /// <summary>Remembers that a database call of the current request failed, so the request can skip further database work.</summary>
+    private sealed class DbProbe
+    {
+        public bool Failed { get; private set; }
+
+        public void MarkFailed() => Failed = true;
     }
 
     public async Task<GateCheckInResult> ProcessCheckInAsync(GateCheckInRequest request, CancellationToken cancellationToken = default)
@@ -326,7 +343,8 @@ public class GateControlService : IGateControlService
         var normPlate = NormalizePlate(cleanPlate);
 
         // Kiểm tra xem xe này có đang trong bãi hay chưa (phiên Active trùng biển số)
-        var activeSessions = await GetActiveSessionsAsync(cancellationToken);
+        var probe = new DbProbe();
+        var activeSessions = await GetActiveSessionsAsync(cancellationToken, probe);
         if (activeSessions.Any(s => NormalizePlate(s.LicensePlate) == normPlate))
         {
             return new GateCheckInResult
@@ -337,7 +355,7 @@ public class GateControlService : IGateControlService
         }
 
         // Kiểm tra vé tháng
-        var monthlyTicket = await FindActiveMonthlyTicketAsync(cleanPlate, cancellationToken);
+        var monthlyTicket = await FindActiveMonthlyTicketAsync(cleanPlate, cancellationToken, probe);
         var isMonthly = monthlyTicket != null;
         var vehicleTypeId = request.VehicleTypeId > 0 ? request.VehicleTypeId : (monthlyTicket?.VehicleTypeId ?? 1);
 
@@ -349,7 +367,7 @@ public class GateControlService : IGateControlService
         }
         else
         {
-            assignedSlot = await SuggestAvailableSlotAsync(vehicleTypeId, cancellationToken);
+            assignedSlot = await SuggestAvailableSlotAsync(vehicleTypeId, cancellationToken, probe);
         }
 
         var ticketCode = isMonthly 
@@ -359,7 +377,7 @@ public class GateControlService : IGateControlService
         // Lưu trữ an toàn vĩnh viễn tệp ảnh chụp khi xe vào
         var archivedImagePath = await _imageStorageService.ArchiveCaptureAsync(request.ImagePath, "CheckIn", cleanPlate);
 
-        var vTypes = await GetVehicleTypesAsync(cancellationToken);
+        var vTypes = await GetVehicleTypesAsync(cancellationToken, probe);
         var matchedVType = vTypes.FirstOrDefault(v => v.VehicleTypeId == vehicleTypeId);
 
         var session = new ParkingSession
@@ -382,7 +400,7 @@ public class GateControlService : IGateControlService
         };
 
         var dbAuditWritten = false;
-        if (_dbContextFactory != null)
+        if (_dbContextFactory != null && !probe.Failed)
         {
             try
             {
@@ -438,9 +456,20 @@ public class GateControlService : IGateControlService
                     dbAuditWritten = true;
                 }
             }
+            catch (Exception ex) when (DbConnectionHelper.IsConnectionException(ex))
+            {
+                // Mất kết nối cơ sở dữ liệu: tiếp tục ở chế độ ngoại tuyến (bộ nhớ + JSONL)
+                System.Diagnostics.Debug.WriteLine($"[GateControlService DB Error]: {ex.Message}");
+            }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[GateControlService DB Error]: {ex.Message}");
+                // Lỗi khác (ghi nhật ký thất bại, hết thời gian chờ khóa nhật ký...): không lưu ngoại tuyến
+                System.Diagnostics.Debug.WriteLine($"[GateControlService Audit Error]: {ex.GetType().Name}");
+                return new GateCheckInResult
+                {
+                    Success = false,
+                    Message = "Không thể ghi nhận lượt vào bãi vì lỗi ghi nhật ký kiểm toán. Vui lòng thử lại."
+                };
             }
         }
 
@@ -621,7 +650,10 @@ public class GateControlService : IGateControlService
         }
     }
 
-    public async Task<List<ParkingSession>> GetActiveSessionsAsync(CancellationToken cancellationToken = default)
+    public Task<List<ParkingSession>> GetActiveSessionsAsync(CancellationToken cancellationToken = default)
+        => GetActiveSessionsAsync(cancellationToken, null);
+
+    private async Task<List<ParkingSession>> GetActiveSessionsAsync(CancellationToken cancellationToken, DbProbe? probe)
     {
         if (_dbContextFactory != null)
         {
@@ -639,7 +671,7 @@ public class GateControlService : IGateControlService
 
                 return list;
             }
-            catch { /* Fallback */ }
+            catch { probe?.MarkFailed(); }
         }
 
         lock (_syncLock)
