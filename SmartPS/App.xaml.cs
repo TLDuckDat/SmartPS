@@ -9,6 +9,7 @@ using SmartPS.Services.Authorization;
 using SmartPS.Services.Customers;
 using SmartPS.Services.Dialog;
 using SmartPS.Services.Localization;
+using SmartPS.Services.ParkingZones;
 using SmartPS.Services.Payment;
 using SmartPS.Services.Payment.Mock;
 using SmartPS.Services.Payment.PayOS;
@@ -107,6 +108,7 @@ public partial class App : Application
         services.AddSingleton<ICustomerService, CustomerService>();
         services.AddSingleton<IMonthlyTicketService, MonthlyTicketService>();
         services.AddSingleton<IBlacklistService, BlacklistService>();
+        services.AddSingleton<IParkingZoneService, ParkingZoneService>();
         services.AddSingleton<PaymentWebhookServer>();
 
         // Đăng ký ViewModels

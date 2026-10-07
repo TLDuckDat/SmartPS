@@ -555,4 +555,18 @@
     <sys:String x:Key="Msg_CustomerValidation_DuplicatePlateInRequest">車両リストにナンバーの重複があります。</sys:String>
     <sys:String x:Key="Msg_CustomerValidation_VehicleTypeRequired">車種を選択してください。</sys:String>
 
+    <!-- PARKING MAP: ZONES AND AUDIENCE -->
+    <sys:String x:Key="Str_Map_Audience_Mixed">共用</sys:String>
+    <sys:String x:Key="Str_Map_Audience_ResidentOnly">居住者専用</sys:String>
+    <sys:String x:Key="Str_Map_Audience_VisitorOnly">一般利用者専用</sys:String>
+    <sys:String x:Key="Str_Map_ZoneSummary">空き {0}/{1} 区画</sys:String>
+    <sys:String x:Key="Str_Map_SaveAudience">対象を保存</sys:String>
+    <sys:String x:Key="Str_Map_Unzoned">区域未設定</sys:String>
+    <sys:String x:Key="Str_Map_MaintenanceCount">保守中: {0}</sys:String>
+    <sys:String x:Key="Str_Map_Status_Available">空き</sys:String>
+    <sys:String x:Key="Str_Map_Status_Occupied">使用中</sys:String>
+    <sys:String x:Key="Str_Map_Status_Maintenance">保守中</sys:String>
+    <sys:String x:Key="Msg_Map_AudienceSaved">区域の対象を保存しました。</sys:String>
+    <sys:String x:Key="Msg_Map_AudienceSaveError">区域の対象を保存できませんでした: {0}</sys:String>
+
 </ResourceDictionary>

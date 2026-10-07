@@ -555,4 +555,18 @@
     <sys:String x:Key="Msg_CustomerValidation_DuplicatePlateInRequest">Biển số bị trùng trong danh sách xe.</sys:String>
     <sys:String x:Key="Msg_CustomerValidation_VehicleTypeRequired">Cần chọn loại xe.</sys:String>
 
+    <!-- PARKING MAP: ZONES AND AUDIENCE -->
+    <sys:String x:Key="Str_Map_Audience_Mixed">Dùng chung</sys:String>
+    <sys:String x:Key="Str_Map_Audience_ResidentOnly">Chỉ dành cho cư dân</sys:String>
+    <sys:String x:Key="Str_Map_Audience_VisitorOnly">Chỉ dành cho khách vãng lai</sys:String>
+    <sys:String x:Key="Str_Map_ZoneSummary">Còn trống {0}/{1} ô</sys:String>
+    <sys:String x:Key="Str_Map_SaveAudience">Lưu đối tượng</sys:String>
+    <sys:String x:Key="Str_Map_Unzoned">Chưa gán khu</sys:String>
+    <sys:String x:Key="Str_Map_MaintenanceCount">Bảo trì: {0}</sys:String>
+    <sys:String x:Key="Str_Map_Status_Available">CÒN TRỐNG</sys:String>
+    <sys:String x:Key="Str_Map_Status_Occupied">ĐÃ ĐỖ XE</sys:String>
+    <sys:String x:Key="Str_Map_Status_Maintenance">BẢO TRÌ</sys:String>
+    <sys:String x:Key="Msg_Map_AudienceSaved">Đã lưu đối tượng của khu.</sys:String>
+    <sys:String x:Key="Msg_Map_AudienceSaveError">Không thể lưu đối tượng của khu: {0}</sys:String>
+
 </ResourceDictionary>

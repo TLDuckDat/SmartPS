@@ -555,4 +555,18 @@
     <sys:String x:Key="Msg_CustomerValidation_DuplicatePlateInRequest">A plate appears twice in the vehicle list.</sys:String>
     <sys:String x:Key="Msg_CustomerValidation_VehicleTypeRequired">A vehicle type is required.</sys:String>
 
+    <!-- PARKING MAP: ZONES AND AUDIENCE -->
+    <sys:String x:Key="Str_Map_Audience_Mixed">Shared</sys:String>
+    <sys:String x:Key="Str_Map_Audience_ResidentOnly">Residents only</sys:String>
+    <sys:String x:Key="Str_Map_Audience_VisitorOnly">Visitors only</sys:String>
+    <sys:String x:Key="Str_Map_ZoneSummary">{0}/{1} free</sys:String>
+    <sys:String x:Key="Str_Map_SaveAudience">Save audience</sys:String>
+    <sys:String x:Key="Str_Map_Unzoned">No zone</sys:String>
+    <sys:String x:Key="Str_Map_MaintenanceCount">Maintenance: {0}</sys:String>
+    <sys:String x:Key="Str_Map_Status_Available">AVAILABLE</sys:String>
+    <sys:String x:Key="Str_Map_Status_Occupied">OCCUPIED</sys:String>
+    <sys:String x:Key="Str_Map_Status_Maintenance">MAINTENANCE</sys:String>
+    <sys:String x:Key="Msg_Map_AudienceSaved">Zone audience saved.</sys:String>
+    <sys:String x:Key="Msg_Map_AudienceSaveError">Could not save the zone audience: {0}</sys:String>
+
 </ResourceDictionary>
