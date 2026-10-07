@@ -17,6 +17,16 @@ public class ResidentVisitorMigrationTests : IClassFixture<PostgresDatabaseFixtu
     private const string Task2HeadMigration = "20261007184617_HardenAuditTriggers";
     private const string ShiftMigration = "20261004152712_AddShiftManagement";
     private const string MigrationSuffix = "_AddResidentVisitorFlow";
+    private const string ResidentVisitorMigration = "20261007193920" + MigrationSuffix;
+
+    /// <summary>Migrations that follow the resident/visitor flow, in order (reporting index migration).</summary>
+    private static readonly string[] LaterMigrations = { "20261007205956_AddReportingIndexes" };
+
+    private static async Task<List<string>> AppliedMigrationsAsync(string cs)
+    {
+        await using var ctx = PostgresDatabaseFixture.CreateContext(cs);
+        return (await ctx.Database.GetAppliedMigrationsAsync()).ToList();
+    }
 
     private readonly PostgresDatabaseFixture _db;
 
@@ -138,10 +148,11 @@ public class ResidentVisitorMigrationTests : IClassFixture<PostgresDatabaseFixtu
         // When the resident/visitor migration runs
         await MigrateToAsync(cs, null);
 
-        // Then it is the latest migration
-        var last = await TextAsync(cs, "SELECT \"MigrationId\" FROM \"__EFMigrationsHistory\" ORDER BY \"MigrationId\" DESC LIMIT 1");
-        Assert.EndsWith(MigrationSuffix, last, StringComparison.Ordinal);
-        Assert.True(string.CompareOrdinal(last, Task2HeadMigration) > 0, $"{last} must sort after {Task2HeadMigration}");
+        // Then it is applied directly after the RBAC/audit head, followed only by the known later migrations
+        var applied = await AppliedMigrationsAsync(cs);
+        Assert.Contains(Task2HeadMigration, applied);
+        Assert.Equal(new[] { ResidentVisitorMigration }.Concat(LaterMigrations).ToArray(),
+            applied.SkipWhile(m => m != Task2HeadMigration).Skip(1).ToArray());
 
         // DefaultLicensePlate → CustomerVehicles (normalized), C2 has none, C3 keeps the shared plate active, C4 inactive
         Assert.Equal(1, await CountAsync(cs, $"SELECT count(*) FROM \"CustomerVehicles\" WHERE \"CustomerId\" = {c1}"));
@@ -311,7 +322,9 @@ public class ResidentVisitorMigrationTests : IClassFixture<PostgresDatabaseFixtu
 
         await using var ctx = _db.CreateContext();
         var applied = (await ctx.Database.GetAppliedMigrationsAsync()).ToList();
-        Assert.EndsWith(MigrationSuffix, applied[^1], StringComparison.Ordinal);
+        Assert.Contains(ResidentVisitorMigration, applied);
+        Assert.Equal(new[] { ResidentVisitorMigration }.Concat(LaterMigrations).ToArray(), applied.TakeLast(1 + LaterMigrations.Length).ToArray());
+        Assert.Equal(LaterMigrations[^1], applied[^1]);
         Assert.Empty(await ctx.Database.GetPendingMigrationsAsync());
         Assert.Equal(TestUsers.TotalPermissionCount, (await PermissionNamesAsync(_db.ConnectionString)).Count);
         Assert.Equal(TestUsers.OperatorSeedPermissions.ToHashSet(StringComparer.Ordinal), await GrantsAsync(_db.ConnectionString, "Operator"));
