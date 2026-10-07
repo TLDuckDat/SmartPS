@@ -41,7 +41,22 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.Property(x => x.Notes)
                .HasMaxLength(500);
 
+        builder.Property(x => x.IsResident)
+               .HasDefaultValue(false);
+
+        builder.Property(x => x.ApartmentCode)
+               .HasMaxLength(20);
+
+        builder.Property(x => x.Building)
+               .HasMaxLength(50);
+
         builder.HasIndex(x => x.PhoneNumber);
+        builder.HasIndex(x => x.ApartmentCode);
+
+        builder.HasMany(x => x.Vehicles)
+               .WithOne(v => v.Customer)
+               .HasForeignKey(v => v.CustomerId)
+               .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(x => x.VehicleType)
                .WithMany()

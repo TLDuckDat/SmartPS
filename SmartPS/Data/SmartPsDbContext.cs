@@ -26,6 +26,9 @@ public class SmartPsDbContext : DbContext
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<MonthlyTicketPlan> MonthlyTicketPlans => Set<MonthlyTicketPlan>();
     public DbSet<MonthlyTicket> MonthlyTickets => Set<MonthlyTicket>();
+    public DbSet<CustomerVehicle> CustomerVehicles => Set<CustomerVehicle>();
+    public DbSet<BlacklistEntry> BlacklistEntries => Set<BlacklistEntry>();
+    public DbSet<MonthlyTicketPurchase> MonthlyTicketPurchases => Set<MonthlyTicketPurchase>();
     public DbSet<ParkingSession> ParkingSessions => Set<ParkingSession>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();

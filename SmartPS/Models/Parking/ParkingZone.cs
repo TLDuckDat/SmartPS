@@ -9,6 +9,7 @@ public class ParkingZone
     public VehicleType? VehicleType { get; set; }
     public int TotalCapacity { get; set; }
     public string? Description { get; set; }
+    public ZoneAudience Audience { get; set; } = ZoneAudience.Mixed;
 
     public ICollection<ParkingSlot> Slots { get; set; } = new List<ParkingSlot>();
 }
