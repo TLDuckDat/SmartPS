@@ -28,6 +28,21 @@ public static class LicensePlateNormalizer
 
     public static bool IsValid(string? plate)
     {
+        if (string.IsNullOrWhiteSpace(plate))
+        {
+            return false;
+        }
+
+        // Chữ hoặc số ngoài ASCII (toàn chiều rộng, Cyrillic...) làm biển số không hợp lệ thay vì âm thầm biến mất khi chuẩn hoá.
+        // Ký tự cách/điều khiển/vô hình vẫn là dấu phân cách.
+        foreach (var ch in plate)
+        {
+            if (!char.IsAscii(ch) && char.IsLetterOrDigit(ch))
+            {
+                return false;
+            }
+        }
+
         var length = Normalize(plate).Length;
         return length >= MinLength && length <= MaxLength;
     }

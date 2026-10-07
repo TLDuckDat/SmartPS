@@ -12,5 +12,7 @@ public enum CheckInRejectReason
     SlotNotFound,
     SlotVehicleTypeMismatch,
     SlotAudienceNotAllowed,
-    SlotNotAvailable
+    SlotNotAvailable,
+    PlateInvalid,
+    ClassificationFailed
 }

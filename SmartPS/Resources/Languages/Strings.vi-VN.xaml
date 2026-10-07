@@ -569,4 +569,9 @@
     <sys:String x:Key="Msg_Map_AudienceSaved">Đã lưu đối tượng của khu.</sys:String>
     <sys:String x:Key="Msg_Map_AudienceSaveError">Không thể lưu đối tượng của khu: {0}</sys:String>
 
+    <sys:String x:Key="Msg_Gate_PlateInvalid">Biển số không hợp lệ (cần 5 đến 12 ký tự chữ và số, không dùng chữ có dấu hay ký tự lạ).</sys:String>
+    <sys:String x:Key="Msg_Gate_ClassificationFailed">Không thể phân loại xe do lỗi hệ thống. Barrier giữ nguyên đóng, vui lòng thử lại.</sys:String>
+    <sys:String x:Key="Str_Gate_Badge_TicketVehicleTypeMismatch">Vé tháng đăng ký cho loại xe khác, tính như khách vãng lai</sys:String>
+    <sys:String x:Key="Str_Map_Legend_Maintenance">Ô đang bảo trì</sys:String>
+
 </ResourceDictionary>

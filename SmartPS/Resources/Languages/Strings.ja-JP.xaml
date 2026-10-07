@@ -569,4 +569,9 @@
     <sys:String x:Key="Msg_Map_AudienceSaved">区域の対象を保存しました。</sys:String>
     <sys:String x:Key="Msg_Map_AudienceSaveError">区域の対象を保存できませんでした: {0}</sys:String>
 
+    <sys:String x:Key="Msg_Gate_PlateInvalid">ナンバーが正しくありません（英数字5〜12文字、ASCIIのみ）。</sys:String>
+    <sys:String x:Key="Msg_Gate_ClassificationFailed">システムエラーのため車両を分類できませんでした。ゲートは閉じたままです。もう一度お試しください。</sys:String>
+    <sys:String x:Key="Str_Gate_Badge_TicketVehicleTypeMismatch">月極券は別の車種用のため一般利用者として扱います</sys:String>
+    <sys:String x:Key="Str_Map_Legend_Maintenance">保守中の区画</sys:String>
+
 </ResourceDictionary>
