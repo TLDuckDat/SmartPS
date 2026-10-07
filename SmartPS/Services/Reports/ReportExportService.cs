@@ -61,10 +61,10 @@ public sealed class ReportExportService : IReportExportService
 
         await _guard.DemandAsync(Permissions.ReportExport, EntityType, filter.Range.Key, cancellationToken);
 
-        if (IsLocked(fullPath))
+        var probe = Probe(fullPath);
+        if (probe != ReportExportStatus.Success)
         {
-            await LogFailureAsync(filter, fileName, "FileLocked", cancellationToken);
-            return Failed(ReportExportStatus.FileLocked);
+            return await FailAsync(filter, fileName, probe, cancellationToken);
         }
 
         var report = await _reports.GetReportAsync(filter, cancellationToken);
@@ -84,15 +84,33 @@ public sealed class ReportExportService : IReportExportService
                     return written;
                 }
             }, cancellationToken);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            TryDelete(tempPath);
+            return await FailAsync(filter, fileName, ReportExportStatus.IoError, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            TryDelete(tempPath);
+            throw;
+        }
+        catch
+        {
+            TryDelete(tempPath);
+            await _audit.LogAsync(FailureEntry(filter, fileName, "Error"), CancellationToken.None);
+            throw;
+        }
 
+        try
+        {
             File.Move(tempPath, fullPath, overwrite: true);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             TryDelete(tempPath);
-            var reason = IsLockViolation(ex) ? "FileLocked" : "IoError";
-            await LogFailureAsync(filter, fileName, reason, cancellationToken);
-            return Failed(reason == "FileLocked" ? ReportExportStatus.FileLocked : ReportExportStatus.IoError);
+            var status = ex is UnauthorizedAccessException || IsLockViolation(ex) ? ReportExportStatus.FileLocked : ReportExportStatus.IoError;
+            return await FailAsync(filter, fileName, status, cancellationToken);
         }
         catch
         {
@@ -112,18 +130,20 @@ public sealed class ReportExportService : IReportExportService
         return new ReportExportResult(ReportExportStatus.Success, fullPath, counts, sessions.IsTruncated, auditWritten);
     }
 
-    private static ReportExportResult Failed(ReportExportStatus status)
-        => new(status, null, new ReportExportRowCounts(0, 0, 0, 0, 0), false, true);
+    private async Task<ReportExportResult> FailAsync(ReportFilter filter, string fileName, ReportExportStatus status, CancellationToken cancellationToken)
+    {
+        var reason = status == ReportExportStatus.FileLocked ? "FileLocked" : "IoError";
+        var written = await _audit.LogAsync(FailureEntry(filter, fileName, reason), cancellationToken);
+        return new ReportExportResult(status, null, new ReportExportRowCounts(0, 0, 0, 0, 0), false, written);
+    }
 
-    private Task<bool> LogFailureAsync(ReportFilter filter, string fileName, string reason, CancellationToken cancellationToken)
-        => _audit.LogAsync(
-            new AuditEntry(
-                AuditActions.ReportExport,
-                AuditOutcome.Failed,
-                EntityType,
-                filter.Range.Key,
-                Details(filter, fileName, counts: null, truncated: null, reason)),
-            cancellationToken);
+    private static AuditEntry FailureEntry(ReportFilter filter, string fileName, string reason)
+        => new(
+            AuditActions.ReportExport,
+            AuditOutcome.Failed,
+            EntityType,
+            filter.Range.Key,
+            Details(filter, fileName, counts: null, truncated: null, reason));
 
     private static object Details(ReportFilter filter, string fileName, ReportExportRowCounts? counts, bool? truncated, string? reason)
     {
@@ -159,26 +179,26 @@ public sealed class ReportExportService : IReportExportService
         return details;
     }
 
-    /// <summary>True when the target exists and cannot be opened exclusively (for example it is open in Excel).</summary>
-    private static bool IsLocked(string path)
+    /// <summary>Success = target is free; FileLocked = open elsewhere (for example Excel); IoError = not writable (read-only, no access).</summary>
+    private static ReportExportStatus Probe(string path)
     {
         if (!File.Exists(path))
         {
-            return false;
+            return ReportExportStatus.Success;
         }
 
         try
         {
             using var probe = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
-            return false;
-        }
-        catch (IOException)
-        {
-            return true;
+            return ReportExportStatus.Success;
         }
         catch (UnauthorizedAccessException)
         {
-            return true;
+            return ReportExportStatus.IoError;
+        }
+        catch (IOException)
+        {
+            return ReportExportStatus.FileLocked;
         }
     }
 
