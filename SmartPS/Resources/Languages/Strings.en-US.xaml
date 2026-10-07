@@ -324,4 +324,54 @@
     <sys:String x:Key="Str_Menu_RolePermissions">Role Permissions</sys:String>
     <sys:String x:Key="Str_Menu_AuditLog">Audit Log</sys:String>
 
+    <!-- ROLE PERMISSIONS SCREEN -->
+    <sys:String x:Key="Str_RolePerm_Title">Role Permissions</sys:String>
+    <sys:String x:Key="Str_RolePerm_Subtitle">Choose what each role is allowed to do. The Admin role always has every permission.</sys:String>
+    <sys:String x:Key="Str_RolePerm_Permission">Permission</sys:String>
+    <sys:String x:Key="Str_RolePerm_Save">Save changes</sys:String>
+    <sys:String x:Key="Str_RolePerm_Reset">Discard changes</sys:String>
+    <sys:String x:Key="Str_RolePerm_AdminLocked">Full access (locked)</sys:String>
+    <sys:String x:Key="Str_RolePerm_ReadOnlyNotice">You have view-only access. Role management permission is required to make changes.</sys:String>
+    <sys:String x:Key="Msg_RolePerm_SaveSuccess">Permissions saved for {0} role(s).</sys:String>
+    <sys:String x:Key="Msg_RolePerm_NoChanges">There are no changes to save.</sys:String>
+    <sys:String x:Key="Msg_RolePerm_SaveError">Unable to save permissions: {0}</sys:String>
+    <sys:String x:Key="Msg_RolePerm_LoadError">Unable to load the permission matrix: {0}</sys:String>
+
+    <!-- PERMISSION MODULES -->
+    <sys:String x:Key="Str_Perm_Module_User">Users</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Role">Roles</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Parking">Parking</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Pricing">Pricing</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Report">Reports</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Shift">Shifts</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Payment">Payments</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Audit">Audit log</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Settings">Settings</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Incident">Incidents</sys:String>
+
+    <!-- PERMISSION NAMES -->
+    <sys:String x:Key="Str_Perm_User_View">View users</sys:String>
+    <sys:String x:Key="Str_Perm_User_Create">Create users</sys:String>
+    <sys:String x:Key="Str_Perm_User_Edit">Edit users</sys:String>
+    <sys:String x:Key="Str_Perm_User_Delete">Delete users</sys:String>
+    <sys:String x:Key="Str_Perm_Role_View">View role permissions</sys:String>
+    <sys:String x:Key="Str_Perm_Role_Manage">Manage role permissions</sys:String>
+    <sys:String x:Key="Str_Perm_Parking_View">View parking status</sys:String>
+    <sys:String x:Key="Str_Perm_Parking_CheckIn">Vehicle check-in</sys:String>
+    <sys:String x:Key="Str_Perm_Parking_CheckOut">Vehicle check-out and fee collection</sys:String>
+    <sys:String x:Key="Str_Perm_Parking_Configure">Configure zones and slots</sys:String>
+    <sys:String x:Key="Str_Perm_Pricing_Manage">Manage pricing</sys:String>
+    <sys:String x:Key="Str_Perm_Report_View">View reports</sys:String>
+    <sys:String x:Key="Str_Perm_Report_Export">Export reports</sys:String>
+    <sys:String x:Key="Str_Perm_Shift_View">View shifts</sys:String>
+    <sys:String x:Key="Str_Perm_Shift_Open">Open shifts</sys:String>
+    <sys:String x:Key="Str_Perm_Shift_Close">Close shifts</sys:String>
+    <sys:String x:Key="Str_Perm_Shift_Review">Review shifts</sys:String>
+    <sys:String x:Key="Str_Perm_Shift_Adjust">Adjust shifts</sys:String>
+    <sys:String x:Key="Str_Perm_Payment_Refund">Refund or cancel payments</sys:String>
+    <sys:String x:Key="Str_Perm_Audit_View">View audit log</sys:String>
+    <sys:String x:Key="Str_Perm_Audit_Verify">Verify audit log integrity</sys:String>
+    <sys:String x:Key="Str_Perm_Settings_Manage">Manage system settings</sys:String>
+    <sys:String x:Key="Str_Perm_Incident_Manage">Handle incidents</sys:String>
+
 </ResourceDictionary>

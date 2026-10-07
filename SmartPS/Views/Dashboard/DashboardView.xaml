@@ -25,6 +25,8 @@
         xmlns:vPrice="clr-namespace:SmartPS.Views.Pricing"
         xmlns:vmSet="clr-namespace:SmartPS.ViewModels.Settings"
         xmlns:vSet="clr-namespace:SmartPS.Views.Settings"
+        xmlns:vmRolePerm="clr-namespace:SmartPS.ViewModels.RolePermissions"
+        xmlns:vRolePerm="clr-namespace:SmartPS.Views.RolePermissions"
         mc:Ignorable="d"
         Title="{DynamicResource Str_Dash_WindowTitle}"
         Height="800" Width="1280"
@@ -67,6 +69,9 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmSet:SettingsViewModel}">
             <vSet:SettingsView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmRolePerm:RolePermissionsViewModel}">
+            <vRolePerm:RolePermissionsView/>
         </DataTemplate>
     </Window.Resources>
 

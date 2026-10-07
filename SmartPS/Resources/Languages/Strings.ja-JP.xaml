@@ -324,4 +324,54 @@
     <sys:String x:Key="Str_Menu_RolePermissions">ロール権限</sys:String>
     <sys:String x:Key="Str_Menu_AuditLog">システム監査ログ</sys:String>
 
+    <!-- ROLE PERMISSIONS SCREEN -->
+    <sys:String x:Key="Str_RolePerm_Title">ロール権限</sys:String>
+    <sys:String x:Key="Str_RolePerm_Subtitle">各ロールに許可する操作を選択します。管理者ロールは常にすべての権限を持ちます。</sys:String>
+    <sys:String x:Key="Str_RolePerm_Permission">権限</sys:String>
+    <sys:String x:Key="Str_RolePerm_Save">変更を保存</sys:String>
+    <sys:String x:Key="Str_RolePerm_Reset">変更を破棄</sys:String>
+    <sys:String x:Key="Str_RolePerm_AdminLocked">全権限（ロック）</sys:String>
+    <sys:String x:Key="Str_RolePerm_ReadOnlyNotice">閲覧のみ可能です。変更にはロール権限の管理権限が必要です。</sys:String>
+    <sys:String x:Key="Msg_RolePerm_SaveSuccess">{0} 件のロールの権限を保存しました。</sys:String>
+    <sys:String x:Key="Msg_RolePerm_NoChanges">保存する変更はありません。</sys:String>
+    <sys:String x:Key="Msg_RolePerm_SaveError">権限を保存できませんでした: {0}</sys:String>
+    <sys:String x:Key="Msg_RolePerm_LoadError">権限マトリクスを読み込めませんでした: {0}</sys:String>
+
+    <!-- PERMISSION MODULES -->
+    <sys:String x:Key="Str_Perm_Module_User">ユーザー</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Role">ロール</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Parking">駐車場</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Pricing">料金</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Report">レポート</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Shift">シフト</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Payment">支払い</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Audit">監査ログ</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Settings">設定</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Incident">インシデント</sys:String>
+
+    <!-- PERMISSION NAMES -->
+    <sys:String x:Key="Str_Perm_User_View">ユーザーの閲覧</sys:String>
+    <sys:String x:Key="Str_Perm_User_Create">ユーザーの作成</sys:String>
+    <sys:String x:Key="Str_Perm_User_Edit">ユーザーの編集</sys:String>
+    <sys:String x:Key="Str_Perm_User_Delete">ユーザーの削除</sys:String>
+    <sys:String x:Key="Str_Perm_Role_View">ロール権限の閲覧</sys:String>
+    <sys:String x:Key="Str_Perm_Role_Manage">ロール権限の管理</sys:String>
+    <sys:String x:Key="Str_Perm_Parking_View">駐車場状況の閲覧</sys:String>
+    <sys:String x:Key="Str_Perm_Parking_CheckIn">入庫処理</sys:String>
+    <sys:String x:Key="Str_Perm_Parking_CheckOut">出庫処理・料金徴収</sys:String>
+    <sys:String x:Key="Str_Perm_Parking_Configure">エリア・駐車枠の設定</sys:String>
+    <sys:String x:Key="Str_Perm_Pricing_Manage">料金表の管理</sys:String>
+    <sys:String x:Key="Str_Perm_Report_View">レポートの閲覧</sys:String>
+    <sys:String x:Key="Str_Perm_Report_Export">レポートの出力</sys:String>
+    <sys:String x:Key="Str_Perm_Shift_View">シフトの閲覧</sys:String>
+    <sys:String x:Key="Str_Perm_Shift_Open">シフトの開始</sys:String>
+    <sys:String x:Key="Str_Perm_Shift_Close">シフトの終了</sys:String>
+    <sys:String x:Key="Str_Perm_Shift_Review">シフトの承認</sys:String>
+    <sys:String x:Key="Str_Perm_Shift_Adjust">シフトの調整</sys:String>
+    <sys:String x:Key="Str_Perm_Payment_Refund">返金・支払いキャンセル</sys:String>
+    <sys:String x:Key="Str_Perm_Audit_View">監査ログの閲覧</sys:String>
+    <sys:String x:Key="Str_Perm_Audit_Verify">監査ログの整合性検証</sys:String>
+    <sys:String x:Key="Str_Perm_Settings_Manage">システム設定の管理</sys:String>
+    <sys:String x:Key="Str_Perm_Incident_Manage">インシデントの処理</sys:String>
+
 </ResourceDictionary>

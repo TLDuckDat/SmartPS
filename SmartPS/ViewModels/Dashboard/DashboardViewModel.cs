@@ -13,6 +13,7 @@ using SmartPS.ViewModels.Overview;
 using SmartPS.ViewModels.ParkingMap;
 using SmartPS.ViewModels.Pricing;
 using SmartPS.ViewModels.Reports;
+using SmartPS.ViewModels.RolePermissions;
 using SmartPS.ViewModels.Settings;
 using SmartPS.ViewModels.Transactions;
 using SmartPS.ViewModels.Shifts;
@@ -166,6 +167,10 @@ public class DashboardViewModel : ViewModelBase
             else if (CurrentViewModel is UserManagementViewModel uvm)
             {
                 await uvm.LoadDataAsync();
+            }
+            else if (CurrentViewModel is RolePermissionsViewModel rpvm)
+            {
+                await rpvm.LoadDataAsync();
             }
         });
 
@@ -390,6 +395,10 @@ public class DashboardViewModel : ViewModelBase
         {
             _ = uvm.LoadDataAsync();
         }
+        else if (CurrentViewModel is RolePermissionsViewModel rpvm)
+        {
+            _ = rpvm.LoadDataAsync();
+        }
     }
 
     private async Task LogNavigationDeniedAsync(NavigationMenuItem item)
@@ -427,6 +436,7 @@ public class DashboardViewModel : ViewModelBase
             NavigationItemType.Shifts => _serviceProvider.GetRequiredService<ShiftsViewModel>(),
             NavigationItemType.UserManagement => _serviceProvider.GetRequiredService<UserManagementViewModel>(),
             NavigationItemType.Pricing => _serviceProvider.GetRequiredService<PricingViewModel>(),
+            NavigationItemType.RolePermissions => _serviceProvider.GetRequiredService<RolePermissionsViewModel>(),
             NavigationItemType.Settings => _serviceProvider.GetRequiredService<SettingsViewModel>(),
             _ => _serviceProvider.GetRequiredService<OverviewViewModel>()
         };

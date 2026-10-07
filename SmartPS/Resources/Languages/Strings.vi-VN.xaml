@@ -324,4 +324,54 @@
     <sys:String x:Key="Str_Menu_RolePermissions">Phân quyền vai trò</sys:String>
     <sys:String x:Key="Str_Menu_AuditLog">Nhật ký hệ thống</sys:String>
 
+    <!-- ROLE PERMISSIONS SCREEN -->
+    <sys:String x:Key="Str_RolePerm_Title">Phân quyền vai trò</sys:String>
+    <sys:String x:Key="Str_RolePerm_Subtitle">Chọn các quyền mà mỗi vai trò được phép thực hiện. Vai trò Admin luôn có toàn quyền.</sys:String>
+    <sys:String x:Key="Str_RolePerm_Permission">Quyền hạn</sys:String>
+    <sys:String x:Key="Str_RolePerm_Save">Lưu thay đổi</sys:String>
+    <sys:String x:Key="Str_RolePerm_Reset">Hoàn tác</sys:String>
+    <sys:String x:Key="Str_RolePerm_AdminLocked">Toàn quyền (khóa)</sys:String>
+    <sys:String x:Key="Str_RolePerm_ReadOnlyNotice">Bạn chỉ có quyền xem. Cần quyền quản lý phân quyền vai trò để thay đổi.</sys:String>
+    <sys:String x:Key="Msg_RolePerm_SaveSuccess">Đã lưu phân quyền cho {0} vai trò.</sys:String>
+    <sys:String x:Key="Msg_RolePerm_NoChanges">Không có thay đổi nào để lưu.</sys:String>
+    <sys:String x:Key="Msg_RolePerm_SaveError">Không thể lưu phân quyền: {0}</sys:String>
+    <sys:String x:Key="Msg_RolePerm_LoadError">Không thể tải ma trận phân quyền: {0}</sys:String>
+
+    <!-- PERMISSION MODULES -->
+    <sys:String x:Key="Str_Perm_Module_User">Người dùng</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Role">Vai trò</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Parking">Bãi đỗ xe</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Pricing">Bảng giá</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Report">Báo cáo</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Shift">Ca trực</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Payment">Thanh toán</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Audit">Nhật ký hệ thống</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Settings">Cài đặt</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Incident">Sự cố</sys:String>
+
+    <!-- PERMISSION NAMES -->
+    <sys:String x:Key="Str_Perm_User_View">Xem người dùng</sys:String>
+    <sys:String x:Key="Str_Perm_User_Create">Tạo người dùng</sys:String>
+    <sys:String x:Key="Str_Perm_User_Edit">Sửa người dùng</sys:String>
+    <sys:String x:Key="Str_Perm_User_Delete">Xóa người dùng</sys:String>
+    <sys:String x:Key="Str_Perm_Role_View">Xem phân quyền vai trò</sys:String>
+    <sys:String x:Key="Str_Perm_Role_Manage">Quản lý phân quyền vai trò</sys:String>
+    <sys:String x:Key="Str_Perm_Parking_View">Xem trạng thái bãi xe</sys:String>
+    <sys:String x:Key="Str_Perm_Parking_CheckIn">Soát vé xe vào</sys:String>
+    <sys:String x:Key="Str_Perm_Parking_CheckOut">Soát vé xe ra và thu phí</sys:String>
+    <sys:String x:Key="Str_Perm_Parking_Configure">Cấu hình khu vực và ô đỗ</sys:String>
+    <sys:String x:Key="Str_Perm_Pricing_Manage">Quản lý bảng giá</sys:String>
+    <sys:String x:Key="Str_Perm_Report_View">Xem báo cáo</sys:String>
+    <sys:String x:Key="Str_Perm_Report_Export">Xuất báo cáo</sys:String>
+    <sys:String x:Key="Str_Perm_Shift_View">Xem ca trực</sys:String>
+    <sys:String x:Key="Str_Perm_Shift_Open">Mở ca trực</sys:String>
+    <sys:String x:Key="Str_Perm_Shift_Close">Đóng ca trực</sys:String>
+    <sys:String x:Key="Str_Perm_Shift_Review">Xác nhận ca trực</sys:String>
+    <sys:String x:Key="Str_Perm_Shift_Adjust">Điều chỉnh ca trực</sys:String>
+    <sys:String x:Key="Str_Perm_Payment_Refund">Hoàn tiền / hủy thanh toán</sys:String>
+    <sys:String x:Key="Str_Perm_Audit_View">Xem nhật ký hệ thống</sys:String>
+    <sys:String x:Key="Str_Perm_Audit_Verify">Kiểm tra toàn vẹn nhật ký</sys:String>
+    <sys:String x:Key="Str_Perm_Settings_Manage">Quản lý cài đặt hệ thống</sys:String>
+    <sys:String x:Key="Str_Perm_Incident_Manage">Xử lý sự cố</sys:String>
+
 </ResourceDictionary>
