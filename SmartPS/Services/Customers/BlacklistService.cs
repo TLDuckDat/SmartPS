@@ -92,7 +92,7 @@ public sealed class BlacklistService : IBlacklistService
         }
 
         var plate = LicensePlateNormalizer.Normalize(licensePlate);
-        if (!LicensePlateNormalizer.IsValid(plate))
+        if (!LicensePlateNormalizer.IsValid(licensePlate))
         {
             return OperationResult<int>.Fail(OperationError.PlateInvalid, "Biển số không hợp lệ.");
         }
@@ -123,7 +123,7 @@ public sealed class BlacklistService : IBlacklistService
                     AuditOutcome.Success,
                     "BlacklistEntry",
                     entry.BlacklistEntryId.ToString(),
-                    new { LicensePlate = plate, Reason = cleanReason }), cancellationToken);
+                    new { LicensePlate = plate, Reason = AuditPii.MaskPhoneNumbersInText(cleanReason) }), cancellationToken);
                 await db.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
                 return OperationResult<int>.Ok(entry.BlacklistEntryId);
@@ -187,7 +187,7 @@ public sealed class BlacklistService : IBlacklistService
                     AuditOutcome.Success,
                     "BlacklistEntry",
                     entry.BlacklistEntryId.ToString(),
-                    new { LicensePlate = entry.LicensePlate, RemoveReason = cleanReason }), cancellationToken);
+                    new { LicensePlate = entry.LicensePlate, RemoveReason = AuditPii.MaskPhoneNumbersInText(cleanReason) }), cancellationToken);
                 await db.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
                 return OperationResult.Ok();

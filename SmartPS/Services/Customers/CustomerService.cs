@@ -311,6 +311,13 @@ public sealed class CustomerService : ICustomerService
             return OperationResult.Fail(OperationError.PermissionDenied, ex.Message);
         }
 
+        // Kiểm tra dữ liệu thuần trước khi mở giao dịch có khoá nhật ký
+        var errors = CustomerValidator.Validate(request with { Vehicles = Array.Empty<NewVehicle>() });
+        if (errors.Count > 0)
+        {
+            return OperationResult.Fail(OperationError.Validation, "Dữ liệu khách hàng không hợp lệ.", errors);
+        }
+
         try
         {
             await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken);
@@ -320,12 +327,6 @@ public sealed class CustomerService : ICustomerService
                 if (customer is null)
                 {
                     return OperationResult.Fail(OperationError.NotFound, "Không tìm thấy khách hàng.");
-                }
-
-                var errors = CustomerValidator.Validate(request with { Vehicles = Array.Empty<NewVehicle>() });
-                if (errors.Count > 0)
-                {
-                    return OperationResult.Fail(OperationError.Validation, "Dữ liệu khách hàng không hợp lệ.", errors);
                 }
 
                 var before = Snapshot(customer);
@@ -459,7 +460,7 @@ public sealed class CustomerService : ICustomerService
                     return OperationResult<int>.Fail(OperationError.NotFound, "Không tìm thấy khách hàng.");
                 }
 
-                if (!LicensePlateNormalizer.IsValid(plate))
+                if (!LicensePlateNormalizer.IsValid(vehicle.LicensePlate))
                 {
                     return OperationResult<int>.Fail(OperationError.PlateInvalid, "Biển số không hợp lệ.",
                         new[] { CustomerValidationError.PlateInvalid });
