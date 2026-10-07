@@ -123,7 +123,8 @@ public static class AuditDetails
                 }
                 else
                 {
-                    writer.WriteRawValue(element.GetRawText());
+                    // Không biểu diễn được bằng decimal: ghi dạng chuỗi để băm ổn định sau khi qua jsonb
+                    writer.WriteStringValue(element.GetRawText());
                 }
 
                 break;
