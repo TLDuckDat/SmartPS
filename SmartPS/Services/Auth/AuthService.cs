@@ -524,7 +524,7 @@ namespace SmartPS.Services.Auth
 
         private static Task<bool> HasOtherActiveAdminAsync(SmartPsDbContext db, int excludedUserId)
         {
-            return db.Users.AnyAsync(u => u.UserId != excludedUserId && u.IsActive && u.Role.RoleName == SystemRoles.Admin);
+            return db.Users.AnyAsync(u => u.UserId != excludedUserId && u.IsActive && EF.Functions.ILike(u.Role.RoleName, SystemRoles.Admin));
         }
     }
 }
