@@ -33,6 +33,9 @@ public sealed class FakeReportService : IReportService
     /// <summary>When set, <see cref="GetReportAsync"/> waits for this task before returning (used to keep an export in flight).</summary>
     public Task? ReportGate { get; set; }
 
+    /// <summary>Runs synchronously inside <see cref="GetReportAsync"/> (e.g. to lock the export target after the lock probe).</summary>
+    public Action<ReportFilter>? OnReportCall { get; set; }
+
     public ReportFilterOptions Options { get; set; } = new(
         new[] { new LookupItem(1, "Xe máy"), new LookupItem(2, "Xe ô tô"), new LookupItem(3, "Xe đạp / Xe điện") },
         new[] { new LookupItem(1, "Khu A"), new LookupItem(2, "Khu B") });
@@ -62,6 +65,7 @@ public sealed class FakeReportService : IReportService
         }
 
         signal.TrySetResult(filter);
+        OnReportCall?.Invoke(filter);
 
         if (ReportGate is not null)
         {

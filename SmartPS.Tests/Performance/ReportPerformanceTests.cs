@@ -16,7 +16,7 @@ public sealed class ReportPerformanceTests : IClassFixture<PostgresDatabaseFixtu
     private const int Financials = 50_000;
     private static readonly TimeSpan ReportBudget = TimeSpan.FromSeconds(3);
     private static readonly TimeSpan ExportBudget = TimeSpan.FromSeconds(15);
-    private static readonly DateOnly StartVn = new(2031, 1, 1);
+    private static readonly DateOnly StartVn = new(2025, 1, 1);
 
     private readonly PostgresDatabaseFixture _db;
     private readonly ITestOutputHelper _output;

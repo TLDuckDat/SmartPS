@@ -56,14 +56,14 @@ public sealed class ReportExportServiceTests : IClassFixture<PostgresDatabaseFix
     {
         _db.RequireAvailable();
         using var sp = await LoggedInAsync("Manager");
-        var a = await _seed.PaidSessionAsync(Vn(2031, 5, 3, 8), Vn(2031, 5, 3, 10), 10_000m);
-        await _seed.PaidSessionAsync(Vn(2031, 5, 3, 9), Vn(2031, 5, 3, 11), 30_000m, PaymentMethod.VietQR);
-        await _seed.PaidSessionAsync(Vn(2031, 5, 5, 23, 30), Vn(2031, 5, 6, 0, 30), 15_000m, PaymentMethod.Card);
-        await _seed.SessionAsync(Vn(2031, 5, 6, 7));
-        await _seed.SessionAsync(Vn(2031, 5, 7, 7), Vn(2031, 5, 7, 8), totalFee: 0m, paymentMethod: PaymentMethod.Free, customerType: CustomerType.Resident, isMonthlyPass: true);
-        await _seed.FinancialAsync(FinancialTransactionType.Refund, PaymentMethod.Cash, -4_000m, Vn(2031, 5, 4, 9), a.SessionId);
-        await _seed.FinancialAsync(FinancialTransactionType.Adjustment, PaymentMethod.Cash, 2_500m, Vn(2031, 5, 6, 9));
-        var filter = Filter(new DateOnly(2031, 5, 1), new DateOnly(2031, 5, 7));
+        var a = await _seed.PaidSessionAsync(Vn(2025, 5, 3, 8), Vn(2025, 5, 3, 10), 10_000m);
+        await _seed.PaidSessionAsync(Vn(2025, 5, 3, 9), Vn(2025, 5, 3, 11), 30_000m, PaymentMethod.VietQR);
+        await _seed.PaidSessionAsync(Vn(2025, 5, 5, 23, 30), Vn(2025, 5, 6, 0, 30), 15_000m, PaymentMethod.Card);
+        await _seed.SessionAsync(Vn(2025, 5, 6, 7));
+        await _seed.SessionAsync(Vn(2025, 5, 7, 7), Vn(2025, 5, 7, 8), totalFee: 0m, paymentMethod: PaymentMethod.Free, customerType: CustomerType.Resident, isMonthlyPass: true);
+        await _seed.FinancialAsync(FinancialTransactionType.Refund, PaymentMethod.Cash, -4_000m, Vn(2025, 5, 4, 9), a.SessionId);
+        await _seed.FinancialAsync(FinancialTransactionType.Adjustment, PaymentMethod.Cash, 2_500m, Vn(2025, 5, 6, 9));
+        var filter = Filter(new DateOnly(2025, 5, 1), new DateOnly(2025, 5, 7));
         var path = Path.Combine(_dir.FullName, "ac7.xlsx");
         var idBefore = await AuditDb.MaxIdAsync(_db.Factory);
 
@@ -112,7 +112,7 @@ public sealed class ReportExportServiceTests : IClassFixture<PostgresDatabaseFix
         var idBefore = await AuditDb.MaxIdAsync(_db.Factory);
 
         var ex = await Assert.ThrowsAsync<PermissionDeniedException>(() =>
-            sp.GetRequiredService<IReportExportService>().ExportAsync(Filter(new DateOnly(2031, 5, 1), new DateOnly(2031, 5, 7)), path));
+            sp.GetRequiredService<IReportExportService>().ExportAsync(Filter(new DateOnly(2025, 5, 1), new DateOnly(2025, 5, 7)), path));
 
         Assert.Equal(new[] { Permissions.ReportExport }, ex.RequiredPermissions);
         Assert.False(File.Exists(path));
@@ -130,7 +130,7 @@ public sealed class ReportExportServiceTests : IClassFixture<PostgresDatabaseFix
         using var sp = await LoggedInAsync("Manager");
         var path = Path.Combine(_dir.FullName, "empty.xlsx");
 
-        var result = await sp.GetRequiredService<IReportExportService>().ExportAsync(Filter(new DateOnly(2031, 12, 1), new DateOnly(2031, 12, 3)), path);
+        var result = await sp.GetRequiredService<IReportExportService>().ExportAsync(Filter(new DateOnly(2025, 12, 1), new DateOnly(2025, 12, 3)), path);
 
         Assert.Equal(ReportExportStatus.Success, result.Status);
         Assert.Equal(0, result.RowCounts.Sessions);
@@ -152,7 +152,7 @@ public sealed class ReportExportServiceTests : IClassFixture<PostgresDatabaseFix
         ReportExportResult result;
         using (new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
         {
-            result = await sp.GetRequiredService<IReportExportService>().ExportAsync(Filter(new DateOnly(2031, 5, 1), new DateOnly(2031, 5, 7)), path);
+            result = await sp.GetRequiredService<IReportExportService>().ExportAsync(Filter(new DateOnly(2025, 5, 1), new DateOnly(2025, 5, 7)), path);
         }
 
         Assert.Equal(ReportExportStatus.FileLocked, result.Status);
