@@ -542,9 +542,22 @@ public class PaymentService : IPaymentService
                 };
             }
 
-            try
             {
-                EnsureCanTransition(payment.Status, PaymentStatus.Refunded);
+                try
+                {
+                    EnsureCanTransition(payment.Status, PaymentStatus.Refunded);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    return new PaymentStatusResult
+                    {
+                        Success = false,
+                        PaymentId = payment.PaymentId,
+                        Status = PaymentStatus.Paid,
+                        Message = ex.Message
+                    };
+                }
+
                 payment.Status = PaymentStatus.Refunded;
                 payment.UpdatedAt = DateTime.UtcNow;
 
@@ -560,7 +573,13 @@ public class PaymentService : IPaymentService
 
                 if (await db.FinancialTransactions.AnyAsync(t =>
                     t.Type == FinancialTransactionType.Refund && t.ReferenceCode == $"PAYMENT-{payment.PaymentId}", cancellationToken))
-                    throw new InvalidOperationException("Giao dịch này đã được ghi nhận hoàn tiền.");
+                    return new PaymentStatusResult
+                    {
+                        Success = false,
+                        PaymentId = payment.PaymentId,
+                        Status = PaymentStatus.Paid,
+                        Message = "Giao dịch này đã được ghi nhận hoàn tiền."
+                    };
 
                 db.FinancialTransactions.Add(new FinancialTransaction
                 {
@@ -602,16 +621,6 @@ public class PaymentService : IPaymentService
                     PaidAt = payment.PaidAt,
                     TransactionReference = txRef,
                     Message = "Đã ghi nhận hoàn tiền thủ công."
-                };
-            }
-            catch (InvalidOperationException ex)
-            {
-                return new PaymentStatusResult
-                {
-                    Success = false,
-                    PaymentId = payment.PaymentId,
-                    Status = PaymentStatus.Paid,
-                    Message = ex.Message
                 };
             }
         }
@@ -998,11 +1007,13 @@ public class PaymentService : IPaymentService
             throw new InvalidOperationException("Đối soát với cổng thanh toán thất bại.", preVerify.Error);
         }
 
-        var verifyResult = preVerify?.Result ?? new PaymentGatewayVerifyResult
+        if (preVerify?.Result == null)
         {
-            Success = false,
-            ErrorMessage = "Trạng thái thay đổi trong lúc xử lý, vui lòng gửi lại."
-        };
+            // Trạng thái thay đổi giữa tiền kiểm tra và giao dịch: báo lỗi tạm thời để cổng thanh toán gửi lại
+            throw new InvalidOperationException("Trạng thái thay đổi trong lúc xử lý, vui lòng gửi lại.");
+        }
+
+        var verifyResult = preVerify.Result;
 
         if (!verifyResult.Success || !verifyResult.IsPaid ||
             !verifyResult.Amount.HasValue ||
