@@ -31,47 +31,51 @@ INSERT INTO "Permissions" ("PermissionName", "Description") VALUES
 ('Shift.Open', 'Mở ca trực'),
 ('Shift.Close', 'Đóng ca trực'),
 ('Shift.Review', 'Quản lý xác nhận ca'),
-('Shift.Adjust', 'Điều chỉnh ca đã khóa')
+('Shift.Adjust', 'Điều chỉnh ca đã khóa'),
+('Audit.View', 'Xem nhật ký hệ thống'),
+('Audit.Verify', 'Kiểm tra toàn vẹn nhật ký'),
+('Payment.Refund', 'Hoàn tiền / huỷ thanh toán'),
+('Settings.Manage', 'Quản lý cài đặt hệ thống'),
+('Incident.Manage', 'Xử lý sự cố')
 ON CONFLICT ("PermissionName") DO NOTHING;
 
 -- -----------------------------------------------------------------------------------
--- 2. DANH MỤC VAI TRÒ (Roles)
+-- 2. DANH MỤC VAI TRÒ (Roles) & 3. GÁN QUYỀN CHO VAI TRÒ (RolePermissions)
+-- Quyền mặc định của Operator/Manager chỉ được gán khi vai trò vừa được tạo trong lần chạy này,
+-- để các thay đổi trên màn hình Phân quyền không bị seed khôi phục lại ở lần khởi động sau.
 -- -----------------------------------------------------------------------------------
-INSERT INTO "Roles" ("RoleName", "Description") VALUES
-('Admin', 'Quản trị viên toàn quyền hệ thống bãi đỗ xe'),
-('Manager', 'Quản lý điều hành vận hành bãi đỗ xe'),
-('Operator', 'Nhân viên trực ca bốt soát vé bãi đỗ xe')
-ON CONFLICT ("RoleName") DO NOTHING;
+WITH new_roles AS (
+    INSERT INTO "Roles" ("RoleName", "Description") VALUES
+    ('Admin', 'Quản trị viên toàn quyền hệ thống bãi đỗ xe'),
+    ('Manager', 'Quản lý điều hành vận hành bãi đỗ xe'),
+    ('Operator', 'Nhân viên trực ca bốt soát vé bãi đỗ xe')
+    ON CONFLICT ("RoleName") DO NOTHING
+    RETURNING "RoleId", "RoleName"),
+op AS (
+    INSERT INTO "RolePermissions" ("RoleId", "PermissionId")
+    SELECT nr."RoleId", p."PermissionId"
+    FROM new_roles nr
+    JOIN "Permissions" p
+      ON p."PermissionName" IN ('Parking.View', 'Parking.CheckIn', 'Parking.CheckOut', 'Report.View', 'Shift.View', 'Shift.Open', 'Shift.Close')
+    WHERE nr."RoleName" = 'Operator'
+    ON CONFLICT DO NOTHING
+    RETURNING 1)
+INSERT INTO "RolePermissions" ("RoleId", "PermissionId")
+SELECT nr."RoleId", p."PermissionId"
+FROM new_roles nr
+JOIN "Permissions" p
+  ON (p."PermissionName" IN ('Report.View', 'Report.Export', 'Pricing.Manage', 'Parking.View', 'Parking.CheckIn', 'Parking.CheckOut',
+                             'Parking.Configure', 'Payment.Refund', 'User.View', 'Role.View', 'Audit.View', 'Incident.Manage')
+      OR p."PermissionName" LIKE 'Shift.%')
+WHERE nr."RoleName" = 'Manager'
+ON CONFLICT DO NOTHING;
 
--- -----------------------------------------------------------------------------------
--- 3. GÁN QUYỀN CHO VAI TRÒ (RolePermissions)
--- -----------------------------------------------------------------------------------
--- Gán toàn bộ quyền cho vai trò Admin
+-- Admin luôn có toàn bộ quyền (kể cả quyền mới được thêm sau này)
 INSERT INTO "RolePermissions" ("RoleId", "PermissionId")
 SELECT r."RoleId", p."PermissionId"
 FROM "Roles" r
 CROSS JOIN "Permissions" p
 WHERE r."RoleName" = 'Admin'
-ON CONFLICT ("RoleId", "PermissionId") DO NOTHING;
-
--- Gán quyền tác nghiệp cơ bản cho vai trò Operator (Xem bãi, check-in, check-out, xem báo cáo)
-INSERT INTO "RolePermissions" ("RoleId", "PermissionId")
-SELECT r."RoleId", p."PermissionId"
-FROM "Roles" r
-JOIN "Permissions" p ON p."PermissionName" IN ('Parking.View', 'Parking.CheckIn', 'Parking.CheckOut', 'Report.View')
-WHERE r."RoleName" = 'Operator'
-ON CONFLICT ("RoleId", "PermissionId") DO NOTHING;
-
-INSERT INTO "RolePermissions" ("RoleId", "PermissionId")
-SELECT r."RoleId", p."PermissionId"
-FROM "Roles" r JOIN "Permissions" p ON p."PermissionName" IN ('Shift.View', 'Shift.Open', 'Shift.Close')
-WHERE r."RoleName" = 'Operator'
-ON CONFLICT ("RoleId", "PermissionId") DO NOTHING;
-
-INSERT INTO "RolePermissions" ("RoleId", "PermissionId")
-SELECT r."RoleId", p."PermissionId"
-FROM "Roles" r JOIN "Permissions" p ON p."PermissionName" LIKE 'Shift.%'
-WHERE r."RoleName" = 'Manager'
 ON CONFLICT ("RoleId", "PermissionId") DO NOTHING;
 
 -- -----------------------------------------------------------------------------------

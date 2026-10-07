@@ -31,6 +31,18 @@ public static class Permissions
     public const string ShiftReview = "Shift.Review";
     public const string ShiftAdjust = "Shift.Adjust";
 
+    // Hoàn tiền, nhật ký hệ thống, cài đặt, sự cố
+    public const string PaymentRefund = "Payment.Refund";
+    public const string AuditView = "Audit.View";
+    public const string AuditVerify = "Audit.Verify";
+    public const string SettingsManage = "Settings.Manage";
+    public const string IncidentManage = "Incident.Manage";
+
+    public static readonly IReadOnlyList<string> ModuleOrder = new[]
+    {
+        "User", "Role", "Parking", "Pricing", "Report", "Shift", "Payment", "Audit", "Settings", "Incident"
+    };
+
     public static IReadOnlyList<string> GetAll()
     {
         return typeof(Permissions)
@@ -38,5 +50,16 @@ public static class Permissions
             .Where(fi => fi.IsLiteral && !fi.IsInitOnly && fi.FieldType == typeof(string))
             .Select(fi => (string)fi.GetValue(null)!)
             .ToList();
+    }
+
+    public static string GetModule(string permissionName)
+    {
+        var dot = permissionName?.IndexOf('.') ?? -1;
+        if (dot <= 0)
+        {
+            throw new ArgumentException("Permission name must have the form 'Module.Action'.", nameof(permissionName));
+        }
+
+        return permissionName![..dot];
     }
 }
