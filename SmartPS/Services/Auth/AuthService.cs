@@ -228,13 +228,11 @@ namespace SmartPS.Services.Auth
             }
 
             var roleChanged = existing.RoleId != request.RoleId;
-            if (roleChanged)
+
+            // Mọi thay đổi trên tài khoản Admin (hoặc biến tài khoản thành Admin) chỉ do Admin thực hiện
+            if (SystemRoles.IsSystemAdmin(existing.Role?.RoleName) || SystemRoles.IsSystemAdmin(newRole.RoleName))
             {
-                // Gán hoặc gỡ vai trò Admin chỉ do Admin thực hiện
-                if (SystemRoles.IsSystemAdmin(existing.Role?.RoleName) || SystemRoles.IsSystemAdmin(newRole.RoleName))
-                {
-                    await DemandSystemAdminAsync(entityId);
-                }
+                await DemandSystemAdminAsync(entityId);
             }
 
             if (isSelf)
@@ -259,6 +257,7 @@ namespace SmartPS.Services.Auth
             var newPasswordHash = passwordChanged ? BCrypt.Net.BCrypt.HashPassword(request.NewPassword) : null;
             var lastAdminViolation = false;
             var notFound = false;
+            var adminRequired = false;
 
             await using (var transaction = await _audit.BeginAuditedTransactionAsync(db))
             {
@@ -266,6 +265,12 @@ namespace SmartPS.Services.Auth
                 if (user is null)
                 {
                     notFound = true;
+                }
+                else if (!_currentUser.IsSystemAdmin
+                         && (SystemRoles.IsSystemAdmin(user.Role?.RoleName) || SystemRoles.IsSystemAdmin(newRole.RoleName)))
+                {
+                    // Kiểm tra lại trên thực thể đang theo dõi (vai trò có thể đổi sau tiền kiểm tra)
+                    adminRequired = true;
                 }
                 else
                 {
@@ -312,6 +317,11 @@ namespace SmartPS.Services.Auth
             if (notFound)
             {
                 throw new KeyNotFoundException("Không tìm thấy tài khoản người dùng cần cập nhật.");
+            }
+
+            if (adminRequired)
+            {
+                await DemandSystemAdminAsync(entityId);
             }
 
             if (lastAdminViolation)
@@ -365,6 +375,7 @@ namespace SmartPS.Services.Auth
             var lastAdminViolation = false;
             var notFound = false;
             var hasHistory = false;
+            var adminRequired = false;
 
             try
             {
@@ -374,6 +385,10 @@ namespace SmartPS.Services.Auth
                     if (user is null)
                     {
                         notFound = true;
+                    }
+                    else if (!_currentUser.IsSystemAdmin && SystemRoles.IsSystemAdmin(user.Role?.RoleName))
+                    {
+                        adminRequired = true;
                     }
                     else if (user.IsActive && SystemRoles.IsSystemAdmin(user.Role?.RoleName)
                              && !await HasOtherActiveAdminAsync(db, user.UserId))
@@ -401,6 +416,11 @@ namespace SmartPS.Services.Auth
             if (notFound)
             {
                 throw new KeyNotFoundException("Không tìm thấy tài khoản người dùng cần xóa.");
+            }
+
+            if (adminRequired)
+            {
+                await DemandSystemAdminAsync(entityId);
             }
 
             if (lastAdminViolation)
@@ -496,6 +516,10 @@ namespace SmartPS.Services.Auth
         private Task LogLoginFailedAsync(User? user, string attemptedUsername, string reason)
         {
             var actor = new AuditActor(user?.UserId, attemptedUsername, user?.Role?.RoleName ?? string.Empty);
+            if (attemptedUsername.Length > AuditRecordFactory.MaxUsernameLength)
+            {
+                attemptedUsername = attemptedUsername[..AuditRecordFactory.MaxUsernameLength];
+            }
             return _audit.LogAsync(new AuditEntry(
                 AuditActions.AuthLoginFailed,
                 AuditOutcome.Failed,
