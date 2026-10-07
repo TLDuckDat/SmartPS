@@ -106,6 +106,8 @@ public partial class App : Application
         services.AddSingleton<IPaymentService, PaymentService>();
         services.AddSingleton<IShiftService, ShiftService>();
         services.AddSingleton<SmartPS.Services.Reports.IReportService, SmartPS.Services.Reports.ReportService>();
+        services.AddSingleton<SmartPS.Services.Reports.IReportExportService, SmartPS.Services.Reports.ReportExportService>();
+        services.AddSingleton<SmartPS.Services.Dialog.IFileDialogService, SmartPS.Services.Dialog.FileDialogService>();
         services.AddSingleton<ICustomerService, CustomerService>();
         services.AddSingleton<IMonthlyTicketService, MonthlyTicketService>();
         services.AddSingleton<IBlacklistService, BlacklistService>();

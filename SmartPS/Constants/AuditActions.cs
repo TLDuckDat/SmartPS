@@ -34,6 +34,7 @@ public static class AuditActions
     public const string GateBlacklistBlocked = "GATE_BLACKLIST_BLOCKED";
     public const string GateBlacklistExitWarning = "GATE_BLACKLIST_EXIT_WARNING";
     public const string ZoneUpdate = "ZONE_UPDATE";
+    public const string ReportExport = "REPORT_EXPORT";
 
     public static IReadOnlyList<string> All { get; } = typeof(AuditActions)
         .GetFields(BindingFlags.Public | BindingFlags.Static)
