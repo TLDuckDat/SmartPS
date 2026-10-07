@@ -99,7 +99,11 @@ internal static class ReportSql
     public const string SlotsPerZone =
         "SELECT z.\"ZoneId\" AS \"ZoneId\", z.\"ZoneName\" AS \"ZoneName\", COUNT(sl.\"SlotId\")::int AS \"Count\" " +
         "FROM \"ParkingZones\" z LEFT JOIN \"ParkingSlots\" sl ON sl.\"ZoneId\" = z.\"ZoneId\" " +
-        "GROUP BY z.\"ZoneId\", z.\"ZoneName\", z.\"ZoneCode\" ORDER BY z.\"ZoneCode\", z.\"ZoneId\"";
+        "AND (@vt IS NULL OR sl.\"VehicleTypeId\" = @vt) " +
+        "WHERE (@zone IS NULL OR z.\"ZoneId\" = @zone) " +
+        "GROUP BY z.\"ZoneId\", z.\"ZoneName\", z.\"ZoneCode\" " +
+        "HAVING @vt IS NULL OR COUNT(sl.\"SlotId\") > 0 " +
+        "ORDER BY z.\"ZoneCode\", z.\"ZoneId\"";
 
     /// <summary>Q10b: active sessions per zone.</summary>
     public const string ActivePerZone =
