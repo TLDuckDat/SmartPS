@@ -51,6 +51,61 @@ public static class GateClassificationQueries
             .ToListAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Các kỳ vé tháng đã thanh toán của biển số: chỉ vé đang Active, khách đang hoạt động và biển số là phương tiện đang hoạt động của khách đó.
+    /// Vé cũ chưa có dòng mua nào dùng khoảng [StartDate, EndDate) của chính vé làm một kỳ.
+    /// </summary>
+    public static async Task<IReadOnlyList<CoveragePeriod>> GetCoveragePeriodsAsync(
+        SmartPsDbContext db,
+        string normalizedPlate,
+        CancellationToken cancellationToken = default)
+    {
+        var tickets = await db.MonthlyTickets
+            .AsNoTracking()
+            .Where(t => t.RegisteredLicensePlate == normalizedPlate
+                        && t.Status == MonthlyTicketStatus.Active
+                        && t.Customer!.IsActive
+                        && db.CustomerVehicles.Any(v => v.CustomerId == t.CustomerId && v.LicensePlate == t.RegisteredLicensePlate && v.IsActive))
+            .Select(t => new { t.TicketId, t.StartDate, t.EndDate })
+            .ToListAsync(cancellationToken);
+        if (tickets.Count == 0)
+        {
+            return Array.Empty<CoveragePeriod>();
+        }
+
+        var ids = tickets.Select(t => t.TicketId).ToList();
+        var purchases = await db.MonthlyTicketPurchases
+            .AsNoTracking()
+            .Where(p => ids.Contains(p.TicketId))
+            .Select(p => new { p.TicketId, p.PeriodStartUtc, p.PeriodEndUtc })
+            .ToListAsync(cancellationToken);
+
+        var periods = new List<CoveragePeriod>();
+        foreach (var ticket in tickets)
+        {
+            var own = purchases.Where(p => p.TicketId == ticket.TicketId).ToList();
+            if (own.Count == 0)
+            {
+                periods.Add(new CoveragePeriod(ticket.StartDate, ticket.EndDate));
+                continue;
+            }
+
+            periods.AddRange(own.Select(p => new CoveragePeriod(p.PeriodStartUtc, p.PeriodEndUtc)));
+        }
+
+        return periods;
+    }
+
+    public static async Task<MonthlyCoverage> GetMonthlyCoverageAsync(
+        SmartPsDbContext db,
+        string normalizedPlate,
+        DateTime checkInUtc,
+        CancellationToken cancellationToken = default)
+    {
+        var periods = await GetCoveragePeriodsAsync(db, normalizedPlate, cancellationToken);
+        return new MonthlyCoverage(MonthlyCoverageCalculator.ContiguousValidUntil(periods, checkInUtc));
+    }
+
     public static async Task<VehicleClassification> ClassifyAsync(
         SmartPsDbContext db,
         string normalizedPlate,

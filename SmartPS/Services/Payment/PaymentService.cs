@@ -79,7 +79,10 @@ public class PaymentService : IPaymentService
         var now = DateTime.UtcNow;
         var pricingRule = await db.PricingRules.AsNoTracking()
             .FirstOrDefaultAsync(r => r.VehicleTypeId == session.VehicleTypeId, cancellationToken);
-        var fee = _feeCalculator.CalculateFee(session, pricingRule, now);
+        var coverage = session.IsMonthlyPass
+            ? await GateClassificationQueries.GetMonthlyCoverageAsync(db, LicensePlateNormalizer.Normalize(session.LicensePlate), session.CheckInTime, cancellationToken)
+            : null;
+        var fee = _feeCalculator.CalculateFee(session, pricingRule, now, coverage);
 
         if (fee.IsMonthlyTicket || fee.TotalFee <= 0)
         {
@@ -1232,6 +1235,15 @@ public class PaymentService : IPaymentService
                 Source = source
             },
             checkoutUser is null ? null : AuditActor.FromUser(checkoutUser)), cancellationToken);
+
+        // Xe vào danh sách đen sau khi đã vào bãi: vẫn cho ra, ghi nhận cảnh báo cạnh bản ghi checkout (R16)
+        var exitBlacklist = await GateClassificationQueries.FindActiveBlacklistAsync(
+            db, LicensePlateNormalizer.Normalize(session.LicensePlate), cancellationToken);
+        if (exitBlacklist != null)
+        {
+            await _audit.AppendAsync(db, GateAuditEntries.BlacklistExitWarning(
+                session, exitBlacklist, checkoutUser is null ? null : AuditActor.FromUser(checkoutUser)), cancellationToken);
+        }
 
         return true;
     }

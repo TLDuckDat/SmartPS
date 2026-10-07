@@ -723,7 +723,31 @@ public class GateControlService : IGateControlService
 
         var now = DateTime.UtcNow;
         var pricingRule = await GetPricingRuleAsync(session.VehicleTypeId, cancellationToken);
-        var feeResult = _feeCalculator.CalculateFee(session, pricingRule, now);
+
+        // Hiệu lực vé tháng và danh sách đen tra trên DB; lỗi DB thì giữ hành vi cũ (miễn phí vé tháng, không cảnh báo).
+        MonthlyCoverage? coverage = null;
+        BlacklistMatch? blacklist = null;
+        if (_dbContextFactory != null)
+        {
+            try
+            {
+                await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+                if (session.IsMonthlyPass)
+                {
+                    coverage = await GateClassificationQueries.GetMonthlyCoverageAsync(db, norm, session.CheckInTime, cancellationToken);
+                }
+
+                blacklist = await GateClassificationQueries.FindActiveBlacklistAsync(db, norm, cancellationToken);
+            }
+            catch (OperationCanceledException) { throw; }
+            catch
+            {
+                coverage = null;
+                blacklist = null;
+            }
+        }
+
+        var feeResult = _feeCalculator.CalculateFee(session, pricingRule, now, coverage);
 
         return new GateCheckOutCalculationResult
         {
@@ -736,7 +760,14 @@ public class GateControlService : IGateControlService
             TotalFee = feeResult.TotalFee,
             IsMonthlyTicket = feeResult.IsMonthlyTicket,
             CustomerName = session.Customer?.FullName,
-            Message = feeResult.Message
+            Message = feeResult.Message,
+            TicketExpiredDuringStay = feeResult.ChargeReason == MonthlyChargeReason.ExpiredDuringStay,
+            TicketNoLongerValid = feeResult.ChargeReason == MonthlyChargeReason.NotCovered,
+            TicketValidUntilUtc = feeResult.TicketValidUntilUtc,
+            ChargeFromUtc = feeResult.ChargeFromUtc,
+            IsBlacklisted = blacklist != null,
+            BlacklistReason = blacklist?.Reason,
+            BlacklistEntryId = blacklist?.BlacklistEntryId
         };
     }
 
@@ -814,6 +845,15 @@ public class GateControlService : IGateControlService
                         PaymentMethod = method.ToString(),
                         ShiftId = shift.ShiftId
                     }), cancellationToken);
+
+                // Xe vào danh sách đen sau khi đã vào bãi: vẫn cho ra, ghi nhận cảnh báo cạnh bản ghi checkout (R16)
+                var exitBlacklist = await GateClassificationQueries.FindActiveBlacklistAsync(
+                    db, NormalizePlate(session.LicensePlate), cancellationToken);
+                if (exitBlacklist != null)
+                {
+                    await _auditService.AppendAsync(db, GateAuditEntries.BlacklistExitWarning(session, exitBlacklist), cancellationToken);
+                }
+
                 await db.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
 
