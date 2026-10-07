@@ -258,6 +258,8 @@ public class AuditTrailDbTests : IClassFixture<PostgresDatabaseFixture>
         var rows = await AuditDb.AllAsync(_db.Factory);
         var target = rows[rows.Count / 2];
         var originalUsername = target.Username;
+        // Keep the trigger's enable mode (ENABLE ALWAYS after HardenAuditTriggers, FX5) when restoring it.
+        var originalMode = await _db.ScalarAsync<string>("SELECT tgenabled::text FROM pg_trigger WHERE tgname = 'TR_AuditLogs_NoUpdate'");
 
         try
         {
@@ -276,7 +278,9 @@ public class AuditTrailDbTests : IClassFixture<PostgresDatabaseFixture>
         finally
         {
             await _db.ExecuteAsync("UPDATE \"AuditLogs\" SET \"Username\" = @u WHERE \"AuditLogId\" = @id", ("u", originalUsername), ("id", target.AuditLogId));
-            await _db.ExecuteAsync("ALTER TABLE \"AuditLogs\" ENABLE TRIGGER \"TR_AuditLogs_NoUpdate\"");
+            await _db.ExecuteAsync(originalMode == "A"
+                ? "ALTER TABLE \"AuditLogs\" ENABLE ALWAYS TRIGGER \"TR_AuditLogs_NoUpdate\""
+                : "ALTER TABLE \"AuditLogs\" ENABLE TRIGGER \"TR_AuditLogs_NoUpdate\"");
         }
 
         Assert.True((await verifier.VerifyAsync()).IsValid);

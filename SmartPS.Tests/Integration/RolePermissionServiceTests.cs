@@ -5,7 +5,7 @@ using SmartPS.Services.RolePermissions;
 
 namespace SmartPS.Tests.Integration;
 
-/// <summary>R9–R11, AC-4 (with seed re-run, m11), AC-5, R7 reload after a matrix save.</summary>
+/// <summary>R9–R11, AC-4 (with seed re-run, m11), AC-5, R7 reload after a matrix save, FX2 (spec §6.10: only system Admin saves).</summary>
 [Collection(PostgresCollection.Name)]
 [Trait("Category", "Integration")]
 public class RolePermissionServiceTests : IClassFixture<PostgresDatabaseFixture>
@@ -242,22 +242,68 @@ public class RolePermissionServiceTests : IClassFixture<PostgresDatabaseFixture>
     }
 
     [Fact]
-    public async Task R7_saving_own_role_reloads_current_user_permissions()
+    public async Task FX2_CH3_non_admin_with_Role_Manage_cannot_save_the_matrix()
     {
-        // R7: permissions are reloaded after saving the matrix (no re-login needed).
+        // Spec §6.10: only a system Admin may save the matrix; Role.Manage on another role is not enough
+        // (otherwise a Role.Manage holder can self-grant User.Edit and take over Admin accounts, CH3).
         _db.RequireAvailable();
         var role = await TestUsers.CreateRoleAsync(_db.Factory, TestUsers.UniqueName("rm"), Permissions.RoleView, Permissions.RoleManage);
         var user = await TestUsers.CreateAsync(_db.Factory, role.RoleName);
+        var operatorBefore = await TestUsers.GrantsAsync(_db.Factory, "Operator");
+        var operatorRoleId = await TestUsers.RoleIdAsync(_db.Factory, "Operator");
         using var sp = IntegrationServices.Create(_db);
         await sp.LoginAsync(user.Username);
-        Assert.False(sp.Perms().HasPermission(Permissions.ReportExport));
+        var idBefore = await AuditDb.MaxIdAsync(_db.Factory);
 
-        await Matrix(sp).SaveAsync(new Dictionary<int, IReadOnlyCollection<string>>
+        var selfGrant = await Assert.ThrowsAsync<PermissionDeniedException>(() => Matrix(sp).SaveAsync(
+            new Dictionary<int, IReadOnlyCollection<string>> { [role.RoleId] = Permissions.GetAll().ToList() }));
+        var otherRole = await Assert.ThrowsAsync<PermissionDeniedException>(() => Matrix(sp).SaveAsync(
+            new Dictionary<int, IReadOnlyCollection<string>> { [operatorRoleId] = new[] { Permissions.ParkingView } }));
+
+        foreach (var ex in new[] { selfGrant, otherRole })
         {
-            [role.RoleId] = new[] { Permissions.RoleView, Permissions.RoleManage, Permissions.ReportExport }
+            Assert.Equal("AdminRoleRequired", ex.Reason);
+            Assert.Equal(new[] { SystemRoles.AdminRoleRequirement }, ex.RequiredPermissions);
+        }
+
+        Assert.Equal(new HashSet<string> { Permissions.RoleView, Permissions.RoleManage }, await TestUsers.GrantsAsync(_db.Factory, role.RoleName));
+        Assert.Equal(operatorBefore, await TestUsers.GrantsAsync(_db.Factory, "Operator"));
+        Assert.False(sp.Perms().HasPermission(Permissions.UserEdit));
+
+        var rows = await AuditDb.RowsAfterAsync(_db.Factory, idBefore);
+        Assert.DoesNotContain(rows, r => r.Action == AuditActions.RolePermissionsUpdate);
+        var denied = rows.Where(r => r.Action == AuditActions.AccessDenied).ToList();
+        Assert.Equal(2, denied.Count);
+        Assert.All(denied, r =>
+        {
+            Assert.Equal(user.UserId, r.UserId);
+            Assert.Equal(new[] { "Role:Admin" }, AuditDb.StringArray(AuditDb.Details(r), "requiredPermissions"));
+        });
+    }
+
+    [Fact]
+    public async Task R7_reload_after_matrix_save_applies_new_grants_to_a_logged_in_user()
+    {
+        // R7 under spec §6.10: the Admin saves; the affected user's session picks the change up via ReloadCurrentUserAsync
+        // (and at the latest at next login, F7) without needing to re-enter credentials.
+        _db.RequireAvailable();
+        var role = await TestUsers.CreateRoleAsync(_db.Factory, TestUsers.UniqueName("rl"), Permissions.RoleView);
+        var user = await TestUsers.CreateAsync(_db.Factory, role.RoleName);
+        using var userSession = IntegrationServices.Create(_db);
+        await userSession.LoginAsync(user.Username);
+        Assert.False(userSession.Perms().HasPermission(Permissions.ReportExport));
+
+        using var adminSession = IntegrationServices.Create(_db);
+        await adminSession.LoginAdminAsync();
+        await Matrix(adminSession).SaveAsync(new Dictionary<int, IReadOnlyCollection<string>>
+        {
+            [role.RoleId] = new[] { Permissions.RoleView, Permissions.ReportExport }
         });
 
-        Assert.True(sp.Perms().HasPermission(Permissions.ReportExport));
-        Assert.Contains(Permissions.ReportExport, sp.GetRequiredService<ICurrentUserContext>().Permissions);
+        await userSession.Auth().ReloadCurrentUserAsync();
+
+        Assert.True(userSession.Perms().HasPermission(Permissions.ReportExport));
+        Assert.Contains(Permissions.ReportExport, userSession.GetRequiredService<ICurrentUserContext>().Permissions);
+        Assert.True(adminSession.Perms().IsAdmin());
     }
 }

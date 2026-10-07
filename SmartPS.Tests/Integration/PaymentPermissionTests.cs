@@ -212,4 +212,35 @@ public class PaymentPermissionTests : IClassFixture<PostgresDatabaseFixture>
         Assert.False(created.IsPermissionDenied);
         Assert.Empty(await AuditDb.RowsAfterAsync(_db.Factory, idBefore));
     }
+
+    [Fact]
+    public async Task FX8_unexpected_audit_failure_during_refund_is_not_reported_as_a_business_rejection()
+    {
+        // FX8 (F6): the refund catch only covers EnsureCanTransition and the duplicate-refund check;
+        // an audit append failure (an InvalidOperationException too) must propagate, and nothing is persisted.
+        _db.RequireAvailable();
+        var (paymentId, _) = await PaidPaymentAsync();
+        var manager = await TestUsers.CreateAsync(_db.Factory, "Manager");
+        using var sp = IntegrationServices.Create(_db, IntegrationServices.FailAppendFor(AuditActions.PaymentRefund));
+        await sp.LoginAsync(manager.Username);
+        await ParkingFlows.OpenShiftAsync(sp, manager.UserId);
+
+        var ex = await Record.ExceptionAsync(() => Payments(sp).ConfirmManualRefundAsync(paymentId, "x", manager.UserId));
+
+        Assert.NotNull(ex);
+        var chain = ex;
+        var found = false;
+        while (chain is not null)
+        {
+            found |= chain.Message.Contains("Simulated audit append failure", StringComparison.Ordinal);
+            chain = chain.InnerException;
+        }
+
+        Assert.True(found, $"expected the audit failure to surface, got {ex}");
+        Assert.Equal(1, sp.GetRequiredService<ThrowingAuditServiceDecorator>().FailuresThrown);
+        Assert.Equal(PaymentStatus.Paid, await StatusAsync(paymentId));
+        await using var ctx = _db.CreateContext();
+        Assert.False(await ctx.FinancialTransactions.AnyAsync(t =>
+            t.Type == SmartPS.Models.Shifts.FinancialTransactionType.Refund && t.ReferenceCode == $"PAYMENT-{paymentId}"));
+    }
 }

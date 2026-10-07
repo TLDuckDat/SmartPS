@@ -131,9 +131,10 @@ public class MigrationTests : IClassFixture<PostgresDatabaseFixture>
         Assert.Equal(3, await CountAsync(cs,
             "SELECT count(*) FROM pg_trigger WHERE tgname IN ('TR_AuditLogs_NoUpdate','TR_AuditLogs_NoDelete','TR_AuditLogs_NoTruncate') AND NOT tgisinternal"));
         Assert.Equal(1, await CountAsync(cs, "SELECT count(*) FROM pg_proc WHERE proname = 'fn_AuditLogs_BlockMutation'"));
+        Assert.Equal(1, await CountAsync(cs, "SELECT count(*) FROM \"__EFMigrationsHistory\" WHERE \"MigrationId\" LIKE '%\\_AddRbacAndAuditTrail'"));
         var lastMigration = await PostgresDatabaseFixture.ScalarAsync<string>(cs,
             "SELECT \"MigrationId\" FROM \"__EFMigrationsHistory\" ORDER BY \"MigrationId\" DESC LIMIT 1");
-        Assert.EndsWith("_AddRbacAndAuditTrail", lastMigration, StringComparison.Ordinal);
+        Assert.EndsWith("_HardenAuditTriggers", lastMigration, StringComparison.Ordinal); // FX5: latest migration
 
         // When Down() runs
         await MigrateToAsync(cs, PreviousMigration);
@@ -220,5 +221,40 @@ public class MigrationTests : IClassFixture<PostgresDatabaseFixture>
         Assert.DoesNotContain("Report.View", await GrantsAsync(cs, "Operator"));
         Assert.DoesNotContain("Audit.View", await GrantsAsync(cs, "Manager"));
         Assert.Equal(23, (await GrantsAsync(cs, "Admin")).Count);
+    }
+
+    private static string MigrationId(string connectionString, string suffix)
+    {
+        using var ctx = PostgresDatabaseFixture.CreateContext(connectionString);
+        return ctx.Database.GetMigrations().Single(m => m.EndsWith(suffix, StringComparison.Ordinal));
+    }
+
+    private static async Task<Dictionary<string, string>> TriggerModesAsync(string cs)
+    {
+        var modes = new Dictionary<string, string>();
+        foreach (var name in new[] { "TR_AuditLogs_NoUpdate", "TR_AuditLogs_NoDelete", "TR_AuditLogs_NoTruncate" })
+        {
+            modes[name] = await PostgresDatabaseFixture.ScalarAsync<string>(cs, $"SELECT tgenabled::text FROM pg_trigger WHERE tgname = '{name}'") ?? "<missing>";
+        }
+
+        return modes;
+    }
+
+    [Fact]
+    public async Task FX5_HardenAuditTriggers_enables_triggers_always_and_down_reverts_to_enable()
+    {
+        // FX5 (CH13): new migration HardenAuditTriggers (AddRbacAndAuditTrail itself is unchanged, it is already on main).
+        _db.RequireAvailable();
+        var cs = await _db.CreateSiblingDatabaseAsync("harden");
+
+        await MigrateToAsync(cs, null);
+        Assert.All(await TriggerModesAsync(cs), kv => Assert.True(kv.Value == "A", $"{kv.Key} = '{kv.Value}' after Up, expected 'A'"));
+
+        await MigrateToAsync(cs, MigrationId(cs, "_AddRbacAndAuditTrail"));
+        Assert.All(await TriggerModesAsync(cs), kv => Assert.True(kv.Value == "O", $"{kv.Key} = '{kv.Value}' after Down, expected 'O'"));
+        Assert.Equal(1, await CountAsync(cs, "SELECT count(*) FROM pg_tables WHERE tablename = 'AuditLogs'"));
+
+        await MigrateToAsync(cs, null);
+        Assert.All(await TriggerModesAsync(cs), kv => Assert.Equal("A", kv.Value));
     }
 }

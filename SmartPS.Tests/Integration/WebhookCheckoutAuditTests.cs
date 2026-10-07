@@ -160,4 +160,56 @@ public class WebhookCheckoutAuditTests : IClassFixture<PostgresDatabaseFixture>
         Assert.Empty(await AuditDb.RowsAfterAsync(_db.Factory, idBefore, AuditActions.ParkingCheckOut));
         Assert.Empty(gateway.Violations);
     }
+
+    [Fact]
+    public async Task FX9_payment_becoming_pending_after_preflight_returns_500_so_the_gateway_retries()
+    {
+        // FX9 (F8): the preflight saw a non-pending payment (so no gateway verify was made outside the lock), but inside the
+        // audited transaction the payment is Pending. The webhook must not be acknowledged: Accepted=false, HTTP 500.
+        _db.RequireAvailable();
+        var op = await TestUsers.CreateAsync(_db.Factory, "Operator");
+        int? flipPaymentId = null;
+        var cs = _db.ConnectionString;
+
+        void FlipToPending()
+        {
+            if (flipPaymentId is null)
+            {
+                return;
+            }
+
+            using var conn = new Npgsql.NpgsqlConnection(cs);
+            conn.Open();
+            using var cmd = new Npgsql.NpgsqlCommand("UPDATE \"Payments\" SET \"Status\" = 1 WHERE \"PaymentId\" = @p", conn);
+            cmd.Parameters.AddWithValue("p", flipPaymentId.Value);
+            cmd.ExecuteNonQuery();
+        }
+
+        using var sp = IntegrationServices.Create(_db, IntegrationServices.HookBeforeBegin(FlipToPending));
+        await sp.LoginAsync(op.Username);
+        var (sessionId, paymentId, _) = await ParkingFlows.PendingVietQrAsync(sp, op.UserId);
+        await _db.ExecuteAsync("UPDATE \"Payments\" SET \"Status\" = 4 WHERE \"PaymentId\" = @p", ("p", paymentId)); // Cancelled at preflight
+        flipPaymentId = paymentId;
+        var payload = await ParkingFlows.PaidWebhookPayloadAsync(sp, paymentId, sp.GetRequiredService<MockPaymentGateway>());
+        var idBefore = await AuditDb.MaxIdAsync(_db.Factory);
+
+        var first = await sp.GetRequiredService<IPaymentService>().ProcessWebhookAsync(payload, null, MockPaymentGateway.MockProvider);
+
+        Assert.False(first.Accepted);
+        Assert.Equal(500, first.HttpStatusCode);
+        Assert.False(first.PaymentPaid);
+        await using (var ctx = _db.CreateContext())
+        {
+            Assert.Equal(PaymentStatus.Pending, ctx.Payments.Where(p => p.PaymentId == paymentId).Select(p => p.Status).Single());
+        }
+
+        Assert.Empty(await AuditDb.RowsAfterAsync(_db.Factory, idBefore, AuditActions.ParkingCheckOut));
+
+        // The gateway retries the same delivery: now the preflight sees Pending and the payment completes once.
+        var retry = await sp.GetRequiredService<IPaymentService>().ProcessWebhookAsync(payload, null, MockPaymentGateway.MockProvider);
+
+        Assert.True(retry.PaymentPaid, retry.Message);
+        var row = Assert.Single(await AuditDb.RowsAfterAsync(_db.Factory, idBefore, AuditActions.ParkingCheckOut));
+        Assert.Equal(sessionId.ToString(), row.EntityId);
+    }
 }

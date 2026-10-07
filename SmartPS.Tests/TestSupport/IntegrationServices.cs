@@ -57,6 +57,15 @@ public static class IntegrationServices
         services.AddSingleton<IAuditService>(sp => sp.GetRequiredService<ThrowingAuditServiceDecorator>());
     };
 
+    /// <summary>Replaces IAuditService with <see cref="HookAuditServiceDecorator"/> running <paramref name="beforeBegin"/> before every Begin.</summary>
+    public static Action<IServiceCollection> HookBeforeBegin(Action beforeBegin) => services =>
+    {
+        services.AddSingleton<AuditService>();
+        services.AddSingleton<HookAuditServiceDecorator>(sp =>
+            new HookAuditServiceDecorator(sp.GetRequiredService<AuditService>(), beforeBegin));
+        services.AddSingleton<IAuditService>(sp => sp.GetRequiredService<HookAuditServiceDecorator>());
+    };
+
     public static IDbContextFactory<SmartPsDbContext> DbFactory(this IServiceProvider sp)
         => sp.GetRequiredService<IDbContextFactory<SmartPsDbContext>>();
 

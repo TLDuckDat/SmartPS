@@ -130,30 +130,89 @@ public class AuditAtomicityTests : IClassFixture<PostgresDatabaseFixture>
         Assert.False(await ctx.AuditLogs.AnyAsync(a => a.Action == AuditActions.ParkingCheckOut && a.Outcome == AuditOutcome.Success && a.EntityId == session.SessionId.ToString()));
     }
 
-    [Fact]
-    public async Task TR15a_append_failure_on_check_in_leaves_no_db_session_and_falls_back_to_memory()
+    private static bool PlateInJsonl(string plate)
     {
-        // R15 + E2: the DB write is rolled back with its audit row; the gate keeps working from memory and flags the JSONL line.
+        var path = Path.Combine(AppContext.BaseDirectory, "Storage", "gate_audit_log.jsonl");
+        return File.Exists(path) && File.ReadAllLines(path).Any(l => l.Contains(plate, StringComparison.Ordinal));
+    }
+
+    private static bool PlateInOfflineSessions(string plate)
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Storage", "offline_active_sessions.json");
+        return File.Exists(path) && File.ReadAllText(path).Contains(plate, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task FX7_append_failure_on_check_in_fails_the_check_in_without_memory_fallback()
+    {
+        // R15 + FX7 (F4): only a connection failure may fall back to memory; an audit failure while the DB is up
+        // must fail the check-in (no DB session, no audit Success, no memory session, no JSONL line).
         _db.RequireAvailable();
         var op = await TestUsers.CreateAsync(_db.Factory, "Operator");
         using var sp = IntegrationServices.Create(_db, IntegrationServices.FailAppendFor(AuditActions.ParkingCheckIn));
         await sp.LoginAsync(op.Username);
         var plate = ParkingFlows.UniquePlate();
+        var vehicleTypeId = await ParkingFlows.MotorbikeTypeIdAsync(_db.Factory);
 
         var result = await sp.GetRequiredService<SmartPS.Services.GateControl.IGateControlService>().ProcessCheckInAsync(
-            new SmartPS.Models.GateControl.GateCheckInRequest { LicensePlate = plate, VehicleTypeId = await ParkingFlows.MotorbikeTypeIdAsync(_db.Factory) });
+            new SmartPS.Models.GateControl.GateCheckInRequest { LicensePlate = plate, VehicleTypeId = vehicleTypeId });
 
-        Assert.True(result.Success, result.Message);
+        Assert.False(result.Success);
+        Assert.False(result.IsPermissionDenied);
+        Assert.Null(result.Session);
+        Assert.False(string.IsNullOrWhiteSpace(result.Message));
+        Assert.Equal(1, sp.GetRequiredService<ThrowingAuditServiceDecorator>().FailuresThrown);
         await using (var ctx = _db.CreateContext())
         {
             Assert.False(await ctx.ParkingSessions.AnyAsync(s => s.LicensePlate == plate));
             Assert.False(await ctx.AuditLogs.AnyAsync(a => a.Action == AuditActions.ParkingCheckIn && a.Outcome == AuditOutcome.Success && a.UserId == op.UserId));
         }
 
-        var jsonlPath = Path.Combine(AppContext.BaseDirectory, "Storage", "gate_audit_log.jsonl");
-        var line = File.ReadAllLines(jsonlPath).Last(l => l.Contains(plate, StringComparison.Ordinal));
-        using var doc = JsonDocument.Parse(line);
-        Assert.Equal(JsonValueKind.False, doc.RootElement.GetProperty("DbAudit").ValueKind);
+        Assert.False(PlateInJsonl(plate), "a failed check-in must not be written to the JSONL log");
+        Assert.False(PlateInOfflineSessions(plate), "a failed check-in must not create a memory/offline session");
+    }
+
+    [Fact]
+    public async Task FX7_audit_lock_timeout_on_check_in_fails_the_check_in_without_memory_fallback()
+    {
+        // FX7: a lock timeout is not a connection failure (even though it is a timeout) → no memory fallback.
+        _db.RequireAvailable();
+        var op = await TestUsers.CreateAsync(_db.Factory, "Operator");
+        using var sp = IntegrationServices.Create(_db);
+        await sp.LoginAsync(op.Username);
+        var plate = ParkingFlows.UniquePlate();
+        var vehicleTypeId = await ParkingFlows.MotorbikeTypeIdAsync(_db.Factory);
+
+        await using var holder = new NpgsqlConnection(_db.ConnectionString);
+        await holder.OpenAsync();
+        await using (var take = new NpgsqlCommand("SELECT pg_advisory_lock(@k)", holder))
+        {
+            take.Parameters.AddWithValue("k", AuditService.AuditChainLockKey);
+            await take.ExecuteNonQueryAsync();
+        }
+
+        SmartPS.Models.GateControl.GateCheckInResult result;
+        try
+        {
+            result = await sp.GetRequiredService<SmartPS.Services.GateControl.IGateControlService>().ProcessCheckInAsync(
+                new SmartPS.Models.GateControl.GateCheckInRequest { LicensePlate = plate, VehicleTypeId = vehicleTypeId });
+        }
+        finally
+        {
+            await using var release = new NpgsqlCommand("SELECT pg_advisory_unlock(@k)", holder);
+            release.Parameters.AddWithValue("k", AuditService.AuditChainLockKey);
+            await release.ExecuteNonQueryAsync();
+        }
+
+        Assert.False(result.Success);
+        Assert.False(result.IsPermissionDenied);
+        await using (var ctx = _db.CreateContext())
+        {
+            Assert.False(await ctx.ParkingSessions.AnyAsync(s => s.LicensePlate == plate));
+        }
+
+        Assert.False(PlateInJsonl(plate));
+        Assert.False(PlateInOfflineSessions(plate));
     }
 
     [Fact]

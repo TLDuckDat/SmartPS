@@ -142,4 +142,22 @@ public class AuditDetailsTests
 
         Assert.DoesNotContain(AuditDetails.ForbiddenKeys, k => k.Equals("passwordChanged", StringComparison.OrdinalIgnoreCase));
     }
+
+    [Fact]
+    public void FX11_number_outside_decimal_range_is_written_as_its_raw_text_string()
+    {
+        // jsonb rewrites 1E+300 as 1 followed by 300 zeros; keeping it as a JSON string makes the hash round-trip.
+        Assert.Equal("{\"v\":\"1E+300\"}", AuditDetails.ToCanonicalJson(new { V = 1e300 }));
+        Assert.Equal("{\"v\":\"1e300\"}", AuditDetails.Canonicalize("{\"v\":1e300}"));
+    }
+
+    [Fact]
+    public void FX11_canonical_form_with_out_of_range_numbers_is_idempotent()
+    {
+        var once = AuditDetails.ToCanonicalJson(new { Big = 1e300, Negative = -1.5e200, Normal = 5000.00m, Small = 0.10m });
+
+        Assert.Equal(once, AuditDetails.Canonicalize(once));
+        Assert.Contains("\"normal\":5000.00", once, StringComparison.Ordinal);
+        Assert.Contains("\"small\":0.10", once, StringComparison.Ordinal);
+    }
 }

@@ -154,4 +154,27 @@ public class GateOfflineJsonlTests
         using var doc = JsonDocument.Parse(AuditDetails.ToCanonicalJson(entry.Details));
         Assert.Equal("ActorMismatch", doc.RootElement.GetProperty("reason").GetString());
     }
+
+    [Fact]
+    public async Task FX12_CH28_after_a_connection_failure_the_audited_transaction_is_not_attempted()
+    {
+        // Once the request has already observed that the database is unreachable (active-session lookup etc.),
+        // check-in goes straight to the memory/JSONL path instead of trying to open an audited transaction.
+        var user = TestUsers.Operator();
+        var context = new CurrentUserContext();
+        context.SetUser(user);
+        var factory = new OfflineFactory();
+        var counting = new HookAuditServiceDecorator(new AuditService(factory, context));
+        var guard = new AuthorizationGuard(new PermissionService(context), context, counting);
+        var gate = new GateControlService(guard, counting, factory);
+        var plate = UniquePlate();
+
+        var result = await gate.ProcessCheckInAsync(new GateCheckInRequest { LicensePlate = plate, VehicleTypeId = 1 });
+
+        Assert.True(result.Success, result.Message);
+        Assert.False(result.IsPermissionDenied);
+        Assert.Equal(0, counting.BeginCalls);
+        var line = Assert.Single(JsonlLinesFor(plate));
+        Assert.Equal(JsonValueKind.False, line.GetProperty("DbAudit").ValueKind);
+    }
 }
