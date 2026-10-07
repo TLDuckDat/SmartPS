@@ -241,7 +241,10 @@ namespace SmartPS.Migrations
                   FROM "MonthlyTickets" t WHERE t."RegisteredLicensePlate" <> ''
                 ),
                 dedup AS (SELECT DISTINCT ON ("CustomerId", plate) * FROM src WHERE plate <> '' AND vt IS NOT NULL ORDER BY "CustomerId", plate, prio),
-                ranked AS (SELECT d.*, row_number() OVER (PARTITION BY plate ORDER BY prio, "CustomerId") AS rn FROM dedup d)
+                ranked AS (SELECT d.*, row_number() OVER (PARTITION BY d.plate ORDER BY
+                  (EXISTS (SELECT 1 FROM "MonthlyTickets" mt WHERE mt."CustomerId" = d."CustomerId" AND mt."RegisteredLicensePlate" = d.plate
+                           AND mt."Status" = 0 AND mt."StartDate" <= now() AND mt."EndDate" > now())) DESC,
+                  d.prio, d."CustomerId") AS rn FROM dedup d)
                 INSERT INTO "CustomerVehicles" ("CustomerId", "LicensePlate", "VehicleTypeId", "IsActive", "CreatedAt")
                 SELECT "CustomerId", plate, vt, rn = 1, created FROM ranked;
                 """);
