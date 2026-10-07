@@ -12,5 +12,7 @@ public enum NavigationItemType
     Shifts,
     UserManagement,
     Pricing,
-    Settings
+    Settings,
+    RolePermissions,
+    AuditLog
 }

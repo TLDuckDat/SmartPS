@@ -2,12 +2,14 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Threading;
+using SmartPS.Constants;
 using SmartPS.Models.GateControl;
 using SmartPS.Models.Ocr;
 using SmartPS.Models.Parking;
 using SmartPS.Models.Payment;
 using SmartPS.Services.Audio;
 using SmartPS.Services.Auth;
+using SmartPS.Services.Authorization;
 using SmartPS.Services.Dialog;
 using SmartPS.Services.GateControl;
 using SmartPS.Services.Localization;
@@ -26,6 +28,7 @@ public class GateControlViewModel : ViewModelBase
     private readonly IDialogService _dialogService;
     private readonly ILocalizationService _localizationService;
     private readonly IAuthService _authService;
+    private readonly IPermissionService _permissionService;
     private readonly IAudioAlertService _audioAlertService;
     private readonly IPaymentService? _paymentService;
 
@@ -513,6 +516,7 @@ public class GateControlViewModel : ViewModelBase
         IDialogService dialogService,
         ILocalizationService localizationService,
         IAuthService authService,
+        IPermissionService permissionService,
         IAudioAlertService? audioAlertService = null,
         IPaymentService? paymentService = null)
     {
@@ -522,6 +526,7 @@ public class GateControlViewModel : ViewModelBase
         _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+        _permissionService = permissionService ?? throw new ArgumentNullException(nameof(permissionService));
         _audioAlertService = audioAlertService ?? new SystemAudioAlertService();
         _paymentService = paymentService;
 
@@ -560,14 +565,14 @@ public class GateControlViewModel : ViewModelBase
         SelectInImageCommand = new RelayCommand(ExecuteSelectInImage);
         QuickTestInCommand = new AsyncRelayCommand(ExecuteQuickTestInAsync);
         RunInOcrCommand = new AsyncRelayCommand(ExecuteRunInOcrAsync);
-        ConfirmCheckInCommand = new AsyncRelayCommand(ExecuteConfirmCheckInAsync);
+        ConfirmCheckInCommand = new AsyncRelayCommand(ExecuteConfirmCheckInAsync, () => _permissionService.HasPermission(Permissions.ParkingCheckIn));
         ToggleBarrierInCommand = new RelayCommand(() => IsBarrierInOpen = !IsBarrierInOpen);
 
         // Commands Làn Ra
         SelectOutImageCommand = new RelayCommand(ExecuteSelectOutImage);
         QuickTestOutCommand = new AsyncRelayCommand(ExecuteQuickTestOutAsync);
         RunOutOcrCommand = new AsyncRelayCommand(ExecuteRunOutOcrAsync);
-        ConfirmCheckOutCommand = new AsyncRelayCommand(ExecuteConfirmCheckOutAsync);
+        ConfirmCheckOutCommand = new AsyncRelayCommand(ExecuteConfirmCheckOutAsync, () => _permissionService.HasPermission(Permissions.ParkingCheckOut));
         ToggleBarrierOutCommand = new RelayCommand(() => IsBarrierOutOpen = !IsBarrierOutOpen);
 
         // Commands Thanh Toán VietQR
@@ -831,8 +836,9 @@ public class GateControlViewModel : ViewModelBase
         }
         else
         {
-            InStatusMessage = $"🔴 [TỪ CHỐI VÀO] {result.Message}";
-            if (!silent) _dialogService.ShowError(result.Message);
+            var denyMessage = result.IsPermissionDenied ? _localizationService.GetString("Msg_Auth_PermissionDenied") : result.Message;
+            InStatusMessage = $"🔴 [TỪ CHỐI VÀO] {denyMessage}";
+            if (!silent) _dialogService.ShowError(denyMessage);
             return false;
         }
     }
@@ -1130,8 +1136,9 @@ public class GateControlViewModel : ViewModelBase
         }
         else
         {
-            OutStatusMessage = $"🔴 [TỪ CHỐI RA] {result.Message}";
-            if (!silent) _dialogService.ShowError(result.Message);
+            var denyMessage = result.IsPermissionDenied ? _localizationService.GetString("Msg_Auth_PermissionDenied") : result.Message;
+            OutStatusMessage = $"🔴 [TỪ CHỐI RA] {denyMessage}";
+            if (!silent) _dialogService.ShowError(denyMessage);
             return false;
         }
     }
@@ -1166,8 +1173,9 @@ public class GateControlViewModel : ViewModelBase
             {
                 IsVietQrModalOpen = false;
                 IsVietQrLoading = false;
-                OutStatusMessage = $"🔴 [LỖI TẠO VIETQR] {result.Message}";
-                if (!silent) _dialogService.ShowError(result.Message);
+                var denyMessage = result.IsPermissionDenied ? _localizationService.GetString("Msg_Auth_PermissionDenied") : result.Message;
+                OutStatusMessage = $"🔴 [LỖI TẠO VIETQR] {denyMessage}";
+                if (!silent) _dialogService.ShowError(denyMessage);
                 return false;
             }
 
@@ -1324,7 +1332,14 @@ public class GateControlViewModel : ViewModelBase
         _vietQrPollTimer.Stop();
         if (VietQrPaymentId > 0 && _paymentService != null)
         {
-            await _paymentService.CancelPaymentAsync(VietQrPaymentId);
+            var cancelResult = await _paymentService.CancelPaymentAsync(VietQrPaymentId);
+            if (cancelResult.IsPermissionDenied)
+            {
+                // Không có quyền huỷ: giữ nguyên giao dịch đang chờ và tiếp tục theo dõi trạng thái
+                _dialogService.ShowWarning(_localizationService.GetString("Msg_Auth_PermissionDenied"));
+                _vietQrPollTimer.Start();
+                return;
+            }
         }
 
         IsVietQrModalOpen = false;

@@ -10,4 +10,5 @@ public class GateCheckInResult
     public bool IsMonthlyTicket { get; set; }
     public string? CustomerName { get; set; }
     public string? AssignedSlotCode { get; set; }
+    public bool IsPermissionDenied { get; set; }
 }

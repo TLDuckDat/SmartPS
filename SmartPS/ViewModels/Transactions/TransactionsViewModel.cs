@@ -1,9 +1,12 @@
 using System.Collections.ObjectModel;
+using SmartPS.Constants;
 using SmartPS.Models.Parking;
 using SmartPS.Models.Payment;
 using SmartPS.Services.GateControl;
 using SmartPS.Services.Payment;
 using SmartPS.Services.Auth;
+using SmartPS.Services.Authorization;
+using SmartPS.Services.Localization;
 using SmartPS.Services.Shifts;
 using SmartPS.Models.Shifts;
 using SmartPS.ViewModels.Shifts;
@@ -16,6 +19,8 @@ public class TransactionsViewModel : ViewModelBase
     private readonly IPaymentService _paymentService;
     private readonly IAuthService _authService;
     private readonly IShiftService _shiftService;
+    private readonly IPermissionService _permissionService;
+    private readonly ILocalizationService _localizationService;
     private readonly List<ParkingSession> _allSessions = new();
     private readonly List<PaymentHistoryItem> _allPayments = new();
     private readonly List<FinancialTransaction> _allFinancialTransactions = new();
@@ -185,12 +190,16 @@ public class TransactionsViewModel : ViewModelBase
         IGateControlService gateControlService,
         IPaymentService paymentService,
         IAuthService authService,
-        IShiftService shiftService)
+        IShiftService shiftService,
+        IPermissionService permissionService,
+        ILocalizationService localizationService)
     {
         _gateControlService = gateControlService ?? throw new ArgumentNullException(nameof(gateControlService));
         _paymentService = paymentService ?? throw new ArgumentNullException(nameof(paymentService));
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _shiftService = shiftService ?? throw new ArgumentNullException(nameof(shiftService));
+        _permissionService = permissionService ?? throw new ArgumentNullException(nameof(permissionService));
+        _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
 
         RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
         ClearFilterCommand = new RelayCommand(() =>
@@ -302,7 +311,8 @@ public class TransactionsViewModel : ViewModelBase
 
     private bool CanRefundPayment(object? param)
     {
-        return param is PaymentHistoryItem item && item.Status == PaymentStatus.Paid;
+        return param is PaymentHistoryItem item && item.Status == PaymentStatus.Paid
+               && _permissionService.HasPermission(Permissions.PaymentRefund);
     }
 
     private async Task ExecuteRefundPaymentAsync(object? param)
@@ -349,7 +359,7 @@ public class TransactionsViewModel : ViewModelBase
             else
             {
                 System.Windows.MessageBox.Show(
-                    result.Message,
+                    result.IsPermissionDenied ? _localizationService.GetString("Msg_Auth_PermissionDenied") : result.Message,
                     "Không thể hoàn tiền",
                     System.Windows.MessageBoxButton.OK,
                     System.Windows.MessageBoxImage.Warning);

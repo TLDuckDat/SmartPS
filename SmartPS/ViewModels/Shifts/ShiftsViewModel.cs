@@ -1,9 +1,11 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using SmartPS.Constants;
 using SmartPS.DTOs.Shifts;
 using SmartPS.Models.Parking;
 using SmartPS.Models.Shifts;
 using SmartPS.Services.Auth;
+using SmartPS.Services.Authorization;
 using SmartPS.Services.Dialog;
 using SmartPS.Services.Localization;
 using SmartPS.Services.Shifts;
@@ -14,6 +16,7 @@ public class ShiftsViewModel : ViewModelBase
 {
     private readonly IShiftService _shiftService;
     private readonly IAuthService _authService;
+    private readonly IPermissionService _permissionService;
     private readonly IDialogService _dialogService;
     private readonly ILocalizationService _localizationService;
 
@@ -176,10 +179,10 @@ public class ShiftsViewModel : ViewModelBase
     }
 
     public bool HasSelectedHistoryShift => SelectedHistoryShift != null;
-    public bool IsManager => IsManagerRole(_authService.CurrentUser?.Role?.RoleName);
-    public bool CanReviewSelectedShift => IsManager && SelectedHistoryShift?.Shift.Status == ShiftStatus.Locked;
-    public bool CanAdjustSelectedShift => IsManager && SelectedHistoryShift?.Shift.Status == ShiftStatus.Locked;
-    public bool CanCreateManualTransaction => IsManager && SelectedHistoryShift?.Shift.Status == ShiftStatus.Active;
+    public bool CanViewAllShifts => _permissionService.HasPermission(Permissions.ShiftReview);
+    public bool CanReviewSelectedShift => _permissionService.HasPermission(Permissions.ShiftReview) && SelectedHistoryShift?.Shift.Status == ShiftStatus.Locked;
+    public bool CanAdjustSelectedShift => _permissionService.HasPermission(Permissions.ShiftAdjust) && SelectedHistoryShift?.Shift.Status == ShiftStatus.Locked;
+    public bool CanCreateManualTransaction => _permissionService.HasPermission(Permissions.ShiftAdjust) && SelectedHistoryShift?.Shift.Status == ShiftStatus.Active;
 
     public string SelectedBeginningCashFormatted => SelectedShiftDashboard == null ? "--" : FormatAmount(SelectedShiftDashboard.Shift.BeginningCash);
     public string SelectedExpectedCashFormatted => SelectedShiftDashboard == null ? "--" : FormatAmount(SelectedShiftDashboard.ExpectedCash);
@@ -316,11 +319,13 @@ public class ShiftsViewModel : ViewModelBase
     public ShiftsViewModel(
         IShiftService shiftService,
         IAuthService authService,
+        IPermissionService permissionService,
         IDialogService dialogService,
         ILocalizationService localizationService)
     {
         _shiftService = shiftService ?? throw new ArgumentNullException(nameof(shiftService));
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+        _permissionService = permissionService ?? throw new ArgumentNullException(nameof(permissionService));
         _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
 
@@ -343,8 +348,8 @@ public class ShiftsViewModel : ViewModelBase
 
         _localizationService.LanguageChanged += RefreshLocalizedContent;
 
-        OpenShiftCommand = new AsyncRelayCommand(OpenShiftAsync);
-        CloseShiftCommand = new AsyncRelayCommand(CloseShiftAsync);
+        OpenShiftCommand = new AsyncRelayCommand(OpenShiftAsync, () => _permissionService.HasPermission(Permissions.ShiftOpen));
+        CloseShiftCommand = new AsyncRelayCommand(CloseShiftAsync, () => _permissionService.HasPermission(Permissions.ShiftClose));
         RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
         ApplyHistoryFilterCommand = new AsyncRelayCommand(LoadHistoryAsync);
         ReviewShiftCommand = new AsyncRelayCommand(ReviewSelectedShiftAsync, () => CanReviewSelectedShift);
@@ -418,6 +423,10 @@ public class ShiftsViewModel : ViewModelBase
             _dialogService.ShowSuccess(GetString("Msg_Shifts_OpenSuccess"));
             await LoadDataAsync();
         }
+        catch (PermissionDeniedException)
+        {
+            _dialogService.ShowWarning(GetString("Msg_Auth_PermissionDenied"));
+        }
         catch (Exception ex)
         {
             _dialogService.ShowError(ex.Message);
@@ -441,6 +450,10 @@ public class ShiftsViewModel : ViewModelBase
             ActualCashInput = string.Empty;
             await LoadDataAsync();
         }
+        catch (PermissionDeniedException)
+        {
+            _dialogService.ShowWarning(GetString("Msg_Auth_PermissionDenied"));
+        }
         catch (Exception ex)
         {
             _dialogService.ShowError(ex.Message);
@@ -452,7 +465,7 @@ public class ShiftsViewModel : ViewModelBase
         var currentUser = _authService.CurrentUser;
         if (currentUser == null || UserFilterOptions.Count > 0) return;
 
-        if (IsManager)
+        if (CanViewAllShifts)
         {
             UserFilterOptions.Add(new ShiftUserFilterOption { UserId = null, DisplayName = GetString("Str_Shifts_AllEmployees") });
             var users = await _authService.GetUsersAsync();
@@ -475,7 +488,7 @@ public class ShiftsViewModel : ViewModelBase
         }
 
         SelectedUserFilter = UserFilterOptions.FirstOrDefault();
-        OnPropertyChanged(nameof(IsManager));
+        OnPropertyChanged(nameof(CanViewAllShifts));
     }
 
     private async Task LoadHistoryAsync()
@@ -495,7 +508,7 @@ public class ShiftsViewModel : ViewModelBase
 
             var request = new ShiftFilterRequest
             {
-                UserId = IsManager ? SelectedUserFilter?.UserId : currentUser.UserId,
+                UserId = CanViewAllShifts ? SelectedUserFilter?.UserId : currentUser.UserId,
                 OpenedFromUtc = fromUtc,
                 OpenedToUtc = toUtc,
                 Status = SelectedStatusFilter?.Status,
@@ -551,6 +564,10 @@ public class ShiftsViewModel : ViewModelBase
             await LoadHistoryAsync();
             SelectedHistoryShift = ShiftHistory.FirstOrDefault(x => x.ShiftId == shiftId);
         }
+        catch (PermissionDeniedException)
+        {
+            _dialogService.ShowWarning(GetString("Msg_Auth_PermissionDenied"));
+        }
         catch (Exception ex)
         {
             _dialogService.ShowError(ex.Message);
@@ -591,6 +608,10 @@ public class ShiftsViewModel : ViewModelBase
             _dialogService.ShowSuccess(GetString("Msg_Shifts_ManualSuccess"));
             await LoadSelectedShiftAsync();
             await LoadHistoryAsync();
+        }
+        catch (PermissionDeniedException)
+        {
+            _dialogService.ShowWarning(GetString("Msg_Auth_PermissionDenied"));
         }
         catch (Exception ex)
         {
@@ -637,6 +658,10 @@ public class ShiftsViewModel : ViewModelBase
 
             await LoadSelectedShiftAsync();
             await LoadHistoryAsync();
+        }
+        catch (PermissionDeniedException)
+        {
+            _dialogService.ShowWarning(GetString("Msg_Auth_PermissionDenied"));
         }
         catch (Exception ex)
         {
@@ -759,10 +784,6 @@ public class ShiftsViewModel : ViewModelBase
         return decimal.TryParse(clean, NumberStyles.Number | NumberStyles.AllowLeadingSign, CultureInfo.CurrentCulture, out value)
                || decimal.TryParse(clean, NumberStyles.Number | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out value);
     }
-
-    private static bool IsManagerRole(string? roleName)
-        => roleName?.Equals("Admin", StringComparison.OrdinalIgnoreCase) == true
-           || roleName?.Equals("Manager", StringComparison.OrdinalIgnoreCase) == true;
 
     private static void CommandManagerInvalidate()
         => System.Windows.Input.CommandManager.InvalidateRequerySuggested();

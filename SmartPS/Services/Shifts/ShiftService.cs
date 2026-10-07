@@ -1,19 +1,27 @@
 using Microsoft.EntityFrameworkCore;
+using SmartPS.Constants;
 using SmartPS.Data;
 using SmartPS.DTOs.Shifts;
+using SmartPS.Models.Audit;
 using SmartPS.Models.Parking;
 using SmartPS.Models.Shifts;
 using SmartPS.Models.Payment;
+using SmartPS.Services.Audit;
+using SmartPS.Services.Authorization;
 
 namespace SmartPS.Services.Shifts;
 
 public class ShiftService : IShiftService
 {
     private readonly IDbContextFactory<SmartPsDbContext> _contextFactory;
+    private readonly IAuthorizationGuard _guard;
+    private readonly IAuditService _audit;
 
-    public ShiftService(IDbContextFactory<SmartPsDbContext> contextFactory)
+    public ShiftService(IDbContextFactory<SmartPsDbContext> contextFactory, IAuthorizationGuard guard, IAuditService audit)
     {
         _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
+        _guard = guard ?? throw new ArgumentNullException(nameof(guard));
+        _audit = audit ?? throw new ArgumentNullException(nameof(audit));
     }
 
     public async Task<Shift?> GetActiveShiftAsync(int userId, CancellationToken cancellationToken = default)
@@ -33,6 +41,8 @@ public class ShiftService : IShiftService
             throw new ArgumentException("Tài khoản mở ca không hợp lệ.", nameof(userId));
         if (beginningCash < 0)
             throw new ArgumentOutOfRangeException(nameof(beginningCash), "Beginning Cash không được âm.");
+
+        await _guard.DemandActorAsync(userId, Permissions.ShiftOpen, "Shift", null, cancellationToken);
 
         await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken);
 
@@ -62,7 +72,18 @@ public class ShiftService : IShiftService
 
         try
         {
-            await db.SaveChangesAsync(cancellationToken);
+            await using (var transaction = await _audit.BeginAuditedTransactionAsync(db, System.Data.IsolationLevel.ReadCommitted, cancellationToken))
+            {
+                await db.SaveChangesAsync(cancellationToken);
+                await _audit.AppendAsync(db, new AuditEntry(
+                    AuditActions.ShiftOpen,
+                    AuditOutcome.Success,
+                    "Shift",
+                    shift.ShiftId.ToString(),
+                    new { BeginningCash = beginningCash }), cancellationToken);
+                await db.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+            }
         }
         catch (DbUpdateException ex)
         {
@@ -99,38 +120,52 @@ public class ShiftService : IShiftService
         if (actualCash < 0)
             throw new ArgumentOutOfRangeException(nameof(actualCash), "Actual Cash không được âm.");
 
+        await _guard.DemandActorAsync(actorUserId, Permissions.ShiftClose, "Shift", shiftId.ToString(), cancellationToken);
+
         await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken);
-        await using var dbTransaction = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken);
+        await using (var dbTransaction = await _audit.BeginAuditedTransactionAsync(db, System.Data.IsolationLevel.Serializable, cancellationToken))
+        {
+            var shift = await db.Shifts
+                .FirstOrDefaultAsync(x => x.ShiftId == shiftId, cancellationToken)
+                ?? throw new KeyNotFoundException("Không tìm thấy ca trực.");
 
-        var shift = await db.Shifts
-            .FirstOrDefaultAsync(x => x.ShiftId == shiftId, cancellationToken)
-            ?? throw new KeyNotFoundException("Không tìm thấy ca trực.");
+            if (shift.Status != ShiftStatus.Active)
+                throw new InvalidOperationException("Chỉ ca Active mới có thể đóng.");
+            if (shift.OpenedByUserId != actorUserId)
+                throw new UnauthorizedAccessException("Chỉ người mở ca mới được đóng ca này.");
+            if (await db.Payments.AnyAsync(p => p.ShiftId == shiftId &&
+                (p.Status == PaymentStatus.Created || p.Status == PaymentStatus.Pending), cancellationToken))
+                throw new InvalidOperationException("Ca còn thanh toán VietQR đang chờ. Hãy hoàn tất hoặc hủy thanh toán trước khi đóng ca.");
 
-        if (shift.Status != ShiftStatus.Active)
-            throw new InvalidOperationException("Chỉ ca Active mới có thể đóng.");
-        if (shift.OpenedByUserId != actorUserId)
-            throw new UnauthorizedAccessException("Chỉ người mở ca mới được đóng ca này.");
-        if (await db.Payments.AnyAsync(p => p.ShiftId == shiftId &&
-            (p.Status == PaymentStatus.Created || p.Status == PaymentStatus.Pending), cancellationToken))
-            throw new InvalidOperationException("Ca còn thanh toán VietQR đang chờ. Hãy hoàn tất hoặc hủy thanh toán trước khi đóng ca.");
+            var transactions = await db.FinancialTransactions
+                .AsNoTracking()
+                .Where(x => x.ShiftId == shiftId)
+                .ToListAsync(cancellationToken);
 
-        var transactions = await db.FinancialTransactions
-            .AsNoTracking()
-            .Where(x => x.ShiftId == shiftId)
-            .ToListAsync(cancellationToken);
+            var dashboard = ShiftFinancialCalculator.BuildDashboard(shift, transactions);
 
-        var dashboard = ShiftFinancialCalculator.BuildDashboard(shift, transactions);
+            shift.ExpectedCash = dashboard.ExpectedCash;
+            shift.ActualCash = actualCash;
+            shift.Difference = actualCash - dashboard.ExpectedCash;
+            shift.ClosedAt = DateTime.UtcNow;
+            shift.Status = ShiftStatus.Locked;
 
-        shift.ExpectedCash = dashboard.ExpectedCash;
-        shift.ActualCash = actualCash;
-        shift.Difference = actualCash - dashboard.ExpectedCash;
-        shift.ClosedAt = DateTime.UtcNow;
-        shift.Status = ShiftStatus.Locked;
+            await _audit.AppendAsync(db, new AuditEntry(
+                AuditActions.ShiftClose,
+                AuditOutcome.Success,
+                "Shift",
+                shiftId.ToString(),
+                new
+                {
+                    ExpectedCash = shift.ExpectedCash,
+                    ActualCash = actualCash,
+                    Difference = shift.Difference
+                }), cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
+            await dbTransaction.CommitAsync(cancellationToken);
 
-        await db.SaveChangesAsync(cancellationToken);
-        await dbTransaction.CommitAsync(cancellationToken);
-
-        return shift;
+            return shift;
+        }
     }
 
     public async Task<List<Shift>> GetShiftHistoryAsync(ShiftFilterRequest filter, CancellationToken cancellationToken = default)
@@ -219,103 +254,110 @@ public class ShiftService : IShiftService
         if (createdByUserId <= 0)
             throw new ArgumentException("Người tạo giao dịch không hợp lệ.", nameof(createdByUserId));
 
+        await _guard.DemandActorAsync(createdByUserId, Permissions.ShiftAdjust, "FinancialTransaction", null, cancellationToken);
+
         await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken);
-        await using var dbTransaction = await db.Database.BeginTransactionAsync(cancellationToken);
-
-        var shift = await db.Shifts.FirstOrDefaultAsync(x => x.ShiftId == shiftId, cancellationToken)
-            ?? throw new KeyNotFoundException("Không tìm thấy ca trực.");
-
-        var actor = await db.Users
-            .Include(x => x.Role)
-            .FirstOrDefaultAsync(x => x.UserId == createdByUserId, cancellationToken)
-            ?? throw new KeyNotFoundException("Không tìm thấy người tạo giao dịch.");
-
-        var isManager = actor.Role?.RoleName.Equals("Manager", StringComparison.OrdinalIgnoreCase) == true
-                        || actor.Role?.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase) == true;
-
-        if (!isManager)
-            throw new UnauthorizedAccessException("Chỉ Manager hoặc Admin mới được tạo giao dịch thủ công.");
-
-        if (shift.Status == ShiftStatus.Reviewed)
-            throw new InvalidOperationException("Ca đã được xác nhận nên không thể phát sinh giao dịch mới.");
-
-        if (shift.Status == ShiftStatus.Locked && type != FinancialTransactionType.Adjustment)
-            throw new InvalidOperationException("Ca đã khóa chỉ cho phép tạo Adjustment, không sửa giao dịch cũ.");
-
-        if (type == FinancialTransactionType.Refund)
-            amount = -Math.Abs(amount);
-        else if (type == FinancialTransactionType.Adjustment && amount == 0)
-            throw new ArgumentException("Adjustment phải có số tiền khác 0.", nameof(amount));
-        else if (type == FinancialTransactionType.Incident && amount == 0)
-            throw new ArgumentException("Incident transaction phải có số tiền khác 0.", nameof(amount));
-
-        if (paymentMethod == PaymentMethod.Free)
-            amount = 0;
-
-        var transaction = new FinancialTransaction
+        await using (var dbTransaction = await _audit.BeginAuditedTransactionAsync(db, System.Data.IsolationLevel.ReadCommitted, cancellationToken))
         {
-            TransactionCode = CreateTransactionCode(),
-            ShiftId = shiftId,
-            CreatedByUserId = createdByUserId,
-            Type = type,
-            PaymentMethod = paymentMethod,
-            Amount = amount,
-            CreatedAt = DateTime.UtcNow,
-            ReferenceCode = string.IsNullOrWhiteSpace(referenceCode) ? null : referenceCode.Trim(),
-            Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim()
-        };
+            var shift = await db.Shifts.FirstOrDefaultAsync(x => x.ShiftId == shiftId, cancellationToken)
+                ?? throw new KeyNotFoundException("Không tìm thấy ca trực.");
 
-        db.FinancialTransactions.Add(transaction);
-        await db.SaveChangesAsync(cancellationToken);
+            if (shift.Status == ShiftStatus.Reviewed)
+                throw new InvalidOperationException("Ca đã được xác nhận nên không thể phát sinh giao dịch mới.");
 
-        if (shift.Status == ShiftStatus.Locked)
-        {
-            var transactions = await db.FinancialTransactions
-                .AsNoTracking()
-                .Where(x => x.ShiftId == shiftId)
-                .ToListAsync(cancellationToken);
+            if (shift.Status == ShiftStatus.Locked && type != FinancialTransactionType.Adjustment)
+                throw new InvalidOperationException("Ca đã khóa chỉ cho phép tạo Adjustment, không sửa giao dịch cũ.");
 
-            var dashboard = ShiftFinancialCalculator.BuildDashboard(shift, transactions);
-            shift.ExpectedCash = dashboard.ExpectedCash;
-            shift.Difference = shift.ActualCash.HasValue
-                ? shift.ActualCash.Value - dashboard.ExpectedCash
-                : null;
+            if (type == FinancialTransactionType.Refund)
+                amount = -Math.Abs(amount);
+            else if (type == FinancialTransactionType.Adjustment && amount == 0)
+                throw new ArgumentException("Adjustment phải có số tiền khác 0.", nameof(amount));
+            else if (type == FinancialTransactionType.Incident && amount == 0)
+                throw new ArgumentException("Incident transaction phải có số tiền khác 0.", nameof(amount));
 
+            if (paymentMethod == PaymentMethod.Free)
+                amount = 0;
+
+            var transaction = new FinancialTransaction
+            {
+                TransactionCode = CreateTransactionCode(),
+                ShiftId = shiftId,
+                CreatedByUserId = createdByUserId,
+                Type = type,
+                PaymentMethod = paymentMethod,
+                Amount = amount,
+                CreatedAt = DateTime.UtcNow,
+                ReferenceCode = string.IsNullOrWhiteSpace(referenceCode) ? null : referenceCode.Trim(),
+                Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim()
+            };
+
+            db.FinancialTransactions.Add(transaction);
             await db.SaveChangesAsync(cancellationToken);
-        }
 
-        await dbTransaction.CommitAsync(cancellationToken);
-        return transaction;
+            if (shift.Status == ShiftStatus.Locked)
+            {
+                var transactions = await db.FinancialTransactions
+                    .AsNoTracking()
+                    .Where(x => x.ShiftId == shiftId)
+                    .ToListAsync(cancellationToken);
+
+                var dashboard = ShiftFinancialCalculator.BuildDashboard(shift, transactions);
+                shift.ExpectedCash = dashboard.ExpectedCash;
+                shift.Difference = shift.ActualCash.HasValue
+                    ? shift.ActualCash.Value - dashboard.ExpectedCash
+                    : null;
+
+                await db.SaveChangesAsync(cancellationToken);
+            }
+
+            await _audit.AppendAsync(db, new AuditEntry(
+                AuditActions.ShiftAdjustment,
+                AuditOutcome.Success,
+                "FinancialTransaction",
+                transaction.TransactionId.ToString(),
+                new
+                {
+                    ShiftId = shiftId,
+                    Type = type.ToString(),
+                    PaymentMethod = paymentMethod.ToString(),
+                    Amount = amount,
+                    TransactionCode = transaction.TransactionCode
+                }), cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
+            await dbTransaction.CommitAsync(cancellationToken);
+            return transaction;
+        }
     }
 
     public async Task<Shift> ReviewShiftAsync(int shiftId, int managerUserId, string? note, CancellationToken cancellationToken = default)
     {
+        await _guard.DemandActorAsync(managerUserId, Permissions.ShiftReview, "Shift", shiftId.ToString(), cancellationToken);
+
         await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken);
+        await using (var transaction = await _audit.BeginAuditedTransactionAsync(db, System.Data.IsolationLevel.ReadCommitted, cancellationToken))
+        {
+            var shift = await db.Shifts.FirstOrDefaultAsync(x => x.ShiftId == shiftId, cancellationToken)
+                ?? throw new KeyNotFoundException("Không tìm thấy ca trực.");
 
-        var reviewer = await db.Users
-            .Include(x => x.Role)
-            .FirstOrDefaultAsync(x => x.UserId == managerUserId, cancellationToken)
-            ?? throw new KeyNotFoundException("Không tìm thấy tài khoản quản lý.");
+            if (shift.Status != ShiftStatus.Locked)
+                throw new InvalidOperationException("Chỉ ca Locked mới có thể được Manager Review.");
 
-        var isManager = reviewer.Role?.RoleName.Equals("Manager", StringComparison.OrdinalIgnoreCase) == true
-                        || reviewer.Role?.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase) == true;
+            shift.ReviewedByUserId = managerUserId;
+            shift.ReviewedAt = DateTime.UtcNow;
+            shift.ManagerNote = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
+            shift.Status = ShiftStatus.Reviewed;
 
-        if (!isManager)
-            throw new UnauthorizedAccessException("Chỉ Manager hoặc Admin mới được xác nhận ca.");
+            await _audit.AppendAsync(db, new AuditEntry(
+                AuditActions.ShiftReview,
+                AuditOutcome.Success,
+                "Shift",
+                shiftId.ToString(),
+                new { Note = shift.ManagerNote }), cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
-        var shift = await db.Shifts.FirstOrDefaultAsync(x => x.ShiftId == shiftId, cancellationToken)
-            ?? throw new KeyNotFoundException("Không tìm thấy ca trực.");
-
-        if (shift.Status != ShiftStatus.Locked)
-            throw new InvalidOperationException("Chỉ ca Locked mới có thể được Manager Review.");
-
-        shift.ReviewedByUserId = managerUserId;
-        shift.ReviewedAt = DateTime.UtcNow;
-        shift.ManagerNote = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
-        shift.Status = ShiftStatus.Reviewed;
-
-        await db.SaveChangesAsync(cancellationToken);
-        return shift;
+            return shift;
+        }
     }
 
     private static string CreateTransactionCode()

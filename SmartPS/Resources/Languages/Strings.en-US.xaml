@@ -312,4 +312,100 @@
     <sys:String x:Key="Str_Shifts_TypeParkingFee">Parking fee</sys:String>
     <sys:String x:Key="Str_Shifts_TypeRefund">Refund</sys:String>
 
+    <!-- AUTHORIZATION & USER PROTECTION -->
+    <sys:String x:Key="Msg_Auth_PermissionDenied">You do not have permission to perform this action.</sys:String>
+    <sys:String x:Key="Msg_User_LastAdminProtected">The last active Administrator account cannot be demoted, locked or deleted.</sys:String>
+    <sys:String x:Key="Msg_User_CannotLockSelf">You cannot lock the account that is currently signed in.</sys:String>
+    <sys:String x:Key="Msg_User_CannotChangeOwnRole">You cannot change the role of the account that is currently signed in.</sys:String>
+    <sys:String x:Key="Msg_User_AdminRoleRequiresAdmin">Only an Administrator can assign, remove or delete the Administrator role.</sys:String>
+    <sys:String x:Key="Msg_DeleteUser_HasHistory">This account has activity history (shifts, transactions...) and cannot be deleted. Lock the account instead.</sys:String>
+
+    <!-- SIDEBAR - ROLE PERMISSIONS & AUDIT LOG -->
+    <sys:String x:Key="Str_Menu_RolePermissions">Role Permissions</sys:String>
+    <sys:String x:Key="Str_Menu_AuditLog">Audit Log</sys:String>
+
+    <!-- ROLE PERMISSIONS SCREEN -->
+    <sys:String x:Key="Str_RolePerm_Title">Role Permissions</sys:String>
+    <sys:String x:Key="Str_RolePerm_Subtitle">Choose what each role is allowed to do. The Admin role always has every permission.</sys:String>
+    <sys:String x:Key="Str_RolePerm_Permission">Permission</sys:String>
+    <sys:String x:Key="Str_RolePerm_Save">Save changes</sys:String>
+    <sys:String x:Key="Str_RolePerm_Reset">Discard changes</sys:String>
+    <sys:String x:Key="Str_RolePerm_AdminLocked">Full access (locked)</sys:String>
+    <sys:String x:Key="Str_RolePerm_ReadOnlyNotice">You have view-only access. Role management permission is required to make changes.</sys:String>
+    <sys:String x:Key="Msg_RolePerm_SaveSuccess">Permissions saved for {0} role(s).</sys:String>
+    <sys:String x:Key="Msg_RolePerm_NoChanges">There are no changes to save.</sys:String>
+    <sys:String x:Key="Msg_RolePerm_SaveError">Unable to save permissions: {0}</sys:String>
+    <sys:String x:Key="Msg_RolePerm_LoadError">Unable to load the permission matrix: {0}</sys:String>
+
+    <!-- PERMISSION MODULES -->
+    <sys:String x:Key="Str_Perm_Module_User">Users</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Role">Roles</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Parking">Parking</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Pricing">Pricing</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Report">Reports</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Shift">Shifts</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Payment">Payments</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Audit">Audit log</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Settings">Settings</sys:String>
+    <sys:String x:Key="Str_Perm_Module_Incident">Incidents</sys:String>
+
+    <!-- PERMISSION NAMES -->
+    <sys:String x:Key="Str_Perm_User_View">View users</sys:String>
+    <sys:String x:Key="Str_Perm_User_Create">Create users</sys:String>
+    <sys:String x:Key="Str_Perm_User_Edit">Edit users</sys:String>
+    <sys:String x:Key="Str_Perm_User_Delete">Delete users</sys:String>
+    <sys:String x:Key="Str_Perm_Role_View">View role permissions</sys:String>
+    <sys:String x:Key="Str_Perm_Role_Manage">Manage role permissions</sys:String>
+    <sys:String x:Key="Str_Perm_Parking_View">View parking status</sys:String>
+    <sys:String x:Key="Str_Perm_Parking_CheckIn">Vehicle check-in</sys:String>
+    <sys:String x:Key="Str_Perm_Parking_CheckOut">Vehicle check-out and fee collection</sys:String>
+    <sys:String x:Key="Str_Perm_Parking_Configure">Configure zones and slots</sys:String>
+    <sys:String x:Key="Str_Perm_Pricing_Manage">Manage pricing</sys:String>
+    <sys:String x:Key="Str_Perm_Report_View">View reports</sys:String>
+    <sys:String x:Key="Str_Perm_Report_Export">Export reports</sys:String>
+    <sys:String x:Key="Str_Perm_Shift_View">View shifts</sys:String>
+    <sys:String x:Key="Str_Perm_Shift_Open">Open shifts</sys:String>
+    <sys:String x:Key="Str_Perm_Shift_Close">Close shifts</sys:String>
+    <sys:String x:Key="Str_Perm_Shift_Review">Review shifts</sys:String>
+    <sys:String x:Key="Str_Perm_Shift_Adjust">Adjust shifts</sys:String>
+    <sys:String x:Key="Str_Perm_Payment_Refund">Refund or cancel payments</sys:String>
+    <sys:String x:Key="Str_Perm_Audit_View">View audit log</sys:String>
+    <sys:String x:Key="Str_Perm_Audit_Verify">Verify audit log integrity</sys:String>
+    <sys:String x:Key="Str_Perm_Settings_Manage">Manage system settings</sys:String>
+    <sys:String x:Key="Str_Perm_Incident_Manage">Handle incidents</sys:String>
+
+    <!-- AUDIT LOG SCREEN -->
+    <sys:String x:Key="Str_Audit_Title">Audit Log</sys:String>
+    <sys:String x:Key="Str_Audit_Subtitle">Append-only log: records cannot be edited or deleted. Each record is linked by a hash chain to detect tampering.</sys:String>
+    <sys:String x:Key="Str_Audit_FromDate">From date</sys:String>
+    <sys:String x:Key="Str_Audit_ToDate">To date</sys:String>
+    <sys:String x:Key="Str_Audit_User">User</sys:String>
+    <sys:String x:Key="Str_Audit_Action">Action</sys:String>
+    <sys:String x:Key="Str_Audit_Outcome">Outcome</sys:String>
+    <sys:String x:Key="Str_Audit_Search">Search</sys:String>
+    <sys:String x:Key="Str_Audit_SearchHint">Entity ID or license plate in the details</sys:String>
+    <sys:String x:Key="Str_Audit_Apply">Apply</sys:String>
+    <sys:String x:Key="Str_Audit_Clear">Clear</sys:String>
+    <sys:String x:Key="Str_Audit_All">All</sys:String>
+    <sys:String x:Key="Str_Audit_Col_Id">ID</sys:String>
+    <sys:String x:Key="Str_Audit_Col_Time">Time</sys:String>
+    <sys:String x:Key="Str_Audit_Col_User">User</sys:String>
+    <sys:String x:Key="Str_Audit_Col_Role">Role</sys:String>
+    <sys:String x:Key="Str_Audit_Col_Action">Action</sys:String>
+    <sys:String x:Key="Str_Audit_Col_Entity">Entity</sys:String>
+    <sys:String x:Key="Str_Audit_Col_Outcome">Outcome</sys:String>
+    <sys:String x:Key="Str_Audit_Col_Machine">Machine</sys:String>
+    <sys:String x:Key="Str_Audit_Details">Details (JSON)</sys:String>
+    <sys:String x:Key="Str_Audit_PrevPage">Previous</sys:String>
+    <sys:String x:Key="Str_Audit_NextPage">Next</sys:String>
+    <sys:String x:Key="Str_Audit_PageInfo">Page {0}/{1} - {2} records</sys:String>
+    <sys:String x:Key="Str_Audit_Verify">Verify integrity</sys:String>
+    <sys:String x:Key="Str_Audit_Outcome_Success">Success</sys:String>
+    <sys:String x:Key="Str_Audit_Outcome_Denied">Denied</sys:String>
+    <sys:String x:Key="Str_Audit_Outcome_Failed">Failed</sys:String>
+    <sys:String x:Key="Msg_Audit_VerifyOk">The audit log is intact: {0} records checked, no tampering detected.</sys:String>
+    <sys:String x:Key="Msg_Audit_VerifyBroken">Tampering detected at audit record {0} ({1}).</sys:String>
+    <sys:String x:Key="Msg_Audit_LoadError">Unable to load the audit log: {0}</sys:String>
+    <sys:String x:Key="Msg_Audit_VerifyError">Unable to verify audit log integrity: {0}</sys:String>
+
 </ResourceDictionary>

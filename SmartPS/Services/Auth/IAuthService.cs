@@ -21,7 +21,10 @@ public interface IAuthService
 
     Task<bool> DeleteUserAsync(int userId);
 
-    void Logout();
+    Task LogoutAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Reloads the logged-in user with role and permissions from the database.</summary>
+    Task ReloadCurrentUserAsync(CancellationToken cancellationToken = default);
 
     Task<bool> CanConnectToDatabaseAsync(CancellationToken cancellationToken = default);
 
