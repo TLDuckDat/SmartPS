@@ -15,13 +15,16 @@ public sealed class RolePermissionService : IRolePermissionService
     private readonly IAuthorizationGuard _guard;
     private readonly IAuditService _audit;
     private readonly IAuthService _authService;
+    private readonly IPermissionService _permissions;
 
     public RolePermissionService(
         IDbContextFactory<SmartPsDbContext> contextFactory,
         IAuthorizationGuard guard,
         IAuditService audit,
-        IAuthService authService)
+        IAuthService authService,
+        IPermissionService permissions)
     {
+        _permissions = permissions ?? throw new ArgumentNullException(nameof(permissions));
         _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
         _guard = guard ?? throw new ArgumentNullException(nameof(guard));
         _audit = audit ?? throw new ArgumentNullException(nameof(audit));
@@ -76,6 +79,12 @@ public sealed class RolePermissionService : IRolePermissionService
         ArgumentNullException.ThrowIfNull(desiredGrantsByRoleId);
 
         await _guard.DemandAsync(Permissions.RoleManage, "Role", null, cancellationToken);
+
+        // Chỉ Admin hệ thống mới được lưu ma trận phân quyền (Role.Manage của vai trò khác là chưa đủ)
+        if (!_permissions.IsAdmin())
+        {
+            await _guard.DenyAsync(new[] { SystemRoles.AdminRoleRequirement }, "AdminRoleRequired", "Role", null, cancellationToken);
+        }
 
         await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken);
 

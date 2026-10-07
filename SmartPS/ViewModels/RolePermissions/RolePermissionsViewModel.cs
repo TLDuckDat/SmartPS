@@ -54,8 +54,8 @@ public class RolePermissionsViewModel : ViewModelBase
         }
     }
 
-    /// <summary>Only users with Role.Manage may change the matrix; Role.View users see it read-only.</summary>
-    public bool CanEdit => _permissionService.HasPermission(Permissions.RoleManage);
+    /// <summary>Only a system Admin may change the matrix; everyone else with Role.View sees it read-only.</summary>
+    public bool CanEdit => _permissionService.IsAdmin();
 
     public bool IsReadOnly => !CanEdit;
 
@@ -157,7 +157,9 @@ public class RolePermissionsViewModel : ViewModelBase
             IsBusy = true;
 
             var desired = new Dictionary<int, IReadOnlyCollection<string>>();
-            foreach (var role in Roles.Where(r => !r.IsSystemAdmin))
+            var changedRoleIds = Rows.SelectMany(row => row.Cells).Where(cell => cell.IsChanged)
+                .Select(cell => cell.Role.RoleId).ToHashSet();
+            foreach (var role in Roles.Where(r => !r.IsSystemAdmin && changedRoleIds.Contains(r.RoleId)))
             {
                 desired[role.RoleId] = Rows
                     .SelectMany(row => row.Cells)
