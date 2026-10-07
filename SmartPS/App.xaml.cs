@@ -1,4 +1,5 @@
 using System.IO;
+using LiveChartsCore.SkiaSharpView;
 using System.Windows;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -32,6 +33,16 @@ public partial class App : Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Biểu đồ LiveCharts2: Skia + giao diện sáng; Segoe UI để hiển thị đúng tiếng Việt/Nhật
+        LiveChartsCore.LiveCharts.Configure(config => config
+            .AddSkiaSharp()
+            .AddDefaultMappers()
+            .AddLightTheme()
+            .HasTextSettings(new TextSettings
+            {
+                DefaultTypeface = SkiaSharp.SKTypeface.FromFamilyName("Segoe UI")
+            }));
 
         // 1. Khởi tạo cấu hình ứng dụng từ appsettings.json
         var configuration = new ConfigurationBuilder()
