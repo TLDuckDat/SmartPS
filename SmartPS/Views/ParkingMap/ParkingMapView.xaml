@@ -6,6 +6,117 @@
              mc:Ignorable="d"
              d:DesignHeight="900" d:DesignWidth="1100">
 
+    <UserControl.Resources>
+        <DataTemplate x:Key="SlotCardTemplate">
+            <Button Command="{Binding DataContext.SelectSlotCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    CommandParameter="{Binding}"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Padding="0"
+                    Margin="0,0,12,12"
+                    Cursor="Hand">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border CornerRadius="6" BorderThickness="1.5" Padding="12,10">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <!-- Mặc định ô trống -->
+                                    <Setter Property="Background" Value="#F0FDF4"/>
+                                    <Setter Property="BorderBrush" Value="#86EFAC"/>
+                                    <Style.Triggers>
+                                        <!-- Ô đã đỗ xe -->
+                                        <DataTrigger Binding="{Binding IsOccupied}" Value="True">
+                                            <Setter Property="Background" Value="#FEF2F2"/>
+                                            <Setter Property="BorderBrush" Value="#F87171"/>
+                                        </DataTrigger>
+                                        <!-- Ô đang bảo trì -->
+                                        <DataTrigger Binding="{Binding IsMaintenance}" Value="True">
+                                            <Setter Property="Background" Value="#FFFBEB"/>
+                                            <Setter Property="BorderBrush" Value="#FCD34D"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Hàng đầu: Mã ô đỗ & Badge trạng thái -->
+                                <Grid Grid.Row="0">
+                                    <TextBlock Text="{Binding SlotCode}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                    <Border HorizontalAlignment="Right" CornerRadius="3" Padding="6,2">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="#DCFCE7"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsOccupied}" Value="True">
+                                                        <Setter Property="Background" Value="#FEE2E2"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsMaintenance}" Value="True">
+                                                        <Setter Property="Background" Value="#FEF3C7"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="{Binding StatusBadgeText}" FontSize="10" FontWeight="Bold">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#15803D"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsOccupied}" Value="True">
+                                                            <Setter Property="Foreground" Value="#B91C1C"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsMaintenance}" Value="True">
+                                                            <Setter Property="Foreground" Value="#B45309"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Hàng giữa: Biển số xe đỗ hoặc nhãn trạng thái -->
+                                <StackPanel Grid.Row="1" VerticalAlignment="Center" Margin="0,6">
+                                    <TextBlock FontSize="13" FontWeight="Bold" TextAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="{Binding StatusText}"/>
+                                                <Setter Property="Foreground" Value="#16A34A"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsOccupied}" Value="True">
+                                                        <Setter Property="Text" Value="{Binding CurrentLicensePlate}"/>
+                                                        <Setter Property="Foreground" Value="#0F172A"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsMaintenance}" Value="True">
+                                                        <Setter Property="Foreground" Value="#B45309"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+
+                                <!-- Hàng đáy: Loại xe -->
+                                <Grid Grid.Row="2">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding VehicleIcon}" FontSize="10.5" Foreground="{StaticResource TextDimBrush}" Margin="0,0,4,0"/>
+                                        <TextBlock Text="{Binding VehicleTypeName}" FontSize="10.5" Foreground="{StaticResource TextDimBrush}"/>
+                                    </StackPanel>
+                                    <TextBlock Text="🏠" FontSize="11" HorizontalAlignment="Right"
+                                               Visibility="{Binding IsResidentSession, Converter={StaticResource BoolToVisConverter}}"/>
+                                </Grid>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </DataTemplate>
+    </UserControl.Resources>
+
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="{StaticResource AppBackgroundBrush}">
         <StackPanel Margin="28,24">
 
@@ -72,7 +183,7 @@
                             <TextBlock Text="🅿" FontSize="16" HorizontalAlignment="Right"/>
                         </Grid>
                         <TextBlock Text="{Binding TotalSlots, StringFormat='{}{0} ô đỗ'}" FontSize="26" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,8,0,2"/>
-                        <TextBlock Text="Khu A (Xe máy) + Khu B (Ô tô)" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Text="{Binding ZonesSummary}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
                 </Border>
 
@@ -84,7 +195,7 @@
                             <TextBlock Text="🟢" FontSize="14" HorizontalAlignment="Right"/>
                         </Grid>
                         <TextBlock Text="{Binding AvailableSlots, StringFormat='{}{0} vị trí'}" FontSize="26" FontWeight="Bold" Foreground="#15803D" Margin="0,8,0,2"/>
-                        <TextBlock Text="Sẵn sàng nhận xe vào đỗ" FontSize="11.5" Foreground="#16A34A"/>
+                        <TextBlock Text="{Binding MaintenanceText}" FontSize="11.5" Foreground="#B45309"/>
                     </StackPanel>
                 </Border>
 
@@ -156,253 +267,78 @@
                             <Border Width="12" Height="12" CornerRadius="2" Background="#FEE2E2" BorderBrush="#FCA5A5" BorderThickness="1" Margin="0,0,6,0"/>
                             <TextBlock Text="Đang có xe đỗ" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
                         </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
+                            <Border Width="12" Height="12" CornerRadius="2" Background="#FEF3C7" BorderBrush="#FCD34D" BorderThickness="1" Margin="0,0,6,0"/>
+                            <TextBlock Text="{DynamicResource Str_Map_Legend_Maintenance}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </StackPanel>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- 4. KHU A: SƠ ĐỒ ĐỖ XE MÁY -->
-            <Border Background="{StaticResource CardBackgroundBrush}"
-                    BorderBrush="{StaticResource AppBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="6"
-                    Padding="20"
-                    Margin="0,0,0,20">
-                <StackPanel>
-                    <Grid Margin="0,0,0,14">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="🏍" FontSize="16" Margin="0,0,8,0"/>
-                            <TextBlock Text="PHÂN KHU A: BÃI ĐỖ XE MÁY" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding MotorbikeOccupiedCount, StringFormat='Đã đỗ: {0}/'}" FontSize="12.5" FontWeight="SemiBold" Foreground="#B91C1C"/>
-                            <TextBlock Text="{Binding MotorbikeTotalCount, StringFormat='{}{0} ô'}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        </StackPanel>
-                    </Grid>
+            <!-- 4. CÁC KHU ĐỖ XE: nhóm theo khu, nhãn đối tượng, số chỗ trống/tổng -->
+            <ItemsControl ItemsSource="{Binding Zones}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{StaticResource CardBackgroundBrush}"
+                                BorderBrush="{StaticResource AppBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="20"
+                                Margin="0,0,0,20">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
 
-                    <!-- Danh sách các ô đỗ xe máy -->
-                    <ItemsControl ItemsSource="{Binding MotorbikeSlots}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel ItemWidth="194" ItemHeight="112" Margin="0"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Button Command="{Binding DataContext.SelectSlotCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding}"
-                                        Background="Transparent"
-                                        BorderThickness="0"
-                                        Padding="0"
-                                        Margin="0,0,12,12"
-                                        Cursor="Hand">
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border CornerRadius="6" BorderThickness="1.5" Padding="12,10">
-                                                <Border.Style>
-                                                    <Style TargetType="Border">
-                                                        <!-- Mặc định ô trống -->
-                                                        <Setter Property="Background" Value="#F0FDF4"/>
-                                                        <Setter Property="BorderBrush" Value="#86EFAC"/>
-                                                        <Style.Triggers>
-                                                            <!-- Ô đã đỗ xe -->
-                                                            <DataTrigger Binding="{Binding IsOccupied}" Value="True">
-                                                                <Setter Property="Background" Value="#FEF2F2"/>
-                                                                <Setter Property="BorderBrush" Value="#F87171"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Border.Style>
-                                                <Grid>
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="Auto"/>
-                                                        <RowDefinition Height="*"/>
-                                                        <RowDefinition Height="Auto"/>
-                                                    </Grid.RowDefinitions>
+                                    <!-- Tên khu, nhãn đối tượng, số chỗ trống -->
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="🅿" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding ZoneName}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                        <Border CornerRadius="3" Padding="8,2" Margin="12,0,0,0" VerticalAlignment="Center">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#E2E8F0"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsResidentOnly}" Value="True">
+                                                            <Setter Property="Background" Value="#DCFCE7"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsVisitorOnly}" Value="True">
+                                                            <Setter Property="Background" Value="#DBEAFE"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding AudienceText}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                        </Border>
+                                        <TextBlock Text="{Binding SummaryText}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding MaintenanceText}" FontSize="12" FontWeight="SemiBold" Foreground="#B45309" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                                    </StackPanel>
 
-                                                    <!-- Hàng đầu: Mã ô đỗ & Badge trạng thái -->
-                                                    <Grid Grid.Row="0">
-                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding SlotCode}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                                        </StackPanel>
-                                                        <Border HorizontalAlignment="Right" CornerRadius="3" Padding="6,2">
-                                                            <Border.Style>
-                                                                <Style TargetType="Border">
-                                                                    <Setter Property="Background" Value="#DCFCE7"/>
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsOccupied}" Value="True">
-                                                                            <Setter Property="Background" Value="#FEE2E2"/>
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </Border.Style>
-                                                            <TextBlock Text="{Binding StatusBadgeText}" FontSize="10" FontWeight="Bold">
-                                                                <TextBlock.Style>
-                                                                    <Style TargetType="TextBlock">
-                                                                        <Setter Property="Foreground" Value="#15803D"/>
-                                                                        <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding IsOccupied}" Value="True">
-                                                                                <Setter Property="Foreground" Value="#B91C1C"/>
-                                                                            </DataTrigger>
-                                                                        </Style.Triggers>
-                                                                    </Style>
-                                                                </TextBlock.Style>
-                                                            </TextBlock>
-                                                        </Border>
-                                                    </Grid>
+                                    <!-- Đổi đối tượng của khu (cần Parking.Configure) -->
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" IsEnabled="{Binding CanEdit}">
+                                        <ComboBox ItemsSource="{Binding AudienceOptions}"
+                                                  SelectedValue="{Binding SelectedAudience, Mode=TwoWay}"
+                                                  SelectedValuePath="Value" DisplayMemberPath="DisplayName"
+                                                  Width="170" Height="32" VerticalContentAlignment="Center"/>
+                                        <Button Command="{Binding SaveAudienceCommand}" Style="{StaticResource SecondaryButtonStyle}"
+                                                Content="{DynamicResource Str_Map_SaveAudience}" Height="32" Margin="8,0,0,0"/>
+                                    </StackPanel>
+                                </Grid>
 
-                                                    <!-- Hàng giữa: Biển số xe đỗ hoặc Chỗ trống -->
-                                                    <StackPanel Grid.Row="1" VerticalAlignment="Center" Margin="0,6">
-                                                        <TextBlock FontSize="13" FontWeight="Bold" TextAlignment="Center">
-                                                            <TextBlock.Style>
-                                                                <Style TargetType="TextBlock">
-                                                                    <Setter Property="Text" Value="Trống (Sẵn sàng)"/>
-                                                                    <Setter Property="Foreground" Value="#16A34A"/>
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsOccupied}" Value="True">
-                                                                            <Setter Property="Text" Value="{Binding CurrentLicensePlate}"/>
-                                                                            <Setter Property="Foreground" Value="#0F172A"/>
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
-                                                    </StackPanel>
-
-                                                    <!-- Hàng đáy: Loại xe -->
-                                                    <Grid Grid.Row="2">
-                                                        <TextBlock Text="🏍 Xe máy hai bánh" FontSize="10.5" Foreground="{StaticResource TextDimBrush}"/>
-                                                    </Grid>
-                                                </Grid>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </Border>
-
-            <!-- 5. KHU B: SƠ ĐỒ ĐỖ Ô TÔ CON -->
-            <Border Background="{StaticResource CardBackgroundBrush}"
-                    BorderBrush="{StaticResource AppBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="6"
-                    Padding="20"
-                    Margin="0,0,0,20">
-                <StackPanel>
-                    <Grid Margin="0,0,0,14">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="🚗" FontSize="16" Margin="0,0,8,0"/>
-                            <TextBlock Text="PHÂN KHU B: BÃI ĐỖ Ô TÔ CON" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding CarOccupiedCount, StringFormat='Đã đỗ: {0}/'}" FontSize="12.5" FontWeight="SemiBold" Foreground="#B91C1C"/>
-                            <TextBlock Text="{Binding CarTotalCount, StringFormat='{}{0} ô'}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        </StackPanel>
-                    </Grid>
-
-                    <!-- Danh sách các ô đỗ ô tô con -->
-                    <ItemsControl ItemsSource="{Binding CarSlots}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel ItemWidth="194" ItemHeight="112" Margin="0"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Button Command="{Binding DataContext.SelectSlotCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding}"
-                                        Background="Transparent"
-                                        BorderThickness="0"
-                                        Padding="0"
-                                        Margin="0,0,12,12"
-                                        Cursor="Hand">
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border CornerRadius="6" BorderThickness="1.5" Padding="12,10">
-                                                <Border.Style>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="Background" Value="#F0FDF4"/>
-                                                        <Setter Property="BorderBrush" Value="#86EFAC"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsOccupied}" Value="True">
-                                                                <Setter Property="Background" Value="#FEF2F2"/>
-                                                                <Setter Property="BorderBrush" Value="#F87171"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Border.Style>
-                                                <Grid>
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="Auto"/>
-                                                        <RowDefinition Height="*"/>
-                                                        <RowDefinition Height="Auto"/>
-                                                    </Grid.RowDefinitions>
-
-                                                    <!-- Hàng đầu: Mã ô đỗ & Badge trạng thái -->
-                                                    <Grid Grid.Row="0">
-                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding SlotCode}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                                        </StackPanel>
-                                                        <Border HorizontalAlignment="Right" CornerRadius="3" Padding="6,2">
-                                                            <Border.Style>
-                                                                <Style TargetType="Border">
-                                                                    <Setter Property="Background" Value="#DCFCE7"/>
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsOccupied}" Value="True">
-                                                                            <Setter Property="Background" Value="#FEE2E2"/>
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </Border.Style>
-                                                            <TextBlock Text="{Binding StatusBadgeText}" FontSize="10" FontWeight="Bold">
-                                                                <TextBlock.Style>
-                                                                    <Style TargetType="TextBlock">
-                                                                        <Setter Property="Foreground" Value="#15803D"/>
-                                                                        <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding IsOccupied}" Value="True">
-                                                                                <Setter Property="Foreground" Value="#B91C1C"/>
-                                                                            </DataTrigger>
-                                                                        </Style.Triggers>
-                                                                    </Style>
-                                                                </TextBlock.Style>
-                                                            </TextBlock>
-                                                        </Border>
-                                                    </Grid>
-
-                                                    <!-- Hàng giữa: Biển số xe đỗ hoặc Chỗ trống -->
-                                                    <StackPanel Grid.Row="1" VerticalAlignment="Center" Margin="0,6">
-                                                        <TextBlock FontSize="13" FontWeight="Bold" TextAlignment="Center">
-                                                            <TextBlock.Style>
-                                                                <Style TargetType="TextBlock">
-                                                                    <Setter Property="Text" Value="Trống (Sẵn sàng)"/>
-                                                                    <Setter Property="Foreground" Value="#16A34A"/>
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsOccupied}" Value="True">
-                                                                            <Setter Property="Text" Value="{Binding CurrentLicensePlate}"/>
-                                                                            <Setter Property="Foreground" Value="#0F172A"/>
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
-                                                    </StackPanel>
-
-                                                    <!-- Hàng đáy: Loại xe -->
-                                                    <Grid Grid.Row="2">
-                                                        <TextBlock Text="🚗 Ô tô con 4-7 chỗ" FontSize="10.5" Foreground="{StaticResource TextDimBrush}"/>
-                                                    </Grid>
-                                                </Grid>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </Border>
+                                <ItemsControl ItemsSource="{Binding Slots}" ItemTemplate="{StaticResource SlotCardTemplate}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel ItemWidth="194" ItemHeight="112" Margin="0"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
 
             <!-- 6. BẢNG CHI TIẾT Ô ĐỖ ĐANG ĐƯỢC CHỌN (INSPECTOR PANEL) -->
             <Border Background="{StaticResource CardBackgroundBrush}"

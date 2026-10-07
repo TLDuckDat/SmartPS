@@ -46,6 +46,9 @@ public class LocalizationKeyParityTests
         keys.AddRange(new[] { "Details", "PrevPage", "NextPage", "PageInfo", "Verify" }.Select(s => $"Str_Audit_{s}"));
         keys.AddRange(new[] { "Success", "Denied", "Failed" }.Select(s => $"Str_Audit_Outcome_{s}"));
         keys.AddRange(new[] { "VerifyOk", "VerifyBroken", "LoadError", "VerifyError" }.Select(s => $"Msg_Audit_{s}"));
+
+        // Reporting & BI (plan §3.3)
+        keys.AddRange(ReportTextKeys.All);
         return keys;
     }
 
@@ -101,7 +104,7 @@ public class LocalizationKeyParityTests
     {
         var expected = Permissions.GetAll().Select(p => $"Str_Perm_{p.Replace('.', '_')}").ToList();
 
-        Assert.Equal(23, expected.Count);
+        Assert.Equal(TestUsers.TotalPermissionCount, expected.Count);
         Assert.Contains("Str_Perm_Audit_View", expected);
         Assert.Contains("Str_Perm_Payment_Refund", expected);
         foreach (var culture in Cultures)

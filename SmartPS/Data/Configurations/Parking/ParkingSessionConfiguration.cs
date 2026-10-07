@@ -45,7 +45,14 @@ public class ParkingSessionConfiguration : IEntityTypeConfiguration<ParkingSessi
         builder.HasIndex(x => x.TicketCode);
         builder.HasIndex(x => x.LicensePlate);
         builder.HasIndex(x => x.CheckInTime);
+        builder.HasIndex(x => x.CheckOutTime);
         builder.HasIndex(x => x.Status);
+
+        // Giữ chỉ mục FK thường và thêm chỉ mục duy nhất một phiên đang hoạt động trên mỗi ô.
+        builder.HasIndex(x => x.SlotId, "IX_ParkingSessions_SlotId");
+        builder.HasIndex(x => x.SlotId, "IX_ParkingSessions_SlotId_Active")
+               .IsUnique()
+               .HasFilter("\"Status\" = 0 AND \"SlotId\" IS NOT NULL");
 
         builder.HasOne(x => x.VehicleType)
                .WithMany(v => v.ParkingSessions)

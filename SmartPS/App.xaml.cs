@@ -1,4 +1,5 @@
 using System.IO;
+using LiveChartsCore.SkiaSharpView;
 using System.Windows;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -6,8 +7,10 @@ using Microsoft.Extensions.DependencyInjection;
 using SmartPS.Data;
 using SmartPS.Services.Auth;
 using SmartPS.Services.Authorization;
+using SmartPS.Services.Customers;
 using SmartPS.Services.Dialog;
 using SmartPS.Services.Localization;
+using SmartPS.Services.ParkingZones;
 using SmartPS.Services.Payment;
 using SmartPS.Services.Payment.Mock;
 using SmartPS.Services.Payment.PayOS;
@@ -30,6 +33,16 @@ public partial class App : Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Biểu đồ LiveCharts2: Skia + giao diện sáng; Segoe UI để hiển thị đúng tiếng Việt/Nhật
+        LiveChartsCore.LiveCharts.Configure(config => config
+            .AddSkiaSharp()
+            .AddDefaultMappers()
+            .AddLightTheme()
+            .HasTextSettings(new TextSettings
+            {
+                DefaultTypeface = SkiaSharp.SKTypeface.FromFamilyName("Segoe UI")
+            }));
 
         // 1. Khởi tạo cấu hình ứng dụng từ appsettings.json
         var configuration = new ConfigurationBuilder()
@@ -103,6 +116,13 @@ public partial class App : Application
 
         services.AddSingleton<IPaymentService, PaymentService>();
         services.AddSingleton<IShiftService, ShiftService>();
+        services.AddSingleton<SmartPS.Services.Reports.IReportService, SmartPS.Services.Reports.ReportService>();
+        services.AddSingleton<SmartPS.Services.Reports.IReportExportService, SmartPS.Services.Reports.ReportExportService>();
+        services.AddSingleton<SmartPS.Services.Dialog.IFileDialogService, SmartPS.Services.Dialog.FileDialogService>();
+        services.AddSingleton<ICustomerService, CustomerService>();
+        services.AddSingleton<IMonthlyTicketService, MonthlyTicketService>();
+        services.AddSingleton<IBlacklistService, BlacklistService>();
+        services.AddSingleton<IParkingZoneService, ParkingZoneService>();
         services.AddSingleton<PaymentWebhookServer>();
 
         // Đăng ký ViewModels

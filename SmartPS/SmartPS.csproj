@@ -39,6 +39,12 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.12" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageReference Include="QRCoder" Version="1.8.0" />
+    <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.5" NoWarn="NU1701" />
+    <!-- Transitive packages of LiveCharts that only ship .NET Framework assets: pinned at the resolved versions so NU1701 can be scoped to them. -->
+    <PackageReference Include="OpenTK" Version="3.3.1" NoWarn="NU1701" />
+    <PackageReference Include="OpenTK.GLWpfControl" Version="3.3.0" NoWarn="NU1701" />
+    <PackageReference Include="SkiaSharp.Views.WPF" Version="3.119.0" NoWarn="NU1701" />
+    <PackageReference Include="ClosedXML" Version="0.105.1" />
   </ItemGroup>
 
 </Project>

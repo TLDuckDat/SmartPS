@@ -21,6 +21,20 @@ public static class AuditActions
     public const string ShiftReview = "SHIFT_REVIEW";
     public const string ShiftAdjustment = "SHIFT_ADJUSTMENT";
     public const string AuditVerify = "AUDIT_VERIFY";
+    public const string CustomerCreate = "CUSTOMER_CREATE";
+    public const string CustomerUpdate = "CUSTOMER_UPDATE";
+    public const string CustomerVehicleAdd = "CUSTOMER_VEHICLE_ADD";
+    public const string CustomerVehicleRemove = "CUSTOMER_VEHICLE_REMOVE";
+    public const string TicketCreate = "TICKET_CREATE";
+    public const string TicketRenew = "TICKET_RENEW";
+    public const string TicketSuspend = "TICKET_SUSPEND";
+    public const string TicketResume = "TICKET_RESUME";
+    public const string BlacklistAdd = "BLACKLIST_ADD";
+    public const string BlacklistRemove = "BLACKLIST_REMOVE";
+    public const string GateBlacklistBlocked = "GATE_BLACKLIST_BLOCKED";
+    public const string GateBlacklistExitWarning = "GATE_BLACKLIST_EXIT_WARNING";
+    public const string ZoneUpdate = "ZONE_UPDATE";
+    public const string ReportExport = "REPORT_EXPORT";
 
     public static IReadOnlyList<string> All { get; } = typeof(AuditActions)
         .GetFields(BindingFlags.Public | BindingFlags.Static)

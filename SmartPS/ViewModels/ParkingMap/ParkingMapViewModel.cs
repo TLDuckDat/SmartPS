@@ -1,12 +1,23 @@
 using System.Collections.ObjectModel;
+using SmartPS.Constants;
 using SmartPS.Models.Parking;
+using SmartPS.Services.Authorization;
+using SmartPS.Services.Dialog;
 using SmartPS.Services.GateControl;
+using SmartPS.Services.Localization;
+using SmartPS.Services.ParkingZones;
 
 namespace SmartPS.ViewModels.ParkingMap;
 
 public class ParkingMapViewModel : ViewModelBase
 {
     private readonly IGateControlService _gateControlService;
+    private readonly IParkingZoneService _zoneService;
+    private readonly IPermissionService _permissions;
+    private readonly IDialogService _dialog;
+    private readonly ILocalizationService _localization;
+
+    private IReadOnlyList<ZoneGroupData> _groups = Array.Empty<ZoneGroupData>();
 
     private int _totalSlots;
     public int TotalSlots
@@ -29,6 +40,21 @@ public class ParkingMapViewModel : ViewModelBase
         set => SetProperty(ref _availableSlots, value);
     }
 
+    private int _maintenanceSlots;
+    public int MaintenanceSlots
+    {
+        get => _maintenanceSlots;
+        set
+        {
+            if (SetProperty(ref _maintenanceSlots, value))
+            {
+                OnPropertyChanged(nameof(MaintenanceText));
+            }
+        }
+    }
+
+    public string MaintenanceText => _localization.GetString("Str_Map_MaintenanceCount", MaintenanceSlots);
+
     private double _occupancyRate;
     public double OccupancyRate
     {
@@ -43,32 +69,11 @@ public class ParkingMapViewModel : ViewModelBase
     }
     public string OccupancyRateFormatted => $"{OccupancyRate:0.0}%";
 
-    private int _motorbikeOccupiedCount;
-    public int MotorbikeOccupiedCount
+    private string _zonesSummary = string.Empty;
+    public string ZonesSummary
     {
-        get => _motorbikeOccupiedCount;
-        set => SetProperty(ref _motorbikeOccupiedCount, value);
-    }
-
-    private int _motorbikeTotalCount = 10;
-    public int MotorbikeTotalCount
-    {
-        get => _motorbikeTotalCount;
-        set => SetProperty(ref _motorbikeTotalCount, value);
-    }
-
-    private int _carOccupiedCount;
-    public int CarOccupiedCount
-    {
-        get => _carOccupiedCount;
-        set => SetProperty(ref _carOccupiedCount, value);
-    }
-
-    private int _carTotalCount = 10;
-    public int CarTotalCount
-    {
-        get => _carTotalCount;
-        set => SetProperty(ref _carTotalCount, value);
+        get => _zonesSummary;
+        set => SetProperty(ref _zonesSummary, value);
     }
 
     private bool _isLoading;
@@ -86,7 +91,7 @@ public class ParkingMapViewModel : ViewModelBase
         {
             if (SetProperty(ref _searchKeyword, value))
             {
-                FilterSlots();
+                RebuildZones();
             }
         }
     }
@@ -98,21 +103,34 @@ public class ParkingMapViewModel : ViewModelBase
         set => SetProperty(ref _selectedSlot, value);
     }
 
-    public ObservableCollection<ParkingSlotItemViewModel> AllSlots { get; } = new();
-    public ObservableCollection<ParkingSlotItemViewModel> MotorbikeSlots { get; } = new();
-    public ObservableCollection<ParkingSlotItemViewModel> CarSlots { get; } = new();
+    /// <summary>Chỉ người có Parking.Configure mới đổi được đối tượng của khu.</summary>
+    public bool CanConfigure => _permissions.HasPermission(Permissions.ParkingConfigure);
+
+    public ObservableCollection<ParkingZoneGroupViewModel> Zones { get; } = new();
 
     public AsyncRelayCommand RefreshCommand { get; }
     public RelayCommand<ParkingSlotItemViewModel> SelectSlotCommand { get; }
 
-    public ParkingMapViewModel(IGateControlService gateControlService)
+    public ParkingMapViewModel(
+        IGateControlService gateControlService,
+        IParkingZoneService zoneService,
+        IPermissionService permissions,
+        IDialogService dialogService,
+        ILocalizationService localization)
     {
         _gateControlService = gateControlService ?? throw new ArgumentNullException(nameof(gateControlService));
+        _zoneService = zoneService ?? throw new ArgumentNullException(nameof(zoneService));
+        _permissions = permissions ?? throw new ArgumentNullException(nameof(permissions));
+        _dialog = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
+        _localization = localization ?? throw new ArgumentNullException(nameof(localization));
+
         RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
         SelectSlotCommand = new RelayCommand<ParkingSlotItemViewModel>(slot =>
         {
             SelectedSlot = slot;
         });
+
+        _localization.LanguageChanged += () => _ = LoadDataAsync();
 
         _ = LoadDataAsync();
     }
@@ -126,65 +144,26 @@ public class ParkingMapViewModel : ViewModelBase
 
             var slots = await _gateControlService.GetAllSlotsAsync();
             var activeSessions = await _gateControlService.GetActiveSessionsAsync();
+            var zones = await _zoneService.GetZonesAsync();
 
-            var slotViewModels = new List<ParkingSlotItemViewModel>();
+            _groups = ParkingMapBuilder.BuildGroups(slots, activeSessions, zones);
 
-            foreach (var s in slots)
-            {
-                var activeSession = activeSessions.FirstOrDefault(sess =>
-                    (sess.SlotId.HasValue && sess.SlotId.Value == s.SlotId) ||
-                    (!string.IsNullOrEmpty(s.CurrentLicensePlate) &&
-                     string.Equals(sess.LicensePlate, s.CurrentLicensePlate, StringComparison.OrdinalIgnoreCase)));
-
-                var isOccupied = s.Status == SlotStatus.Occupied || activeSession != null;
-                var currentPlate = s.CurrentLicensePlate ?? activeSession?.LicensePlate;
-
-                var vm = new ParkingSlotItemViewModel
-                {
-                    SlotId = s.SlotId,
-                    SlotCode = s.SlotCode,
-                    ZoneName = s.ZoneName,
-                    VehicleTypeId = s.VehicleTypeId,
-                    VehicleTypeName = s.VehicleType?.TypeName ?? (s.VehicleTypeId == 1 ? "Xe máy" : "Ô tô con"),
-                    Status = isOccupied ? SlotStatus.Occupied : SlotStatus.Available,
-                    CurrentLicensePlate = currentPlate,
-                    CheckInTime = activeSession?.CheckInTimeLocal,
-                    TicketCode = activeSession?.TicketCode,
-                    CustomerName = activeSession?.Customer?.FullName
-                };
-
-                slotViewModels.Add(vm);
-            }
-
-            AllSlots.Clear();
-            foreach (var vm in slotViewModels)
-            {
-                AllSlots.Add(vm);
-            }
-
-            // Tính toán chỉ số thống kê thực tế
-            TotalSlots = AllSlots.Count;
-            OccupiedSlots = AllSlots.Count(s => s.IsOccupied);
-            AvailableSlots = Math.Max(0, TotalSlots - OccupiedSlots);
+            // Chỉ số thống kê thực tế: ô bảo trì không được tính là còn trống
+            TotalSlots = _groups.Sum(g => g.TotalCount);
+            OccupiedSlots = _groups.Sum(g => g.OccupiedCount);
+            AvailableSlots = _groups.Sum(g => g.AvailableCount);
+            MaintenanceSlots = _groups.Sum(g => g.MaintenanceCount);
             OccupancyRate = TotalSlots > 0 ? Math.Round((double)OccupiedSlots / TotalSlots * 100, 1) : 0;
+            ZonesSummary = string.Join(" · ", _groups.Select(g => string.IsNullOrWhiteSpace(g.ZoneName) ? g.ZoneCode : g.ZoneName));
 
-            MotorbikeTotalCount = AllSlots.Count(s => s.VehicleTypeId == 1 || s.SlotCode.StartsWith("A"));
-            MotorbikeOccupiedCount = AllSlots.Count(s => (s.VehicleTypeId == 1 || s.SlotCode.StartsWith("A")) && s.IsOccupied);
+            var selectedId = SelectedSlot?.SlotId;
+            RebuildZones();
 
-            CarTotalCount = AllSlots.Count(s => s.VehicleTypeId == 2 || s.SlotCode.StartsWith("B"));
-            CarOccupiedCount = AllSlots.Count(s => (s.VehicleTypeId == 2 || s.SlotCode.StartsWith("B")) && s.IsOccupied);
-
-            FilterSlots();
-
-            // Nếu slot đang chọn vẫn tồn tại thì cập nhật lại tham chiếu
-            if (SelectedSlot != null)
-            {
-                SelectedSlot = AllSlots.FirstOrDefault(s => s.SlotId == SelectedSlot.SlotId);
-            }
-            else
-            {
-                SelectedSlot = AllSlots.FirstOrDefault(s => s.IsOccupied) ?? AllSlots.FirstOrDefault();
-            }
+            // Nếu ô đang chọn vẫn tồn tại thì cập nhật lại tham chiếu
+            var allSlots = Zones.SelectMany(z => z.Slots).ToList();
+            SelectedSlot = (selectedId.HasValue ? allSlots.FirstOrDefault(s => s.SlotId == selectedId.Value) : null)
+                           ?? allSlots.FirstOrDefault(s => s.IsOccupied)
+                           ?? allSlots.FirstOrDefault();
         }
         catch (Exception ex)
         {
@@ -196,29 +175,69 @@ public class ParkingMapViewModel : ViewModelBase
         }
     }
 
-    private void FilterSlots()
+    private void RebuildZones()
     {
         var kw = SearchKeyword?.Trim().ToUpperInvariant() ?? string.Empty;
+        var canConfigure = CanConfigure;
 
-        MotorbikeSlots.Clear();
-        CarSlots.Clear();
-
-        foreach (var s in AllSlots)
+        Zones.Clear();
+        foreach (var group in _groups)
         {
-            var matchKw = string.IsNullOrEmpty(kw) ||
-                          s.SlotCode.ToUpperInvariant().Contains(kw) ||
-                          (!string.IsNullOrEmpty(s.CurrentLicensePlate) && s.CurrentLicensePlate.ToUpperInvariant().Contains(kw));
+            var slotViewModels = group.Slots
+                .Where(s => string.IsNullOrEmpty(kw)
+                            || s.SlotCode.ToUpperInvariant().Contains(kw)
+                            || (!string.IsNullOrEmpty(s.CurrentLicensePlate) && s.CurrentLicensePlate.ToUpperInvariant().Contains(kw)))
+                .Select(s => ToSlotViewModel(group, s))
+                .ToList();
 
-            if (!matchKw) continue;
+            // Khi tìm kiếm, chỉ giữ các khu còn ô khớp
+            if (!string.IsNullOrEmpty(kw) && slotViewModels.Count == 0)
+            {
+                continue;
+            }
 
-            if (s.VehicleTypeId == 1 || s.SlotCode.StartsWith("A"))
-            {
-                MotorbikeSlots.Add(s);
-            }
-            else
-            {
-                CarSlots.Add(s);
-            }
+            Zones.Add(new ParkingZoneGroupViewModel(group, slotViewModels, canConfigure, _localization, SaveZoneAudienceAsync));
         }
+    }
+
+    private ParkingSlotItemViewModel ToSlotViewModel(ZoneGroupData group, SlotMapData slot)
+        => new()
+        {
+            SlotId = slot.SlotId,
+            SlotCode = slot.SlotCode,
+            ZoneName = group.ZoneName,
+            VehicleTypeId = slot.VehicleTypeId,
+            VehicleTypeName = string.IsNullOrEmpty(slot.VehicleTypeName) ? (slot.VehicleTypeId == 1 ? "Xe máy" : "Ô tô con") : slot.VehicleTypeName,
+            Status = slot.EffectiveStatus,
+            StatusText = _localization.GetString($"Str_Map_Status_{slot.EffectiveStatus}"),
+            CurrentLicensePlate = slot.CurrentLicensePlate,
+            CheckInTime = slot.CheckInTimeLocal,
+            TicketCode = slot.TicketCode,
+            CustomerName = slot.CustomerName,
+            IsResidentSession = slot.SessionCustomerType == CustomerType.Resident
+        };
+
+    private async Task SaveZoneAudienceAsync(ParkingZoneGroupViewModel zone)
+    {
+        if (!zone.ZoneId.HasValue)
+        {
+            return;
+        }
+
+        var result = await _zoneService.UpdateAudienceAsync(zone.ZoneId.Value, zone.SelectedAudience);
+        if (result.Success)
+        {
+            _dialog.ShowSuccess(_localization.GetString("Msg_Map_AudienceSaved"));
+            await LoadDataAsync();
+            return;
+        }
+
+        if (result.IsPermissionDenied)
+        {
+            _dialog.ShowWarning(_localization.GetString("Msg_Auth_PermissionDenied"));
+            return;
+        }
+
+        _dialog.ShowError(_localization.GetString("Msg_Map_AudienceSaveError", _localization.GetString($"Msg_Op_{result.Error}")));
     }
 }

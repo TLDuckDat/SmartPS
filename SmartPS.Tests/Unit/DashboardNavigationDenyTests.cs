@@ -83,7 +83,8 @@ public class DashboardNavigationDenyTests
         Assert.Equal(new HashSet<NavigationItemType>
         {
             NavigationItemType.Overview, NavigationItemType.GateControl, NavigationItemType.Shifts, NavigationItemType.ParkingMap,
-            NavigationItemType.Incidents, NavigationItemType.Reports, NavigationItemType.Transactions
+            NavigationItemType.Incidents, NavigationItemType.Reports, NavigationItemType.Transactions,
+            NavigationItemType.Customers
         }, h.VisibleIds());
         Assert.False(h.Item(NavigationItemType.UserManagement).IsVisible);
         Assert.False(h.Item(NavigationItemType.AuditLog).IsVisible);

@@ -8,12 +8,17 @@ namespace SmartPS.Services.GateControl;
 public class StandardParkingFeeCalculator : IParkingFeeCalculator
 {
     public ParkingFeeCalculationResult CalculateFee(ParkingSession session, PricingRule? pricingRule, DateTime checkOutTime)
+        => CalculateFee(session, pricingRule, checkOutTime, null);
+
+    public ParkingFeeCalculationResult CalculateFee(ParkingSession session, PricingRule? pricingRule, DateTime checkOutTime, MonthlyCoverage? coverage)
     {
         var duration = checkOutTime - session.CheckInTime;
         if (duration.TotalSeconds < 0) duration = TimeSpan.FromSeconds(1);
 
-        // Trường hợp 1: Xe vé tháng -> Miễn cước lượt
-        if (session.IsMonthlyPass)
+        var window = MonthlyFeeSplitPolicy.Resolve(session.CheckInTime, checkOutTime, session.IsMonthlyPass, coverage);
+
+        // Trường hợp 1: Xe vé tháng còn hiệu lực (hoặc chưa tra cứu được) -> Miễn cước lượt
+        if (window.IsFree)
         {
             return new ParkingFeeCalculationResult
             {
@@ -22,28 +27,48 @@ public class StandardParkingFeeCalculator : IParkingFeeCalculator
                 DiscountPercentage = 100,
                 TotalFee = 0,
                 IsMonthlyTicket = true,
-                Message = "Xe vé tháng được miễn cước phí."
+                Message = "Xe vé tháng được miễn cước phí.",
+                ChargeReason = window.Reason,
+                ChargeFromUtc = null,
+                TicketValidUntilUtc = window.TicketValidUntilUtc
             };
         }
 
-        // Trường hợp 2: Tính cước theo biểu phí
+        // Trường hợp 2: Tính cước theo biểu phí. Vé tháng hết hạn chỉ bị tính phần thời gian không được bao phủ,
+        // theo giá vãng lai và không áp chiết khấu hạng khách hàng.
+        var isMonthlyCharge = window.Reason != MonthlyChargeReason.NotMonthly;
+        var chargeSession = isMonthlyCharge
+            ? new ParkingSession
+            {
+                SessionId = session.SessionId,
+                LicensePlate = session.LicensePlate,
+                VehicleTypeId = session.VehicleTypeId,
+                CheckInTime = window.ChargeFromUtc ?? session.CheckInTime,
+                IsMonthlyPass = false,
+                Customer = null
+            }
+            : session;
+
+        var chargeDuration = checkOutTime - chargeSession.CheckInTime;
+        if (chargeDuration.TotalSeconds < 0) chargeDuration = TimeSpan.FromSeconds(1);
+
         decimal fee = 0;
         if (pricingRule != null)
         {
             var firstBlockMin = pricingRule.FirstBlockMinutes > 0 ? pricingRule.FirstBlockMinutes : 120;
-            if (duration.TotalMinutes <= firstBlockMin)
+            if (chargeDuration.TotalMinutes <= firstBlockMin)
             {
                 fee = pricingRule.FirstBlockPrice;
             }
             else
             {
-                var extraMinutes = duration.TotalMinutes - firstBlockMin;
+                var extraMinutes = chargeDuration.TotalMinutes - firstBlockMin;
                 var extraHours = (decimal)Math.Ceiling(extraMinutes / 60.0);
                 fee = pricingRule.FirstBlockPrice + (extraHours * pricingRule.AdditionalPricePerHour);
             }
 
             // Phụ phí qua đêm nếu gửi trên 12 tiếng hoặc gửi qua đêm (22h đến 6h)
-            if (duration.TotalHours >= 12 || (session.CheckInTime.Hour >= 22 && checkOutTime.Hour <= 6))
+            if (chargeDuration.TotalHours >= 12 || (chargeSession.CheckInTime.Hour >= 22 && checkOutTime.Hour <= 6))
             {
                 fee += pricingRule.OvernightPrice;
             }
@@ -55,7 +80,7 @@ public class StandardParkingFeeCalculator : IParkingFeeCalculator
         }
 
         // Chiết khấu theo hạng khách hàng (CustomerTier / CustomerType)
-        double discount = GetCustomerDiscount(session.Customer);
+        double discount = GetCustomerDiscount(chargeSession.Customer);
         var totalFee = fee * (decimal)(1 - discount / 100.0);
 
         return new ParkingFeeCalculationResult
@@ -65,7 +90,15 @@ public class StandardParkingFeeCalculator : IParkingFeeCalculator
             DiscountPercentage = discount,
             TotalFee = Math.Max(0, Math.Round(totalFee, 0)),
             IsMonthlyTicket = false,
-            Message = "Tính cước thành công."
+            Message = window.Reason switch
+            {
+                MonthlyChargeReason.ExpiredDuringStay => "Vé tháng hết hạn trong lúc gửi, tính cước vãng lai cho phần sau khi hết hạn.",
+                MonthlyChargeReason.NotCovered => "Vé tháng không còn hiệu lực, tính cước vãng lai.",
+                _ => "Tính cước thành công."
+            },
+            ChargeReason = window.Reason,
+            ChargeFromUtc = isMonthlyCharge ? window.ChargeFromUtc : null,
+            TicketValidUntilUtc = window.TicketValidUntilUtc
         };
     }
 

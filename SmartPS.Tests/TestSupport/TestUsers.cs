@@ -16,21 +16,38 @@ public static class TestUsers
     public const string SeedAdminUsername = "admin";
     public const string SeedAdminPassword = "Admin@123";
 
-    /// <summary>Operator grants from seed_data.sql (unchanged by this task).</summary>
-    public static readonly IReadOnlyList<string> OperatorSeedPermissions = new[]
+    /// <summary>Total number of permissions after the resident/visitor flow (23 RBAC + 3 customer/blacklist).</summary>
+    public const int TotalPermissionCount = 26;
+
+    /// <summary>The 3 permissions added by the resident/visitor flow (R8).</summary>
+    public static readonly IReadOnlyList<string> CustomerPermissions = new[]
+    {
+        Permissions.CustomerView, Permissions.CustomerManage, Permissions.BlacklistManage
+    };
+
+    /// <summary>Operator grants written by the AddRbacAndAuditTrail migration (the original 7).</summary>
+    public static readonly IReadOnlyList<string> OperatorRbacMigrationPermissions = new[]
     {
         Permissions.ParkingView, Permissions.ParkingCheckIn, Permissions.ParkingCheckOut, Permissions.ReportView,
         Permissions.ShiftView, Permissions.ShiftOpen, Permissions.ShiftClose
     };
 
-    /// <summary>Manager defaults decided in spec §6.1.</summary>
-    public static readonly IReadOnlyList<string> ManagerDefaultPermissions = new[]
+    /// <summary>Manager grants written by the AddRbacAndAuditTrail migration (the original 17, spec §6.1 of the RBAC task).</summary>
+    public static readonly IReadOnlyList<string> ManagerRbacMigrationPermissions = new[]
     {
         Permissions.ReportView, Permissions.ReportExport, Permissions.PricingManage,
         Permissions.ParkingView, Permissions.ParkingCheckIn, Permissions.ParkingCheckOut, Permissions.ParkingConfigure,
         Permissions.ShiftView, Permissions.ShiftOpen, Permissions.ShiftClose, Permissions.ShiftReview, Permissions.ShiftAdjust,
         Permissions.PaymentRefund, Permissions.UserView, Permissions.RoleView, Permissions.AuditView, Permissions.IncidentManage
     };
+
+    /// <summary>Operator grants from seed_data.sql (RBAC grants + Customer.View).</summary>
+    public static readonly IReadOnlyList<string> OperatorSeedPermissions =
+        OperatorRbacMigrationPermissions.Append(Permissions.CustomerView).ToArray();
+
+    /// <summary>Manager defaults (RBAC spec §6.1 + the 3 customer/blacklist permissions).</summary>
+    public static readonly IReadOnlyList<string> ManagerDefaultPermissions =
+        ManagerRbacMigrationPermissions.Concat(CustomerPermissions).ToArray();
 
     /// <summary>The 18 permissions that existed before this task (fb7303a).</summary>
     public static readonly IReadOnlyList<string> LegacyPermissions = new[]

@@ -8,8 +8,10 @@ using SmartPS.Models.Ocr;
 using SmartPS.Models.Parking;
 using SmartPS.Models.Payment;
 using SmartPS.Services.Audio;
+using SmartPS.Services.Audit;
 using SmartPS.Services.Auth;
 using SmartPS.Services.Authorization;
+using SmartPS.Services.Customers;
 using SmartPS.Services.Dialog;
 using SmartPS.Services.GateControl;
 using SmartPS.Services.Localization;
@@ -130,7 +132,7 @@ public class GateControlViewModel : ViewModelBase
         {
             if (SetProperty(ref _inPlateText, value))
             {
-                _ = CheckMonthlyPassInAsync(value);
+                _ = ClassifyInPlateAsync(value);
             }
         }
     }
@@ -189,6 +191,37 @@ public class GateControlViewModel : ViewModelBase
         get => _isMonthlyTicketIn;
         set => SetProperty(ref _isMonthlyTicketIn, value);
     }
+
+    private VehicleCategory _inCategory = VehicleCategory.Visitor;
+    public VehicleCategory InCategory
+    {
+        get => _inCategory;
+        set => SetProperty(ref _inCategory, value);
+    }
+
+    private bool _isBlacklistedIn;
+    public bool IsBlacklistedIn
+    {
+        get => _isBlacklistedIn;
+        set => SetProperty(ref _isBlacklistedIn, value);
+    }
+
+    private string _inBadgeForeground = "#475569";
+    public string InBadgeForeground
+    {
+        get => _inBadgeForeground;
+        set => SetProperty(ref _inBadgeForeground, value);
+    }
+
+    private string _inBadgeBackground = "#F1F5F9";
+    public string InBadgeBackground
+    {
+        get => _inBadgeBackground;
+        set => SetProperty(ref _inBadgeBackground, value);
+    }
+
+    // Tăng mỗi lần phân loại để bỏ qua kết quả của biển số đã bị thay thế
+    private int _classifySequence;
 
     private bool _isBarrierInOpen;
     public bool IsBarrierInOpen
@@ -387,6 +420,30 @@ public class GateControlViewModel : ViewModelBase
         get => _isOutOcrBusy;
         set => SetProperty(ref _isOutOcrBusy, value);
     }
+
+    private string _outWarningText = string.Empty;
+    public string OutWarningText
+    {
+        get => _outWarningText;
+        set => SetProperty(ref _outWarningText, value);
+    }
+
+    private bool _isOutWarningVisible;
+    public bool IsOutWarningVisible
+    {
+        get => _isOutWarningVisible;
+        set => SetProperty(ref _isOutWarningVisible, value);
+    }
+
+    private bool _isOutBlacklisted;
+    public bool IsOutBlacklisted
+    {
+        get => _isOutBlacklisted;
+        set => SetProperty(ref _isOutBlacklisted, value);
+    }
+
+    // Phiên đã phát âm báo danh sách đen ở làn ra, tránh phát lặp khi tính lại cước
+    private int? _outBlacklistAlertedSessionId;
 
     private string _outStatusMessage = "Sẵn sàng đối soát xe ra";
     public string OutStatusMessage
@@ -753,36 +810,74 @@ public class GateControlViewModel : ViewModelBase
         }
     }
 
-    private async Task CheckMonthlyPassInAsync(string plate)
+    private async Task ClassifyInPlateAsync(string plate)
     {
+        var sequence = Interlocked.Increment(ref _classifySequence);
         if (string.IsNullOrWhiteSpace(plate))
         {
-            InCustomerBadge = "Khách vãng lai";
-            IsMonthlyTicketIn = false;
+            ApplyInClassification(VehicleClassification.Visitor(string.Empty));
             return;
         }
 
-        var ticket = await _gateControlService.FindActiveMonthlyTicketAsync(plate);
-        if (ticket != null)
+        var classification = await _gateControlService.ClassifyVehicleAsync(plate);
+        if (sequence != Volatile.Read(ref _classifySequence)) return;
+
+        ApplyInClassification(classification);
+
+        var ticket = classification.Ticket;
+        if (classification.IsMonthlyPass && ticket != null && ticket.VehicleTypeId > 0
+            && VehicleTypes.Any(v => v.VehicleTypeId == ticket.VehicleTypeId))
         {
-            IsMonthlyTicketIn = true;
-            InCustomerBadge = $"👑 VÉ THÁNG: {ticket.Customer?.FullName ?? "VIP"} (Hiệu lực: {ticket.EndDate:dd/MM/yyyy})";
-            if (ticket.VehicleTypeId > 0 && VehicleTypes.Any(v => v.VehicleTypeId == ticket.VehicleTypeId))
-            {
-                InSelectedVehicleType = VehicleTypes.First(v => v.VehicleTypeId == ticket.VehicleTypeId);
-            }
+            InSelectedVehicleType = VehicleTypes.First(v => v.VehicleTypeId == ticket.VehicleTypeId);
         }
-        else
+
+        await SuggestSlotInAsync();
+    }
+
+    private void ApplyInClassification(VehicleClassification classification)
+    {
+        InCategory = classification.Category;
+        IsMonthlyTicketIn = classification.IsMonthlyPass;
+        IsBlacklistedIn = classification.IsBlacklisted;
+
+        var ticket = classification.Ticket;
+        switch (classification.Category)
         {
-            IsMonthlyTicketIn = false;
-            InCustomerBadge = "Khách vãng lai";
+            case VehicleCategory.Resident:
+                InCustomerBadge = _localizationService.GetString("Str_Gate_Badge_Resident",
+                    ticket?.CustomerName ?? string.Empty, ticket?.ApartmentCode ?? string.Empty, FormatTicketEnd(ticket));
+                InBadgeForeground = "#15803D";
+                InBadgeBackground = "#DCFCE7";
+                break;
+            case VehicleCategory.MonthlyPass:
+                InCustomerBadge = _localizationService.GetString("Str_Gate_Badge_MonthlyPass",
+                    ticket?.CustomerName ?? string.Empty, FormatTicketEnd(ticket));
+                InBadgeForeground = "#1D4ED8";
+                InBadgeBackground = "#DBEAFE";
+                break;
+            case VehicleCategory.Blacklisted:
+                InCustomerBadge = _localizationService.GetString("Str_Gate_Badge_Blacklisted", classification.Blacklist?.Reason ?? string.Empty);
+                InBadgeForeground = "#B91C1C";
+                InBadgeBackground = "#FEE2E2";
+                break;
+            default:
+                var visitorBadge = _localizationService.GetString("Str_Gate_Badge_Visitor");
+                InCustomerBadge = classification.Warning == ClassificationWarning.CustomerLocked
+                    ? $"{visitorBadge} - {_localizationService.GetString("Str_Gate_Badge_CustomerLocked")}"
+                    : visitorBadge;
+                InBadgeForeground = "#475569";
+                InBadgeBackground = "#F1F5F9";
+                break;
         }
     }
+
+    private static string FormatTicketEnd(TicketCandidate? ticket)
+        => ticket == null ? string.Empty : TicketDates.LastValidDateVn(ticket.EndDateUtc).ToString("dd/MM/yyyy");
 
     private async Task SuggestSlotInAsync()
     {
         if (InSelectedVehicleType == null) return;
-        var slot = await _gateControlService.SuggestAvailableSlotAsync(InSelectedVehicleType.VehicleTypeId);
+        var slot = await _gateControlService.SuggestAvailableSlotAsync(InSelectedVehicleType.VehicleTypeId, InCategory);
         InSuggestedSlotCode = slot?.SlotCode ?? "Tự do";
     }
 
@@ -818,6 +913,13 @@ public class GateControlViewModel : ViewModelBase
 
             InStatusMessage = $"🟢 [VÀO THÀNH CÔNG] Biển số: {InPlateText} | Thời gian vào: {LastInTimeFormatted} | Mã vé: {LastInTicketCode} | Ô đỗ: {LastInSlotCode}";
 
+            if (result.TicketVehicleTypeMismatchWarning)
+            {
+                var mismatch = _localizationService.GetString("Str_Gate_Badge_TicketVehicleTypeMismatch");
+                InStatusMessage += $" | {mismatch}";
+                if (!silent) _dialogService.ShowWarning(mismatch);
+            }
+
             // Mở barrier làn vào 3 giây
             IsBarrierInOpen = true;
             _barrierInTimer.Stop();
@@ -830,18 +932,57 @@ public class GateControlViewModel : ViewModelBase
 
             if (!silent)
             {
-                _dialogService.ShowSuccess(result.Message);
+                _dialogService.ShowSuccess(GetCheckInSuccessMessage(result));
             }
             return true;
         }
         else
         {
-            var denyMessage = result.IsPermissionDenied ? _localizationService.GetString("Msg_Auth_PermissionDenied") : result.Message;
+            var denyMessage = result.IsPermissionDenied ? _localizationService.GetString("Msg_Auth_PermissionDenied") : GetRejectMessage(result);
             InStatusMessage = $"🔴 [TỪ CHỐI VÀO] {denyMessage}";
+            if (result.RejectReason == CheckInRejectReason.Blacklisted)
+            {
+                _audioAlertService.PlayErrorAlert();
+            }
+            else if (result.RejectReason == CheckInRejectReason.NoSlotAvailable)
+            {
+                _audioAlertService.PlayWarningAlert();
+            }
+
             if (!silent) _dialogService.ShowError(denyMessage);
             return false;
         }
     }
+
+    private string GetCheckInSuccessMessage(GateCheckInResult result)
+        => result.Category switch
+        {
+            VehicleCategory.Resident => _localizationService.GetString("Msg_Gate_CheckInResident"),
+            VehicleCategory.MonthlyPass => _localizationService.GetString("Msg_Gate_CheckInMonthly"),
+            _ => _localizationService.GetString("Msg_Gate_CheckInVisitor")
+        };
+
+    private string GetRejectMessage(GateCheckInResult result)
+        => result.RejectReason switch
+        {
+            CheckInRejectReason.Blacklisted => _localizationService.GetString("Msg_Gate_BlacklistBlocked", result.BlacklistReason ?? string.Empty),
+            CheckInRejectReason.NoSlotAvailable => _localizationService.GetString("Msg_Gate_NoSlotFor", GetGroupName(result.Category)),
+            CheckInRejectReason.SlotNotFound => _localizationService.GetString("Msg_Gate_SlotNotFound"),
+            CheckInRejectReason.SlotVehicleTypeMismatch => _localizationService.GetString("Msg_Gate_SlotVehicleTypeMismatch"),
+            CheckInRejectReason.SlotAudienceNotAllowed => _localizationService.GetString("Msg_Gate_SlotAudienceNotAllowed"),
+            CheckInRejectReason.SlotNotAvailable => _localizationService.GetString("Msg_Gate_SlotNotAvailable"),
+            CheckInRejectReason.PlateInvalid => _localizationService.GetString("Msg_Gate_PlateInvalid"),
+            CheckInRejectReason.ClassificationFailed => _localizationService.GetString("Msg_Gate_ClassificationFailed"),
+            _ => result.Message
+        };
+
+    private string GetGroupName(VehicleCategory category)
+        => category switch
+        {
+            VehicleCategory.Resident => _localizationService.GetString("Str_Gate_Group_Resident"),
+            VehicleCategory.MonthlyPass => _localizationService.GetString("Str_Gate_Group_MonthlyPass"),
+            _ => _localizationService.GetString("Str_Gate_Group_Visitor")
+        };
 
     #endregion
 
@@ -995,6 +1136,7 @@ public class GateControlViewModel : ViewModelBase
             DurationFormatted = calcResult.DurationFormatted;
             CalculatedFee = calcResult.TotalFee;
             IsMonthlyTicketOut = calcResult.IsMonthlyTicket;
+            ApplyOutWarnings(calcResult);
             EvaluatePlateMatch();
             OutStatusMessage = calcResult.Message;
         }
@@ -1022,10 +1164,43 @@ public class GateControlViewModel : ViewModelBase
         IsPlateMatched = string.Equals(normIn, normOut, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string Normalize(string? text)
+    private static string Normalize(string? text) => LicensePlateNormalizer.Normalize(text);
+
+    /// <summary>Hiển thị cảnh báo vé tháng hết hạn trong lúc gửi và xe thuộc danh sách đen ở làn ra (R15, R16).</summary>
+    private void ApplyOutWarnings(GateCheckOutCalculationResult calc)
     {
-        if (string.IsNullOrEmpty(text)) return string.Empty;
-        return System.Text.RegularExpressions.Regex.Replace(text, @"[^a-zA-Z0-9]", "").ToUpperInvariant();
+        var lines = new List<string>();
+        if (calc.TicketExpiredDuringStay && calc.TicketValidUntilUtc.HasValue)
+        {
+            var expiry = AuditTime.ToVietnamTime(calc.TicketValidUntilUtc.Value).ToString("dd/MM/yyyy HH:mm");
+            lines.Add(_localizationService.GetString("Msg_Gate_TicketExpiredDuringStay", expiry));
+        }
+        else if (calc.TicketNoLongerValid)
+        {
+            lines.Add(_localizationService.GetString("Msg_Gate_TicketNoLongerValid"));
+        }
+
+        if (calc.IsBlacklisted)
+        {
+            lines.Add(_localizationService.GetString("Msg_Gate_BlacklistExitWarning", calc.BlacklistReason ?? string.Empty));
+            var sessionId = calc.ActiveSession?.SessionId;
+            if (_outBlacklistAlertedSessionId != sessionId)
+            {
+                _outBlacklistAlertedSessionId = sessionId;
+                _audioAlertService.PlayErrorAlert();
+            }
+        }
+
+        OutWarningText = string.Join(Environment.NewLine, lines);
+        IsOutWarningVisible = lines.Count > 0;
+        IsOutBlacklisted = calc.IsBlacklisted;
+    }
+
+    private void ClearOutWarnings()
+    {
+        OutWarningText = string.Empty;
+        IsOutWarningVisible = false;
+        IsOutBlacklisted = false;
     }
 
     private async void LoadSessionToOutLane(ParkingSession session)
@@ -1041,6 +1216,7 @@ public class GateControlViewModel : ViewModelBase
             DurationFormatted = calcResult.DurationFormatted;
             CalculatedFee = calcResult.TotalFee;
             IsMonthlyTicketOut = calcResult.IsMonthlyTicket;
+            ApplyOutWarnings(calcResult);
         }
 
         EvaluatePlateMatch();
@@ -1123,6 +1299,8 @@ public class GateControlViewModel : ViewModelBase
             }
 
             // Reset Làn Ra
+            ClearOutWarnings();
+            _outBlacklistAlertedSessionId = null;
             MatchedSession = null;
             OutPlateText = string.Empty;
             OutImagePath = null;

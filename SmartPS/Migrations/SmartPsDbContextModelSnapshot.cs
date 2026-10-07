@@ -217,6 +217,60 @@ namespace SmartPS.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
+            modelBuilder.Entity("SmartPS.Models.Parking.BlacklistEntry", b =>
+                {
+                    b.Property<int>("BlacklistEntryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BlacklistEntryId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("LicensePlate")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("RemoveReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("RemovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("RemovedByUserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("BlacklistEntryId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("RemovedByUserId");
+
+                    b.HasIndex(new[] { "LicensePlate" }, "IX_BlacklistEntries_LicensePlate");
+
+                    b.HasIndex(new[] { "LicensePlate" }, "IX_BlacklistEntries_LicensePlate_Active")
+                        .IsUnique()
+                        .HasFilter("\"IsActive\"");
+
+                    b.ToTable("BlacklistEntries", (string)null);
+                });
+
             modelBuilder.Entity("SmartPS.Models.Parking.Customer", b =>
                 {
                     b.Property<int>("CustomerId")
@@ -224,6 +278,14 @@ namespace SmartPS.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CustomerId"));
+
+                    b.Property<string>("ApartmentCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Building")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -251,6 +313,11 @@ namespace SmartPS.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
 
+                    b.Property<bool>("IsResident")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -269,6 +336,8 @@ namespace SmartPS.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("CustomerId");
+
+                    b.HasIndex("ApartmentCode");
 
                     b.HasIndex("PhoneNumber");
 
@@ -327,6 +396,49 @@ namespace SmartPS.Migrations
                         .IsUnique();
 
                     b.ToTable("CustomerTiers", (string)null);
+                });
+
+            modelBuilder.Entity("SmartPS.Models.Parking.CustomerVehicle", b =>
+                {
+                    b.Property<int>("CustomerVehicleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CustomerVehicleId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("LicensePlate")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime?>("RemovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("VehicleTypeId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CustomerVehicleId");
+
+                    b.HasIndex("VehicleTypeId");
+
+                    b.HasIndex(new[] { "CustomerId" }, "IX_CustomerVehicles_CustomerId");
+
+                    b.HasIndex(new[] { "LicensePlate" }, "IX_CustomerVehicles_LicensePlate_Active")
+                        .IsUnique()
+                        .HasFilter("\"IsActive\"");
+
+                    b.ToTable("CustomerVehicles", (string)null);
                 });
 
             modelBuilder.Entity("SmartPS.Models.Parking.MonthlyTicket", b =>
@@ -442,6 +554,52 @@ namespace SmartPS.Migrations
                     b.ToTable("MonthlyTicketPlans", (string)null);
                 });
 
+            modelBuilder.Entity("SmartPS.Models.Parking.MonthlyTicketPurchase", b =>
+                {
+                    b.Property<long>("MonthlyTicketPurchaseId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("MonthlyTicketPurchaseId"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("PeriodEndUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("PeriodStartUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("PlanId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("TicketId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("MonthlyTicketPurchaseId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("PlanId");
+
+                    b.HasIndex("TicketId");
+
+                    b.HasIndex(new[] { "CreatedAtUtc" }, "IX_MonthlyTicketPurchases_CreatedAtUtc");
+
+                    b.ToTable("MonthlyTicketPurchases", (string)null);
+                });
+
             modelBuilder.Entity("SmartPS.Models.Parking.ParkingSession", b =>
                 {
                     b.Property<int>("SessionId")
@@ -516,19 +674,25 @@ namespace SmartPS.Migrations
 
                     b.HasIndex("CheckInTime");
 
+                    b.HasIndex("CheckOutTime");
+
                     b.HasIndex("CreatedByUserId");
 
                     b.HasIndex("CustomerId");
 
                     b.HasIndex("LicensePlate");
 
-                    b.HasIndex("SlotId");
-
                     b.HasIndex("Status");
 
                     b.HasIndex("TicketCode");
 
                     b.HasIndex("VehicleTypeId");
+
+                    b.HasIndex(new[] { "SlotId" }, "IX_ParkingSessions_SlotId");
+
+                    b.HasIndex(new[] { "SlotId" }, "IX_ParkingSessions_SlotId_Active")
+                        .IsUnique()
+                        .HasFilter("\"Status\" = 0 AND \"SlotId\" IS NOT NULL");
 
                     b.ToTable("ParkingSessions", (string)null);
                 });
@@ -605,6 +769,11 @@ namespace SmartPS.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ZoneId"));
+
+                    b.Property<int>("Audience")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
 
                     b.Property<string>("Description")
                         .HasMaxLength(255)
@@ -1130,12 +1299,48 @@ namespace SmartPS.Migrations
                     b.Navigation("Role");
                 });
 
+            modelBuilder.Entity("SmartPS.Models.Parking.BlacklistEntry", b =>
+                {
+                    b.HasOne("SmartPS.Models.Auth.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SmartPS.Models.Auth.User", "RemovedByUser")
+                        .WithMany()
+                        .HasForeignKey("RemovedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("RemovedByUser");
+                });
+
             modelBuilder.Entity("SmartPS.Models.Parking.Customer", b =>
                 {
                     b.HasOne("SmartPS.Models.Parking.VehicleType", "VehicleType")
                         .WithMany()
                         .HasForeignKey("VehicleTypeId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("VehicleType");
+                });
+
+            modelBuilder.Entity("SmartPS.Models.Parking.CustomerVehicle", b =>
+                {
+                    b.HasOne("SmartPS.Models.Parking.Customer", "Customer")
+                        .WithMany("Vehicles")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SmartPS.Models.Parking.VehicleType", "VehicleType")
+                        .WithMany()
+                        .HasForeignKey("VehicleTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
 
                     b.Navigation("VehicleType");
                 });
@@ -1175,6 +1380,32 @@ namespace SmartPS.Migrations
                         .IsRequired();
 
                     b.Navigation("VehicleType");
+                });
+
+            modelBuilder.Entity("SmartPS.Models.Parking.MonthlyTicketPurchase", b =>
+                {
+                    b.HasOne("SmartPS.Models.Auth.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SmartPS.Models.Parking.MonthlyTicketPlan", "Plan")
+                        .WithMany()
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SmartPS.Models.Parking.MonthlyTicket", "Ticket")
+                        .WithMany("Purchases")
+                        .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("Plan");
+
+                    b.Navigation("Ticket");
                 });
 
             modelBuilder.Entity("SmartPS.Models.Parking.ParkingSession", b =>
@@ -1362,6 +1593,13 @@ namespace SmartPS.Migrations
                     b.Navigation("MonthlyTickets");
 
                     b.Navigation("ParkingSessions");
+
+                    b.Navigation("Vehicles");
+                });
+
+            modelBuilder.Entity("SmartPS.Models.Parking.MonthlyTicket", b =>
+                {
+                    b.Navigation("Purchases");
                 });
 
             modelBuilder.Entity("SmartPS.Models.Parking.ParkingSession", b =>

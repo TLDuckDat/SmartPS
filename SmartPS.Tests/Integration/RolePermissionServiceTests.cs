@@ -44,7 +44,7 @@ public class RolePermissionServiceTests : IClassFixture<PostgresDatabaseFixture>
         Assert.Contains(matrix.Roles, r => r.RoleName == "Manager" && !r.IsSystemAdmin);
         Assert.Contains(matrix.Roles, r => r.RoleName == "Operator" && !r.IsSystemAdmin);
 
-        Assert.Equal(23, matrix.Permissions.Count);
+        Assert.Equal(TestUsers.TotalPermissionCount, matrix.Permissions.Count);
         var expectedOrder = matrix.Permissions
             .OrderBy(p => Permissions.ModuleOrder.ToList().IndexOf(p.Module))
             .ThenBy(p => p.Name, StringComparer.Ordinal)

@@ -15,7 +15,7 @@ public static class NavigationAccessPolicy
             NavigationItemType.Incidents => new[] { Permissions.ParkingView },
             NavigationItemType.GateControl => new[] { Permissions.ParkingCheckIn, Permissions.ParkingCheckOut },
             NavigationItemType.Shifts => new[] { Permissions.ShiftView },
-            NavigationItemType.Customers => new[] { Permissions.ParkingConfigure },
+            NavigationItemType.Customers => new[] { Permissions.CustomerView },
             NavigationItemType.Reports => new[] { Permissions.ReportView },
             NavigationItemType.Transactions => new[] { Permissions.ReportView },
             NavigationItemType.Pricing => new[] { Permissions.PricingManage },
