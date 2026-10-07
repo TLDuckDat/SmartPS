@@ -13,9 +13,9 @@ public sealed record ReportResult(
     IReadOnlyList<ZoneOccupancyRow> Zones,
     CustomerGroupBreakdown CustomerGroups)
 {
-    /// <summary>False when the period has no traffic and no money movement (drives the empty-state messages).</summary>
+    /// <summary>False when the period has no traffic and no money movement; "in the lot now" is a live figure and does not count.</summary>
     public bool HasActivity =>
         Daily.Any(d => d.CheckIns != 0 || d.CheckOuts != 0 || d.NetRevenue != 0m || d.RefundTotal != 0m || d.AdjustmentTotal != 0m)
         || Kpis.CheckIns.Current != 0m || Kpis.CheckOuts.Current != 0m || Kpis.NetRevenue.Current != 0m
-        || Kpis.VehiclesInLotNow != 0 || (Kpis.MonthlyTicketRevenue?.Current ?? 0m) != 0m;
+        || (Kpis.MonthlyTicketRevenue?.Current ?? 0m) != 0m;
 }
