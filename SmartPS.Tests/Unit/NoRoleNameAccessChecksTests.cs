@@ -17,8 +17,9 @@ public partial class NoRoleNameAccessChecksTests
     [GeneratedRegex(@"\b(AllowedRoles|IsManagerRole)\b")]
     private static partial Regex LegacyRoleGate();
 
-    // Comparing against SystemRoles.Admin (system-admin identification, e.g. in an EF query) is the AC-17 exception.
-    [GeneratedRegex(@"RoleName\s*(==|!=|\.Equals\s*\()\s*(?!SystemRoles\.)")]
+    // Only comparisons against a role-name string literal are violations; comparing against SystemRoles.Admin
+    // (system-admin identification, e.g. in an EF query) is the AC-17 exception.
+    [GeneratedRegex(@"RoleName\s*(==|!=|\.Equals\s*\()\s*""(Admin|Manager|Operator)""")]
     private static partial Regex RoleNameComparison();
 
     private static IEnumerable<(string File, int Line, string Text)> ScanCode(Regex pattern)
@@ -88,6 +89,18 @@ public partial class NoRoleNameAccessChecksTests
         var hits = ScanCode(RoleNameComparison()).ToList();
 
         Assert.True(hits.Count == 0, "RoleName comparisons outside the allow-list:" + Environment.NewLine + Describe(hits));
+    }
+
+    [Theory]
+    [InlineData("if (user.Role?.RoleName == \"Admin\")", true)]
+    [InlineData("x.RoleName != \"Manager\"", true)]
+    [InlineData("actor.Role?.RoleName.Equals(\"Operator\", StringComparison.OrdinalIgnoreCase)", true)]
+    [InlineData("u.Role.RoleName == SystemRoles.Admin", false)]
+    [InlineData("u.Role.RoleName.Equals(SystemRoles.Admin, StringComparison.OrdinalIgnoreCase)", false)]
+    [InlineData("SystemRoles.IsSystemAdmin(user.Role?.RoleName)", false)]
+    public void RoleName_comparison_pattern_self_check(string code, bool isViolation)
+    {
+        Assert.Equal(isViolation, RoleNameComparison().IsMatch(code));
     }
 
     [Fact]

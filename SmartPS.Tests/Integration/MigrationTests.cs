@@ -56,11 +56,15 @@ public class MigrationTests : IClassFixture<PostgresDatabaseFixture>
     private static Task<long> CountAsync(string connectionString, string sql)
         => PostgresDatabaseFixture.ScalarAsync<long>(connectionString, sql);
 
-    /// <summary>Legacy data as it existed at fb7303a (18 permissions, Manager = Shift.*, Operator = 7 grants).</summary>
+    /// <summary>
+    /// Legacy data as it existed at fb7303a (18 permissions, Manager = Shift.*, Operator = 7 grants).
+    /// AddShiftManagement already inserts the 5 Shift.* permissions (and grants them to existing Admin/Manager roles),
+    /// so the setup tolerates rows that the earlier migrations created.
+    /// </summary>
     private static async Task InsertLegacyDataAsync(string cs, bool preInsertAuditView = false)
     {
         var permissionValues = string.Join(",", TestUsers.LegacyPermissions.Select(p => $"('{p}','{p}')"));
-        await ExecAsync(cs, $"INSERT INTO \"Permissions\" (\"PermissionName\",\"Description\") VALUES {permissionValues};");
+        await ExecAsync(cs, $"INSERT INTO \"Permissions\" (\"PermissionName\",\"Description\") VALUES {permissionValues} ON CONFLICT (\"PermissionName\") DO NOTHING;");
         if (preInsertAuditView)
         {
             await ExecAsync(cs, "INSERT INTO \"Permissions\" (\"PermissionName\",\"Description\") VALUES ('Audit.View','pre-existing');");
@@ -69,13 +73,16 @@ public class MigrationTests : IClassFixture<PostgresDatabaseFixture>
         await ExecAsync(cs, "INSERT INTO \"Roles\" (\"RoleName\",\"Description\") VALUES ('Admin','a'),('Manager','m'),('Operator','o');");
         await ExecAsync(cs, """
             INSERT INTO "RolePermissions" ("RoleId","PermissionId")
-            SELECT r."RoleId", p."PermissionId" FROM "Roles" r CROSS JOIN "Permissions" p WHERE r."RoleName"='Admin';
+            SELECT r."RoleId", p."PermissionId" FROM "Roles" r CROSS JOIN "Permissions" p WHERE r."RoleName"='Admin'
+            ON CONFLICT ("RoleId","PermissionId") DO NOTHING;
             INSERT INTO "RolePermissions" ("RoleId","PermissionId")
-            SELECT r."RoleId", p."PermissionId" FROM "Roles" r JOIN "Permissions" p ON p."PermissionName" LIKE 'Shift.%' WHERE r."RoleName"='Manager';
+            SELECT r."RoleId", p."PermissionId" FROM "Roles" r JOIN "Permissions" p ON p."PermissionName" LIKE 'Shift.%' WHERE r."RoleName"='Manager'
+            ON CONFLICT ("RoleId","PermissionId") DO NOTHING;
             INSERT INTO "RolePermissions" ("RoleId","PermissionId")
             SELECT r."RoleId", p."PermissionId" FROM "Roles" r JOIN "Permissions" p
               ON p."PermissionName" IN ('Parking.View','Parking.CheckIn','Parking.CheckOut','Report.View','Shift.View','Shift.Open','Shift.Close')
-            WHERE r."RoleName"='Operator';
+            WHERE r."RoleName"='Operator'
+            ON CONFLICT ("RoleId","PermissionId") DO NOTHING;
             """);
         await ExecAsync(cs, $"""
             INSERT INTO "Users" ("Username","PasswordHash","FullName","RoleId","IsActive")
