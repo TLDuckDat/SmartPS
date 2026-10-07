@@ -712,5 +712,9 @@
     <sys:String x:Key="Str_Ov_ParkedByVehicleType">車両タイプ別の駐車中台数</sys:String>
     <sys:String x:Key="Str_Ov_ParkedByGroup">顧客グループ別の駐車中台数</sys:String>
     <sys:String x:Key="Msg_Ov_LoadError">概要を読み込めませんでした。データベース接続を確認してください。</sys:String>
+    <sys:String x:Key="Msg_Gate_PlateInvalid">ナンバーが正しくありません（英数字5〜12文字、ASCIIのみ）。</sys:String>
+    <sys:String x:Key="Msg_Gate_ClassificationFailed">システムエラーのため車両を分類できませんでした。ゲートは閉じたままです。もう一度お試しください。</sys:String>
+    <sys:String x:Key="Str_Gate_Badge_TicketVehicleTypeMismatch">月極券は別の車種用のため一般利用者として扱います</sys:String>
+    <sys:String x:Key="Str_Map_Legend_Maintenance">保守中の区画</sys:String>
 
 </ResourceDictionary>

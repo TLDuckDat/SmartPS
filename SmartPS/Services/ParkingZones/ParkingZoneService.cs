@@ -55,6 +55,11 @@ public sealed class ParkingZoneService : IParkingZoneService
             return OperationResult.Fail(OperationError.PermissionDenied, ex.Message);
         }
 
+        if (!Enum.IsDefined(audience))
+        {
+            return OperationResult.Fail(OperationError.Validation, "Đối tượng của khu không hợp lệ.");
+        }
+
         try
         {
             await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken);

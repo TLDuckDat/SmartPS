@@ -297,7 +297,7 @@ public sealed class MonthlyTicketService : IMonthlyTicketService
                     AuditOutcome.Success,
                     "MonthlyTicket",
                     ticket.TicketId.ToString(),
-                    new { TicketCode = ticket.TicketCode, Reason = NullIfBlank(reason) }), cancellationToken);
+                    new { TicketCode = ticket.TicketCode, Reason = AuditPii.MaskPhoneNumbersInText(NullIfBlank(reason)) }), cancellationToken);
                 await db.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
                 return OperationResult.Ok();
@@ -413,18 +413,22 @@ public sealed class MonthlyTicketService : IMonthlyTicketService
     {
         var today = TicketDates.TodayVn(nowUtc);
         var prefix = $"MT-{today.ToString("yyyyMM", CultureInfo.InvariantCulture)}-";
-        var last = await db.MonthlyTickets.AsNoTracking()
+        // Lấy giá trị số lớn nhất của phần đuôi (không dùng thứ tự chuỗi: mã 5 chữ số xếp trước mã 4 chữ số lớn hơn)
+        var codes = await db.MonthlyTickets.AsNoTracking()
             .Where(t => t.TicketCode.StartsWith(prefix))
-            .OrderByDescending(t => t.TicketCode)
             .Select(t => t.TicketCode)
-            .FirstOrDefaultAsync(cancellationToken);
+            .ToListAsync(cancellationToken);
 
-        var next = 1;
-        if (last is not null
-            && int.TryParse(last[prefix.Length..], NumberStyles.None, CultureInfo.InvariantCulture, out var number))
+        var max = 0;
+        foreach (var code in codes)
         {
-            next = number + 1;
+            if (int.TryParse(code[prefix.Length..], NumberStyles.None, CultureInfo.InvariantCulture, out var number) && number > max)
+            {
+                max = number;
+            }
         }
+
+        var next = max + 1;
 
         return prefix + next.ToString("D4", CultureInfo.InvariantCulture);
     }

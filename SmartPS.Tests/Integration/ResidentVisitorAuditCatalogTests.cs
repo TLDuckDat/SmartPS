@@ -112,7 +112,7 @@ public class ResidentVisitorAuditCatalogTests : IClassFixture<PostgresDatabaseFi
         {
             var created = await customers.CreateCustomerAsync(new CustomerUpsertRequest
             {
-                FullName = "Catalogue " + phone,
+                FullName = "Catalogue customer",
                 PhoneNumber = phone,
                 Email = "catalogue@example.com",
                 IdentityCard = IdentityCard,

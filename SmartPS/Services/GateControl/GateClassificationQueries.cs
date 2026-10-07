@@ -58,6 +58,7 @@ public static class GateClassificationQueries
     public static async Task<IReadOnlyList<CoveragePeriod>> GetCoveragePeriodsAsync(
         SmartPsDbContext db,
         string normalizedPlate,
+        DateTime checkInUtc,
         CancellationToken cancellationToken = default)
     {
         var tickets = await db.MonthlyTickets
@@ -65,7 +66,9 @@ public static class GateClassificationQueries
             .Where(t => t.RegisteredLicensePlate == normalizedPlate
                         && t.Status == MonthlyTicketStatus.Active
                         && t.Customer!.IsActive
-                        && db.CustomerVehicles.Any(v => v.CustomerId == t.CustomerId && v.LicensePlate == t.RegisteredLicensePlate && v.IsActive))
+                        // Chủ biển số tại thời điểm xe vào: xe được gỡ/chuyển sau đó không làm đổi độ phủ
+                        && db.CustomerVehicles.Any(v => v.CustomerId == t.CustomerId && v.LicensePlate == t.RegisteredLicensePlate
+                                                        && v.CreatedAt <= checkInUtc && (v.RemovedAt == null || v.RemovedAt > checkInUtc)))
             .Select(t => new { t.TicketId, t.StartDate, t.EndDate })
             .ToListAsync(cancellationToken);
         if (tickets.Count == 0)
@@ -90,6 +93,13 @@ public static class GateClassificationQueries
                 continue;
             }
 
+            // Vé cũ chưa có dòng mua đầu tiên: phần từ ngày bắt đầu của vé đến kỳ mua sớm nhất vẫn được phủ
+            var earliest = own.Min(p => p.PeriodStartUtc);
+            if (ticket.StartDate < earliest)
+            {
+                periods.Add(new CoveragePeriod(ticket.StartDate, earliest));
+            }
+
             periods.AddRange(own.Select(p => new CoveragePeriod(p.PeriodStartUtc, p.PeriodEndUtc)));
         }
 
@@ -102,7 +112,7 @@ public static class GateClassificationQueries
         DateTime checkInUtc,
         CancellationToken cancellationToken = default)
     {
-        var periods = await GetCoveragePeriodsAsync(db, normalizedPlate, cancellationToken);
+        var periods = await GetCoveragePeriodsAsync(db, normalizedPlate, checkInUtc, cancellationToken);
         return new MonthlyCoverage(MonthlyCoverageCalculator.ContiguousValidUntil(periods, checkInUtc));
     }
 

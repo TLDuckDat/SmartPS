@@ -105,7 +105,7 @@ public static class CustomerValidator
         foreach (var vehicle in request.Vehicles ?? Array.Empty<NewVehicle>())
         {
             var plate = LicensePlateNormalizer.Normalize(vehicle.LicensePlate);
-            if (!LicensePlateNormalizer.IsValid(plate))
+            if (!LicensePlateNormalizer.IsValid(vehicle.LicensePlate))
             {
                 errors.Add(CustomerValidationError.PlateInvalid);
             }

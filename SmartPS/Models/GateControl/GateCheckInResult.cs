@@ -21,6 +21,7 @@ public class GateCheckInResult
     public string? ApartmentCode { get; set; }
     public DateTime? TicketValidUntilUtc { get; set; }
     public bool CustomerLockedWarning { get; set; }
+    public bool TicketVehicleTypeMismatchWarning { get; set; }
     public string? AssignedZoneCode { get; set; }
     public ZoneAudience? AssignedZoneAudience { get; set; }
 }

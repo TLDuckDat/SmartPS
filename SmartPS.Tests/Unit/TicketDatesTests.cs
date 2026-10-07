@@ -141,4 +141,44 @@ public class TicketDatesTests
         Assert.True(TicketDates.Overlaps(a, b.AddTicks(1), b, c));
         Assert.False(TicketDates.Overlaps(a, a.AddDays(1), c, c.AddDays(1)));
     }
+    // ---- Fix round 1, G5 (CH1-04): renewals stay anchored to the original start day-of-month -----------------------
+
+    [Fact]
+    public void G5_Jan_31_renewals_do_not_drift_to_the_28th()
+    {
+        var jan31 = new DateOnly(2027, 1, 31);
+        var (s, e) = TicketDates.ForNewTicket(jan31, 1);
+        var now = s.AddDays(5);
+
+        var (s2, e2) = TicketDates.ForRenewal(s, e, MonthlyTicketStatus.Active, 1, now);
+        var (s3, e3) = TicketDates.ForRenewal(s2, e2, MonthlyTicketStatus.Active, 1, now);
+        var (s4, e4) = TicketDates.ForRenewal(s3, e3, MonthlyTicketStatus.Active, 1, now);
+
+        Assert.Equal(U(2027, 2, 27, 17), e);   // VN 2027-02-28
+        Assert.Equal(s, s2);
+        Assert.Equal(U(2027, 3, 30, 17), e2);  // VN 2027-03-31
+        Assert.Equal(U(2027, 4, 29, 17), e3);  // VN 2027-04-30
+        Assert.Equal(U(2027, 5, 30, 17), e4);  // VN 2027-05-31
+        Assert.Equal(s, s4);
+    }
+
+    [Fact]
+    public void G5_multi_month_renewal_is_anchored_too()
+    {
+        var (s, e) = TicketDates.ForNewTicket(new DateOnly(2027, 8, 31), 1);   // VN end 2027-09-30
+        var (_, e2) = TicketDates.ForRenewal(s, e, MonthlyTicketStatus.Active, 3, s.AddDays(1));
+
+        Assert.Equal(U(2027, 9, 29, 17), e);
+        Assert.Equal(U(2027, 12, 30, 17), e2); // VN 2027-12-31 (anchor Aug 31 + 4 months)
+    }
+
+    [Fact]
+    public void G5_leap_year_February_then_March()
+    {
+        var (s, e) = TicketDates.ForNewTicket(new DateOnly(2028, 1, 30), 1);   // 2028 is a leap year
+        var (_, e2) = TicketDates.ForRenewal(s, e, MonthlyTicketStatus.Active, 1, s.AddDays(1));
+
+        Assert.Equal(U(2028, 2, 28, 17), e);   // VN 2028-02-29
+        Assert.Equal(U(2028, 3, 29, 17), e2);  // VN 2028-03-30
+    }
 }

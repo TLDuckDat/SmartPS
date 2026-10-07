@@ -913,6 +913,13 @@ public class GateControlViewModel : ViewModelBase
 
             InStatusMessage = $"🟢 [VÀO THÀNH CÔNG] Biển số: {InPlateText} | Thời gian vào: {LastInTimeFormatted} | Mã vé: {LastInTicketCode} | Ô đỗ: {LastInSlotCode}";
 
+            if (result.TicketVehicleTypeMismatchWarning)
+            {
+                var mismatch = _localizationService.GetString("Str_Gate_Badge_TicketVehicleTypeMismatch");
+                InStatusMessage += $" | {mismatch}";
+                if (!silent) _dialogService.ShowWarning(mismatch);
+            }
+
             // Mở barrier làn vào 3 giây
             IsBarrierInOpen = true;
             _barrierInTimer.Stop();
@@ -964,6 +971,8 @@ public class GateControlViewModel : ViewModelBase
             CheckInRejectReason.SlotVehicleTypeMismatch => _localizationService.GetString("Msg_Gate_SlotVehicleTypeMismatch"),
             CheckInRejectReason.SlotAudienceNotAllowed => _localizationService.GetString("Msg_Gate_SlotAudienceNotAllowed"),
             CheckInRejectReason.SlotNotAvailable => _localizationService.GetString("Msg_Gate_SlotNotAvailable"),
+            CheckInRejectReason.PlateInvalid => _localizationService.GetString("Msg_Gate_PlateInvalid"),
+            CheckInRejectReason.ClassificationFailed => _localizationService.GetString("Msg_Gate_ClassificationFailed"),
             _ => result.Message
         };
 

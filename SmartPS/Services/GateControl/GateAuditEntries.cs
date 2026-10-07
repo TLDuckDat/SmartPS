@@ -2,6 +2,7 @@ using SmartPS.Constants;
 using SmartPS.Models.Audit;
 using SmartPS.Models.Parking;
 using SmartPS.Services.Audit;
+using SmartPS.Services.Customers;
 
 namespace SmartPS.Services.GateControl;
 
@@ -20,7 +21,7 @@ public static class GateAuditEntries
             {
                 LicensePlate = licensePlate,
                 NormalizedPlate = normalizedPlate,
-                Reason = match.Reason,
+                Reason = AuditPii.MaskPhoneNumbersInText(match.Reason),
                 HadValidTicket = hadValidTicket
             });
     }
@@ -37,7 +38,7 @@ public static class GateAuditEntries
             new
             {
                 LicensePlate = session.LicensePlate,
-                Reason = match.Reason,
+                Reason = AuditPii.MaskPhoneNumbersInText(match.Reason),
                 BlacklistEntryId = match.BlacklistEntryId
             },
             actor);

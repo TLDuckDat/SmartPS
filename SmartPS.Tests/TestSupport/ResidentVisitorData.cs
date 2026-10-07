@@ -81,6 +81,13 @@ public sealed class ResidentVisitorData
         return id;
     }
 
+    /// <summary>Active monthly plan for <paramref name="vehicleTypeId"/> (e.g. for an isolated vehicle type); returns its PlanId.</summary>
+    public Task<int> CreateIsolatedPlanAsync(int vehicleTypeId, int durationMonths = 1, decimal totalPrice = 120_000m)
+        => ScalarIntAsync(
+            "INSERT INTO \"MonthlyTicketPlans\" (\"PlanName\",\"VehicleTypeId\",\"DurationMonths\",\"PricePerMonth\",\"DiscountPercentage\",\"TotalPrice\",\"Description\",\"IsActive\") " +
+            "VALUES (@n,@vt,@m,@ppm,0,@total,'test plan',true) RETURNING \"PlanId\"",
+            ("n", NextCode("Plan ")), ("vt", vehicleTypeId), ("m", durationMonths), ("ppm", totalPrice / durationMonths), ("total", totalPrice));
+
     /// <summary>Creates a zone with <paramref name="slotCount"/> slots coded "{zoneCode}-01".. (all with <paramref name="status"/>).</summary>
     public async Task<TestZone> CreateZoneAsync(ZoneAudience audience, int vehicleTypeId, int slotCount, SlotStatus status = SlotStatus.Available, string? code = null)
     {
@@ -118,11 +125,16 @@ public sealed class ResidentVisitorData
             ("ap", isResident ? (apartment ?? "T-" + (Interlocked.Increment(ref s_counter) % 9999).ToString("D4", System.Globalization.CultureInfo.InvariantCulture)) : apartment));
     }
 
-    public Task<int> AddVehicleAsync(int customerId, string normalizedPlate, int vehicleTypeId, bool isActive = true)
+    /// <summary>
+    /// Inserts a vehicle. <c>CreatedAt</c> defaults to 30 days ago so that tests which back-date a session's check-in
+    /// still see the vehicle as owned at check-in time (G4); pass <paramref name="createdAtUtc"/> to control it.
+    /// </summary>
+    public Task<int> AddVehicleAsync(int customerId, string normalizedPlate, int vehicleTypeId, bool isActive = true, DateTime? createdAtUtc = null)
         => ScalarIntAsync(
             "INSERT INTO \"CustomerVehicles\" (\"CustomerId\",\"LicensePlate\",\"VehicleTypeId\",\"IsActive\",\"CreatedAt\",\"RemovedAt\") " +
-            "VALUES (@c,@p,@vt,@a,now(), CASE WHEN @a THEN NULL ELSE now() END) RETURNING \"CustomerVehicleId\"",
-            ("c", customerId), ("p", normalizedPlate), ("vt", vehicleTypeId), ("a", isActive));
+            "VALUES (@c,@p,@vt,@a,@created, CASE WHEN @a THEN NULL ELSE now() END) RETURNING \"CustomerVehicleId\"",
+            ("c", customerId), ("p", normalizedPlate), ("vt", vehicleTypeId), ("a", isActive),
+            ("created", Utc(createdAtUtc ?? DateTime.UtcNow.AddDays(-30))));
 
     public Task<int> DeactivateVehicleAsync(int customerVehicleId)
         => _db.ExecuteAsync("UPDATE \"CustomerVehicles\" SET \"IsActive\" = false, \"RemovedAt\" = now() WHERE \"CustomerVehicleId\" = @id", ("id", customerVehicleId));

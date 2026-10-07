@@ -260,6 +260,50 @@ public class ResidentVisitorMigrationTests : IClassFixture<PostgresDatabaseFixtu
     }
 
     [Fact]
+    public async Task G7_plate_conflict_prefers_the_customer_holding_a_valid_ticket_over_a_default_plate_only_owner()
+    {
+        // Fix round 1, G7 (CH1-06, challenge Attacks2.H3): B holds a currently valid ticket on 77Z-999.99 (its own default
+        // plate is another one); A only has 77Z-999.99 as DefaultLicensePlate. After the migration B must own the plate.
+        _db.RequireAvailable();
+        var cs = await _db.CreateSiblingDatabaseAsync("rv_mig_g7");
+        await MigrateToAsync(cs, ShiftMigration);
+        await ExecAsync(cs, "INSERT INTO \"Roles\" (\"RoleName\",\"Description\") VALUES ('Admin','a'),('Manager','m'),('Operator','o');");
+        await MigrateToAsync(cs, Task2HeadMigration);
+        await ExecAsync(cs, """
+            INSERT INTO "VehicleTypes" ("TypeName","Description") VALUES ('Xe máy','m');
+            INSERT INTO "Customers" ("FullName","PhoneNumber","DefaultLicensePlate","Type","CreatedAt","IsActive","VehicleTypeId")
+            SELECT 'B-ticket-holder', '0900000002', '77Z-000.01', 0, now() - interval '5 day', true, v."VehicleTypeId" FROM "VehicleTypes" v;
+            INSERT INTO "Customers" ("FullName","PhoneNumber","DefaultLicensePlate","Type","CreatedAt","IsActive","VehicleTypeId")
+            SELECT 'A-default-only', '0900000001', '77Z-999.99', 0, now() - interval '4 day', true, v."VehicleTypeId" FROM "VehicleTypes" v;
+            INSERT INTO "MonthlyTickets" ("TicketCode","CustomerId","RegisteredLicensePlate","VehicleTypeId","StartDate","EndDate","MonthlyPrice","Status","CreatedAt")
+            SELECT 'MT-B', c."CustomerId", '77Z-999.99', c."VehicleTypeId", now() - interval '10 day', now() + interval '20 day', 120000, 0, now()
+            FROM "Customers" c WHERE c."FullName"='B-ticket-holder';
+            """);
+
+        await MigrateToAsync(cs, null);
+
+        Assert.Equal(1, await CountAsync(cs, """
+            SELECT count(*) FROM "CustomerVehicles" v JOIN "Customers" c ON c."CustomerId" = v."CustomerId"
+            WHERE c."FullName" = 'B-ticket-holder' AND v."LicensePlate" = '77Z99999' AND v."IsActive"
+            """));
+        Assert.Equal(0, await CountAsync(cs, """
+            SELECT count(*) FROM "CustomerVehicles" v JOIN "Customers" c ON c."CustomerId" = v."CustomerId"
+            WHERE c."FullName" = 'A-default-only' AND v."LicensePlate" = '77Z99999' AND v."IsActive"
+            """));
+        Assert.Equal(1, await CountAsync(cs, "SELECT count(*) FROM \"CustomerVehicles\" WHERE \"LicensePlate\" = '77Z99999' AND \"IsActive\""));
+        Assert.Equal(1, await CountAsync(cs, """
+            SELECT count(*) FROM "CustomerVehicles" v JOIN "Customers" c ON c."CustomerId" = v."CustomerId"
+            WHERE c."FullName" = 'B-ticket-holder' AND v."LicensePlate" = '77Z00001' AND v."IsActive"
+            """));
+
+        // B's ticket still classifies after the migration
+        await using var ctx = PostgresDatabaseFixture.CreateContext(cs);
+        var classification = await SmartPS.Services.GateControl.GateClassificationQueries.ClassifyAsync(ctx, "77Z99999", DateTime.UtcNow);
+        Assert.Equal(SmartPS.Models.GateControl.VehicleCategory.MonthlyPass, classification.Category);
+        Assert.Equal("MT-B", classification.Ticket?.TicketCode);
+    }
+
+    [Fact]
     public async Task Fresh_database_reaches_the_new_migration_with_seed()
     {
         // The fixture database = all migrations + seed.

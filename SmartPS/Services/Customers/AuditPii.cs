@@ -32,6 +32,20 @@ public static class AuditPii
             return string.Empty;
         }
 
-        return Regex.Replace(text, @"\d{9,}", m => MaskPhone(m.Value));
+        // Dãy từ 9 chữ số trở lên, cho phép dấu cách, chấm hoặc gạch ngang giữa các chữ số; giữ lại 3 chữ số cuối.
+        return Regex.Replace(text, @"(?:\d[\s.\-/_()]{0,2}){9,}", m =>
+        {
+            var digitsLeft = m.Value.Count(char.IsDigit) - VisibleDigits;
+            var chars = m.Value.Select(c =>
+            {
+                if (!char.IsDigit(c))
+                {
+                    return c;
+                }
+
+                return digitsLeft-- > 0 ? '*' : c;
+            });
+            return new string(chars.ToArray());
+        });
     }
 }

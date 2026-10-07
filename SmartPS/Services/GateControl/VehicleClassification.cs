@@ -6,7 +6,8 @@ namespace SmartPS.Services.GateControl;
 public enum ClassificationWarning
 {
     None = 0,
-    CustomerLocked = 1
+    CustomerLocked = 1,
+    TicketVehicleTypeMismatch = 2
 }
 
 public sealed record BlacklistMatch(int BlacklistEntryId, string LicensePlate, string Reason);

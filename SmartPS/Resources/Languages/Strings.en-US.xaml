@@ -712,5 +712,9 @@
     <sys:String x:Key="Str_Ov_ParkedByVehicleType">Parked vehicles by type</sys:String>
     <sys:String x:Key="Str_Ov_ParkedByGroup">Parked vehicles by customer group</sys:String>
     <sys:String x:Key="Msg_Ov_LoadError">Could not load the overview. Check the database connection.</sys:String>
+    <sys:String x:Key="Msg_Gate_PlateInvalid">The plate is not valid (5 to 12 letters or digits, ASCII only).</sys:String>
+    <sys:String x:Key="Msg_Gate_ClassificationFailed">The vehicle could not be classified because of a system error. The barrier stays closed; please try again.</sys:String>
+    <sys:String x:Key="Str_Gate_Badge_TicketVehicleTypeMismatch">The monthly ticket is for another vehicle type, treated as a visitor</sys:String>
+    <sys:String x:Key="Str_Map_Legend_Maintenance">Under maintenance</sys:String>
 
 </ResourceDictionary>
