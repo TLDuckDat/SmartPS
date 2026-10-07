@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace SmartPS.Services.Customers;
 
 /// <summary>Che dữ liệu cá nhân trước khi ghi vào nhật ký kiểm toán bất biến.</summary>
@@ -20,5 +22,16 @@ public static class AuditPii
         }
 
         return new string('*', value.Length - VisibleDigits) + value[^VisibleDigits..];
+    }
+
+    /// <summary>Che các dãy từ 9 chữ số trở lên (số điện thoại gõ nhầm vào ô tên) trong một đoạn văn bản.</summary>
+    public static string MaskPhoneNumbersInText(string? text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return string.Empty;
+        }
+
+        return Regex.Replace(text, @"\d{9,}", m => MaskPhone(m.Value));
     }
 }

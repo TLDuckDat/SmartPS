@@ -266,7 +266,7 @@ public sealed class CustomerService : ICustomerService
                     customer.CustomerId.ToString(),
                     new
                     {
-                        FullName = customer.FullName,
+                        FullName = AuditPii.MaskPhoneNumbersInText(customer.FullName),
                         PhoneNumber = AuditPii.MaskPhone(phone),
                         IsResident = customer.IsResident,
                         ApartmentCode = customer.ApartmentCode,
@@ -608,7 +608,7 @@ public sealed class CustomerService : ICustomerService
     private static object Snapshot(Customer customer)
         => new
         {
-            FullName = customer.FullName,
+            FullName = AuditPii.MaskPhoneNumbersInText(customer.FullName),
             PhoneNumber = AuditPii.MaskPhone(customer.PhoneNumber),
             IsResident = customer.IsResident,
             ApartmentCode = customer.ApartmentCode,
