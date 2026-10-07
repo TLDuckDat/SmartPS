@@ -1,9 +1,12 @@
 using System.Collections.ObjectModel;
+using SmartPS.Constants;
+using SmartPS.Services.Authorization;
 
 namespace SmartPS.ViewModels.Incidents;
 
 public class IncidentsViewModel : ViewModelBase
 {
+    private readonly IPermissionService _permissionService;
     private readonly List<IncidentItemViewModel> _allIncidents = new();
 
     private int _totalIncidents;
@@ -45,8 +48,9 @@ public class IncidentsViewModel : ViewModelBase
     public AsyncRelayCommand RefreshCommand { get; }
     public RelayCommand<IncidentItemViewModel> ResolveCommand { get; }
 
-    public IncidentsViewModel()
+    public IncidentsViewModel(IPermissionService permissionService)
     {
+        _permissionService = permissionService ?? throw new ArgumentNullException(nameof(permissionService));
         RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
         ResolveCommand = new RelayCommand<IncidentItemViewModel>(item =>
         {
@@ -56,7 +60,7 @@ public class IncidentsViewModel : ViewModelBase
                 item.ResolutionNotes = "Đã đối chiếu giấy đăng ký xe và CCCD chính chủ. Cho phép xuất bãi an toàn.";
                 _ = LoadDataAsync();
             }
-        });
+        }, _ => _permissionService.HasPermission(Permissions.IncidentManage));
 
         InitializeIncidents();
         _ = LoadDataAsync();

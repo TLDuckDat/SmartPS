@@ -8,7 +8,7 @@ public class NavigationMenuItem : ViewModelBase
     public string TitleKey { get; init; } = string.Empty;
     public string CategoryKey { get; init; } = string.Empty;
     public string IconData { get; init; } = string.Empty;
-    public string[] AllowedRoles { get; init; } = Array.Empty<string>();
+    public IReadOnlyList<string> RequiredPermissions { get; init; } = Array.Empty<string>();
 
     private bool _isVisible = true;
     public bool IsVisible

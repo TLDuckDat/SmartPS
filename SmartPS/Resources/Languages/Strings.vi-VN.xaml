@@ -320,4 +320,8 @@
     <sys:String x:Key="Msg_User_AdminRoleRequiresAdmin">Chỉ Quản trị viên (Admin) mới được gán, gỡ hoặc xóa tài khoản mang vai trò Admin.</sys:String>
     <sys:String x:Key="Msg_DeleteUser_HasHistory">Không thể xóa tài khoản đã có lịch sử hoạt động (ca trực, giao dịch...). Hãy khóa tài khoản thay vì xóa.</sys:String>
 
+    <!-- SIDEBAR - ROLE PERMISSIONS & AUDIT LOG -->
+    <sys:String x:Key="Str_Menu_RolePermissions">Phân quyền vai trò</sys:String>
+    <sys:String x:Key="Str_Menu_AuditLog">Nhật ký hệ thống</sys:String>
+
 </ResourceDictionary>

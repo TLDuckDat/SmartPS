@@ -240,6 +240,12 @@
                                                             <DataTrigger Binding="{Binding Id}" Value="Settings">
                                                                 <Setter Property="Text" Value="{DynamicResource Str_Menu_Settings}"/>
                                                             </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Id}" Value="RolePermissions">
+                                                                <Setter Property="Text" Value="{DynamicResource Str_Menu_RolePermissions}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Id}" Value="AuditLog">
+                                                                <Setter Property="Text" Value="{DynamicResource Str_Menu_AuditLog}"/>
+                                                            </DataTrigger>
                                                             <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                                                 <Setter Property="Foreground" Value="#FFFFFF"/>
                                                                 <Setter Property="FontWeight" Value="SemiBold"/>

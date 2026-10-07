@@ -320,4 +320,8 @@
     <sys:String x:Key="Msg_User_AdminRoleRequiresAdmin">管理者ロールの付与・解除・削除は管理者のみ実行できます。</sys:String>
     <sys:String x:Key="Msg_DeleteUser_HasHistory">このアカウントには操作履歴（シフト、取引など）があるため削除できません。代わりにアカウントをロックしてください。</sys:String>
 
+    <!-- SIDEBAR - ROLE PERMISSIONS & AUDIT LOG -->
+    <sys:String x:Key="Str_Menu_RolePermissions">ロール権限</sys:String>
+    <sys:String x:Key="Str_Menu_AuditLog">システム監査ログ</sys:String>
+
 </ResourceDictionary>

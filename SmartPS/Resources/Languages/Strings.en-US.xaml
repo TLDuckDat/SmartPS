@@ -320,4 +320,8 @@
     <sys:String x:Key="Msg_User_AdminRoleRequiresAdmin">Only an Administrator can assign, remove or delete the Administrator role.</sys:String>
     <sys:String x:Key="Msg_DeleteUser_HasHistory">This account has activity history (shifts, transactions...) and cannot be deleted. Lock the account instead.</sys:String>
 
+    <!-- SIDEBAR - ROLE PERMISSIONS & AUDIT LOG -->
+    <sys:String x:Key="Str_Menu_RolePermissions">Role Permissions</sys:String>
+    <sys:String x:Key="Str_Menu_AuditLog">Audit Log</sys:String>
+
 </ResourceDictionary>
