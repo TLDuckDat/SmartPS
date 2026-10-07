@@ -33,7 +33,7 @@ public static class AuditPii
         }
 
         // Dãy từ 9 chữ số trở lên, cho phép dấu cách, chấm hoặc gạch ngang giữa các chữ số; giữ lại 3 chữ số cuối.
-        return Regex.Replace(text, @"(?:\d[\s.\-]?){9,}", m =>
+        return Regex.Replace(text, @"(?:\d[\s.\-/_()]{0,2}){9,}", m =>
         {
             var digitsLeft = m.Value.Count(char.IsDigit) - VisibleDigits;
             var chars = m.Value.Select(c =>
