@@ -177,4 +177,89 @@ public class GateOfflineJsonlTests
         var line = Assert.Single(JsonlLinesFor(plate));
         Assert.Equal(JsonValueKind.False, line.GetProperty("DbAudit").ValueKind);
     }
+
+    /// <summary>Offline factory whose contexts count every attempt to open a database connection.</summary>
+    private sealed class CountingOfflineFactory : IDbContextFactory<SmartPsDbContext>
+    {
+        private readonly ConnectionAttemptCounter _counter = new();
+
+        public int ConnectionAttempts => _counter.Attempts;
+
+        public SmartPsDbContext CreateDbContext()
+            => new(new DbContextOptionsBuilder<SmartPsDbContext>().UseNpgsql(OfflineConnection).AddInterceptors(_counter).Options);
+
+        private sealed class ConnectionAttemptCounter : Microsoft.EntityFrameworkCore.Diagnostics.DbConnectionInterceptor
+        {
+            private int _attempts;
+
+            public int Attempts => Volatile.Read(ref _attempts);
+
+            public override Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult ConnectionOpening(
+                System.Data.Common.DbConnection connection,
+                Microsoft.EntityFrameworkCore.Diagnostics.ConnectionEventData eventData,
+                Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult result)
+            {
+                Interlocked.Increment(ref _attempts);
+                return result;
+            }
+
+            public override ValueTask<Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult> ConnectionOpeningAsync(
+                System.Data.Common.DbConnection connection,
+                Microsoft.EntityFrameworkCore.Diagnostics.ConnectionEventData eventData,
+                Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult result,
+                CancellationToken cancellationToken = default)
+            {
+                Interlocked.Increment(ref _attempts);
+                return ValueTask.FromResult(result);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task FY4_CH28_offline_check_in_makes_at_most_one_connection_attempt()
+    {
+        // FY4: after the first connection failure of the request (DbProbe.Failed), every later DB helper
+        // (active sessions, monthly ticket, slot suggestion, vehicle types, audited transaction) skips the database.
+        var context = new CurrentUserContext();
+        context.SetUser(TestUsers.Operator());
+        var factory = new CountingOfflineFactory();
+        var audit = new AuditService(factory, context);
+        var gate = new GateControlService(new AuthorizationGuard(new PermissionService(context), context, audit), audit, factory);
+        var plate = UniquePlate();
+
+        var result = await gate.ProcessCheckInAsync(new GateCheckInRequest { LicensePlate = plate, VehicleTypeId = 1 });
+
+        Assert.True(result.Success, result.Message);
+        Assert.Equal(1, factory.ConnectionAttempts);
+        var line = Assert.Single(JsonlLinesFor(plate));
+        Assert.Equal(JsonValueKind.False, line.GetProperty("DbAudit").ValueKind);
+    }
+
+    [Fact]
+    public async Task FY2_cancelled_offline_check_in_is_not_turned_into_an_offline_success()
+    {
+        // FY2 (CH32): cancellation must propagate (or fail the request); it is never a connection failure.
+        var context = new CurrentUserContext();
+        context.SetUser(TestUsers.Operator());
+        var factory = new OfflineFactory();
+        var audit = new AuditService(factory, context);
+        var gate = new GateControlService(new AuthorizationGuard(new PermissionService(context), context, audit), audit, factory);
+        var plate = UniquePlate();
+
+        GateCheckInResult? result = null;
+        Exception? thrown = null;
+        try
+        {
+            result = await gate.ProcessCheckInAsync(new GateCheckInRequest { LicensePlate = plate, VehicleTypeId = 1 }, new CancellationToken(canceled: true));
+        }
+        catch (OperationCanceledException ex)
+        {
+            thrown = ex;
+        }
+
+        Assert.True(thrown is not null || result is { Success: false }, $"cancelled check-in returned Success={result?.Success}");
+        Assert.Empty(JsonlLinesFor(plate));
+        var offlinePath = Path.Combine(AppContext.BaseDirectory, "Storage", "offline_active_sessions.json");
+        Assert.False(File.Exists(offlinePath) && File.ReadAllText(offlinePath).Contains(plate, StringComparison.Ordinal));
+    }
 }

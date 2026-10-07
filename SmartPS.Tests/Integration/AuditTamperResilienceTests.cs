@@ -201,4 +201,51 @@ public class AuditTamperResilienceTests : IClassFixture<PostgresDatabaseFixture>
         Assert.Equal(AuditHashing.ComputeHash(row.PrevHash, row), row.Hash);
         Assert.True(AuditChainVerifier.Verify(await AuditDb.AllAsync(_db.Factory)).IsValid);
     }
+
+    [Theory]
+    [InlineData("0")]
+    [InlineData("1")]
+    [InlineData(" Success")]
+    [InlineData("Success ")]
+    [InlineData("success")]
+    [InlineData("SUCCESS")]
+    [InlineData("Success, Denied")]
+    public async Task FY3_CH31_any_change_of_the_stored_outcome_text_is_detected_and_not_shown_as_valid(string tamperedText)
+    {
+        // FY3: Outcome is parsed strictly (exact "Success" / "Denied" / "Failed"); numeric, padded, re-cased or flag
+        // forms are invalid → Verify reports HashMismatch at that row, and the audit page still lists the row
+        // without presenting it as a valid outcome.
+        _db.RequireAvailable();
+        var tag = "fy3-" + Guid.NewGuid().ToString("N")[..8];
+        using var sp = IntegrationServices.Create(_db);
+        await sp.LoginAdminAsync();
+        var audit = sp.GetRequiredService<IAuditService>();
+        for (var i = 0; i < 3; i++)
+        {
+            Assert.True(await audit.LogAsync(new AuditEntry(AuditActions.ParkingCheckOut, AuditOutcome.Success, "ParkingSession", $"{tag}-{i}")));
+        }
+
+        var victimId = await _db.ScalarAsync<long>("SELECT \"AuditLogId\" FROM \"AuditLogs\" WHERE \"EntityId\" = @e", ("e", $"{tag}-1"));
+
+        await TamperAsync($"UPDATE \"AuditLogs\" SET \"Outcome\" = '{tamperedText.Replace("'", "''")}' WHERE \"AuditLogId\" = {victimId}");
+        AuditVerificationResult verify;
+        AuditPage page;
+        try
+        {
+            verify = await sp.GetRequiredService<IAuditIntegrityVerifier>().VerifyAsync();
+            page = await sp.GetRequiredService<IAuditQueryService>().QueryAsync(new AuditQueryFilter { SearchText = tag });
+        }
+        finally
+        {
+            await TamperAsync($"UPDATE \"AuditLogs\" SET \"Outcome\" = 'Success' WHERE \"AuditLogId\" = {victimId}");
+        }
+
+        Assert.False(verify.IsValid, $"Outcome '{tamperedText}' was accepted as a valid stored value");
+        Assert.Equal(victimId, verify.FirstInvalidAuditLogId);
+        Assert.Equal(AuditChainFailureReason.HashMismatch, verify.FailureReason);
+
+        Assert.Equal(3, page.TotalCount);
+        var shown = Assert.Single(page.Items, r => r.AuditLogId == victimId);
+        Assert.False(Enum.IsDefined(shown.Outcome), $"tampered outcome '{tamperedText}' is displayed as {shown.Outcome}");
+    }
 }
