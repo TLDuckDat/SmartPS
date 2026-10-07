@@ -708,4 +708,9 @@
     <sys:String x:Key="Msg_Rpt_ExportError">Không thể xuất báo cáo. Vui lòng kiểm tra đường dẫn lưu và thử lại.</sys:String>
     <sys:String x:Key="Msg_Rpt_ExportAuditNotWritten">Đã xuất báo cáo nhưng chưa ghi được nhật ký kiểm toán.</sys:String>
 
+    <!-- OVERVIEW -->
+    <sys:String x:Key="Str_Ov_ParkedByVehicleType">Xe đang gửi theo loại</sys:String>
+    <sys:String x:Key="Str_Ov_ParkedByGroup">Xe đang gửi theo nhóm khách</sys:String>
+    <sys:String x:Key="Msg_Ov_LoadError">Không thể tải dữ liệu tổng quan. Vui lòng kiểm tra kết nối cơ sở dữ liệu.</sys:String>
+
 </ResourceDictionary>

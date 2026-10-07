@@ -708,4 +708,9 @@
     <sys:String x:Key="Msg_Rpt_ExportError">Could not export the report. Check the save location and try again.</sys:String>
     <sys:String x:Key="Msg_Rpt_ExportAuditNotWritten">The report was exported but the audit entry could not be written.</sys:String>
 
+    <!-- OVERVIEW -->
+    <sys:String x:Key="Str_Ov_ParkedByVehicleType">Parked vehicles by type</sys:String>
+    <sys:String x:Key="Str_Ov_ParkedByGroup">Parked vehicles by customer group</sys:String>
+    <sys:String x:Key="Msg_Ov_LoadError">Could not load the overview. Check the database connection.</sys:String>
+
 </ResourceDictionary>

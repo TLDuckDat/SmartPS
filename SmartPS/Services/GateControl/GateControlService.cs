@@ -990,45 +990,6 @@ public class GateControlService : IGateControlService
         }
     }
 
-    public async Task<OverviewKpiData> GetOverviewKpiAsync(CancellationToken cancellationToken = default)
-    {
-        var slots = await GetAllSlotsAsync(cancellationToken);
-        var activeSessions = await GetActiveSessionsAsync(cancellationToken);
-        var allHistory = await GetAllSessionsHistoryAsync(cancellationToken);
-
-        var totalSlots = slots.Count > 0 ? slots.Count : 20;
-        var occupiedCount = activeSessions.Count;
-        var availableSlots = Math.Max(0, totalSlots - occupiedCount);
-        var occupancyRate = totalSlots > 0 ? Math.Round((double)occupiedCount / totalSlots * 100, 1) : 0;
-
-        var today = DateTime.UtcNow.Date;
-        var todayCheckIns = allHistory.Count(s => s.CheckInTime.Date == today);
-        var todayCompleted = allHistory.Where(s => s.CheckOutTime.HasValue && s.CheckOutTime.Value.Date == today).ToList();
-        var todayCheckOuts = todayCompleted.Count;
-        var todayRevenue = todayCompleted.Sum(s => s.TotalFee);
-
-        var motorbikeCount = activeSessions.Count(s => s.VehicleTypeId == 1);
-        var carCount = activeSessions.Count(s => s.VehicleTypeId == 2);
-        var monthlyCount = activeSessions.Count(s => s.IsMonthlyPass);
-        var regularCount = activeSessions.Count(s => !s.IsMonthlyPass);
-
-        return new OverviewKpiData
-        {
-            TotalParkedVehicles = occupiedCount,
-            TotalSlots = totalSlots,
-            AvailableSlots = availableSlots,
-            OccupiedSlots = occupiedCount,
-            OccupancyRate = occupancyRate,
-            TodayCheckIns = Math.Max(occupiedCount, todayCheckIns),
-            TodayCheckOuts = todayCheckOuts,
-            TodayRevenue = todayRevenue,
-            MotorbikeParkedCount = motorbikeCount,
-            CarParkedCount = carCount,
-            MonthlyParkedCount = monthlyCount,
-            RegularParkedCount = regularCount
-        };
-    }
-
     public event EventHandler<ParkingSession>? SessionCompleted;
 
     public void NotifySessionCompleted(ParkingSession session)

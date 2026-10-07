@@ -708,4 +708,9 @@
     <sys:String x:Key="Msg_Rpt_ExportError">レポートを出力できませんでした。保存先を確認して再試行してください。</sys:String>
     <sys:String x:Key="Msg_Rpt_ExportAuditNotWritten">レポートは出力されましたが、監査ログを書き込めませんでした。</sys:String>
 
+    <!-- OVERVIEW -->
+    <sys:String x:Key="Str_Ov_ParkedByVehicleType">車両タイプ別の駐車中台数</sys:String>
+    <sys:String x:Key="Str_Ov_ParkedByGroup">顧客グループ別の駐車中台数</sys:String>
+    <sys:String x:Key="Msg_Ov_LoadError">概要を読み込めませんでした。データベース接続を確認してください。</sys:String>
+
 </ResourceDictionary>
