@@ -61,6 +61,8 @@ public partial class App : Application
         services.AddSingleton<IPermissionService, PermissionService>();
         services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<SmartPS.Services.RolePermissions.IRolePermissionService, SmartPS.Services.RolePermissions.RolePermissionService>();
+        services.AddSingleton<SmartPS.Services.Audit.IAuditQueryService, SmartPS.Services.Audit.AuditQueryService>();
+        services.AddSingleton<SmartPS.Services.Audit.IAuditIntegrityVerifier, SmartPS.Services.Audit.AuditIntegrityVerifier>();
         services.AddSingleton<ILocalizationService, LocalizationService>();
         services.AddSingleton<SmartPS.Services.Audio.IAudioAlertService, SmartPS.Services.Audio.SystemAudioAlertService>();
         services.AddSingleton<SmartPS.Services.Storage.IImageStorageService, SmartPS.Services.Storage.ImageStorageService>();
@@ -118,6 +120,7 @@ public partial class App : Application
         services.AddTransient<SmartPS.ViewModels.Pricing.PricingViewModel>();
         services.AddTransient<SmartPS.ViewModels.Settings.SettingsViewModel>();
         services.AddTransient<SmartPS.ViewModels.RolePermissions.RolePermissionsViewModel>();
+        services.AddTransient<SmartPS.ViewModels.Audit.AuditLogViewModel>();
 
         // Đăng ký Views
         services.AddTransient<LoginView>();

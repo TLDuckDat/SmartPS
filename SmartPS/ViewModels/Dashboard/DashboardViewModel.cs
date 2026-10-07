@@ -6,6 +6,7 @@ using SmartPS.Services.Auth;
 using SmartPS.Services.Authorization;
 using SmartPS.Services.Dialog;
 using SmartPS.Services.Localization;
+using SmartPS.ViewModels.Audit;
 using SmartPS.ViewModels.Customers;
 using SmartPS.ViewModels.GateControl;
 using SmartPS.ViewModels.Incidents;
@@ -171,6 +172,10 @@ public class DashboardViewModel : ViewModelBase
             else if (CurrentViewModel is RolePermissionsViewModel rpvm)
             {
                 await rpvm.LoadDataAsync();
+            }
+            else if (CurrentViewModel is AuditLogViewModel avm)
+            {
+                await avm.LoadDataAsync();
             }
         });
 
@@ -399,6 +404,10 @@ public class DashboardViewModel : ViewModelBase
         {
             _ = rpvm.LoadDataAsync();
         }
+        else if (CurrentViewModel is AuditLogViewModel avm)
+        {
+            _ = avm.LoadDataAsync();
+        }
     }
 
     private async Task LogNavigationDeniedAsync(NavigationMenuItem item)
@@ -437,6 +446,7 @@ public class DashboardViewModel : ViewModelBase
             NavigationItemType.UserManagement => _serviceProvider.GetRequiredService<UserManagementViewModel>(),
             NavigationItemType.Pricing => _serviceProvider.GetRequiredService<PricingViewModel>(),
             NavigationItemType.RolePermissions => _serviceProvider.GetRequiredService<RolePermissionsViewModel>(),
+            NavigationItemType.AuditLog => _serviceProvider.GetRequiredService<AuditLogViewModel>(),
             NavigationItemType.Settings => _serviceProvider.GetRequiredService<SettingsViewModel>(),
             _ => _serviceProvider.GetRequiredService<OverviewViewModel>()
         };

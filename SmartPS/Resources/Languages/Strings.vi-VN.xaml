@@ -374,4 +374,38 @@
     <sys:String x:Key="Str_Perm_Settings_Manage">Quản lý cài đặt hệ thống</sys:String>
     <sys:String x:Key="Str_Perm_Incident_Manage">Xử lý sự cố</sys:String>
 
+    <!-- AUDIT LOG SCREEN -->
+    <sys:String x:Key="Str_Audit_Title">Nhật ký hệ thống</sys:String>
+    <sys:String x:Key="Str_Audit_Subtitle">Nhật ký chỉ ghi thêm, không thể sửa hoặc xóa. Mỗi bản ghi được liên kết bằng chuỗi băm để phát hiện chỉnh sửa trái phép.</sys:String>
+    <sys:String x:Key="Str_Audit_FromDate">Từ ngày</sys:String>
+    <sys:String x:Key="Str_Audit_ToDate">Đến ngày</sys:String>
+    <sys:String x:Key="Str_Audit_User">Người dùng</sys:String>
+    <sys:String x:Key="Str_Audit_Action">Hành động</sys:String>
+    <sys:String x:Key="Str_Audit_Outcome">Kết quả</sys:String>
+    <sys:String x:Key="Str_Audit_Search">Tìm kiếm</sys:String>
+    <sys:String x:Key="Str_Audit_SearchHint">Mã đối tượng hoặc biển số trong chi tiết</sys:String>
+    <sys:String x:Key="Str_Audit_Apply">Lọc</sys:String>
+    <sys:String x:Key="Str_Audit_Clear">Xóa bộ lọc</sys:String>
+    <sys:String x:Key="Str_Audit_All">Tất cả</sys:String>
+    <sys:String x:Key="Str_Audit_Col_Id">Mã</sys:String>
+    <sys:String x:Key="Str_Audit_Col_Time">Thời gian</sys:String>
+    <sys:String x:Key="Str_Audit_Col_User">Người dùng</sys:String>
+    <sys:String x:Key="Str_Audit_Col_Role">Vai trò</sys:String>
+    <sys:String x:Key="Str_Audit_Col_Action">Hành động</sys:String>
+    <sys:String x:Key="Str_Audit_Col_Entity">Đối tượng</sys:String>
+    <sys:String x:Key="Str_Audit_Col_Outcome">Kết quả</sys:String>
+    <sys:String x:Key="Str_Audit_Col_Machine">Máy</sys:String>
+    <sys:String x:Key="Str_Audit_Details">Chi tiết (JSON)</sys:String>
+    <sys:String x:Key="Str_Audit_PrevPage">Trang trước</sys:String>
+    <sys:String x:Key="Str_Audit_NextPage">Trang sau</sys:String>
+    <sys:String x:Key="Str_Audit_PageInfo">Trang {0}/{1} - {2} bản ghi</sys:String>
+    <sys:String x:Key="Str_Audit_Verify">Kiểm tra toàn vẹn</sys:String>
+    <sys:String x:Key="Str_Audit_Outcome_Success">Thành công</sys:String>
+    <sys:String x:Key="Str_Audit_Outcome_Denied">Bị từ chối</sys:String>
+    <sys:String x:Key="Str_Audit_Outcome_Failed">Thất bại</sys:String>
+    <sys:String x:Key="Msg_Audit_VerifyOk">Nhật ký toàn vẹn: đã kiểm tra {0} bản ghi, không phát hiện chỉnh sửa.</sys:String>
+    <sys:String x:Key="Msg_Audit_VerifyBroken">Phát hiện nhật ký bị chỉnh sửa tại bản ghi có mã {0} ({1}).</sys:String>
+    <sys:String x:Key="Msg_Audit_LoadError">Không thể tải nhật ký hệ thống: {0}</sys:String>
+    <sys:String x:Key="Msg_Audit_VerifyError">Không thể kiểm tra toàn vẹn nhật ký: {0}</sys:String>
+
 </ResourceDictionary>

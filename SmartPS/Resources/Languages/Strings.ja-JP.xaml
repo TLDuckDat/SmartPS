@@ -374,4 +374,38 @@
     <sys:String x:Key="Str_Perm_Settings_Manage">システム設定の管理</sys:String>
     <sys:String x:Key="Str_Perm_Incident_Manage">インシデントの処理</sys:String>
 
+    <!-- AUDIT LOG SCREEN -->
+    <sys:String x:Key="Str_Audit_Title">システム監査ログ</sys:String>
+    <sys:String x:Key="Str_Audit_Subtitle">追記専用のログです。記録は編集・削除できません。各記録はハッシュチェーンで連結され、不正な改ざんを検出できます。</sys:String>
+    <sys:String x:Key="Str_Audit_FromDate">開始日</sys:String>
+    <sys:String x:Key="Str_Audit_ToDate">終了日</sys:String>
+    <sys:String x:Key="Str_Audit_User">ユーザー</sys:String>
+    <sys:String x:Key="Str_Audit_Action">操作</sys:String>
+    <sys:String x:Key="Str_Audit_Outcome">結果</sys:String>
+    <sys:String x:Key="Str_Audit_Search">検索</sys:String>
+    <sys:String x:Key="Str_Audit_SearchHint">対象IDまたは詳細内のナンバープレート</sys:String>
+    <sys:String x:Key="Str_Audit_Apply">絞り込み</sys:String>
+    <sys:String x:Key="Str_Audit_Clear">クリア</sys:String>
+    <sys:String x:Key="Str_Audit_All">すべて</sys:String>
+    <sys:String x:Key="Str_Audit_Col_Id">ID</sys:String>
+    <sys:String x:Key="Str_Audit_Col_Time">日時</sys:String>
+    <sys:String x:Key="Str_Audit_Col_User">ユーザー</sys:String>
+    <sys:String x:Key="Str_Audit_Col_Role">ロール</sys:String>
+    <sys:String x:Key="Str_Audit_Col_Action">操作</sys:String>
+    <sys:String x:Key="Str_Audit_Col_Entity">対象</sys:String>
+    <sys:String x:Key="Str_Audit_Col_Outcome">結果</sys:String>
+    <sys:String x:Key="Str_Audit_Col_Machine">マシン</sys:String>
+    <sys:String x:Key="Str_Audit_Details">詳細 (JSON)</sys:String>
+    <sys:String x:Key="Str_Audit_PrevPage">前へ</sys:String>
+    <sys:String x:Key="Str_Audit_NextPage">次へ</sys:String>
+    <sys:String x:Key="Str_Audit_PageInfo">{0}/{1} ページ - {2} 件</sys:String>
+    <sys:String x:Key="Str_Audit_Verify">整合性を検証</sys:String>
+    <sys:String x:Key="Str_Audit_Outcome_Success">成功</sys:String>
+    <sys:String x:Key="Str_Audit_Outcome_Denied">拒否</sys:String>
+    <sys:String x:Key="Str_Audit_Outcome_Failed">失敗</sys:String>
+    <sys:String x:Key="Msg_Audit_VerifyOk">監査ログは正常です: {0} 件を検証し、改ざんは検出されませんでした。</sys:String>
+    <sys:String x:Key="Msg_Audit_VerifyBroken">監査記録 {0} で改ざんを検出しました ({1})。</sys:String>
+    <sys:String x:Key="Msg_Audit_LoadError">監査ログを読み込めませんでした: {0}</sys:String>
+    <sys:String x:Key="Msg_Audit_VerifyError">監査ログの整合性を検証できませんでした: {0}</sys:String>
+
 </ResourceDictionary>
