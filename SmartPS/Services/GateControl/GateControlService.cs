@@ -480,6 +480,7 @@ public class GateControlService : IGateControlService
         var dbAuditWritten = false;
         BlacklistMatch? blockedBy = null;
         var rejection = CheckInRejectReason.None;
+        int? requestedSlotId = request.SlotId is > 0 ? request.SlotId : null;
 
         if (dbReachable)
         {
@@ -493,7 +494,7 @@ public class GateControlService : IGateControlService
                     if (blockedBy == null)
                     {
                         var (slot, reason) = await GateSlotAllocator.AllocateAsync(
-                            db, vehicleTypeId, category, null, cleanPlate, cancellationToken);
+                            db, vehicleTypeId, category, requestedSlotId, cleanPlate, cancellationToken);
                         if (reason != CheckInRejectReason.None)
                         {
                             rejection = reason;
@@ -605,8 +606,11 @@ public class GateControlService : IGateControlService
         {
             if (!dbAuditWritten && assignedSlot == null)
             {
-                // Chế độ ngoại tuyến: dùng ô trống đầu tiên trong bộ nhớ (không xét khu)
-                assignedSlot = _memorySlots.FirstOrDefault(s => s.VehicleTypeId == vehicleTypeId && s.Status == SlotStatus.Available);
+                // Chế độ ngoại tuyến: dùng ô được chỉ định nếu còn trống và đúng loại xe, ngược lại ô trống đầu tiên trong bộ nhớ
+                assignedSlot = requestedSlotId.HasValue
+                    ? _memorySlots.FirstOrDefault(s => s.SlotId == requestedSlotId.Value && s.VehicleTypeId == vehicleTypeId && s.Status == SlotStatus.Available)
+                    : null;
+                assignedSlot ??= _memorySlots.FirstOrDefault(s => s.VehicleTypeId == vehicleTypeId && s.Status == SlotStatus.Available);
                 session.SlotId = assignedSlot?.SlotId;
                 session.Slot = assignedSlot;
             }
@@ -682,6 +686,10 @@ public class GateControlService : IGateControlService
         Message = reason switch
         {
             CheckInRejectReason.NoSlotAvailable => $"Hết chỗ cho {CategoryGroupName(category)}",
+            CheckInRejectReason.SlotNotFound => "Không tìm thấy ô đỗ được chỉ định.",
+            CheckInRejectReason.SlotVehicleTypeMismatch => "Ô đỗ được chỉ định không dành cho loại xe này.",
+            CheckInRejectReason.SlotAudienceNotAllowed => $"Ô đỗ được chỉ định không dành cho {CategoryGroupName(category)}.",
+            CheckInRejectReason.SlotNotAvailable => "Ô đỗ được chỉ định không còn trống.",
             _ => "Không thể cấp ô đỗ cho xe."
         }
     };
