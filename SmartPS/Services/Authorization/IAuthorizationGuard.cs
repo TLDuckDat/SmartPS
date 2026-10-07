@@ -7,6 +7,9 @@ namespace SmartPS.Services.Authorization;
 /// </summary>
 public interface IAuthorizationGuard
 {
+    /// <summary>Id of the logged-in user, or null when nobody is logged in.</summary>
+    int? CurrentUserId { get; }
+
     Task DemandAsync(string permission, string? entityType = null, string? entityId = null, CancellationToken cancellationToken = default);
 
     Task DemandAnyAsync(IReadOnlyCollection<string> permissions, string? entityType = null, string? entityId = null, CancellationToken cancellationToken = default);

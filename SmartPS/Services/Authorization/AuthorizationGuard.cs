@@ -17,6 +17,8 @@ public sealed class AuthorizationGuard : IAuthorizationGuard
         _auditService = auditService;
     }
 
+    public int? CurrentUserId => _currentUser.User?.UserId;
+
     public Task DemandAsync(string permission, string? entityType = null, string? entityId = null, CancellationToken cancellationToken = default)
     {
         return DemandAnyAsync(new[] { permission }, entityType, entityId, cancellationToken);
