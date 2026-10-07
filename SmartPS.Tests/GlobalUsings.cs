@@ -1,0 +1,9 @@
+global using Xunit;
+global using SmartPS.Constants;
+global using SmartPS.Models.Audit;
+global using SmartPS.Models.Reports;
+global using SmartPS.Services.Audit;
+global using SmartPS.Services.Authorization;
+global using SmartPS.Services.Reports;
+global using SmartPS.Tests.TestSupport;
+global using System.IO;

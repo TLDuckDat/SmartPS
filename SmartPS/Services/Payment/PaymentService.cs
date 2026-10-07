@@ -1,9 +1,15 @@
 using Microsoft.EntityFrameworkCore;
+using SmartPS.Constants;
 using SmartPS.Data;
+using SmartPS.Models.Audit;
 using SmartPS.Models.Parking;
 using SmartPS.Models.Payment;
+using SmartPS.Services.Audit;
+using SmartPS.Services.Authorization;
 using SmartPS.Services.GateControl;
 using SmartPS.Services.Payment.PayOS;
+using SmartPS.Services.Shifts;
+using SmartPS.Models.Shifts;
 
 namespace SmartPS.Services.Payment;
 
@@ -12,6 +18,10 @@ public class PaymentService : IPaymentService
     private readonly IDbContextFactory<SmartPsDbContext> _dbContextFactory;
     private readonly IPaymentGateway _gateway;
     private readonly IParkingFeeCalculator _feeCalculator;
+    private readonly IAuthorizationGuard _guard;
+    private readonly IAuditService _audit;
+    private readonly IPermissionService _permissions;
+    private readonly ICurrentUserContext _currentUser;
     private readonly IGateControlService? _gateControlService;
     private readonly SemaphoreSlim _webhookLock = new(1, 1);
 
@@ -19,11 +29,19 @@ public class PaymentService : IPaymentService
         IDbContextFactory<SmartPsDbContext> dbContextFactory,
         IPaymentGateway gateway,
         IParkingFeeCalculator feeCalculator,
+        IAuthorizationGuard guard,
+        IAuditService audit,
+        IPermissionService permissions,
+        ICurrentUserContext currentUser,
         IGateControlService? gateControlService = null)
     {
         _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
         _gateway = gateway ?? throw new ArgumentNullException(nameof(gateway));
         _feeCalculator = feeCalculator ?? throw new ArgumentNullException(nameof(feeCalculator));
+        _guard = guard ?? throw new ArgumentNullException(nameof(guard));
+        _audit = audit ?? throw new ArgumentNullException(nameof(audit));
+        _permissions = permissions ?? throw new ArgumentNullException(nameof(permissions));
+        _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
         _gateControlService = gateControlService;
     }
 
@@ -31,7 +49,19 @@ public class PaymentService : IPaymentService
         CreatePaymentRequest request,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
+            await _guard.DemandActorAsync(request.ActorUserId, Permissions.ParkingCheckOut, "Payment", null, cancellationToken);
+        }
+        catch (PermissionDeniedException ex)
+        {
+            return new PaymentCreationResult { Success = false, IsPermissionDenied = true, Message = ex.Message };
+        }
+
         await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+        await using var shiftReservation = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken);
+        var shift = await ShiftAccounting.FindActiveShiftAsync(db, request.ActorUserId, cancellationToken);
+        if (shift == null) return FailCreate("Bạn cần mở ca trực trước khi tạo thanh toán VietQR.");
         var session = await db.ParkingSessions
             .Include(s => s.Customer)
             .FirstOrDefaultAsync(s => s.SessionId == request.SessionId, cancellationToken);
@@ -49,7 +79,10 @@ public class PaymentService : IPaymentService
         var now = DateTime.UtcNow;
         var pricingRule = await db.PricingRules.AsNoTracking()
             .FirstOrDefaultAsync(r => r.VehicleTypeId == session.VehicleTypeId, cancellationToken);
-        var fee = _feeCalculator.CalculateFee(session, pricingRule, now);
+        var coverage = session.IsMonthlyPass
+            ? await GateClassificationQueries.GetMonthlyCoverageAsync(db, LicensePlateNormalizer.Normalize(session.LicensePlate), session.CheckInTime, cancellationToken)
+            : null;
+        var fee = _feeCalculator.CalculateFee(session, pricingRule, now, coverage);
 
         if (fee.IsMonthlyTicket || fee.TotalFee <= 0)
         {
@@ -71,6 +104,8 @@ public class PaymentService : IPaymentService
 
         if (active != null)
         {
+            if (active.ShiftId != shift.ShiftId || active.CheckoutUserId != request.ActorUserId)
+                return FailCreate("Thanh toán VietQR đang chờ được tạo bởi ca trực khác.");
             var activeExpired = active.ExpiredAt.HasValue && active.ExpiredAt.Value <= now;
             if (activeExpired)
             {
@@ -122,6 +157,8 @@ public class PaymentService : IPaymentService
         var payment = new Models.Payment.Payment
         {
             SessionId = session.SessionId,
+            ShiftId = shift.ShiftId,
+            CheckoutUserId = request.ActorUserId,
             Amount = fee.TotalFee,
             Currency = "VND",
             Status = PaymentStatus.Created,
@@ -160,6 +197,7 @@ public class PaymentService : IPaymentService
         };
         db.PaymentAttempts.Add(attempt);
         await db.SaveChangesAsync(cancellationToken);
+        await shiftReservation.CommitAsync(cancellationToken);
 
         PaymentGatewayCreateResult gatewayResult;
         try
@@ -331,12 +369,16 @@ public class PaymentService : IPaymentService
                 return await GetPaymentStatusAsync(paymentId, cancellationToken);
             }
 
-            await using var dbTx = await db.Database.BeginTransactionAsync(cancellationToken);
             try
             {
-                var paid = await TryMarkPaidAndCheckoutAsync(db, payment, tx, cancellationToken);
-                await db.SaveChangesAsync(cancellationToken);
-                await dbTx.CommitAsync(cancellationToken);
+                bool paid;
+                await using (var dbTx = await _audit.BeginAuditedTransactionAsync(db, System.Data.IsolationLevel.Serializable, cancellationToken))
+                {
+                    paid = await TryMarkPaidAndCheckoutAsync(db, payment, tx, "gatewayVerify", cancellationToken);
+                    await db.SaveChangesAsync(cancellationToken);
+                    await dbTx.CommitAsync(cancellationToken);
+                }
+
                 if (paid)
                 {
                     var session = await db.ParkingSessions.Include(s => s.Slot)
@@ -350,7 +392,6 @@ public class PaymentService : IPaymentService
             }
             catch (Exception ex)
             {
-                await dbTx.RollbackAsync(cancellationToken);
                 PaymentLog.Event("PaymentProcessingError", ex.Message);
             }
         }
@@ -361,110 +402,234 @@ public class PaymentService : IPaymentService
     public async Task<PaymentStatusResult> CancelPaymentAsync(int paymentId, CancellationToken cancellationToken = default)
     {
         await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
-        var payment = await db.Payments
-            .Include(p => p.Transactions)
-            .FirstOrDefaultAsync(p => p.PaymentId == paymentId, cancellationToken);
 
-        if (payment == null)
+        // Tiền kiểm tra chỉ đọc, chưa giữ khoá nhật ký
+        var snapshot = await db.Payments
+            .AsNoTracking()
+            .Where(p => p.PaymentId == paymentId)
+            .Select(p => new { p.Status, p.CheckoutUserId })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (snapshot == null)
         {
             return new PaymentStatusResult { Success = false, Message = "Không tìm thấy thanh toán." };
         }
 
-        try
+        // Huỷ thanh toán cần Payment.Refund; riêng QR VietQR đang chờ do chính mình tạo chỉ cần Parking.CheckOut
+        var currentUserId = _currentUser.User?.UserId;
+        var byOwner = currentUserId.HasValue && snapshot.CheckoutUserId == currentUserId;
+        var ownerMayCancel = byOwner
+            && (snapshot.Status == PaymentStatus.Created || snapshot.Status == PaymentStatus.Pending)
+            && _permissions.HasPermission(Permissions.ParkingCheckOut);
+        if (!_permissions.HasPermission(Permissions.PaymentRefund) && !ownerMayCancel)
         {
-            EnsureCanTransition(payment.Status, PaymentStatus.Cancelled);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return new PaymentStatusResult { Success = false, Message = ex.Message, Status = payment.Status, PaymentId = payment.PaymentId };
+            try
+            {
+                await _guard.DenyAsync(
+                    new[] { Permissions.PaymentRefund },
+                    _currentUser.User is null ? "NotAuthenticated" : "MissingPermission",
+                    "Payment",
+                    paymentId.ToString(),
+                    cancellationToken);
+            }
+            catch (PermissionDeniedException ex)
+            {
+                return new PaymentStatusResult { Success = false, IsPermissionDenied = true, PaymentId = paymentId, Message = ex.Message };
+            }
         }
 
-        payment.Status = PaymentStatus.Cancelled;
-        payment.UpdatedAt = DateTime.UtcNow;
-        foreach (var tx in payment.Transactions.Where(t => t.Status == PaymentTransactionStatus.Pending || t.Status == PaymentTransactionStatus.Created))
+        PaymentStatusResult? failure = null;
+        await using (var dbTx = await _audit.BeginAuditedTransactionAsync(db, System.Data.IsolationLevel.ReadCommitted, cancellationToken))
         {
-            tx.Status = PaymentTransactionStatus.Cancelled;
-            tx.UpdatedAt = DateTime.UtcNow;
+            var payment = await db.Payments
+                .Include(p => p.Transactions)
+                .FirstOrDefaultAsync(p => p.PaymentId == paymentId, cancellationToken);
+
+            if (payment == null)
+            {
+                failure = new PaymentStatusResult { Success = false, Message = "Không tìm thấy thanh toán." };
+            }
+            else
+            {
+                try
+                {
+                    EnsureCanTransition(payment.Status, PaymentStatus.Cancelled);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    failure = new PaymentStatusResult { Success = false, Message = ex.Message, Status = payment.Status, PaymentId = payment.PaymentId };
+                }
+
+                if (failure == null)
+                {
+                    var previousStatus = payment.Status;
+                    payment.Status = PaymentStatus.Cancelled;
+                    payment.UpdatedAt = DateTime.UtcNow;
+                    foreach (var tx in payment.Transactions.Where(t => t.Status == PaymentTransactionStatus.Pending || t.Status == PaymentTransactionStatus.Created))
+                    {
+                        tx.Status = PaymentTransactionStatus.Cancelled;
+                        tx.UpdatedAt = DateTime.UtcNow;
+                    }
+
+                    await _audit.AppendAsync(db, new AuditEntry(
+                        AuditActions.PaymentCancel,
+                        AuditOutcome.Success,
+                        "Payment",
+                        payment.PaymentId.ToString(),
+                        new
+                        {
+                            PaymentId = payment.PaymentId,
+                            Amount = payment.Amount,
+                            PreviousStatus = previousStatus.ToString(),
+                            ByOwner = byOwner
+                        }), cancellationToken);
+                    await db.SaveChangesAsync(cancellationToken);
+                    await dbTx.CommitAsync(cancellationToken);
+                }
+            }
         }
 
-        await db.SaveChangesAsync(cancellationToken);
+        if (failure != null)
+        {
+            return failure;
+        }
+
         return await GetPaymentStatusAsync(paymentId, cancellationToken);
     }
 
     public async Task<PaymentStatusResult> ConfirmManualRefundAsync(
         int paymentId,
         string? reason = null,
+        int actorUserId = 0,
         CancellationToken cancellationToken = default)
     {
-        await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
-        var payment = await db.Payments
-            .Include(p => p.Transactions)
-            .FirstOrDefaultAsync(p => p.PaymentId == paymentId, cancellationToken);
-
-        if (payment == null)
-        {
-            return new PaymentStatusResult
-            {
-                Success = false,
-                PaymentId = paymentId,
-                Message = "Không tìm thấy giao dịch thanh toán."
-            };
-        }
-
-        if (payment.Status != PaymentStatus.Paid)
-        {
-            return new PaymentStatusResult
-            {
-                Success = false,
-                PaymentId = payment.PaymentId,
-                Status = payment.Status,
-                Message = $"Chỉ giao dịch Paid mới được hoàn tiền. Trạng thái hiện tại: {payment.Status}."
-            };
-        }
-
         try
         {
-            EnsureCanTransition(payment.Status, PaymentStatus.Refunded);
-            payment.Status = PaymentStatus.Refunded;
-            payment.UpdatedAt = DateTime.UtcNow;
+            await _guard.DemandActorAsync(actorUserId, Permissions.PaymentRefund, "Payment", paymentId.ToString(), cancellationToken);
+        }
+        catch (PermissionDeniedException ex)
+        {
+            return new PaymentStatusResult { Success = false, IsPermissionDenied = true, PaymentId = paymentId, Message = ex.Message };
+        }
 
-            foreach (var tx in payment.Transactions.Where(t => t.Status == PaymentTransactionStatus.Completed))
+        await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+        PaymentStatusResult refundResult;
+        string refundLog;
+        await using (var dbTransaction = await _audit.BeginAuditedTransactionAsync(db, System.Data.IsolationLevel.Serializable, cancellationToken))
+        {
+            var activeShift = await ShiftAccounting.FindActiveShiftAsync(db, actorUserId, cancellationToken);
+            if (activeShift == null)
+                return new PaymentStatusResult { Success = false, PaymentId = paymentId, Message = "Bạn cần mở ca trực trước khi hoàn tiền." };
+            var payment = await db.Payments
+                .Include(p => p.Transactions)
+                .FirstOrDefaultAsync(p => p.PaymentId == paymentId, cancellationToken);
+
+            if (payment == null)
             {
-                tx.UpdatedAt = DateTime.UtcNow;
+                return new PaymentStatusResult
+                {
+                    Success = false,
+                    PaymentId = paymentId,
+                    Message = "Không tìm thấy giao dịch thanh toán."
+                };
             }
 
-            await db.SaveChangesAsync(cancellationToken);
-
-            var txRef = payment.Transactions
-                .OrderByDescending(t => t.PaymentTransactionId)
-                .Select(t => t.TransactionReference)
-                .FirstOrDefault() ?? $"PAYMENT-{payment.PaymentId}";
-
-            PaymentLog.Event(
-                "PaymentRefunded",
-                $"Payment #{payment.PaymentId} ref {txRef} amount {payment.Amount}. Reason={reason ?? "Không ghi rõ lý do"}");
-
-            return new PaymentStatusResult
+            if (payment.Status != PaymentStatus.Paid)
             {
-                Success = true,
-                PaymentId = payment.PaymentId,
-                Status = PaymentStatus.Refunded,
-                Amount = payment.Amount,
-                PaidAt = payment.PaidAt,
-                TransactionReference = txRef,
-                Message = "Đã ghi nhận hoàn tiền thủ công."
-            };
-        }
-        catch (InvalidOperationException ex)
-        {
-            return new PaymentStatusResult
+                return new PaymentStatusResult
+                {
+                    Success = false,
+                    PaymentId = payment.PaymentId,
+                    Status = payment.Status,
+                    Message = $"Chỉ giao dịch Paid mới được hoàn tiền. Trạng thái hiện tại: {payment.Status}."
+                };
+            }
+
             {
-                Success = false,
-                PaymentId = payment.PaymentId,
-                Status = payment.Status,
-                Message = ex.Message
-            };
+                try
+                {
+                    EnsureCanTransition(payment.Status, PaymentStatus.Refunded);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    return new PaymentStatusResult
+                    {
+                        Success = false,
+                        PaymentId = payment.PaymentId,
+                        Status = PaymentStatus.Paid,
+                        Message = ex.Message
+                    };
+                }
+
+                payment.Status = PaymentStatus.Refunded;
+                payment.UpdatedAt = DateTime.UtcNow;
+
+                foreach (var tx in payment.Transactions.Where(t => t.Status == PaymentTransactionStatus.Completed))
+                {
+                    tx.UpdatedAt = DateTime.UtcNow;
+                }
+
+                var txRef = payment.Transactions
+                    .OrderByDescending(t => t.PaymentTransactionId)
+                    .Select(t => t.TransactionReference)
+                    .FirstOrDefault() ?? $"PAYMENT-{payment.PaymentId}";
+
+                if (await db.FinancialTransactions.AnyAsync(t =>
+                    t.Type == FinancialTransactionType.Refund && t.ReferenceCode == $"PAYMENT-{payment.PaymentId}", cancellationToken))
+                    return new PaymentStatusResult
+                    {
+                        Success = false,
+                        PaymentId = payment.PaymentId,
+                        Status = PaymentStatus.Paid,
+                        Message = "Giao dịch này đã được ghi nhận hoàn tiền."
+                    };
+
+                db.FinancialTransactions.Add(new FinancialTransaction
+                {
+                    TransactionCode = ShiftAccounting.NewCode(),
+                    ShiftId = activeShift.ShiftId,
+                    ParkingSessionId = payment.SessionId,
+                    CreatedByUserId = actorUserId,
+                    Type = FinancialTransactionType.Refund,
+                    PaymentMethod = payment.PaymentMethod,
+                    Amount = -payment.Amount,
+                    ReferenceCode = $"PAYMENT-{payment.PaymentId}",
+                    Note = reason,
+                    CreatedAt = DateTime.UtcNow
+                });
+                await _audit.AppendAsync(db, new AuditEntry(
+                    AuditActions.PaymentRefund,
+                    AuditOutcome.Success,
+                    "Payment",
+                    payment.PaymentId.ToString(),
+                    new
+                    {
+                        PaymentId = payment.PaymentId,
+                        SessionId = payment.SessionId,
+                        Amount = payment.Amount,
+                        PaymentMethod = payment.PaymentMethod.ToString(),
+                        Reason = reason,
+                        TransactionReference = txRef
+                    }), cancellationToken);
+                await db.SaveChangesAsync(cancellationToken);
+                await dbTransaction.CommitAsync(cancellationToken);
+
+                refundLog = $"Payment #{payment.PaymentId} ref {txRef} amount {payment.Amount}. Reason={reason ?? "Không ghi rõ lý do"}";
+                refundResult = new PaymentStatusResult
+                {
+                    Success = true,
+                    PaymentId = payment.PaymentId,
+                    Status = PaymentStatus.Refunded,
+                    Amount = payment.Amount,
+                    PaidAt = payment.PaidAt,
+                    TransactionReference = txRef,
+                    Message = "Đã ghi nhận hoàn tiền thủ công."
+                };
+            }
         }
+
+        PaymentLog.Event("PaymentRefunded", refundLog);
+        return refundResult;
     }
 
     public async Task<WebhookProcessResult> ProcessWebhookAsync(
@@ -512,7 +677,7 @@ public class PaymentService : IPaymentService
 
         var existing = await db.PaymentWebhooks
             .FirstOrDefaultAsync(w => w.Provider == provider && w.EventId == eventId, cancellationToken);
-        if (existing != null)
+        if (existing?.IsProcessed == true)
         {
             existing.IsDuplicate = true;
             existing.ProcessedAt = DateTime.UtcNow;
@@ -528,7 +693,7 @@ public class PaymentService : IPaymentService
             };
         }
 
-        var webhook = new PaymentWebhook
+        var webhook = existing ?? new PaymentWebhook
         {
             Provider = provider,
             EventId = eventId,
@@ -541,22 +706,24 @@ public class PaymentService : IPaymentService
             IsDuplicate = false
         };
 
-        db.PaymentWebhooks.Add(webhook);
-
-        try
+        if (existing == null)
         {
-            await db.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateException)
-        {
-            PaymentLog.Event("WebhookDuplicate", $"Unique constraint EventId={eventId}");
-            return new WebhookProcessResult
+            db.PaymentWebhooks.Add(webhook);
+            try
             {
-                Accepted = true,
-                IsDuplicate = true,
-                HttpStatusCode = 200,
-                Message = "Webhook trùng (ràng buộc CSDL)."
-            };
+                await db.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException)
+            {
+                PaymentLog.Event("WebhookDuplicate", $"Unique constraint EventId={eventId}");
+                return new WebhookProcessResult
+                {
+                    Accepted = true,
+                    IsDuplicate = true,
+                    HttpStatusCode = 200,
+                    Message = "Webhook trùng (ràng buộc CSDL)."
+                };
+            }
         }
 
         var signatureOk = await _gateway.VerifyWebhookSignatureAsync(rawPayload, webhookSignature ?? string.Empty, cancellationToken);
@@ -585,181 +752,30 @@ public class PaymentService : IPaymentService
             return new WebhookProcessResult { Accepted = false, HttpStatusCode = 400, Message = webhook.ErrorMessage };
         }
 
-        await using var dbTx = await db.Database.BeginTransactionAsync(cancellationToken);
+        // Đối soát với cổng thanh toán TRƯỚC khi mở giao dịch giữ khoá nhật ký (không gọi mạng khi đang giữ khoá)
+        var preVerify = await PreVerifyWebhookAsync(parsed, cancellationToken);
+
+        var run = new WebhookRun();
+        WebhookProcessResult result;
         try
         {
-            var paymentTx = await FindTransactionAsync(db, parsed, cancellationToken);
-            if (paymentTx == null)
+            await using (var dbTx = await _audit.BeginAuditedTransactionAsync(db, System.Data.IsolationLevel.Serializable, cancellationToken))
             {
-                webhook.ErrorMessage = "Không tìm thấy giao dịch theo mã tham chiếu.";
-                webhook.ProcessedAt = DateTime.UtcNow;
-                await db.SaveChangesAsync(cancellationToken);
-                await dbTx.CommitAsync(cancellationToken);
-                PaymentLog.Event("PaymentTransactionNotFound", $"ref={parsed.TransactionReference} order={parsed.GatewayOrderCode}");
-                return new WebhookProcessResult
-                {
-                    Accepted = true,
-                    HttpStatusCode = 200,
-                    Message = webhook.ErrorMessage
-                };
+                result = await ApplyWebhookAsync(db, dbTx, parsed, webhook, preVerify, run, cancellationToken);
             }
-
-            webhook.PaymentTransactionId = paymentTx.PaymentTransactionId;
-            webhook.TransactionReference = paymentTx.TransactionReference;
-
-            await db.Entry(paymentTx).Reference(t => t.Payment).LoadAsync(cancellationToken);
-            var payment = paymentTx.Payment;
-            if (payment == null)
-            {
-                webhook.ErrorMessage = "Giao dịch không gắn với payment.";
-                webhook.ProcessedAt = DateTime.UtcNow;
-                await db.SaveChangesAsync(cancellationToken);
-                await dbTx.CommitAsync(cancellationToken);
-                return new WebhookProcessResult { Accepted = true, HttpStatusCode = 200, Message = webhook.ErrorMessage };
-            }
-
-            if (!string.Equals(parsed.TransactionReference?.Trim(), paymentTx.TransactionReference, StringComparison.OrdinalIgnoreCase))
-            {
-                webhook.ErrorMessage = $"Sai payment reference. Expected={paymentTx.TransactionReference}, Actual={parsed.TransactionReference ?? "<trống>"}";
-                webhook.ProcessedAt = DateTime.UtcNow;
-                await db.SaveChangesAsync(cancellationToken);
-                await dbTx.CommitAsync(cancellationToken);
-                PaymentLog.Event("PaymentReferenceMismatch", webhook.ErrorMessage);
-                return new WebhookProcessResult { Accepted = true, HttpStatusCode = 200, Message = webhook.ErrorMessage };
-            }
-
-            if ((payment.Status == PaymentStatus.Created || payment.Status == PaymentStatus.Pending) &&
-                payment.ExpiredAt.HasValue && payment.ExpiredAt.Value <= DateTime.UtcNow)
-            {
-                EnsureCanTransition(payment.Status, PaymentStatus.Expired);
-                payment.Status = PaymentStatus.Expired;
-                payment.UpdatedAt = DateTime.UtcNow;
-                paymentTx.Status = PaymentTransactionStatus.Cancelled;
-                paymentTx.UpdatedAt = DateTime.UtcNow;
-                webhook.ErrorMessage = "Payment đã hết hạn, không thể xác nhận thanh toán.";
-                webhook.ProcessedAt = DateTime.UtcNow;
-                await db.SaveChangesAsync(cancellationToken);
-                await dbTx.CommitAsync(cancellationToken);
-                PaymentLog.Event("PaymentExpired", $"Webhook đến sau thời hạn payment #{payment.PaymentId}.");
-                return new WebhookProcessResult { Accepted = true, HttpStatusCode = 200, Message = webhook.ErrorMessage };
-            }
-
-            if (payment.Status == PaymentStatus.Paid)
-            {
-                webhook.IsProcessed = true;
-                webhook.IsDuplicate = true;
-                webhook.ProcessedAt = DateTime.UtcNow;
-                await db.SaveChangesAsync(cancellationToken);
-                await dbTx.CommitAsync(cancellationToken);
-                PaymentLog.Event("WebhookDuplicate", $"Payment #{payment.PaymentId} đã Paid.");
-                return new WebhookProcessResult
-                {
-                    Accepted = true,
-                    IsDuplicate = true,
-                    PaymentPaid = true,
-                    HttpStatusCode = 200,
-                    Message = "Thanh toán đã được xử lý trước đó."
-                };
-            }
-
-            if (!string.IsNullOrWhiteSpace(parsed.GatewayOrderCode) &&
-                !string.Equals(parsed.GatewayOrderCode, paymentTx.GatewayOrderCode, StringComparison.Ordinal))
-            {
-                webhook.ErrorMessage = $"Sai GatewayOrderCode. Expected={paymentTx.GatewayOrderCode}, Actual={parsed.GatewayOrderCode}.";
-                webhook.ProcessedAt = DateTime.UtcNow;
-                await db.SaveChangesAsync(cancellationToken);
-                await dbTx.CommitAsync(cancellationToken);
-                PaymentLog.Event("PaymentOrderCodeMismatch", webhook.ErrorMessage);
-                return new WebhookProcessResult { Accepted = true, HttpStatusCode = 200, Message = webhook.ErrorMessage };
-            }
-
-            if (Math.Round(parsed.Amount, 0) != Math.Round(payment.Amount, 0) ||
-                Math.Round(parsed.Amount, 0) != Math.Round(paymentTx.Amount, 0))
-            {
-                webhook.ErrorMessage = $"Số tiền không khớp. Expected={payment.Amount}, Actual={parsed.Amount}";
-                webhook.ProcessedAt = DateTime.UtcNow;
-                await db.SaveChangesAsync(cancellationToken);
-                await dbTx.CommitAsync(cancellationToken);
-                PaymentLog.Event("PaymentAmountMismatch", webhook.ErrorMessage);
-                return new WebhookProcessResult
-                {
-                    Accepted = true,
-                    HttpStatusCode = 200,
-                    Message = webhook.ErrorMessage
-                };
-            }
-
-            if (!parsed.ProviderReportsSuccess)
-            {
-                webhook.ErrorMessage = "Nhà cung cấp báo thanh toán không thành công.";
-                webhook.ProcessedAt = DateTime.UtcNow;
-                await db.SaveChangesAsync(cancellationToken);
-                await dbTx.CommitAsync(cancellationToken);
-                return new WebhookProcessResult { Accepted = true, HttpStatusCode = 200, Message = webhook.ErrorMessage };
-            }
-
-            var verifyResult = await _gateway.VerifyPaymentAsync(new PaymentGatewayVerifyRequest
-            {
-                TransactionReference = paymentTx.TransactionReference,
-                ExpectedAmount = payment.Amount,
-                GatewayTransactionId = parsed.GatewayTransactionId,
-                GatewayOrderCode = parsed.GatewayOrderCode
-            }, cancellationToken);
-
-            if (!verifyResult.Success || !verifyResult.IsPaid ||
-                !verifyResult.Amount.HasValue ||
-                Math.Round(verifyResult.Amount.Value, 0) != Math.Round(payment.Amount, 0))
-            {
-                webhook.ErrorMessage = verifyResult.ErrorMessage ?? "Đối soát với cổng thanh toán không xác nhận giao dịch Paid hoặc sai số tiền.";
-                webhook.ProcessedAt = DateTime.UtcNow;
-                await db.SaveChangesAsync(cancellationToken);
-                await dbTx.CommitAsync(cancellationToken);
-                PaymentLog.Event("PaymentProviderVerificationFailed", webhook.ErrorMessage);
-                return new WebhookProcessResult { Accepted = true, HttpStatusCode = 200, Message = webhook.ErrorMessage };
-            }
-
-            var checkoutCompleted = await TryMarkPaidAndCheckoutAsync(db, payment, paymentTx, cancellationToken);
-            if (!string.IsNullOrWhiteSpace(parsed.GatewayTransactionId))
-            {
-                paymentTx.GatewayTransactionId = parsed.GatewayTransactionId;
-            }
-
-            webhook.IsProcessed = true;
-            webhook.ProcessedAt = DateTime.UtcNow;
-            await db.SaveChangesAsync(cancellationToken);
-            await dbTx.CommitAsync(cancellationToken);
-
-            var session = await db.ParkingSessions
-                .Include(s => s.Slot)
-                .FirstOrDefaultAsync(s => s.SessionId == payment.SessionId, cancellationToken);
-            if (session != null)
-            {
-                _gateControlService?.NotifySessionCompleted(session);
-            }
-
-            PaymentLog.Event("PaymentPaid", $"Payment #{payment.PaymentId} ref {paymentTx.TransactionReference}");
-            if (checkoutCompleted)
-            {
-                PaymentLog.Event("PaymentCheckoutCompleted", $"Session {payment.SessionId} completed after payment #{payment.PaymentId}");
-            }
-
-            return new WebhookProcessResult
-            {
-                Accepted = true,
-                PaymentPaid = true,
-                CheckoutCompleted = checkoutCompleted,
-                HttpStatusCode = 200,
-                Message = "Thanh toán hợp lệ, đã hoàn tất phiên gửi xe."
-            };
         }
         catch (Exception ex)
         {
-            await dbTx.RollbackAsync(cancellationToken);
-            webhook.ErrorMessage = "Lỗi xử lý webhook.";
-            webhook.ProcessedAt = DateTime.UtcNow;
+            db.ChangeTracker.Clear();
             try
             {
-                await db.SaveChangesAsync(cancellationToken);
+                var savedWebhook = await db.PaymentWebhooks.FindAsync(new object[] { webhook.PaymentWebhookId }, cancellationToken);
+                if (savedWebhook != null)
+                {
+                    savedWebhook.ErrorMessage = "Lỗi xử lý webhook.";
+                    savedWebhook.ProcessedAt = DateTime.UtcNow;
+                    await db.SaveChangesAsync(cancellationToken);
+                }
             }
             catch
             {
@@ -774,6 +790,269 @@ public class PaymentService : IPaymentService
                 Message = "Lỗi xử lý webhook."
             };
         }
+
+        // Sau khi đã nhả khoá: ghi log tệp và thông báo hoàn tất phiên
+        foreach (var (eventName, message) in run.Events)
+        {
+            PaymentLog.Event(eventName, message);
+        }
+
+        if (run.PaidPayment != null)
+        {
+            var session = await db.ParkingSessions
+                .Include(s => s.Slot)
+                .FirstOrDefaultAsync(s => s.SessionId == run.PaidPayment.SessionId, cancellationToken);
+            if (session != null)
+            {
+                _gateControlService?.NotifySessionCompleted(session);
+            }
+
+            PaymentLog.Event("PaymentPaid", $"Payment #{run.PaidPayment.PaymentId} ref {run.PaidReference}");
+            if (run.CheckoutCompleted)
+            {
+                PaymentLog.Event("PaymentCheckoutCompleted", $"Session {run.PaidPayment.SessionId} completed after payment #{run.PaidPayment.PaymentId}");
+            }
+        }
+
+        return result;
+    }
+
+    private sealed class WebhookRun
+    {
+        public List<(string Name, string Message)> Events { get; } = new();
+        public Models.Payment.Payment? PaidPayment { get; set; }
+        public string? PaidReference { get; set; }
+        public bool CheckoutCompleted { get; set; }
+    }
+
+    private sealed record WebhookPreVerify(PaymentGatewayVerifyResult? Result, Exception? Error);
+
+    /// <summary>Gọi cổng thanh toán (nếu webhook đủ điều kiện) bằng truy vấn chỉ đọc, ngoài mọi giao dịch.</summary>
+    private async Task<WebhookPreVerify?> PreVerifyWebhookAsync(
+        PaymentGatewayWebhookParseResult parsed,
+        CancellationToken cancellationToken)
+    {
+        if (!parsed.ProviderReportsSuccess)
+        {
+            return null;
+        }
+
+        try
+        {
+            await using var preDb = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+            var paymentTx = await FindTransactionAsync(preDb, parsed, cancellationToken, asNoTracking: true);
+            if (paymentTx == null)
+            {
+                return null;
+            }
+
+            var payment = await preDb.Payments.AsNoTracking()
+                .FirstOrDefaultAsync(p => p.PaymentId == paymentTx.PaymentId, cancellationToken);
+            if (payment == null)
+            {
+                return null;
+            }
+
+            var pending = payment.Status == PaymentStatus.Created || payment.Status == PaymentStatus.Pending;
+            var expired = payment.ExpiredAt.HasValue && payment.ExpiredAt.Value <= DateTime.UtcNow;
+            var referenceOk = string.Equals(parsed.TransactionReference?.Trim(), paymentTx.TransactionReference, StringComparison.OrdinalIgnoreCase);
+            var orderCodeOk = string.IsNullOrWhiteSpace(parsed.GatewayOrderCode) ||
+                              string.Equals(parsed.GatewayOrderCode, paymentTx.GatewayOrderCode, StringComparison.Ordinal);
+            var amountOk = Math.Round(parsed.Amount, 0) == Math.Round(payment.Amount, 0) &&
+                           Math.Round(parsed.Amount, 0) == Math.Round(paymentTx.Amount, 0);
+            if (!pending || expired || !referenceOk || !orderCodeOk || !amountOk)
+            {
+                return null;
+            }
+
+            var verify = await _gateway.VerifyPaymentAsync(new PaymentGatewayVerifyRequest
+            {
+                TransactionReference = paymentTx.TransactionReference,
+                ExpectedAmount = payment.Amount,
+                GatewayTransactionId = parsed.GatewayTransactionId,
+                GatewayOrderCode = parsed.GatewayOrderCode
+            }, cancellationToken);
+            return new WebhookPreVerify(verify, null);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            return new WebhookPreVerify(null, ex);
+        }
+    }
+
+    /// <summary>Xử lý webhook bên trong giao dịch nhật ký; mọi nhánh đều tự commit trước khi trả kết quả.</summary>
+    private async Task<WebhookProcessResult> ApplyWebhookAsync(
+        SmartPsDbContext db,
+        AuditedTransaction dbTx,
+        PaymentGatewayWebhookParseResult parsed,
+        PaymentWebhook webhook,
+        WebhookPreVerify? preVerify,
+        WebhookRun run,
+        CancellationToken cancellationToken)
+    {
+        var paymentTx = await FindTransactionAsync(db, parsed, cancellationToken);
+        if (paymentTx == null)
+        {
+            webhook.ErrorMessage = "Không tìm thấy giao dịch theo mã tham chiếu.";
+            webhook.ProcessedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync(cancellationToken);
+            await dbTx.CommitAsync(cancellationToken);
+            run.Events.Add(("PaymentTransactionNotFound", $"ref={parsed.TransactionReference} order={parsed.GatewayOrderCode}"));
+            return new WebhookProcessResult
+            {
+                Accepted = true,
+                HttpStatusCode = 200,
+                Message = webhook.ErrorMessage
+            };
+        }
+
+        webhook.PaymentTransactionId = paymentTx.PaymentTransactionId;
+        webhook.TransactionReference = paymentTx.TransactionReference;
+
+        await db.Entry(paymentTx).Reference(t => t.Payment).LoadAsync(cancellationToken);
+        var payment = paymentTx.Payment;
+        if (payment == null)
+        {
+            webhook.ErrorMessage = "Giao dịch không gắn với payment.";
+            webhook.ProcessedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync(cancellationToken);
+            await dbTx.CommitAsync(cancellationToken);
+            return new WebhookProcessResult { Accepted = true, HttpStatusCode = 200, Message = webhook.ErrorMessage };
+        }
+
+        if (!string.Equals(parsed.TransactionReference?.Trim(), paymentTx.TransactionReference, StringComparison.OrdinalIgnoreCase))
+        {
+            webhook.ErrorMessage = $"Sai payment reference. Expected={paymentTx.TransactionReference}, Actual={parsed.TransactionReference ?? "<trống>"}";
+            webhook.ProcessedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync(cancellationToken);
+            await dbTx.CommitAsync(cancellationToken);
+            run.Events.Add(("PaymentReferenceMismatch", webhook.ErrorMessage));
+            return new WebhookProcessResult { Accepted = true, HttpStatusCode = 200, Message = webhook.ErrorMessage };
+        }
+
+        if ((payment.Status == PaymentStatus.Created || payment.Status == PaymentStatus.Pending) &&
+            payment.ExpiredAt.HasValue && payment.ExpiredAt.Value <= DateTime.UtcNow)
+        {
+            EnsureCanTransition(payment.Status, PaymentStatus.Expired);
+            payment.Status = PaymentStatus.Expired;
+            payment.UpdatedAt = DateTime.UtcNow;
+            paymentTx.Status = PaymentTransactionStatus.Cancelled;
+            paymentTx.UpdatedAt = DateTime.UtcNow;
+            webhook.ErrorMessage = "Payment đã hết hạn, không thể xác nhận thanh toán.";
+            webhook.ProcessedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync(cancellationToken);
+            await dbTx.CommitAsync(cancellationToken);
+            run.Events.Add(("PaymentExpired", $"Webhook đến sau thời hạn payment #{payment.PaymentId}."));
+            return new WebhookProcessResult { Accepted = true, HttpStatusCode = 200, Message = webhook.ErrorMessage };
+        }
+
+        if (payment.Status == PaymentStatus.Paid)
+        {
+            webhook.IsProcessed = true;
+            webhook.IsDuplicate = true;
+            webhook.ProcessedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync(cancellationToken);
+            await dbTx.CommitAsync(cancellationToken);
+            run.Events.Add(("WebhookDuplicate", $"Payment #{payment.PaymentId} đã Paid."));
+            return new WebhookProcessResult
+            {
+                Accepted = true,
+                IsDuplicate = true,
+                PaymentPaid = true,
+                HttpStatusCode = 200,
+                Message = "Thanh toán đã được xử lý trước đó."
+            };
+        }
+
+        if (!string.IsNullOrWhiteSpace(parsed.GatewayOrderCode) &&
+            !string.Equals(parsed.GatewayOrderCode, paymentTx.GatewayOrderCode, StringComparison.Ordinal))
+        {
+            webhook.ErrorMessage = $"Sai GatewayOrderCode. Expected={paymentTx.GatewayOrderCode}, Actual={parsed.GatewayOrderCode}.";
+            webhook.ProcessedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync(cancellationToken);
+            await dbTx.CommitAsync(cancellationToken);
+            run.Events.Add(("PaymentOrderCodeMismatch", webhook.ErrorMessage));
+            return new WebhookProcessResult { Accepted = true, HttpStatusCode = 200, Message = webhook.ErrorMessage };
+        }
+
+        if (Math.Round(parsed.Amount, 0) != Math.Round(payment.Amount, 0) ||
+            Math.Round(parsed.Amount, 0) != Math.Round(paymentTx.Amount, 0))
+        {
+            webhook.ErrorMessage = $"Số tiền không khớp. Expected={payment.Amount}, Actual={parsed.Amount}";
+            webhook.ProcessedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync(cancellationToken);
+            await dbTx.CommitAsync(cancellationToken);
+            run.Events.Add(("PaymentAmountMismatch", webhook.ErrorMessage));
+            return new WebhookProcessResult
+            {
+                Accepted = true,
+                HttpStatusCode = 200,
+                Message = webhook.ErrorMessage
+            };
+        }
+
+        if (!parsed.ProviderReportsSuccess)
+        {
+            webhook.ErrorMessage = "Nhà cung cấp báo thanh toán không thành công.";
+            webhook.ProcessedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync(cancellationToken);
+            await dbTx.CommitAsync(cancellationToken);
+            return new WebhookProcessResult { Accepted = true, HttpStatusCode = 200, Message = webhook.ErrorMessage };
+        }
+
+        if (preVerify?.Error != null)
+        {
+            // Giữ hành vi cũ: lỗi khi gọi cổng thanh toán là lỗi xử lý webhook (HTTP 500, cổng sẽ gửi lại)
+            throw new InvalidOperationException("Đối soát với cổng thanh toán thất bại.", preVerify.Error);
+        }
+
+        if (preVerify?.Result == null)
+        {
+            // Trạng thái thay đổi giữa tiền kiểm tra và giao dịch: báo lỗi tạm thời để cổng thanh toán gửi lại
+            throw new InvalidOperationException("Trạng thái thay đổi trong lúc xử lý, vui lòng gửi lại.");
+        }
+
+        var verifyResult = preVerify.Result;
+
+        if (!verifyResult.Success || !verifyResult.IsPaid ||
+            !verifyResult.Amount.HasValue ||
+            Math.Round(verifyResult.Amount.Value, 0) != Math.Round(payment.Amount, 0))
+        {
+            webhook.ErrorMessage = verifyResult.ErrorMessage ?? "Đối soát với cổng thanh toán không xác nhận giao dịch Paid hoặc sai số tiền.";
+            webhook.ProcessedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync(cancellationToken);
+            await dbTx.CommitAsync(cancellationToken);
+            run.Events.Add(("PaymentProviderVerificationFailed", webhook.ErrorMessage));
+            return new WebhookProcessResult { Accepted = true, HttpStatusCode = 200, Message = webhook.ErrorMessage };
+        }
+
+        var checkoutCompleted = await TryMarkPaidAndCheckoutAsync(db, payment, paymentTx, "webhook", cancellationToken);
+        if (!string.IsNullOrWhiteSpace(parsed.GatewayTransactionId))
+        {
+            paymentTx.GatewayTransactionId = parsed.GatewayTransactionId;
+        }
+
+        webhook.IsProcessed = true;
+        webhook.ProcessedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        await dbTx.CommitAsync(cancellationToken);
+
+        run.PaidPayment = payment;
+        run.PaidReference = paymentTx.TransactionReference;
+        run.CheckoutCompleted = checkoutCompleted;
+
+        return new WebhookProcessResult
+        {
+            Accepted = true,
+            PaymentPaid = true,
+            CheckoutCompleted = checkoutCompleted,
+            HttpStatusCode = 200,
+            Message = "Thanh toán hợp lệ, đã hoàn tất phiên gửi xe."
+        };
     }
 
     public async Task<List<PaymentHistoryItem>> GetPaymentHistoryAsync(CancellationToken cancellationToken = default)
@@ -822,31 +1101,33 @@ public class PaymentService : IPaymentService
     private static async Task<PaymentTransaction?> FindTransactionAsync(
         SmartPsDbContext db,
         PaymentGatewayWebhookParseResult parsed,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool asNoTracking = false)
     {
         PaymentTransaction? tx = null;
+        var transactions = asNoTracking ? db.PaymentTransactions.AsNoTracking() : db.PaymentTransactions;
 
         if (!string.IsNullOrWhiteSpace(parsed.GatewayOrderCode))
         {
-            tx = await db.PaymentTransactions
+            tx = await transactions
                 .FirstOrDefaultAsync(t => t.GatewayOrderCode == parsed.GatewayOrderCode, cancellationToken);
         }
 
         if (tx == null && !string.IsNullOrWhiteSpace(parsed.GatewayTransactionId))
         {
-            tx = await db.PaymentTransactions
+            tx = await transactions
                 .FirstOrDefaultAsync(t => t.GatewayTransactionId == parsed.GatewayTransactionId, cancellationToken);
         }
 
         if (tx == null && !string.IsNullOrWhiteSpace(parsed.TransactionReference))
         {
             var refText = parsed.TransactionReference.Trim();
-            tx = await db.PaymentTransactions
+            tx = await transactions
                 .FirstOrDefaultAsync(t => t.TransactionReference == refText, cancellationToken);
 
             if (tx == null)
             {
-                tx = await db.PaymentTransactions
+                tx = await transactions
                     .Where(t => t.Status == PaymentTransactionStatus.Pending || t.Status == PaymentTransactionStatus.Created)
                     .OrderByDescending(t => t.PaymentTransactionId)
                     .FirstOrDefaultAsync(t => refText.Contains(t.TransactionReference), cancellationToken);
@@ -856,10 +1137,11 @@ public class PaymentService : IPaymentService
         return tx;
     }
 
-    private static async Task<bool> TryMarkPaidAndCheckoutAsync(
+    private async Task<bool> TryMarkPaidAndCheckoutAsync(
         SmartPsDbContext db,
         Models.Payment.Payment payment,
         PaymentTransaction paymentTx,
+        string source,
         CancellationToken cancellationToken)
     {
         EnsureCanTransition(payment.Status, PaymentStatus.Paid);
@@ -872,12 +1154,13 @@ public class PaymentService : IPaymentService
         paymentTx.CompletedAt = paidAt;
         paymentTx.UpdatedAt = paidAt;
 
-        return await CompleteParkingSessionAsync(db, payment, cancellationToken);
+        return await CompleteParkingSessionAsync(db, payment, source, cancellationToken);
     }
 
-    private static async Task<bool> CompleteParkingSessionAsync(
+    private async Task<bool> CompleteParkingSessionAsync(
         SmartPsDbContext db,
         Models.Payment.Payment payment,
+        string source,
         CancellationToken cancellationToken)
     {
         var session = await db.ParkingSessions
@@ -886,13 +1169,26 @@ public class PaymentService : IPaymentService
 
         if (session == null)
         {
-            return false;
+            throw new InvalidOperationException("Không tìm thấy phiên gửi xe cho payment.");
         }
 
         if (session.Status == SessionStatus.Completed)
         {
-            return false;
+            throw new InvalidOperationException("Phiên gửi xe đã được checkout trước đó.");
         }
+
+        var shift = payment.ShiftId.HasValue && payment.CheckoutUserId.HasValue
+            ? await ShiftAccounting.FindActiveShiftAsync(db, payment.CheckoutUserId.Value, cancellationToken)
+            : null;
+        if (shift == null || shift.ShiftId != payment.ShiftId)
+            throw new InvalidOperationException("Ca trực của người tạo VietQR không còn Active.");
+        var reference = await db.PaymentTransactions.AsNoTracking()
+            .Where(t => t.PaymentId == payment.PaymentId)
+            .OrderByDescending(t => t.PaymentTransactionId)
+            .Select(t => t.TransactionReference)
+            .FirstOrDefaultAsync(cancellationToken);
+        await ShiftAccounting.AddParkingFeeAsync(db, shift, payment.CheckoutUserId!.Value,
+            session.SessionId, PaymentMethod.VietQR, payment.Amount, reference, cancellationToken);
 
         session.CheckOutTime = DateTime.UtcNow;
         session.TotalFee = payment.Amount;
@@ -916,6 +1212,37 @@ public class PaymentService : IPaymentService
                 slot.Status = SlotStatus.Available;
                 slot.CurrentLicensePlate = null;
             }
+        }
+
+        // Người thu tiền là người tạo VietQR, không phải người dùng đang đăng nhập (webhook không có phiên đăng nhập)
+        var checkoutUser = await db.Users.AsNoTracking()
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.UserId == payment.CheckoutUserId!.Value, cancellationToken);
+        await _audit.AppendAsync(db, new AuditEntry(
+            AuditActions.ParkingCheckOut,
+            AuditOutcome.Success,
+            "ParkingSession",
+            session.SessionId.ToString(),
+            new
+            {
+                SessionId = session.SessionId,
+                LicensePlate = session.LicensePlate,
+                TicketCode = session.TicketCode,
+                Fee = payment.Amount,
+                PaymentMethod = PaymentMethod.VietQR.ToString(),
+                PaymentId = payment.PaymentId,
+                ShiftId = shift.ShiftId,
+                Source = source
+            },
+            checkoutUser is null ? null : AuditActor.FromUser(checkoutUser)), cancellationToken);
+
+        // Xe vào danh sách đen sau khi đã vào bãi: vẫn cho ra, ghi nhận cảnh báo cạnh bản ghi checkout (R16)
+        var exitBlacklist = await GateClassificationQueries.FindActiveBlacklistAsync(
+            db, LicensePlateNormalizer.Normalize(session.LicensePlate), cancellationToken);
+        if (exitBlacklist != null)
+        {
+            await _audit.AppendAsync(db, GateAuditEntries.BlacklistExitWarning(
+                session, exitBlacklist, checkoutUser is null ? null : AuditActor.FromUser(checkoutUser)), cancellationToken);
         }
 
         return true;

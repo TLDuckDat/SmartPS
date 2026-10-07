@@ -616,6 +616,21 @@
                                 </DataGrid>
                             </StackPanel>
                         </TabItem>
+                        <TabItem Header="{DynamicResource Str_Shifts_TransactionsTitle}" FontSize="13" FontWeight="Bold" Padding="16,8">
+                            <DataGrid ItemsSource="{Binding FilteredFinancialTransactions}" AutoGenerateColumns="False"
+                                      IsReadOnly="True" CanUserAddRows="False" HeadersVisibility="Column"
+                                      GridLinesVisibility="Horizontal" BorderThickness="0">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_TransactionCode}" Binding="{Binding TransactionCode}" Width="175"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Time}" Binding="{Binding CreatedAtLocal, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}}" Width="160"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Type}" Binding="{Binding LocalizedTypeText}" Width="120"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Payment}" Binding="{Binding LocalizedPaymentMethodText}" Width="110"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_LicensePlate}" Binding="{Binding LicensePlate}" Width="120"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Amount}" Binding="{Binding AmountFormatted}" Width="120"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Reference}" Binding="{Binding ReferenceCode}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </TabItem>
                     </TabControl>
                 </Border>
             </StackPanel>

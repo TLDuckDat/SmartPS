@@ -1,8 +1,10 @@
 using System.Collections.ObjectModel;
+using SmartPS.Constants;
 using SmartPS.Data;
 using SmartPS.DTOs.Auth;
 using SmartPS.Models.Auth;
 using SmartPS.Services.Auth;
+using SmartPS.Services.Authorization;
 using SmartPS.Services.Dialog;
 using SmartPS.Services.Localization;
 
@@ -13,6 +15,7 @@ public class UserManagementViewModel : ViewModelBase
     private readonly IAuthService _authService;
     private readonly IDialogService _dialogService;
     private readonly ILocalizationService _localizationService;
+    private readonly IPermissionService _permissionService;
 
     // Số liệu KPI tài khoản
     private int _totalUsers;
@@ -140,11 +143,12 @@ public class UserManagementViewModel : ViewModelBase
     public RelayCommand ToggleCreatePanelCommand { get; }
     public AsyncRelayCommand RefreshCommand { get; }
 
-    public UserManagementViewModel(IAuthService authService, IDialogService dialogService, ILocalizationService localizationService)
+    public UserManagementViewModel(IAuthService authService, IDialogService dialogService, ILocalizationService localizationService, IPermissionService permissionService)
     {
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
+        _permissionService = permissionService ?? throw new ArgumentNullException(nameof(permissionService));
 
         _localizationService.LanguageChanged += () =>
         {
@@ -172,9 +176,9 @@ public class UserManagementViewModel : ViewModelBase
             }
         };
 
-        CreateUserCommand = new AsyncRelayCommand(ExecuteCreateUserAsync, () => !IsBusy);
-        EditUserCommand = new AsyncRelayCommand(ExecuteEditUserAsync, _ => !IsBusy);
-        DeleteUserCommand = new AsyncRelayCommand(ExecuteDeleteUserAsync, _ => !IsBusy);
+        CreateUserCommand = new AsyncRelayCommand(ExecuteCreateUserAsync, () => !IsBusy && _permissionService.HasPermission(Permissions.UserCreate));
+        EditUserCommand = new AsyncRelayCommand(ExecuteEditUserAsync, _ => !IsBusy && _permissionService.HasPermission(Permissions.UserEdit));
+        DeleteUserCommand = new AsyncRelayCommand(ExecuteDeleteUserAsync, _ => !IsBusy && _permissionService.HasPermission(Permissions.UserDelete));
 
         ToggleCreatePanelCommand = new RelayCommand(() => IsCreatePanelVisible = !IsCreatePanelVisible);
         FilterRoleCommand = new RelayCommand(param =>
@@ -340,6 +344,10 @@ public class UserManagementViewModel : ViewModelBase
                 _dialogService.ShowError(_localizationService.GetString("Msg_CreateUser_Failed"));
             }
         }
+        catch (Exception ex) when (TryGetAuthorizationMessage(ex) is { } message)
+        {
+            _dialogService.ShowWarning(message);
+        }
         catch (Exception ex)
         {
             if (DbConnectionHelper.IsConnectionException(ex))
@@ -413,6 +421,10 @@ public class UserManagementViewModel : ViewModelBase
                     _dialogService.ShowError(_localizationService.GetString("Msg_DeleteUser_Failed"));
                 }
             }
+            catch (Exception ex) when (TryGetAuthorizationMessage(ex) is { } message)
+            {
+                _dialogService.ShowWarning(message);
+            }
             catch (Exception ex)
             {
                 if (DbConnectionHelper.IsConnectionException(ex))
@@ -429,5 +441,20 @@ public class UserManagementViewModel : ViewModelBase
                 IsBusy = false;
             }
         }
+    }
+
+    private string? TryGetAuthorizationMessage(Exception ex)
+    {
+        return ex switch
+        {
+            PermissionDeniedException { Reason: "AdminRoleRequired" } => _localizationService.GetString("Msg_User_AdminRoleRequiresAdmin"),
+            PermissionDeniedException => _localizationService.GetString("Msg_Auth_PermissionDenied"),
+            AdminProtectionException { Reason: AdminProtectionReason.LastActiveAdmin } => _localizationService.GetString("Msg_User_LastAdminProtected"),
+            AdminProtectionException { Reason: AdminProtectionReason.SelfDeactivate } => _localizationService.GetString("Msg_User_CannotLockSelf"),
+            AdminProtectionException { Reason: AdminProtectionReason.SelfRoleChange } => _localizationService.GetString("Msg_User_CannotChangeOwnRole"),
+            AdminProtectionException { Reason: AdminProtectionReason.SelfDelete } => _localizationService.GetString("Msg_DeleteUser_PreventSelfDelete"),
+            UserHasHistoryException => _localizationService.GetString("Msg_DeleteUser_HasHistory"),
+            _ => null
+        };
     }
 }

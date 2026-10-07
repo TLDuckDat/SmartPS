@@ -37,14 +37,12 @@ public class LicensePlateOcrService : IOcrLicensePlateService
         var dirInfo = new DirectoryInfo(baseDir);
         for (int i = 0; i < 5 && dirInfo != null; i++)
         {
-            candidates.Add(Path.Combine(dirInfo.FullName, "SmartPS", "Services", "OcrLisencePlate", "LicensePlateEngine.exe"));
             candidates.Add(Path.Combine(dirInfo.FullName, "Services", "OcrLisencePlate", "LicensePlateEngine.exe"));
             dirInfo = dirInfo.Parent;
         }
 
         // 3. Theo CurrentDirectory
         var curDir = Directory.GetCurrentDirectory();
-        candidates.Add(Path.Combine(curDir, "SmartPS", "Services", "OcrLisencePlate", "LicensePlateEngine.exe"));
         candidates.Add(Path.Combine(curDir, "Services", "OcrLisencePlate", "LicensePlateEngine.exe"));
 
         foreach (var path in candidates)

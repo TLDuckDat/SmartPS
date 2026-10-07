@@ -1,13 +1,17 @@
 using System.Collections.ObjectModel;
-using SmartPS.Models.GateControl;
 using SmartPS.Models.Parking;
-using SmartPS.Services.GateControl;
+using SmartPS.Models.Reports;
+using SmartPS.Services.Localization;
+using SmartPS.Services.Reports;
 
 namespace SmartPS.ViewModels.Overview;
 
 public class OverviewViewModel : ViewModelBase
 {
-    private readonly IGateControlService _gateControlService;
+    private const int RecentSessionCount = 15;
+
+    private readonly IReportService _reportService;
+    private readonly ILocalizationService _localization;
 
     private int _totalParkedVehicles;
     public int TotalParkedVehicles
@@ -16,14 +20,14 @@ public class OverviewViewModel : ViewModelBase
         set => SetProperty(ref _totalParkedVehicles, value);
     }
 
-    private int _totalSlots = 20;
+    private int _totalSlots;
     public int TotalSlots
     {
         get => _totalSlots;
         set => SetProperty(ref _totalSlots, value);
     }
 
-    private int _availableSlots = 20;
+    private int _availableSlots;
     public int AvailableSlots
     {
         get => _availableSlots;
@@ -42,7 +46,7 @@ public class OverviewViewModel : ViewModelBase
             }
         }
     }
-    public string OccupancyRateFormatted => $"{OccupancyRate:0.0}%";
+    public string OccupancyRateFormatted => ReportFormat.Percent(OccupancyRate);
 
     private int _todayCheckIns;
     public int TodayCheckIns
@@ -70,20 +74,13 @@ public class OverviewViewModel : ViewModelBase
             }
         }
     }
-    public string TodayRevenueFormatted => $"{TodayRevenue:N0} đ";
+    public string TodayRevenueFormatted => ReportFormat.Currency(TodayRevenue);
 
-    private int _motorbikeParkedCount;
-    public int MotorbikeParkedCount
+    private int _residentParkedCount;
+    public int ResidentParkedCount
     {
-        get => _motorbikeParkedCount;
-        set => SetProperty(ref _motorbikeParkedCount, value);
-    }
-
-    private int _carParkedCount;
-    public int CarParkedCount
-    {
-        get => _carParkedCount;
-        set => SetProperty(ref _carParkedCount, value);
+        get => _residentParkedCount;
+        set => SetProperty(ref _residentParkedCount, value);
     }
 
     private int _monthlyParkedCount;
@@ -93,6 +90,7 @@ public class OverviewViewModel : ViewModelBase
         set => SetProperty(ref _monthlyParkedCount, value);
     }
 
+    // Visitors: neither residents nor monthly-pass holders.
     private int _regularParkedCount;
     public int RegularParkedCount
     {
@@ -107,15 +105,32 @@ public class OverviewViewModel : ViewModelBase
         set => SetProperty(ref _isLoading, value);
     }
 
+    private string? _errorMessage;
+    public string? ErrorMessage
+    {
+        get => _errorMessage;
+        private set
+        {
+            if (SetProperty(ref _errorMessage, value))
+            {
+                OnPropertyChanged(nameof(HasError));
+            }
+        }
+    }
+
+    public bool HasError => !string.IsNullOrEmpty(_errorMessage);
+
+    public ObservableCollection<VehicleTypeCount> ParkedByVehicleType { get; } = new();
+
     public ObservableCollection<ParkingSession> RecentSessions { get; } = new();
 
     public AsyncRelayCommand RefreshCommand { get; }
 
-    public OverviewViewModel(IGateControlService gateControlService)
+    public OverviewViewModel(IReportService reportService, ILocalizationService localization)
     {
-        _gateControlService = gateControlService ?? throw new ArgumentNullException(nameof(gateControlService));
+        _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
+        _localization = localization ?? throw new ArgumentNullException(nameof(localization));
         RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
-        _ = LoadDataAsync();
     }
 
     public async Task LoadDataAsync()
@@ -124,30 +139,38 @@ public class OverviewViewModel : ViewModelBase
         try
         {
             IsLoading = true;
-            var kpi = await _gateControlService.GetOverviewKpiAsync();
+            var snapshot = await _reportService.GetOverviewSnapshotAsync();
+            var recent = await _reportService.GetRecentSessionsAsync(RecentSessionCount);
 
-            TotalParkedVehicles = kpi.TotalParkedVehicles;
-            TotalSlots = kpi.TotalSlots;
-            AvailableSlots = kpi.AvailableSlots;
-            OccupancyRate = kpi.OccupancyRate;
-            TodayCheckIns = kpi.TodayCheckIns;
-            TodayCheckOuts = kpi.TodayCheckOuts;
-            TodayRevenue = kpi.TodayRevenue;
-            MotorbikeParkedCount = kpi.MotorbikeParkedCount;
-            CarParkedCount = kpi.CarParkedCount;
-            MonthlyParkedCount = kpi.MonthlyParkedCount;
-            RegularParkedCount = kpi.RegularParkedCount;
+            TotalParkedVehicles = snapshot.OccupiedNow;
+            TotalSlots = snapshot.TotalSlots;
+            AvailableSlots = snapshot.AvailableSlots;
+            OccupancyRate = snapshot.OccupancyPercent;
+            TodayCheckIns = snapshot.TodayCheckIns;
+            TodayCheckOuts = snapshot.TodayCheckOuts;
+            TodayRevenue = snapshot.TodayNetRevenue;
+            ResidentParkedCount = snapshot.ParkedResidents;
+            MonthlyParkedCount = snapshot.ParkedMonthlyPass;
+            RegularParkedCount = snapshot.ParkedVisitors;
 
-            var history = await _gateControlService.GetAllSessionsHistoryAsync();
+            ParkedByVehicleType.Clear();
+            foreach (var item in snapshot.ParkedByVehicleType)
+            {
+                ParkedByVehicleType.Add(item);
+            }
+
             RecentSessions.Clear();
-            foreach (var session in history.Take(15))
+            foreach (var session in recent)
             {
                 RecentSessions.Add(session);
             }
+
+            ErrorMessage = null;
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[OverviewViewModel Error]: {ex.Message}");
+            ErrorMessage = _localization.GetString(ReportTextKeys.MsgOvLoadError);
         }
         finally
         {

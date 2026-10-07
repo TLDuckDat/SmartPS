@@ -19,6 +19,7 @@ public class PaymentCreationResult
     public byte[]? QrImagePng { get; set; }
     public string? CheckoutUrl { get; set; }
     public string Description { get; set; } = string.Empty;
+    public bool IsPermissionDenied { get; set; }
 }
 
 public class PaymentStatusResult
@@ -31,6 +32,7 @@ public class PaymentStatusResult
     public decimal Amount { get; set; }
     public DateTime? PaidAt { get; set; }
     public bool CheckoutCompleted { get; set; }
+    public bool IsPermissionDenied { get; set; }
 }
 
 public class WebhookProcessResult
@@ -70,6 +72,7 @@ public class PaymentDetailsResult
 public class CreatePaymentRequest
 {
     public int SessionId { get; set; }
+    public int ActorUserId { get; set; }
     public string? CheckoutImagePath { get; set; }
 }
 

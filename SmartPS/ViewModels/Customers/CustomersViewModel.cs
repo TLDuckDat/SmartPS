@@ -1,186 +1,283 @@
 using System.Collections.ObjectModel;
-using SmartPS.Models.Parking;
+using SmartPS.Constants;
+using SmartPS.Services.Authorization;
+using SmartPS.Services.Customers;
+using SmartPS.Services.Dialog;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.ViewModels.Customers;
 
+/// <summary>
+/// Màn Khách hàng: danh sách cư dân/khách từ DB, biểu mẫu thêm/sửa kèm xe và vé tháng, và tab danh sách đen.
+/// Quyền ghi lấy từ <see cref="IPermissionService"/>; người chỉ có Customer.View thấy màn ở chế độ chỉ xem.
+/// </summary>
 public class CustomersViewModel : ViewModelBase
 {
-    private readonly List<CustomerItemViewModel> _allCustomers = new();
+    private readonly ICustomerService _customers;
+    private readonly IPermissionService _permissions;
+    private readonly IDialogService _dialog;
+    private readonly ILocalizationService _localization;
 
-    private int _totalCustomers;
-    public int TotalCustomers
+    private bool _loaded;
+    private int _searchVersion;
+
+    public CustomersViewModel(
+        ICustomerService customers,
+        IMonthlyTicketService tickets,
+        IBlacklistService blacklist,
+        IPermissionService permissions,
+        IDialogService dialogService,
+        ILocalizationService localization)
     {
-        get => _totalCustomers;
-        set => SetProperty(ref _totalCustomers, value);
+        _customers = customers ?? throw new ArgumentNullException(nameof(customers));
+        _permissions = permissions ?? throw new ArgumentNullException(nameof(permissions));
+        _dialog = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
+        _localization = localization ?? throw new ArgumentNullException(nameof(localization));
+
+        Editor = new CustomerEditorViewModel(customers, tickets, permissions, dialogService, localization, RefreshAfterChangeAsync);
+        Blacklist = new BlacklistViewModel(blacklist, permissions, dialogService, localization);
+
+        RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
+        SearchCommand = new AsyncRelayCommand(() => SearchAsync(resetPage: true));
+        PrevPageCommand = new AsyncRelayCommand(() => GoToPageAsync(PageIndex - 1), () => PageIndex > 0);
+        NextPageCommand = new AsyncRelayCommand(() => GoToPageAsync(PageIndex + 1), () => PageIndex + 1 < TotalPages);
+        NewCustomerCommand = new RelayCommand(() => Editor.StartNew(), () => CanManageCustomers);
+
+        _localization.LanguageChanged += OnLanguageChanged;
     }
 
-    private int _activeTicketsCount;
-    public int ActiveTicketsCount
-    {
-        get => _activeTicketsCount;
-        set => SetProperty(ref _activeTicketsCount, value);
-    }
+    public bool CanManageCustomers => _permissions.HasPermission(Permissions.CustomerManage);
 
-    private int _expiringSoonCount;
-    public int ExpiringSoonCount
-    {
-        get => _expiringSoonCount;
-        set => SetProperty(ref _expiringSoonCount, value);
-    }
+    public bool CanManageBlacklist => _permissions.HasPermission(Permissions.BlacklistManage);
 
-    private decimal _monthlyRevenueTotal;
-    public decimal MonthlyRevenueTotal
-    {
-        get => _monthlyRevenueTotal;
-        set
-        {
-            if (SetProperty(ref _monthlyRevenueTotal, value))
-            {
-                OnPropertyChanged(nameof(MonthlyRevenueTotalFormatted));
-            }
-        }
-    }
-    public string MonthlyRevenueTotalFormatted => $"{MonthlyRevenueTotal:N0} đ/tháng";
+    public bool IsReadOnly => !CanManageCustomers;
 
-    private string _searchKeyword = string.Empty;
-    public string SearchKeyword
-    {
-        get => _searchKeyword;
-        set
-        {
-            if (SetProperty(ref _searchKeyword, value))
-            {
-                ApplyFilter();
-            }
-        }
-    }
+    public ObservableCollection<CustomerItemViewModel> Customers { get; } = new();
+
+    public CustomerEditorViewModel Editor { get; }
+
+    public BlacklistViewModel Blacklist { get; }
+
+    public AsyncRelayCommand RefreshCommand { get; }
+
+    public AsyncRelayCommand SearchCommand { get; }
+
+    public AsyncRelayCommand PrevPageCommand { get; }
+
+    public AsyncRelayCommand NextPageCommand { get; }
+
+    public RelayCommand NewCustomerCommand { get; }
 
     private CustomerItemViewModel? _selectedCustomer;
     public CustomerItemViewModel? SelectedCustomer
     {
         get => _selectedCustomer;
-        set => SetProperty(ref _selectedCustomer, value);
-    }
-
-    public ObservableCollection<CustomerItemViewModel> FilteredCustomers { get; } = new();
-
-    public AsyncRelayCommand RefreshCommand { get; }
-
-    public CustomersViewModel()
-    {
-        RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
-        InitializeCustomers();
-        _ = LoadDataAsync();
-    }
-
-    private void InitializeCustomers()
-    {
-        _allCustomers.Clear();
-        _allCustomers.AddRange(new[]
+        set
         {
-            new CustomerItemViewModel
+            if (SetProperty(ref _selectedCustomer, value) && value is not null)
             {
-                CustomerId = 1,
-                FullName = "Nguyễn Văn Hùng",
-                PhoneNumber = "0988.123.456",
-                Email = "hung.nguyen@smartps.vn",
-                IdentityCard = "001200001234",
-                DefaultLicensePlate = "30K-555.55",
-                Type = CustomerType.VIP,
-                VehicleTypeName = "Ô tô con 4-7 chỗ",
-                MonthlyTicketCode = "MT-2026-001",
-                TicketExpiry = DateTime.UtcNow.AddMonths(5)
-            },
-            new CustomerItemViewModel
-            {
-                CustomerId = 2,
-                FullName = "Trần Thị Mai Hương",
-                PhoneNumber = "0912.888.999",
-                Email = "huong.tran@gmail.com",
-                IdentityCard = "001201004567",
-                DefaultLicensePlate = "29B1-888.88",
-                Type = CustomerType.VIP,
-                VehicleTypeName = "Xe máy hai bánh",
-                MonthlyTicketCode = "MT-2026-002",
-                TicketExpiry = DateTime.UtcNow.AddMonths(3)
-            },
-            new CustomerItemViewModel
-            {
-                CustomerId = 3,
-                FullName = "Lê Hoàng Long",
-                PhoneNumber = "0977.345.678",
-                Email = "long.le@fpt.com.vn",
-                IdentityCard = "001202008899",
-                DefaultLicensePlate = "30F-999.99",
-                Type = CustomerType.Loyal,
-                VehicleTypeName = "Ô tô con 4-7 chỗ",
-                MonthlyTicketCode = "MT-2026-003",
-                TicketExpiry = DateTime.UtcNow.AddDays(7)
-            },
-            new CustomerItemViewModel
-            {
-                CustomerId = 4,
-                FullName = "Phạm Quốc Tuấn",
-                PhoneNumber = "0904.567.890",
-                Email = "tuan.pham@outlook.com",
-                IdentityCard = "001203001122",
-                DefaultLicensePlate = "29D2-123.45",
-                Type = CustomerType.Regular,
-                VehicleTypeName = "Xe máy hai bánh",
-                MonthlyTicketCode = "MT-2026-004",
-                TicketExpiry = DateTime.UtcNow.AddDays(-2) // Hết hạn
-            },
-            new CustomerItemViewModel
-            {
-                CustomerId = 5,
-                FullName = "Đặng Thùy Dung",
-                PhoneNumber = "0936.789.012",
-                Email = "dung.dang@vinhome.vn",
-                IdentityCard = "001204003344",
-                DefaultLicensePlate = "30A-678.90",
-                Type = CustomerType.VIP,
-                VehicleTypeName = "Ô tô con 4-7 chỗ",
-                MonthlyTicketCode = "MT-2026-005",
-                TicketExpiry = DateTime.UtcNow.AddMonths(8)
-            }
-        });
-    }
-
-    public Task LoadDataAsync()
-    {
-        TotalCustomers = _allCustomers.Count;
-        ActiveTicketsCount = _allCustomers.Count(c => c.HasActiveTicket);
-        ExpiringSoonCount = _allCustomers.Count(c => c.HasActiveTicket && c.TicketExpiry.HasValue && (c.TicketExpiry.Value - DateTime.UtcNow).TotalDays <= 15);
-        
-        // Tính doanh thu vé tháng định kỳ (Ô tô 1.200.000đ, Xe máy 100.000đ)
-        MonthlyRevenueTotal = _allCustomers.Where(c => c.HasActiveTicket).Sum(c => c.VehicleTypeName.Contains("Ô tô") ? 1200000m : 100000m);
-
-        ApplyFilter();
-        return Task.CompletedTask;
-    }
-
-    private void ApplyFilter()
-    {
-        var kw = SearchKeyword?.Trim().ToUpperInvariant() ?? string.Empty;
-        FilteredCustomers.Clear();
-
-        foreach (var c in _allCustomers)
-        {
-            var match = string.IsNullOrEmpty(kw) ||
-                        c.FullName.ToUpperInvariant().Contains(kw) ||
-                        c.PhoneNumber.Contains(kw) ||
-                        c.DefaultLicensePlate.ToUpperInvariant().Contains(kw) ||
-                        c.MonthlyTicketCode.ToUpperInvariant().Contains(kw);
-
-            if (match)
-            {
-                FilteredCustomers.Add(c);
+                _ = Editor.OpenAsync(value.CustomerId);
             }
         }
+    }
 
-        if (SelectedCustomer == null || !FilteredCustomers.Contains(SelectedCustomer))
+    private string _searchText = string.Empty;
+    public string SearchText
+    {
+        get => _searchText;
+        set
         {
-            SelectedCustomer = FilteredCustomers.FirstOrDefault();
+            if (SetProperty(ref _searchText, value ?? string.Empty) && _loaded)
+            {
+                _ = SearchAsync(resetPage: true);
+            }
         }
+    }
+
+    private CustomerListFilter _filter = CustomerListFilter.All;
+    public CustomerListFilter Filter
+    {
+        get => _filter;
+        set
+        {
+            if (SetProperty(ref _filter, value) && _loaded)
+            {
+                _ = SearchAsync(resetPage: true);
+            }
+        }
+    }
+
+    private int _totalCustomers;
+    public int TotalCustomers { get => _totalCustomers; private set => SetProperty(ref _totalCustomers, value); }
+
+    private int _residentCount;
+    public int ResidentCount { get => _residentCount; private set => SetProperty(ref _residentCount, value); }
+
+    private int _activeTicketsCount;
+    public int ActiveTicketsCount { get => _activeTicketsCount; private set => SetProperty(ref _activeTicketsCount, value); }
+
+    private int _expiringSoonCount;
+    public int ExpiringSoonCount { get => _expiringSoonCount; private set => SetProperty(ref _expiringSoonCount, value); }
+
+    private decimal _activeTicketRevenue;
+    public decimal ActiveTicketRevenue
+    {
+        get => _activeTicketRevenue;
+        private set
+        {
+            if (SetProperty(ref _activeTicketRevenue, value))
+            {
+                OnPropertyChanged(nameof(ActiveTicketRevenueFormatted));
+            }
+        }
+    }
+
+    public string ActiveTicketRevenueFormatted => $"{ActiveTicketRevenue:N0} đ";
+
+    private int _pageIndex;
+    public int PageIndex
+    {
+        get => _pageIndex;
+        private set
+        {
+            if (SetProperty(ref _pageIndex, value))
+            {
+                OnPropertyChanged(nameof(PageInfoText));
+            }
+        }
+    }
+
+    private int _totalPages;
+    public int TotalPages
+    {
+        get => _totalPages;
+        private set
+        {
+            if (SetProperty(ref _totalPages, value))
+            {
+                OnPropertyChanged(nameof(PageInfoText));
+            }
+        }
+    }
+
+    private int _matchedCount;
+    public int MatchedCount
+    {
+        get => _matchedCount;
+        private set
+        {
+            if (SetProperty(ref _matchedCount, value))
+            {
+                OnPropertyChanged(nameof(PageInfoText));
+            }
+        }
+    }
+
+    public string PageInfoText => _localization.GetString("Str_Cust_PageInfo", PageIndex + 1, Math.Max(1, TotalPages), MatchedCount);
+
+    /// <summary>Tải tổng quan, danh sách khách hàng và danh sách đen. Không tự gọi từ constructor.</summary>
+    public async Task LoadDataAsync()
+    {
+        try
+        {
+            var summary = await _customers.GetSummaryAsync();
+            TotalCustomers = summary.TotalCustomers;
+            ResidentCount = summary.ResidentCount;
+            ActiveTicketsCount = summary.ActiveTicketCount;
+            ExpiringSoonCount = summary.ExpiringSoonCount;
+            ActiveTicketRevenue = summary.ActiveTicketRevenue;
+
+            await SearchAsync(resetPage: false);
+            await Blacklist.LoadAsync();
+            _loaded = true;
+        }
+        catch (PermissionDeniedException)
+        {
+            _dialog.ShowWarning(_localization.GetString("Msg_Auth_PermissionDenied"));
+        }
+        catch (Exception ex)
+        {
+            _dialog.ShowError(_localization.GetString("Msg_Cust_LoadError", ex.Message));
+        }
+    }
+
+    private async Task GoToPageAsync(int pageIndex)
+    {
+        PageIndex = Math.Max(0, pageIndex);
+        await SearchAsync(resetPage: false);
+    }
+
+    private async Task SearchAsync(bool resetPage)
+    {
+        if (resetPage)
+        {
+            PageIndex = 0;
+        }
+
+        var version = Interlocked.Increment(ref _searchVersion);
+        try
+        {
+            var page = await _customers.SearchAsync(new CustomerQuery
+            {
+                SearchText = SearchText,
+                Filter = Filter,
+                PageIndex = PageIndex
+            });
+
+            // Bỏ kết quả của lần tìm kiếm đã cũ
+            if (version != Volatile.Read(ref _searchVersion))
+            {
+                return;
+            }
+
+            Customers.Clear();
+            foreach (var item in page.Items)
+            {
+                Customers.Add(new CustomerItemViewModel(item, _localization));
+            }
+
+            PageIndex = page.PageIndex;
+            TotalPages = page.TotalPages;
+            MatchedCount = page.TotalCount;
+            PrevPageCommand.RaiseCanExecuteChanged();
+            NextPageCommand.RaiseCanExecuteChanged();
+        }
+        catch (PermissionDeniedException)
+        {
+            _dialog.ShowWarning(_localization.GetString("Msg_Auth_PermissionDenied"));
+        }
+        catch (Exception ex)
+        {
+            _dialog.ShowError(_localization.GetString("Msg_Cust_LoadError", ex.Message));
+        }
+    }
+
+    private async Task RefreshAfterChangeAsync()
+    {
+        try
+        {
+            var summary = await _customers.GetSummaryAsync();
+            TotalCustomers = summary.TotalCustomers;
+            ResidentCount = summary.ResidentCount;
+            ActiveTicketsCount = summary.ActiveTicketCount;
+            ExpiringSoonCount = summary.ExpiringSoonCount;
+            ActiveTicketRevenue = summary.ActiveTicketRevenue;
+        }
+        catch (Exception ex)
+        {
+            _dialog.ShowError(_localization.GetString("Msg_Cust_LoadError", ex.Message));
+        }
+
+        await SearchAsync(resetPage: false);
+    }
+
+    private void OnLanguageChanged()
+    {
+        foreach (var item in Customers)
+        {
+            item.RefreshTexts();
+        }
+
+        OnPropertyChanged(nameof(PageInfoText));
     }
 }

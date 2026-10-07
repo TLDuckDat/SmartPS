@@ -52,6 +52,13 @@
                 </Grid>
             </Border>
 
+            <!-- Thông báo lỗi tải dữ liệu (địa phương hóa) -->
+            <Border Background="{StaticResource ErrorBackgroundBrush}" BorderBrush="{StaticResource ErrorBorderBrush}" BorderThickness="1"
+                    CornerRadius="6" Padding="14,10" Margin="0,0,0,14"
+                    Visibility="{Binding HasError, Converter={StaticResource BoolToVisConverter}}">
+                <TextBlock Text="{Binding ErrorMessage}" FontSize="12.5" Foreground="{StaticResource ErrorTextBrush}" TextWrapping="Wrap"/>
+            </Border>
+
             <!-- 2. Hàng Thẻ KPI Số Liệu Thực Tế (5 Cột) -->
             <Grid Margin="0,0,0,20">
                 <Grid.ColumnDefinitions>
@@ -135,41 +142,39 @@
                     <ColumnDefinition Width="1*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Thống kê theo Loại xe -->
+                <!-- Thống kê theo Loại xe (lấy từ bảng VehicleTypes) -->
                 <Border Grid.Column="0" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="18">
                     <StackPanel>
-                        <TextBlock Text="PHÂN BỔ THEO LOẠI XE ĐANG ĐỖ" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
-                        <Grid Margin="0,4">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="🏍 Xe máy (Khu A):" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"/>
-                            </StackPanel>
-                            <TextBlock Text="{Binding MotorbikeParkedCount, StringFormat='{}{0} xe'}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right"/>
-                        </Grid>
-                        <Separator Background="{StaticResource DividerBrush}" Margin="0,8"/>
-                        <Grid Margin="0,4">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="🚗 Ô tô con (Khu B):" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"/>
-                            </StackPanel>
-                            <TextBlock Text="{Binding CarParkedCount, StringFormat='{}{0} xe'}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right"/>
-                        </Grid>
+                        <TextBlock Text="{DynamicResource Str_Ov_ParkedByVehicleType}" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                        <ItemsControl ItemsSource="{Binding ParkedByVehicleType}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,6">
+                                        <TextBlock Text="{Binding Name}" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Count, StringFormat='{}{0} xe'}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
                 </Border>
 
-                <!-- Thống kê theo Hạng thẻ khách hàng -->
+                <!-- Thống kê theo nhóm khách: Cư dân / Vé tháng / Vãng lai -->
                 <Border Grid.Column="2" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="18">
                     <StackPanel>
-                        <TextBlock Text="PHÂN LOẠI ĐỐI TƯỢNG GỬI XE" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                        <TextBlock Text="{DynamicResource Str_Ov_ParkedByGroup}" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
                         <Grid Margin="0,4">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="👑 Khách vé tháng (Cư dân/Cố định):" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"/>
-                            </StackPanel>
+                            <TextBlock Text="{DynamicResource Str_Rpt_Group_Resident}" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding ResidentParkedCount, StringFormat='{}{0} xe'}" FontSize="13" FontWeight="Bold" Foreground="#0284C7" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Separator Background="{StaticResource DividerBrush}" Margin="0,8"/>
+                        <Grid Margin="0,4">
+                            <TextBlock Text="{DynamicResource Str_Rpt_Group_MonthlyPass}" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding MonthlyParkedCount, StringFormat='{}{0} xe'}" FontSize="13" FontWeight="Bold" Foreground="#15803D" HorizontalAlignment="Right"/>
                         </Grid>
                         <Separator Background="{StaticResource DividerBrush}" Margin="0,8"/>
                         <Grid Margin="0,4">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="🎫 Khách vãng lai (Lượt):" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"/>
-                            </StackPanel>
+                            <TextBlock Text="{DynamicResource Str_Rpt_Group_Visitor}" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding RegularParkedCount, StringFormat='{}{0} xe'}" FontSize="13" FontWeight="Bold" Foreground="#D97706" HorizontalAlignment="Right"/>
                         </Grid>
                     </StackPanel>
@@ -274,7 +279,7 @@
                             </DataGridTextColumn>
 
                             <!-- Cước phí -->
-                            <DataGridTextColumn Header="Cước Phí" Binding="{Binding TotalFee, StringFormat={}{0:N0} đ}" Width="100">
+                            <DataGridTextColumn Header="Cước Phí" Binding="{Binding TotalFee, Converter={StaticResource VndCurrencyConverter}}" Width="100">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="VerticalAlignment" Value="Center"/>

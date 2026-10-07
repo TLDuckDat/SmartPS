@@ -18,14 +18,16 @@ public enum PaymentMethod
 {
     Cash = 0,        // Tiền mặt
     VietQR = 1,      // Chuyển khoản VietQR
-    Card = 2         // Thẻ / Ví điện tử
+    Card = 2,        // Thẻ / Ví điện tử
+    Free = 3         // Miễn phí / vé tháng
 }
 
 public enum CustomerType
 {
     Regular = 0,     // Khách lạ / Vãng lai
     Loyal = 1,       // Khách thân quen
-    VIP = 2          // Khách VIP / Cư dân
+    VIP = 2,         // Khách VIP
+    Resident = 3     // Cư dân
 }
 
 public enum MonthlyTicketStatus
@@ -35,3 +37,16 @@ public enum MonthlyTicketStatus
     Suspended = 2    // Tạm khóa
 }
 
+
+public enum ZoneAudience
+{
+    Mixed = 0,        // Dùng chung
+    ResidentOnly = 1, // Chỉ dành cho cư dân
+    VisitorOnly = 2   // Chỉ dành cho khách vãng lai
+}
+
+public enum TicketPurchaseKind
+{
+    Create = 0,      // Mua mới
+    Renew = 1        // Gia hạn
+}

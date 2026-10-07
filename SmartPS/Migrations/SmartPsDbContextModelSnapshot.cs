@@ -22,6 +22,93 @@ namespace SmartPS.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("SmartPS.Models.Audit.AuditLog", b =>
+                {
+                    b.Property<long>("AuditLogId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("AuditLogId"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Details")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasDefaultValueSql("'{}'::jsonb");
+
+                    b.Property<string>("EntityId")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("EntityType")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Hash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("MachineName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime>("OccurredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("PrevHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("RoleName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("AuditLogId");
+
+                    b.HasIndex("OccurredAtUtc")
+                        .HasDatabaseName("IX_AuditLogs_OccurredAtUtc");
+
+                    b.HasIndex("PrevHash")
+                        .IsUnique()
+                        .HasDatabaseName("IX_AuditLogs_PrevHash");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_AuditLogs_UserId");
+
+                    b.HasIndex("Username")
+                        .HasDatabaseName("IX_AuditLogs_Username");
+
+                    b.HasIndex("Action", "OccurredAtUtc")
+                        .HasDatabaseName("IX_AuditLogs_Action_OccurredAtUtc");
+
+                    b.HasIndex("EntityType", "EntityId")
+                        .HasDatabaseName("IX_AuditLogs_EntityType_EntityId");
+
+                    b.ToTable("AuditLogs", (string)null);
+                });
+
             modelBuilder.Entity("SmartPS.Models.Auth.Permission", b =>
                 {
                     b.Property<int>("PermissionId")
@@ -130,6 +217,60 @@ namespace SmartPS.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
+            modelBuilder.Entity("SmartPS.Models.Parking.BlacklistEntry", b =>
+                {
+                    b.Property<int>("BlacklistEntryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BlacklistEntryId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("LicensePlate")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("RemoveReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("RemovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("RemovedByUserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("BlacklistEntryId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("RemovedByUserId");
+
+                    b.HasIndex(new[] { "LicensePlate" }, "IX_BlacklistEntries_LicensePlate");
+
+                    b.HasIndex(new[] { "LicensePlate" }, "IX_BlacklistEntries_LicensePlate_Active")
+                        .IsUnique()
+                        .HasFilter("\"IsActive\"");
+
+                    b.ToTable("BlacklistEntries", (string)null);
+                });
+
             modelBuilder.Entity("SmartPS.Models.Parking.Customer", b =>
                 {
                     b.Property<int>("CustomerId")
@@ -137,6 +278,14 @@ namespace SmartPS.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CustomerId"));
+
+                    b.Property<string>("ApartmentCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Building")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -164,6 +313,11 @@ namespace SmartPS.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
 
+                    b.Property<bool>("IsResident")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -182,6 +336,8 @@ namespace SmartPS.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("CustomerId");
+
+                    b.HasIndex("ApartmentCode");
 
                     b.HasIndex("PhoneNumber");
 
@@ -240,6 +396,49 @@ namespace SmartPS.Migrations
                         .IsUnique();
 
                     b.ToTable("CustomerTiers", (string)null);
+                });
+
+            modelBuilder.Entity("SmartPS.Models.Parking.CustomerVehicle", b =>
+                {
+                    b.Property<int>("CustomerVehicleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CustomerVehicleId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("LicensePlate")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime?>("RemovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("VehicleTypeId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CustomerVehicleId");
+
+                    b.HasIndex("VehicleTypeId");
+
+                    b.HasIndex(new[] { "CustomerId" }, "IX_CustomerVehicles_CustomerId");
+
+                    b.HasIndex(new[] { "LicensePlate" }, "IX_CustomerVehicles_LicensePlate_Active")
+                        .IsUnique()
+                        .HasFilter("\"IsActive\"");
+
+                    b.ToTable("CustomerVehicles", (string)null);
                 });
 
             modelBuilder.Entity("SmartPS.Models.Parking.MonthlyTicket", b =>
@@ -355,6 +554,52 @@ namespace SmartPS.Migrations
                     b.ToTable("MonthlyTicketPlans", (string)null);
                 });
 
+            modelBuilder.Entity("SmartPS.Models.Parking.MonthlyTicketPurchase", b =>
+                {
+                    b.Property<long>("MonthlyTicketPurchaseId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("MonthlyTicketPurchaseId"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("PeriodEndUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("PeriodStartUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("PlanId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("TicketId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("MonthlyTicketPurchaseId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("PlanId");
+
+                    b.HasIndex("TicketId");
+
+                    b.HasIndex(new[] { "CreatedAtUtc" }, "IX_MonthlyTicketPurchases_CreatedAtUtc");
+
+                    b.ToTable("MonthlyTicketPurchases", (string)null);
+                });
+
             modelBuilder.Entity("SmartPS.Models.Parking.ParkingSession", b =>
                 {
                     b.Property<int>("SessionId")
@@ -429,19 +674,25 @@ namespace SmartPS.Migrations
 
                     b.HasIndex("CheckInTime");
 
+                    b.HasIndex("CheckOutTime");
+
                     b.HasIndex("CreatedByUserId");
 
                     b.HasIndex("CustomerId");
 
                     b.HasIndex("LicensePlate");
 
-                    b.HasIndex("SlotId");
-
                     b.HasIndex("Status");
 
                     b.HasIndex("TicketCode");
 
                     b.HasIndex("VehicleTypeId");
+
+                    b.HasIndex(new[] { "SlotId" }, "IX_ParkingSessions_SlotId");
+
+                    b.HasIndex(new[] { "SlotId" }, "IX_ParkingSessions_SlotId_Active")
+                        .IsUnique()
+                        .HasFilter("\"Status\" = 0 AND \"SlotId\" IS NOT NULL");
 
                     b.ToTable("ParkingSessions", (string)null);
                 });
@@ -518,6 +769,11 @@ namespace SmartPS.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ZoneId"));
+
+                    b.Property<int>("Audience")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
 
                     b.Property<string>("Description")
                         .HasMaxLength(255)
@@ -632,6 +888,9 @@ namespace SmartPS.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<int?>("CheckoutUserId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -657,6 +916,9 @@ namespace SmartPS.Migrations
                     b.Property<int>("SessionId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("ShiftId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -665,12 +927,16 @@ namespace SmartPS.Migrations
 
                     b.HasKey("PaymentId");
 
+                    b.HasIndex("CheckoutUserId");
+
                     b.HasIndex("CreatedAt");
 
                     b.HasIndex("SessionId")
                         .IsUnique()
                         .HasDatabaseName("IX_Payments_SessionId_Active")
                         .HasFilter("\"Status\" IN (0, 1)");
+
+                    b.HasIndex("ShiftId");
 
                     b.HasIndex("Status");
 
@@ -869,6 +1135,140 @@ namespace SmartPS.Migrations
                     b.ToTable("PaymentWebhooks", (string)null);
                 });
 
+            modelBuilder.Entity("SmartPS.Models.Shifts.FinancialTransaction", b =>
+                {
+                    b.Property<int>("TransactionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TransactionId"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int?>("ParkingSessionId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PaymentMethod")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ReferenceCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("ShiftId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TransactionCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("TransactionId");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("ParkingSessionId");
+
+                    b.HasIndex("PaymentMethod");
+
+                    b.HasIndex("ShiftId");
+
+                    b.HasIndex("TransactionCode")
+                        .IsUnique();
+
+                    b.HasIndex("Type");
+
+                    b.HasIndex("ParkingSessionId", "Type")
+                        .IsUnique()
+                        .HasDatabaseName("IX_FinancialTransactions_OneParkingFeePerSession")
+                        .HasFilter("\"ParkingSessionId\" IS NOT NULL AND \"Type\" = 0");
+
+                    b.ToTable("FinancialTransactions", (string)null);
+                });
+
+            modelBuilder.Entity("SmartPS.Models.Shifts.Shift", b =>
+                {
+                    b.Property<int>("ShiftId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ShiftId"));
+
+                    b.Property<decimal?>("ActualCash")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("BeginningCash")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("Difference")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal?>("ExpectedCash")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("ManagerNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("OpenedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("OpenedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ReviewedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.HasKey("ShiftId");
+
+                    b.HasIndex("OpenedAt");
+
+                    b.HasIndex("OpenedByUserId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Shifts_OneActivePerUser")
+                        .HasFilter("\"Status\" = 0");
+
+                    b.HasIndex("ReviewedByUserId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("OpenedByUserId", "Status");
+
+                    b.ToTable("Shifts", (string)null);
+                });
+
             modelBuilder.Entity("SmartPS.Models.Auth.RolePermission", b =>
                 {
                     b.HasOne("SmartPS.Models.Auth.Permission", "Permission")
@@ -899,12 +1299,48 @@ namespace SmartPS.Migrations
                     b.Navigation("Role");
                 });
 
+            modelBuilder.Entity("SmartPS.Models.Parking.BlacklistEntry", b =>
+                {
+                    b.HasOne("SmartPS.Models.Auth.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SmartPS.Models.Auth.User", "RemovedByUser")
+                        .WithMany()
+                        .HasForeignKey("RemovedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("RemovedByUser");
+                });
+
             modelBuilder.Entity("SmartPS.Models.Parking.Customer", b =>
                 {
                     b.HasOne("SmartPS.Models.Parking.VehicleType", "VehicleType")
                         .WithMany()
                         .HasForeignKey("VehicleTypeId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("VehicleType");
+                });
+
+            modelBuilder.Entity("SmartPS.Models.Parking.CustomerVehicle", b =>
+                {
+                    b.HasOne("SmartPS.Models.Parking.Customer", "Customer")
+                        .WithMany("Vehicles")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SmartPS.Models.Parking.VehicleType", "VehicleType")
+                        .WithMany()
+                        .HasForeignKey("VehicleTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
 
                     b.Navigation("VehicleType");
                 });
@@ -944,6 +1380,32 @@ namespace SmartPS.Migrations
                         .IsRequired();
 
                     b.Navigation("VehicleType");
+                });
+
+            modelBuilder.Entity("SmartPS.Models.Parking.MonthlyTicketPurchase", b =>
+                {
+                    b.HasOne("SmartPS.Models.Auth.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SmartPS.Models.Parking.MonthlyTicketPlan", "Plan")
+                        .WithMany()
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SmartPS.Models.Parking.MonthlyTicket", "Ticket")
+                        .WithMany("Purchases")
+                        .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("Plan");
+
+                    b.Navigation("Ticket");
                 });
 
             modelBuilder.Entity("SmartPS.Models.Parking.ParkingSession", b =>
@@ -1019,11 +1481,21 @@ namespace SmartPS.Migrations
 
             modelBuilder.Entity("SmartPS.Models.Payment.Payment", b =>
                 {
+                    b.HasOne("SmartPS.Models.Auth.User", null)
+                        .WithMany()
+                        .HasForeignKey("CheckoutUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("SmartPS.Models.Parking.ParkingSession", "Session")
                         .WithMany("Payments")
                         .HasForeignKey("SessionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("SmartPS.Models.Shifts.Shift", null)
+                        .WithMany()
+                        .HasForeignKey("ShiftId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Session");
                 });
@@ -1060,6 +1532,50 @@ namespace SmartPS.Migrations
                     b.Navigation("PaymentTransaction");
                 });
 
+            modelBuilder.Entity("SmartPS.Models.Shifts.FinancialTransaction", b =>
+                {
+                    b.HasOne("SmartPS.Models.Auth.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SmartPS.Models.Parking.ParkingSession", "ParkingSession")
+                        .WithMany()
+                        .HasForeignKey("ParkingSessionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SmartPS.Models.Shifts.Shift", "Shift")
+                        .WithMany("Transactions")
+                        .HasForeignKey("ShiftId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("ParkingSession");
+
+                    b.Navigation("Shift");
+                });
+
+            modelBuilder.Entity("SmartPS.Models.Shifts.Shift", b =>
+                {
+                    b.HasOne("SmartPS.Models.Auth.User", "OpenedByUser")
+                        .WithMany()
+                        .HasForeignKey("OpenedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SmartPS.Models.Auth.User", "ReviewedByUser")
+                        .WithMany()
+                        .HasForeignKey("ReviewedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("OpenedByUser");
+
+                    b.Navigation("ReviewedByUser");
+                });
+
             modelBuilder.Entity("SmartPS.Models.Auth.Permission", b =>
                 {
                     b.Navigation("RolePermissions");
@@ -1077,6 +1593,13 @@ namespace SmartPS.Migrations
                     b.Navigation("MonthlyTickets");
 
                     b.Navigation("ParkingSessions");
+
+                    b.Navigation("Vehicles");
+                });
+
+            modelBuilder.Entity("SmartPS.Models.Parking.MonthlyTicket", b =>
+                {
+                    b.Navigation("Purchases");
                 });
 
             modelBuilder.Entity("SmartPS.Models.Parking.ParkingSession", b =>
@@ -1113,6 +1636,11 @@ namespace SmartPS.Migrations
                     b.Navigation("Attempts");
 
                     b.Navigation("Webhooks");
+                });
+
+            modelBuilder.Entity("SmartPS.Models.Shifts.Shift", b =>
+                {
+                    b.Navigation("Transactions");
                 });
 #pragma warning restore 612, 618
         }
