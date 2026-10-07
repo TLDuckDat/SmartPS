@@ -101,7 +101,7 @@ public class LocalizationKeyParityTests
     {
         var expected = Permissions.GetAll().Select(p => $"Str_Perm_{p.Replace('.', '_')}").ToList();
 
-        Assert.Equal(23, expected.Count);
+        Assert.Equal(TestUsers.TotalPermissionCount, expected.Count);
         Assert.Contains("Str_Perm_Audit_View", expected);
         Assert.Contains("Str_Perm_Payment_Refund", expected);
         foreach (var culture in Cultures)

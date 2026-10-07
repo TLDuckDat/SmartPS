@@ -15,6 +15,12 @@ namespace SmartPS.Tests.Integration;
 public class MigrationTests : IClassFixture<PostgresDatabaseFixture>
 {
     private const string PreviousMigration = "20261004152712_AddShiftManagement";
+
+    /// <summary>The RBAC/audit migration under test (later migrations add more permissions, see ResidentVisitorMigrationTests).</summary>
+    private const string RbacMigration = "20261007173801_AddRbacAndAuditTrail";
+
+    /// <summary>Last migration of the RBAC/audit task (FX5); the AC15/N2 scenarios stop here.</summary>
+    private const string Task2HeadMigration = "20261007184617_HardenAuditTriggers";
     private const string LegacyAdminHash = "$2a$11$4zQCT6o4m1i7fStbvC18teLVORe5LvV5BscyAQW/.QPh.bWeOKpgW";
 
     private readonly PostgresDatabaseFixture _db;
@@ -115,8 +121,8 @@ public class MigrationTests : IClassFixture<PostgresDatabaseFixture>
         await MigrateToAsync(cs, PreviousMigration);
         await InsertLegacyDataAsync(cs);
 
-        // When the new migration runs
-        await MigrateToAsync(cs, null);
+        // When the new migration runs (up to the last RBAC/audit migration)
+        await MigrateToAsync(cs, Task2HeadMigration);
 
         // Then legacy users/roles are intact, 5 permissions are added, Admin has all, Manager has the §6.1 defaults
         await AssertLegacyUsersIntactAsync(cs);
@@ -124,8 +130,8 @@ public class MigrationTests : IClassFixture<PostgresDatabaseFixture>
         Assert.Equal(23, permissions.Count);
         Assert.Superset(TestUsers.NewPermissions.ToHashSet(), permissions);
         Assert.Equal(permissions, await GrantsAsync(cs, "Admin"));
-        Assert.Equal(TestUsers.ManagerDefaultPermissions.ToHashSet(StringComparer.Ordinal), await GrantsAsync(cs, "Manager"));
-        Assert.Equal(TestUsers.OperatorSeedPermissions.ToHashSet(StringComparer.Ordinal), await GrantsAsync(cs, "Operator"));
+        Assert.Equal(TestUsers.ManagerRbacMigrationPermissions.ToHashSet(StringComparer.Ordinal), await GrantsAsync(cs, "Manager"));
+        Assert.Equal(TestUsers.OperatorRbacMigrationPermissions.ToHashSet(StringComparer.Ordinal), await GrantsAsync(cs, "Operator"));
 
         Assert.Equal(1, await CountAsync(cs, "SELECT count(*) FROM pg_tables WHERE tablename = 'AuditLogs'"));
         Assert.Equal(3, await CountAsync(cs,
@@ -149,11 +155,11 @@ public class MigrationTests : IClassFixture<PostgresDatabaseFixture>
             new HashSet<string>(StringComparer.Ordinal) { "Shift.View", "Shift.Open", "Shift.Close", "Shift.Review", "Shift.Adjust" },
             await GrantsAsync(cs, "Manager"));
         Assert.Equal(TestUsers.LegacyPermissions.ToHashSet(StringComparer.Ordinal), await GrantsAsync(cs, "Admin"));
-        Assert.Equal(TestUsers.OperatorSeedPermissions.ToHashSet(StringComparer.Ordinal), await GrantsAsync(cs, "Operator"));
+        Assert.Equal(TestUsers.OperatorRbacMigrationPermissions.ToHashSet(StringComparer.Ordinal), await GrantsAsync(cs, "Operator"));
         await AssertLegacyUsersIntactAsync(cs);
 
         // And Up can be applied again after Down
-        await MigrateToAsync(cs, null);
+        await MigrateToAsync(cs, Task2HeadMigration);
         Assert.Equal(23, (await PermissionNamesAsync(cs)).Count);
     }
 
@@ -165,7 +171,7 @@ public class MigrationTests : IClassFixture<PostgresDatabaseFixture>
         await MigrateToAsync(cs, PreviousMigration);
         await InsertLegacyDataAsync(cs, preInsertAuditView: true);
 
-        await MigrateToAsync(cs, null);
+        await MigrateToAsync(cs, Task2HeadMigration);
 
         Assert.Equal(1, await CountAsync(cs, "SELECT count(*) FROM \"Permissions\" WHERE \"PermissionName\" = 'Audit.View'"));
         Assert.Equal(23, (await PermissionNamesAsync(cs)).Count);
@@ -180,8 +186,8 @@ public class MigrationTests : IClassFixture<PostgresDatabaseFixture>
         // Fixture DB = MigrateAsync + seed on an empty database.
         _db.RequireAvailable();
 
-        Assert.Equal(23, (await PermissionNamesAsync(_db.ConnectionString)).Count);
-        Assert.Equal(23, (await GrantsAsync(_db.ConnectionString, "Admin")).Count);
+        Assert.Equal(TestUsers.TotalPermissionCount, (await PermissionNamesAsync(_db.ConnectionString)).Count);
+        Assert.Equal(TestUsers.TotalPermissionCount, (await GrantsAsync(_db.ConnectionString, "Admin")).Count);
         Assert.Equal(TestUsers.ManagerDefaultPermissions.ToHashSet(StringComparer.Ordinal), await GrantsAsync(_db.ConnectionString, "Manager"));
         Assert.Equal(TestUsers.OperatorSeedPermissions.ToHashSet(StringComparer.Ordinal), await GrantsAsync(_db.ConnectionString, "Operator"));
 
@@ -220,7 +226,7 @@ public class MigrationTests : IClassFixture<PostgresDatabaseFixture>
 
         Assert.DoesNotContain("Report.View", await GrantsAsync(cs, "Operator"));
         Assert.DoesNotContain("Audit.View", await GrantsAsync(cs, "Manager"));
-        Assert.Equal(23, (await GrantsAsync(cs, "Admin")).Count);
+        Assert.Equal(TestUsers.TotalPermissionCount, (await GrantsAsync(cs, "Admin")).Count);
     }
 
     private static string MigrationId(string connectionString, string suffix)

@@ -4,9 +4,11 @@ using SmartPS.Data;
 using SmartPS.DTOs.Auth;
 using SmartPS.Models.Auth;
 using SmartPS.Services.Auth;
+using SmartPS.Services.Customers;
 using SmartPS.Services.GateControl;
 using SmartPS.Services.Payment;
 using SmartPS.Services.Payment.Mock;
+using SmartPS.Services.ParkingZones;
 using SmartPS.Services.RolePermissions;
 using SmartPS.Services.Shifts;
 using SmartPS.Services.Storage;
@@ -42,6 +44,12 @@ public static class IntegrationServices
         services.AddSingleton<MockPaymentGateway>();
         services.AddSingleton<IPaymentGateway>(sp => sp.GetRequiredService<MockPaymentGateway>());
         services.AddSingleton<IPaymentService, PaymentService>();
+
+        // Resident/visitor flow (C7, C9)
+        services.AddSingleton<ICustomerService, CustomerService>();
+        services.AddSingleton<IMonthlyTicketService, MonthlyTicketService>();
+        services.AddSingleton<IBlacklistService, BlacklistService>();
+        services.AddSingleton<IParkingZoneService, ParkingZoneService>();
 
         overrides?.Invoke(services);
 
