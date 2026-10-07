@@ -54,6 +54,9 @@ public partial class App : Application
         });
 
         // Đăng ký Business Services
+        services.AddSingleton<ICurrentUserContext, CurrentUserContext>();
+        services.AddSingleton<SmartPS.Services.Audit.IAuditService, SmartPS.Services.Audit.AuditService>();
+        services.AddSingleton<IAuthorizationGuard, AuthorizationGuard>();
         services.AddSingleton<IAuthService, AuthService>();
         services.AddSingleton<IPermissionService, PermissionService>();
         services.AddSingleton<IDialogService, DialogService>();
