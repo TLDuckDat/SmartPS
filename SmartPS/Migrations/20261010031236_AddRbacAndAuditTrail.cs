@@ -101,6 +101,11 @@ WHERE r.""RoleName"" = 'Manager'
        'Parking.CheckOut', 'Parking.Configure', 'Payment.Refund', 'User.View', 'Role.View', 'Audit.View', 'Incident.Manage')
        OR p.""PermissionName"" LIKE 'Shift.%')
 ON CONFLICT (""RoleId"", ""PermissionId"") DO NOTHING;");
+
+            // ENABLE ALWAYS keeps the append-only triggers firing even under session_replication_role = replica.
+            migrationBuilder.Sql(@"ALTER TABLE ""AuditLogs"" ENABLE ALWAYS TRIGGER ""TR_AuditLogs_NoUpdate"";");
+            migrationBuilder.Sql(@"ALTER TABLE ""AuditLogs"" ENABLE ALWAYS TRIGGER ""TR_AuditLogs_NoDelete"";");
+            migrationBuilder.Sql(@"ALTER TABLE ""AuditLogs"" ENABLE ALWAYS TRIGGER ""TR_AuditLogs_NoTruncate"";");
         }
 
         /// <inheritdoc />

@@ -228,11 +228,6 @@ namespace SmartPS.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("DefaultLicensePlate")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
                     b.Property<string>("Email")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -241,6 +236,9 @@ namespace SmartPS.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<int?>("HouseholdId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("IdentityCard")
                         .HasMaxLength(30)
@@ -261,72 +259,49 @@ namespace SmartPS.Migrations
                         .HasColumnType("character varying(20)");
 
                     b.Property<int>("Type")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
-
-                    b.Property<int?>("VehicleTypeId")
                         .HasColumnType("integer");
 
                     b.HasKey("CustomerId");
 
-                    b.HasIndex("PhoneNumber");
+                    b.HasIndex("HouseholdId");
 
-                    b.HasIndex("VehicleTypeId");
+                    b.HasIndex("PhoneNumber");
 
                     b.ToTable("Customers", (string)null);
                 });
 
-            modelBuilder.Entity("SmartPS.Models.Parking.CustomerTier", b =>
+            modelBuilder.Entity("SmartPS.Models.Parking.Household", b =>
                 {
-                    b.Property<int>("TierId")
+                    b.Property<int>("HouseholdId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TierId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("HouseholdId"));
 
-                    b.Property<string>("BadgeColor")
+                    b.Property<string>("ApartmentCode")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasDefaultValue("#64748B");
+                        .HasColumnType("character varying(20)");
 
-                    b.Property<string>("BadgeIcon")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasDefaultValue("👤");
-
-                    b.Property<int>("CustomerType")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<double>("DiscountPercentage")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("double precision")
-                        .HasDefaultValue(0.0);
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true);
+                        .HasColumnType("boolean");
 
-                    b.Property<string>("TierName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                    b.Property<int?>("MaxVehicles")
+                        .HasColumnType("integer");
 
-                    b.HasKey("TierId");
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
-                    b.HasIndex("CustomerType")
+                    b.HasKey("HouseholdId");
+
+                    b.HasIndex("ApartmentCode")
                         .IsUnique();
 
-                    b.ToTable("CustomerTiers", (string)null);
+                    b.ToTable("Households", (string)null);
                 });
 
             modelBuilder.Entity("SmartPS.Models.Parking.MonthlyTicket", b =>
@@ -343,6 +318,9 @@ namespace SmartPS.Migrations
                     b.Property<int>("CustomerId")
                         .HasColumnType("integer");
 
+                    b.Property<int>("DurationMonths")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -353,9 +331,6 @@ namespace SmartPS.Migrations
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
-
-                    b.Property<int?>("PlanId")
-                        .HasColumnType("integer");
 
                     b.Property<string>("RegisteredLicensePlate")
                         .IsRequired()
@@ -375,6 +350,9 @@ namespace SmartPS.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<int>("VehicleId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("VehicleTypeId")
                         .HasColumnType("integer");
 
@@ -382,64 +360,16 @@ namespace SmartPS.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.HasIndex("PlanId");
-
                     b.HasIndex("RegisteredLicensePlate");
 
                     b.HasIndex("TicketCode")
                         .IsUnique();
 
+                    b.HasIndex("VehicleId");
+
                     b.HasIndex("VehicleTypeId");
 
                     b.ToTable("MonthlyTickets", (string)null);
-                });
-
-            modelBuilder.Entity("SmartPS.Models.Parking.MonthlyTicketPlan", b =>
-                {
-                    b.Property<int>("PlanId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PlanId"));
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<double>("DiscountPercentage")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("double precision")
-                        .HasDefaultValue(0.0);
-
-                    b.Property<int>("DurationMonths")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true);
-
-                    b.Property<string>("PlanName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<decimal>("PricePerMonth")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<decimal>("TotalPrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<int>("VehicleTypeId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("PlanId");
-
-                    b.HasIndex("VehicleTypeId");
-
-                    b.ToTable("MonthlyTicketPlans", (string)null);
                 });
 
             modelBuilder.Entity("SmartPS.Models.Parking.ParkingSession", b =>
@@ -473,7 +403,7 @@ namespace SmartPS.Migrations
                     b.Property<int>("CustomerType")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasDefaultValue(0);
+                        .HasDefaultValue(1);
 
                     b.Property<bool>("IsMonthlyPass")
                         .ValueGeneratedOnAdd()
@@ -531,6 +461,24 @@ namespace SmartPS.Migrations
                     b.HasIndex("VehicleTypeId");
 
                     b.ToTable("ParkingSessions", (string)null);
+                });
+
+            modelBuilder.Entity("SmartPS.Models.Parking.ParkingSettings", b =>
+                {
+                    b.Property<int>("SettingsId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SettingsId"));
+
+                    b.Property<int>("DefaultMaxVehiclesPerHousehold")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(2);
+
+                    b.HasKey("SettingsId");
+
+                    b.ToTable("ParkingSettings", (string)null);
                 });
 
             modelBuilder.Entity("SmartPS.Models.Parking.ParkingSlot", b =>
@@ -646,7 +594,11 @@ namespace SmartPS.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("RuleId"));
 
-                    b.Property<decimal>("AdditionalPricePerHour")
+                    b.Property<decimal>("Block4hPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("DailyPrice")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
@@ -654,16 +606,15 @@ namespace SmartPS.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<int>("FirstBlockMinutes")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(120);
-
-                    b.Property<decimal>("FirstBlockPrice")
+                    b.Property<decimal>("Monthly1Price")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
-                    b.Property<decimal>("OvernightPrice")
+                    b.Property<decimal>("Monthly3Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("Monthly6Price")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
@@ -672,9 +623,56 @@ namespace SmartPS.Migrations
 
                     b.HasKey("RuleId");
 
-                    b.HasIndex("VehicleTypeId");
+                    b.HasIndex("VehicleTypeId")
+                        .IsUnique();
 
                     b.ToTable("PricingRules", (string)null);
+                });
+
+            modelBuilder.Entity("SmartPS.Models.Parking.Vehicle", b =>
+                {
+                    b.Property<int>("VehicleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("VehicleId"));
+
+                    b.Property<string>("Brand")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Color")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LicensePlate")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("OwnerCustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VehicleTypeId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("VehicleId");
+
+                    b.HasIndex("LicensePlate")
+                        .IsUnique()
+                        .HasFilter("\"IsActive\" = true");
+
+                    b.HasIndex("OwnerCustomerId");
+
+                    b.HasIndex("VehicleTypeId");
+
+                    b.ToTable("Vehicles", (string)null);
                 });
 
             modelBuilder.Entity("SmartPS.Models.Parking.VehicleType", b =>
@@ -1132,12 +1130,12 @@ namespace SmartPS.Migrations
 
             modelBuilder.Entity("SmartPS.Models.Parking.Customer", b =>
                 {
-                    b.HasOne("SmartPS.Models.Parking.VehicleType", "VehicleType")
-                        .WithMany()
-                        .HasForeignKey("VehicleTypeId")
+                    b.HasOne("SmartPS.Models.Parking.Household", "Household")
+                        .WithMany("Customers")
+                        .HasForeignKey("HouseholdId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.Navigation("VehicleType");
+                    b.Navigation("Household");
                 });
 
             modelBuilder.Entity("SmartPS.Models.Parking.MonthlyTicket", b =>
@@ -1148,10 +1146,11 @@ namespace SmartPS.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("SmartPS.Models.Parking.MonthlyTicketPlan", "Plan")
+                    b.HasOne("SmartPS.Models.Parking.Vehicle", "Vehicle")
                         .WithMany()
-                        .HasForeignKey("PlanId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("SmartPS.Models.Parking.VehicleType", "VehicleType")
                         .WithMany()
@@ -1161,18 +1160,7 @@ namespace SmartPS.Migrations
 
                     b.Navigation("Customer");
 
-                    b.Navigation("Plan");
-
-                    b.Navigation("VehicleType");
-                });
-
-            modelBuilder.Entity("SmartPS.Models.Parking.MonthlyTicketPlan", b =>
-                {
-                    b.HasOne("SmartPS.Models.Parking.VehicleType", "VehicleType")
-                        .WithMany()
-                        .HasForeignKey("VehicleTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.Navigation("Vehicle");
 
                     b.Navigation("VehicleType");
                 });
@@ -1244,6 +1232,25 @@ namespace SmartPS.Migrations
                         .HasForeignKey("VehicleTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("VehicleType");
+                });
+
+            modelBuilder.Entity("SmartPS.Models.Parking.Vehicle", b =>
+                {
+                    b.HasOne("SmartPS.Models.Parking.Customer", "OwnerCustomer")
+                        .WithMany()
+                        .HasForeignKey("OwnerCustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SmartPS.Models.Parking.VehicleType", "VehicleType")
+                        .WithMany()
+                        .HasForeignKey("VehicleTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("OwnerCustomer");
 
                     b.Navigation("VehicleType");
                 });
@@ -1362,6 +1369,11 @@ namespace SmartPS.Migrations
                     b.Navigation("MonthlyTickets");
 
                     b.Navigation("ParkingSessions");
+                });
+
+            modelBuilder.Entity("SmartPS.Models.Parking.Household", b =>
+                {
+                    b.Navigation("Customers");
                 });
 
             modelBuilder.Entity("SmartPS.Models.Parking.ParkingSession", b =>
