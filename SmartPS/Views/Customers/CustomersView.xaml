@@ -113,50 +113,68 @@
                 </Border>
             </Grid>
 
-            <!-- 3. Thanh Tìm Kiếm Khách Hàng -->
-            <Border Background="{StaticResource CardBackgroundBrush}"
-                    BorderBrush="{StaticResource AppBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="6"
-                    Padding="16"
-                    Margin="0,0,0,20">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="380"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+            <TabControl Background="Transparent" BorderThickness="0" Margin="0,0,0,20">
+                <!-- TAB 1: KHÁCH HÀNG & PHƯƠNG TIỆN -->
+                <TabItem Header="Khách Hàng &amp; Phương Tiện" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}">
+                    <StackPanel Margin="0,16,0,0">
+                        <!-- 3. Thanh Tìm Kiếm Khách Hàng -->
+                        <Border Background="{StaticResource CardBackgroundBrush}"
+                                BorderBrush="{StaticResource AppBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="16"
+                                Margin="0,0,0,20">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="380"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Height="36">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="32"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="🔍" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                            <TextBox Grid.Column="1"
-                                     Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}"
-                                     BorderThickness="0"
-                                     Background="Transparent"
-                                     VerticalContentAlignment="Center"
-                                     FontSize="13"
-                                     Foreground="{StaticResource TextPrimaryBrush}"
-                                     Padding="0,0,8,0"/>
-                        </Grid>
-                    </Border>
-                </Grid>
-            </Border>
+                                <Border Grid.Column="0" Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Height="36">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="32"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="🔍" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        <TextBox Grid.Column="1"
+                                                 Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}"
+                                                 BorderThickness="0"
+                                                 Background="Transparent"
+                                                 VerticalContentAlignment="Center"
+                                                 FontSize="13"
+                                                 Foreground="{StaticResource TextPrimaryBrush}"
+                                                 Padding="0,0,8,0"/>
+                                    </Grid>
+                                </Border>
 
-            <!-- 4. Bảng Danh Sách Khách Hàng & Vé Tháng -->
-            <Border Background="{StaticResource CardBackgroundBrush}"
-                    BorderBrush="{StaticResource AppBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="6"
-                    Padding="20">
-                <StackPanel>
-                    <Grid Margin="0,0,0,14">
-                        <TextBlock Text="DANH SÁCH KHÁCH HÀNG &amp; HỢP ĐỒNG GỬI XE" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <TextBlock Text="{Binding FilteredCustomers.Count, StringFormat='Hiển thị {0} khách hàng'}" FontSize="12" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Right"/>
-                    </Grid>
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="Sắp xếp:" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12.5" Margin="0,0,8,0"/>
+                                    <ComboBox ItemsSource="{Binding CustomerSortOptions}" SelectedIndex="{Binding SelectedCustomerSortIndex}" Width="200" Height="34" VerticalContentAlignment="Center"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- 4. Bảng Danh Sách Khách Hàng & Vé Tháng -->
+                        <Border Background="{StaticResource CardBackgroundBrush}"
+                                BorderBrush="{StaticResource AppBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="20">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="DANH SÁCH KHÁCH HÀNG &amp; HỢP ĐỒNG GỬI XE" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <Button Content="Thêm Khách Hàng" Command="{Binding AddCustomerCommand}" Padding="10,5" Margin="0,0,10,0" Background="#10B981" Foreground="White" BorderThickness="0"/>
+                                        <Button Content="Thêm Phương Tiện" Command="{Binding AddVehicleCommand}" Padding="10,5" Margin="0,0,10,0" Background="#3B82F6" Foreground="White" BorderThickness="0"/>
+                                        <Button Content="Xóa" Command="{Binding DeleteCustomerCommand}" Padding="10,5" Background="#EF4444" Foreground="White" BorderThickness="0" ToolTip="Xóa khách hàng đang chọn"/>
+                                    </StackPanel>
+                                </Grid>
 
                     <DataGrid ItemsSource="{Binding FilteredCustomers}"
                               SelectedItem="{Binding SelectedCustomer}"
@@ -289,8 +307,167 @@
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
-                </StackPanel>
-            </Border>
+                        </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </TabItem>
+                
+                <!-- TAB 2: QUẢN LÝ HỘ GIA ĐÌNH -->
+                <TabItem Header="Quản Lý Hộ Gia Đình" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}">
+                    <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="20" Margin="0,16,0,0">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="DANH SÁCH HỘ GIA ĐÌNH CƯ DÂN" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Button Content="Thêm Hộ Gia Đình" Command="{Binding AddHouseholdCommand}" Padding="10,5" Margin="0,0,10,0" Background="#10B981" Foreground="White" BorderThickness="0"/>
+                                    <Button Content="Xóa" Command="{Binding DeleteHouseholdCommand}" Padding="10,5" Background="#EF4444" Foreground="White" BorderThickness="0" ToolTip="Xóa hộ đang chọn"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Thanh Tìm Kiếm & Sắp Xếp Hộ Gia Đình -->
+                            <Border Background="#F8FAFC" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="4" Padding="12,10" Margin="0,0,0,14">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="320"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Background="White" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Height="34">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="30"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="🔍" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                            <TextBox Grid.Column="1" Text="{Binding HouseholdSearchKeyword, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center" FontSize="12.5" Foreground="{StaticResource TextPrimaryBrush}" Padding="0,0,6,0"/>
+                                        </Grid>
+                                    </Border>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="Sắp xếp:" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12.5" Margin="0,0,8,0"/>
+                                        <ComboBox ItemsSource="{Binding HouseholdSortOptions}" SelectedIndex="{Binding SelectedHouseholdSortIndex}" Width="190" Height="34" VerticalContentAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <DataGrid ItemsSource="{Binding Households}" SelectedItem="{Binding SelectedHousehold}" AutoGenerateColumns="False" IsReadOnly="True" RowHeight="38" MaxHeight="550" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{StaticResource DividerBrush}" Background="Transparent" BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0" HeadersVisibility="Column">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Mã Căn Hộ" Binding="{Binding ApartmentCode}" Width="150"/>
+                                    <DataGridTextColumn Header="Số Xe Tối Đa" Binding="{Binding MaxVehicles}" Width="120"/>
+                                    <DataGridTextColumn Header="Ghi Chú" Binding="{Binding Notes}" Width="*"/>
+                                    <DataGridTextColumn Header="Ngày Tạo" Binding="{Binding CreatedAt, StringFormat={}{0:dd/MM/yyyy}}" Width="120"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+                </TabItem>
+
+                <!-- TAB 3: QUẢN LÝ VÉ THÁNG -->
+                <TabItem Header="Quản Lý Vé Tháng" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}">
+                    <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="20" Margin="0,16,0,0">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="DANH SÁCH VÉ THÁNG ĐANG HOẠT ĐỘNG" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Button Content="Đăng Ký Vé Tháng" Command="{Binding AddTicketCommand}" Padding="10,5" Margin="0,0,10,0" Background="#8B5CF6" Foreground="White" BorderThickness="0"/>
+                                    <Button Content="Khóa/Mở Thẻ" Command="{Binding ToggleTicketCommand}" Padding="10,5" Margin="0,0,10,0" Background="#F59E0B" Foreground="White" BorderThickness="0" ToolTip="Khóa hoặc mở khóa thẻ"/>
+                                    <Button Content="Gia Hạn" Command="{Binding RenewTicketCommand}" Padding="10,5" Margin="0,0,10,0" Background="#3B82F6" Foreground="White" BorderThickness="0" ToolTip="Gia hạn thêm 1 tháng"/>
+                                    <Button Content="Xóa Vé" Command="{Binding DeleteTicketCommand}" Padding="10,5" Background="#EF4444" Foreground="White" BorderThickness="0" ToolTip="Xóa vé đang chọn"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Thanh Tìm Kiếm & Sắp Xếp Vé Tháng -->
+                            <Border Background="#F8FAFC" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="4" Padding="12,10" Margin="0,0,0,14">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="360"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Background="White" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Height="34">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="30"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="🔍" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                            <TextBox Grid.Column="1" Text="{Binding TicketSearchKeyword, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center" FontSize="12.5" Foreground="{StaticResource TextPrimaryBrush}" Padding="0,0,6,0"/>
+                                        </Grid>
+                                    </Border>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="Sắp xếp:" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12.5" Margin="0,0,8,0"/>
+                                        <ComboBox ItemsSource="{Binding TicketSortOptions}" SelectedIndex="{Binding SelectedTicketSortIndex}" Width="220" Height="34" VerticalContentAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <DataGrid ItemsSource="{Binding Tickets}" SelectedItem="{Binding SelectedTicket}" AutoGenerateColumns="False" IsReadOnly="True" RowHeight="38" MaxHeight="550" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{StaticResource DividerBrush}" Background="Transparent" BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0" HeadersVisibility="Column">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Mã Vé" Binding="{Binding TicketCode}" Width="150">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock"><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Margin" Value="10,0"/><Setter Property="Foreground" Value="{StaticResource PrimaryButtonBrush}"/></Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="Khách Hàng" Binding="{Binding Customer.FullName}" Width="160"/>
+                                    <DataGridTextColumn Header="Biển Số" Binding="{Binding RegisteredLicensePlate}" Width="120"/>
+                                    <DataGridTextColumn Header="Tháng ĐK" Binding="{Binding DurationMonths}" Width="80"/>
+                                    <DataGridTextColumn Header="Tiền Vé" Binding="{Binding MonthlyPrice, StringFormat={}{0:N0} đ}" Width="110"/>
+                                    <DataGridTextColumn Header="Hạn Dùng" Binding="{Binding EndDate, StringFormat={}{0:dd/MM/yyyy}}" Width="110"/>
+                                    <DataGridTextColumn Header="Ngày Đăng Ký" Binding="{Binding CreatedAt, StringFormat={}{0:dd/MM/yyyy}}" Width="110"/>
+
+                                    <!-- Trạng thái thẻ -->
+                                    <DataGridTemplateColumn Header="Trạng Thái Thẻ" Width="135">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border CornerRadius="3" Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#FEE2E2"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsActiveValid}" Value="True">
+                                                                    <Setter Property="Background" Value="#DCFCE7"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="Suspended">
+                                                                    <Setter Property="Background" Value="#FEF3C7"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding StatusDisplay}" FontSize="11" FontWeight="SemiBold">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="#B91C1C"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsActiveValid}" Value="True">
+                                                                        <Setter Property="Foreground" Value="#15803D"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Suspended">
+                                                                        <Setter Property="Foreground" Value="#D97706"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Cancelled">
+                                                                        <Setter Property="Foreground" Value="#DC2626"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+                </TabItem>
+            </TabControl>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

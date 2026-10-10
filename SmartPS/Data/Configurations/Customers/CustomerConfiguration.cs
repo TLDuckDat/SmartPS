@@ -26,11 +26,8 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.Property(x => x.IdentityCard)
                .HasMaxLength(30);
 
-        builder.Property(x => x.DefaultLicensePlate)
-               .HasMaxLength(20);
-
         builder.Property(x => x.Type)
-               .HasDefaultValue(CustomerType.Regular);
+               .IsRequired();
 
         builder.Property(x => x.CreatedAt)
                .IsRequired();
@@ -43,9 +40,9 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
 
         builder.HasIndex(x => x.PhoneNumber);
 
-        builder.HasOne(x => x.VehicleType)
-               .WithMany()
-               .HasForeignKey(x => x.VehicleTypeId)
+        builder.HasOne(x => x.Household)
+               .WithMany(h => h.Customers)
+               .HasForeignKey(x => x.HouseholdId)
                .OnDelete(DeleteBehavior.SetNull);
     }
 }

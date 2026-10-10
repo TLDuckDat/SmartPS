@@ -22,10 +22,11 @@ public class SmartPsDbContext : DbContext
     public DbSet<ParkingZone> ParkingZones => Set<ParkingZone>();
     public DbSet<ParkingSlot> ParkingSlots => Set<ParkingSlot>();
     public DbSet<PricingRule> PricingRules => Set<PricingRule>();
-    public DbSet<CustomerTier> CustomerTiers => Set<CustomerTier>();
     public DbSet<Customer> Customers => Set<Customer>();
-    public DbSet<MonthlyTicketPlan> MonthlyTicketPlans => Set<MonthlyTicketPlan>();
     public DbSet<MonthlyTicket> MonthlyTickets => Set<MonthlyTicket>();
+    public DbSet<Household> Households => Set<Household>();
+    public DbSet<Vehicle> Vehicles => Set<Vehicle>();
+    public DbSet<ParkingSettings> ParkingSettings => Set<ParkingSettings>();
     public DbSet<ParkingSession> ParkingSessions => Set<ParkingSession>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();

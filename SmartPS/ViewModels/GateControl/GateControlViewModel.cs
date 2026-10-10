@@ -353,6 +353,13 @@ public class GateControlViewModel : ViewModelBase
     }
     public string CalculatedFeeFormatted => $"{CalculatedFee:N0} đ";
 
+    private string _feeDetails = string.Empty;
+    public string FeeDetails
+    {
+        get => _feeDetails;
+        set => SetProperty(ref _feeDetails, value);
+    }
+
     private bool _isMonthlyTicketOut;
     public bool IsMonthlyTicketOut
     {
@@ -766,7 +773,7 @@ public class GateControlViewModel : ViewModelBase
         if (ticket != null)
         {
             IsMonthlyTicketIn = true;
-            InCustomerBadge = $"👑 VÉ THÁNG: {ticket.Customer?.FullName ?? "VIP"} (Hiệu lực: {ticket.EndDate:dd/MM/yyyy})";
+            InCustomerBadge = $"👑 VÉ THÁNG: {ticket.Customer?.FullName ?? "Cư dân"} (Hiệu lực: {ticket.EndDate:dd/MM/yyyy})";
             if (ticket.VehicleTypeId > 0 && VehicleTypes.Any(v => v.VehicleTypeId == ticket.VehicleTypeId))
             {
                 InSelectedVehicleType = VehicleTypes.First(v => v.VehicleTypeId == ticket.VehicleTypeId);
@@ -995,6 +1002,7 @@ public class GateControlViewModel : ViewModelBase
             DurationFormatted = calcResult.DurationFormatted;
             CalculatedFee = calcResult.TotalFee;
             IsMonthlyTicketOut = calcResult.IsMonthlyTicket;
+            FeeDetails = calcResult.FeeDetails;
             EvaluatePlateMatch();
             OutStatusMessage = calcResult.Message;
         }
@@ -1004,6 +1012,7 @@ public class GateControlViewModel : ViewModelBase
             IsPlateMatched = false;
             DurationFormatted = "--:--";
             CalculatedFee = 0;
+            FeeDetails = string.Empty;
             OutStatusMessage = calcResult.Message;
         }
     }
@@ -1041,6 +1050,7 @@ public class GateControlViewModel : ViewModelBase
             DurationFormatted = calcResult.DurationFormatted;
             CalculatedFee = calcResult.TotalFee;
             IsMonthlyTicketOut = calcResult.IsMonthlyTicket;
+            FeeDetails = calcResult.FeeDetails;
         }
 
         EvaluatePlateMatch();

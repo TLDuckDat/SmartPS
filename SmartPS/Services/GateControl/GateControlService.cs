@@ -71,18 +71,18 @@ public class GateControlService : IGateControlService
         {
             new PricingRule
             {
-                RuleId = 1, VehicleTypeId = 1, FirstBlockMinutes = 120, FirstBlockPrice = 5000,
-                AdditionalPricePerHour = 2000, OvernightPrice = 15000, Description = "Biểu phí xe máy tiêu chuẩn"
+                RuleId = 1, VehicleTypeId = 1, Block4hPrice = 5000,
+                DailyPrice = 25000, Monthly1Price = 100000, Description = "Biểu phí xe máy tiêu chuẩn"
             },
             new PricingRule
             {
-                RuleId = 2, VehicleTypeId = 2, FirstBlockMinutes = 120, FirstBlockPrice = 25000,
-                AdditionalPricePerHour = 10000, OvernightPrice = 70000, Description = "Biểu phí ô tô con tiêu chuẩn"
+                RuleId = 2, VehicleTypeId = 2, Block4hPrice = 25000,
+                DailyPrice = 100000, Monthly1Price = 1200000, Description = "Biểu phí ô tô con tiêu chuẩn"
             },
             new PricingRule
             {
-                RuleId = 3, VehicleTypeId = 3, FirstBlockMinutes = 120, FirstBlockPrice = 40000,
-                AdditionalPricePerHour = 15000, OvernightPrice = 120000, Description = "Biểu phí xe tải tiêu chuẩn"
+                RuleId = 3, VehicleTypeId = 3, Block4hPrice = 2000,
+                DailyPrice = 10000, Monthly1Price = 50000, Description = "Biểu phí xe tải tiêu chuẩn"
             }
         });
 
@@ -178,8 +178,8 @@ public class GateControlService : IGateControlService
                         Status = item.Status,
                         IsMonthlyPass = item.IsMonthlyPass,
                         CustomerId = item.CustomerId,
-                        Customer = !string.IsNullOrEmpty(item.CustomerName) ? new Customer { CustomerId = item.CustomerId ?? 0, FullName = item.CustomerName, Type = item.CustomerType } : null,
-                        CustomerType = item.CustomerType,
+                        Customer = !string.IsNullOrEmpty(item.CustomerName) ? new Customer { CustomerId = item.CustomerId ?? 0, FullName = item.CustomerName, Type = (item.CustomerType == 0 && !item.IsMonthlyPass && item.CustomerId == null) ? CustomerType.External : item.CustomerType } : null,
+                        CustomerType = (item.CustomerType == 0 && !item.IsMonthlyPass && item.CustomerId == null) ? CustomerType.External : item.CustomerType,
                         CreatedByUserId = item.CreatedByUserId,
                         TotalFee = item.TotalFee
                     });
@@ -397,7 +397,7 @@ public class GateControlService : IGateControlService
             IsMonthlyPass = isMonthly,
             CustomerId = monthlyTicket?.CustomerId,
             Customer = monthlyTicket?.Customer,
-            CustomerType = isMonthly ? CustomerType.VIP : CustomerType.Regular,
+            CustomerType = isMonthly ? CustomerType.Resident : CustomerType.External,
             CreatedByUserId = createdByUserId,
             TotalFee = 0
         };
@@ -544,11 +544,11 @@ public class GateControlService : IGateControlService
             CheckOutTime = now,
             Duration = feeResult.Duration,
             RawFee = feeResult.RawFee,
-            DiscountPercentage = feeResult.DiscountPercentage,
             TotalFee = feeResult.TotalFee,
             IsMonthlyTicket = feeResult.IsMonthlyTicket,
             CustomerName = session.Customer?.FullName,
-            Message = feeResult.Message
+            Message = feeResult.Message,
+            FeeDetails = feeResult.FeeDetails
         };
     }
 

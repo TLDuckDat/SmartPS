@@ -1,4 +1,4 @@
-﻿namespace SmartPS.Models.Parking;
+namespace SmartPS.Models.Parking;
 
 public class PricingRule
 {
@@ -6,9 +6,10 @@ public class PricingRule
     public int VehicleTypeId { get; set; }
     public VehicleType? VehicleType { get; set; }
 
-    public int FirstBlockMinutes { get; set; } = 120; // 2 giờ đầu
-    public decimal FirstBlockPrice { get; set; }     // Giá 2 giờ đầu
-    public decimal AdditionalPricePerHour { get; set; } // Mỗi giờ tiếp theo
-    public decimal OvernightPrice { get; set; }      // Phụ thu qua đêm (từ 23h - 6h)
+    public decimal Block4hPrice { get; set; }
+    public decimal DailyPrice { get; set; }
+    public decimal Monthly1Price { get; set; }
+    public decimal Monthly3Price { get; set; }
+    public decimal Monthly6Price { get; set; }
     public string? Description { get; set; }
 }
