@@ -122,7 +122,7 @@ public class AuditTamperResilienceTests : IClassFixture<PostgresDatabaseFixture>
             Assert.True(mode == "A", $"{name}: tgenabled = '{mode}', expected 'A' (ENABLE ALWAYS)");
         }
 
-        var applied = await _db.ScalarAsync<long>("SELECT count(*) FROM \"__EFMigrationsHistory\" WHERE \"MigrationId\" LIKE '%\\_HardenAuditTriggers'");
+        var applied = await _db.ScalarAsync<long>("SELECT count(*) FROM \"__EFMigrationsHistory\" WHERE \"MigrationId\" LIKE '%\\_AddRbacAndAuditTrail'");
         Assert.Equal(1, applied);
     }
 

@@ -14,7 +14,7 @@ namespace SmartPS.Tests.Integration;
 [Trait("Category", "Integration")]
 public class MigrationTests : IClassFixture<PostgresDatabaseFixture>
 {
-    private const string PreviousMigration = "20261004152712_AddShiftManagement";
+    private const string PreviousMigration = "20261008011116_AddHouseholdVehicleAndPricing";
     private const string LegacyAdminHash = "$2a$11$4zQCT6o4m1i7fStbvC18teLVORe5LvV5BscyAQW/.QPh.bWeOKpgW";
 
     private readonly PostgresDatabaseFixture _db;
@@ -57,7 +57,7 @@ public class MigrationTests : IClassFixture<PostgresDatabaseFixture>
         => PostgresDatabaseFixture.ScalarAsync<long>(connectionString, sql);
 
     /// <summary>
-    /// Legacy data as it existed at fb7303a (18 permissions, Manager = Shift.*, Operator = 7 grants).
+    /// Legacy data as it existed at the household and pricing migration (18 permissions, Manager = Shift.*, Operator = 7 grants).
     /// AddShiftManagement already inserts the 5 Shift.* permissions (and grants them to existing Admin/Manager roles),
     /// so the setup tolerates rows that the earlier migrations created.
     /// </summary>
@@ -134,7 +134,7 @@ public class MigrationTests : IClassFixture<PostgresDatabaseFixture>
         Assert.Equal(1, await CountAsync(cs, "SELECT count(*) FROM \"__EFMigrationsHistory\" WHERE \"MigrationId\" LIKE '%\\_AddRbacAndAuditTrail'"));
         var lastMigration = await PostgresDatabaseFixture.ScalarAsync<string>(cs,
             "SELECT \"MigrationId\" FROM \"__EFMigrationsHistory\" ORDER BY \"MigrationId\" DESC LIMIT 1");
-        Assert.EndsWith("_HardenAuditTriggers", lastMigration, StringComparison.Ordinal); // FX5: latest migration
+        Assert.EndsWith("_AddRbacAndAuditTrail", lastMigration, StringComparison.Ordinal); // single migration, triggers hardened inside it
 
         // When Down() runs
         await MigrateToAsync(cs, PreviousMigration);
@@ -223,12 +223,6 @@ public class MigrationTests : IClassFixture<PostgresDatabaseFixture>
         Assert.Equal(23, (await GrantsAsync(cs, "Admin")).Count);
     }
 
-    private static string MigrationId(string connectionString, string suffix)
-    {
-        using var ctx = PostgresDatabaseFixture.CreateContext(connectionString);
-        return ctx.Database.GetMigrations().Single(m => m.EndsWith(suffix, StringComparison.Ordinal));
-    }
-
     private static async Task<Dictionary<string, string>> TriggerModesAsync(string cs)
     {
         var modes = new Dictionary<string, string>();
@@ -241,18 +235,18 @@ public class MigrationTests : IClassFixture<PostgresDatabaseFixture>
     }
 
     [Fact]
-    public async Task FX5_HardenAuditTriggers_enables_triggers_always_and_down_reverts_to_enable()
+    public async Task FX5_AddRbacAndAuditTrail_enables_triggers_always_and_down_removes_them()
     {
-        // FX5 (CH13): new migration HardenAuditTriggers (AddRbacAndAuditTrail itself is unchanged, it is already on main).
+        // FX5 (CH13): the single AddRbacAndAuditTrail migration leaves the append-only triggers ENABLE ALWAYS.
         _db.RequireAvailable();
         var cs = await _db.CreateSiblingDatabaseAsync("harden");
 
         await MigrateToAsync(cs, null);
         Assert.All(await TriggerModesAsync(cs), kv => Assert.True(kv.Value == "A", $"{kv.Key} = '{kv.Value}' after Up, expected 'A'"));
 
-        await MigrateToAsync(cs, MigrationId(cs, "_AddRbacAndAuditTrail"));
-        Assert.All(await TriggerModesAsync(cs), kv => Assert.True(kv.Value == "O", $"{kv.Key} = '{kv.Value}' after Down, expected 'O'"));
-        Assert.Equal(1, await CountAsync(cs, "SELECT count(*) FROM pg_tables WHERE tablename = 'AuditLogs'"));
+        await MigrateToAsync(cs, PreviousMigration);
+        Assert.All(await TriggerModesAsync(cs), kv => Assert.True(kv.Value == "<missing>", $"{kv.Key} = '{kv.Value}' after Down, expected no trigger"));
+        Assert.Equal(0, await CountAsync(cs, "SELECT count(*) FROM pg_tables WHERE tablename = 'AuditLogs'"));
 
         await MigrateToAsync(cs, null);
         Assert.All(await TriggerModesAsync(cs), kv => Assert.Equal("A", kv.Value));
