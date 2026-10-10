@@ -10,9 +10,9 @@ public class GateCheckOutCalculationResult
     public DateTime CheckOutTime { get; set; } = DateTime.UtcNow;
     public TimeSpan Duration { get; set; }
     public decimal RawFee { get; set; }
-    public double DiscountPercentage { get; set; }
     public decimal TotalFee { get; set; }
     public bool IsMonthlyTicket { get; set; }
     public string? CustomerName { get; set; }
+    public string FeeDetails { get; set; } = string.Empty;
     public string DurationFormatted => $"{(int)Duration.TotalHours}h {Duration.Minutes}m {Duration.Seconds}s";
 }

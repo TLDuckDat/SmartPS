@@ -12,72 +12,78 @@ public class StandardParkingFeeCalculator : IParkingFeeCalculator
         var duration = checkOutTime - session.CheckInTime;
         if (duration.TotalSeconds < 0) duration = TimeSpan.FromSeconds(1);
 
-        // Trường hợp 1: Xe vé tháng -> Miễn cước lượt
+        int days = (int)Math.Floor(duration.TotalDays);
+        int hours = duration.Hours;
+        int minutes = duration.Minutes;
+        
+        string durationStr = "";
+        if (days > 0) durationStr += $"{days} ngày ";
+        if (hours > 0) durationStr += $"{hours} giờ ";
+        if (minutes > 0 || durationStr == "") durationStr += $"{minutes} phút";
+
+        // 1. Vé tháng
         if (session.IsMonthlyPass)
         {
             return new ParkingFeeCalculationResult
             {
                 Duration = duration,
                 RawFee = 0,
-                DiscountPercentage = 100,
                 TotalFee = 0,
                 IsMonthlyTicket = true,
-                Message = "Xe vé tháng được miễn cước phí."
+                Message = "Xe vé tháng được miễn cước lượt.",
+                FeeDetails = $"Thời gian đỗ: {durationStr.Trim()}. Miễn cước phí (Vé tháng)."
             };
         }
 
-        // Trường hợp 2: Tính cước theo biểu phí
-        decimal fee = 0;
-        if (pricingRule != null)
-        {
-            var firstBlockMin = pricingRule.FirstBlockMinutes > 0 ? pricingRule.FirstBlockMinutes : 120;
-            if (duration.TotalMinutes <= firstBlockMin)
-            {
-                fee = pricingRule.FirstBlockPrice;
-            }
-            else
-            {
-                var extraMinutes = duration.TotalMinutes - firstBlockMin;
-                var extraHours = (decimal)Math.Ceiling(extraMinutes / 60.0);
-                fee = pricingRule.FirstBlockPrice + (extraHours * pricingRule.AdditionalPricePerHour);
-            }
+        // 2. Tính phí (không còn ân hạn 15 phút)
+        decimal block4hPrice = pricingRule?.Block4hPrice ?? (session.VehicleTypeId == 2 ? 25000 : 5000);
+        decimal dailyPrice = pricingRule?.DailyPrice ?? (session.VehicleTypeId == 2 ? 100000 : 25000);
 
-            // Phụ phí qua đêm nếu gửi trên 12 tiếng hoặc gửi qua đêm (22h đến 6h)
-            if (duration.TotalHours >= 12 || (session.CheckInTime.Hour >= 22 && checkOutTime.Hour <= 6))
+        decimal fee = 0;
+        string feeDetailCalc = "";
+
+        if (days > 0)
+        {
+            fee += days * dailyPrice;
+            feeDetailCalc += $"{days} ngày ({dailyPrice:N0}đ/ngày)";
+            
+            double remainingHours = duration.TotalHours - (days * 24);
+            if (remainingHours > 0)
             {
-                fee += pricingRule.OvernightPrice;
+                if (remainingHours <= 4)
+                {
+                    fee += block4hPrice;
+                    feeDetailCalc += $" + vượt {remainingHours:F1}h ({block4hPrice:N0}đ)";
+                }
+                else
+                {
+                    fee += dailyPrice;
+                    feeDetailCalc += $" + vượt {remainingHours:F1}h ({dailyPrice:N0}đ)";
+                }
             }
         }
         else
         {
-            // Mặc định an toàn: xe máy 5,000đ, ô tô 25,000đ
-            fee = session.VehicleTypeId == 2 ? 25000 : 5000;
+            if (duration.TotalHours <= 4)
+            {
+                fee = block4hPrice;
+                feeDetailCalc = $"Khung 4h ({block4hPrice:N0}đ)";
+            }
+            else
+            {
+                fee = dailyPrice;
+                feeDetailCalc = $"Gói 1 ngày ({dailyPrice:N0}đ)";
+            }
         }
-
-        // Chiết khấu theo hạng khách hàng (CustomerTier / CustomerType)
-        double discount = GetCustomerDiscount(session.Customer);
-        var totalFee = fee * (decimal)(1 - discount / 100.0);
 
         return new ParkingFeeCalculationResult
         {
             Duration = duration,
             RawFee = fee,
-            DiscountPercentage = discount,
-            TotalFee = Math.Max(0, Math.Round(totalFee, 0)),
+            TotalFee = Math.Max(0, Math.Round(fee, 0)),
             IsMonthlyTicket = false,
-            Message = "Tính cước thành công."
-        };
-    }
-
-    private static double GetCustomerDiscount(Customer? customer)
-    {
-        if (customer == null) return 0;
-
-        return customer.Type switch
-        {
-            CustomerType.Loyal => 10,
-            CustomerType.VIP => 20,
-            _ => 0
+            Message = "Tính cước thành công.",
+            FeeDetails = $"Thời gian đỗ: {durationStr.Trim()}. Cước phí: {feeDetailCalc} = {fee:N0}đ."
         };
     }
 }

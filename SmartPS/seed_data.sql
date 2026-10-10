@@ -102,32 +102,23 @@ ON CONFLICT ("TypeName") DO NOTHING;
 -- -----------------------------------------------------------------------------------
 -- 6. BIỂU PHÍ TÍNH TIỀN (PricingRules)
 -- -----------------------------------------------------------------------------------
--- Biểu phí Xe máy: 2h đầu 5.000đ, thêm 2.000đ/giờ, qua đêm 10.000đ
-INSERT INTO "PricingRules" ("VehicleTypeId", "FirstBlockMinutes", "FirstBlockPrice", "AdditionalPricePerHour", "OvernightPrice", "Description")
-SELECT v."VehicleTypeId", 120, 5000.00, 2000.00, 10000.00, 'Bảng giá gửi xe máy tiêu chuẩn'
+-- Biểu phí Xe máy: 4h 5.000đ, ngày 25.000đ, tháng 1/3/6: 100.000/285.000/540.000đ
+INSERT INTO "PricingRules" ("VehicleTypeId", "Block4hPrice", "DailyPrice", "Monthly1Price", "Monthly3Price", "Monthly6Price", "Description")
+SELECT v."VehicleTypeId", 5000.00, 25000.00, 100000.00, 285000.00, 540000.00, 'Bảng giá gửi xe máy tiêu chuẩn'
 FROM "VehicleTypes" v WHERE v."TypeName" = 'Xe máy'
 AND NOT EXISTS (SELECT 1 FROM "PricingRules" pr WHERE pr."VehicleTypeId" = v."VehicleTypeId");
 
--- Biểu phí Xe ô tô: 2h đầu 25.000đ, thêm 15.000đ/giờ, qua đêm 50.000đ
-INSERT INTO "PricingRules" ("VehicleTypeId", "FirstBlockMinutes", "FirstBlockPrice", "AdditionalPricePerHour", "OvernightPrice", "Description")
-SELECT v."VehicleTypeId", 120, 25000.00, 15000.00, 50000.00, 'Bảng giá gửi xe ô tô tiêu chuẩn'
+-- Biểu phí Xe ô tô: 4h 25.000đ, ngày 100.000đ, tháng 1/3/6: 1.200.000/3.400.000/6.500.000đ
+INSERT INTO "PricingRules" ("VehicleTypeId", "Block4hPrice", "DailyPrice", "Monthly1Price", "Monthly3Price", "Monthly6Price", "Description")
+SELECT v."VehicleTypeId", 25000.00, 100000.00, 1200000.00, 3400000.00, 6500000.00, 'Bảng giá gửi xe ô tô tiêu chuẩn'
 FROM "VehicleTypes" v WHERE v."TypeName" = 'Xe ô tô'
 AND NOT EXISTS (SELECT 1 FROM "PricingRules" pr WHERE pr."VehicleTypeId" = v."VehicleTypeId");
 
--- Biểu phí Xe đạp / điện: 2h đầu 2.000đ, thêm 1.000đ/giờ, qua đêm 5.000đ
-INSERT INTO "PricingRules" ("VehicleTypeId", "FirstBlockMinutes", "FirstBlockPrice", "AdditionalPricePerHour", "OvernightPrice", "Description")
-SELECT v."VehicleTypeId", 120, 2000.00, 1000.00, 5000.00, 'Bảng giá gửi xe đạp tiêu chuẩn'
+-- Biểu phí Xe đạp / điện: 4h 2.000đ, ngày 10.000đ, tháng 1/3/6: 50.000/140.000/270.000đ
+INSERT INTO "PricingRules" ("VehicleTypeId", "Block4hPrice", "DailyPrice", "Monthly1Price", "Monthly3Price", "Monthly6Price", "Description")
+SELECT v."VehicleTypeId", 2000.00, 10000.00, 50000.00, 140000.00, 270000.00, 'Bảng giá gửi xe đạp tiêu chuẩn'
 FROM "VehicleTypes" v WHERE v."TypeName" = 'Xe đạp / Xe điện'
 AND NOT EXISTS (SELECT 1 FROM "PricingRules" pr WHERE pr."VehicleTypeId" = v."VehicleTypeId");
-
--- -----------------------------------------------------------------------------------
--- 7. HẠNG KHÁCH HÀNG (CustomerTiers)
--- -----------------------------------------------------------------------------------
-INSERT INTO "CustomerTiers" ("CustomerType", "TierName", "DiscountPercentage", "BadgeColor", "BadgeIcon", "Description", "IsActive") VALUES
-(0, 'Khách Vãng Lai', 0.0, '#64748B', '👤', 'Khách vãng lai, gửi xe theo lượt tiêu chuẩn', true),
-(1, 'Khách Thân Quen', 10.0, '#3B82F6', '🌟', 'Khách hàng thường xuyên, giảm 10% vé tháng và lượt', true),
-(2, 'Khách VIP / Cư Dân', 20.0, '#F59E0B', '👑', 'Cư dân căn hộ / Khách VIP, giảm 20% và ưu tiên vị trí đỗ', true)
-ON CONFLICT ("CustomerType") DO NOTHING;
 
 -- -----------------------------------------------------------------------------------
 -- 8. KHU VỰC BÃI XE (ParkingZones)
@@ -179,27 +170,10 @@ WHERE z."ZoneCode" = 'ZONE_B'
 ON CONFLICT ("SlotCode") DO NOTHING;
 
 -- -----------------------------------------------------------------------------------
--- 10. GÓI VÉ THÁNG MẪU (MonthlyTicketPlans)
+-- 10. CÀI ĐẶT BÃI XE (ParkingSettings)
 -- -----------------------------------------------------------------------------------
-INSERT INTO "MonthlyTicketPlans" ("PlanName", "VehicleTypeId", "DurationMonths", "PricePerMonth", "DiscountPercentage", "TotalPrice", "Description", "IsActive")
-SELECT 'Gói Xe Máy 1 Tháng', v."VehicleTypeId", 1, 120000.00, 0.0, 120000.00, 'Vé gửi xe máy định kỳ 1 tháng', true
-FROM "VehicleTypes" v WHERE v."TypeName" = 'Xe máy'
-AND NOT EXISTS (SELECT 1 FROM "MonthlyTicketPlans" p WHERE p."PlanName" = 'Gói Xe Máy 1 Tháng');
-
-INSERT INTO "MonthlyTicketPlans" ("PlanName", "VehicleTypeId", "DurationMonths", "PricePerMonth", "DiscountPercentage", "TotalPrice", "Description", "IsActive")
-SELECT 'Gói Xe Máy 3 Tháng (Tiết kiệm)', v."VehicleTypeId", 3, 120000.00, 5.5, 340000.00, 'Vé gửi xe máy 3 tháng giảm giá đặc biệt', true
-FROM "VehicleTypes" v WHERE v."TypeName" = 'Xe máy'
-AND NOT EXISTS (SELECT 1 FROM "MonthlyTicketPlans" p WHERE p."PlanName" = 'Gói Xe Máy 3 Tháng (Tiết kiệm)');
-
-INSERT INTO "MonthlyTicketPlans" ("PlanName", "VehicleTypeId", "DurationMonths", "PricePerMonth", "DiscountPercentage", "TotalPrice", "Description", "IsActive")
-SELECT 'Gói Ô Tô 1 Tháng', v."VehicleTypeId", 1, 1200000.00, 0.0, 1200000.00, 'Vé gửi ô tô định kỳ 1 tháng', true
-FROM "VehicleTypes" v WHERE v."TypeName" = 'Xe ô tô'
-AND NOT EXISTS (SELECT 1 FROM "MonthlyTicketPlans" p WHERE p."PlanName" = 'Gói Ô Tô 1 Tháng');
-
-INSERT INTO "MonthlyTicketPlans" ("PlanName", "VehicleTypeId", "DurationMonths", "PricePerMonth", "DiscountPercentage", "TotalPrice", "Description", "IsActive")
-SELECT 'Gói Ô Tô 3 Tháng (Tiết kiệm)', v."VehicleTypeId", 3, 1200000.00, 5.5, 3400000.00, 'Vé gửi ô tô 3 tháng tiết kiệm chi phí', true
-FROM "VehicleTypes" v WHERE v."TypeName" = 'Xe ô tô'
-AND NOT EXISTS (SELECT 1 FROM "MonthlyTicketPlans" p WHERE p."PlanName" = 'Gói Ô Tô 3 Tháng (Tiết kiệm)');
+INSERT INTO "ParkingSettings" ("SettingsId", "DefaultMaxVehiclesPerHousehold") VALUES (1, 2)
+ON CONFLICT ("SettingsId") DO NOTHING;
 
 COMMIT;
 

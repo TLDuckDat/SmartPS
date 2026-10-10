@@ -9,10 +9,10 @@ public class ParkingFeeCalculationResult
 {
     public TimeSpan Duration { get; set; }
     public decimal RawFee { get; set; }
-    public double DiscountPercentage { get; set; }
     public decimal TotalFee { get; set; }
     public bool IsMonthlyTicket { get; set; }
     public string Message { get; set; } = string.Empty;
+    public string FeeDetails { get; set; } = string.Empty;
 }
 
 /// <summary>
