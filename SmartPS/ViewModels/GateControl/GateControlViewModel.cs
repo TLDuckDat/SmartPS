@@ -764,6 +764,14 @@ public class GateControlViewModel : ViewModelBase
             return;
         }
 
+        var blacklisted = await _gateControlService.CheckBlacklistAsync(plate);
+        if (blacklisted != null)
+        {
+            IsMonthlyTicketIn = false;
+            InCustomerBadge = $"⛔ XE BỊ CẤM: {blacklisted.Reason}";
+            return;
+        }
+
         var ticket = await _gateControlService.FindActiveMonthlyTicketAsync(plate);
         if (ticket != null)
         {
@@ -777,7 +785,20 @@ public class GateControlViewModel : ViewModelBase
         else
         {
             IsMonthlyTicketIn = false;
-            InCustomerBadge = "Khách vãng lai";
+            var vehicle = await _gateControlService.FindVehicleOwnerAsync(plate);
+            if (vehicle != null && (vehicle.OwnerCustomer?.Type == CustomerType.Resident || vehicle.OwnerCustomer?.HouseholdId.HasValue == true))
+            {
+                var apt = !string.IsNullOrEmpty(vehicle.OwnerCustomer?.Household?.ApartmentCode) ? $" - P.{vehicle.OwnerCustomer.Household.ApartmentCode}" : "";
+                InCustomerBadge = $"🏠 CƯ DÂN (Chưa có vé tháng): {vehicle.OwnerCustomer?.FullName}{apt}";
+                if (vehicle.VehicleTypeId > 0 && VehicleTypes.Any(v => v.VehicleTypeId == vehicle.VehicleTypeId))
+                {
+                    InSelectedVehicleType = VehicleTypes.First(v => v.VehicleTypeId == vehicle.VehicleTypeId);
+                }
+            }
+            else
+            {
+                InCustomerBadge = "Khách vãng lai";
+            }
         }
     }
 

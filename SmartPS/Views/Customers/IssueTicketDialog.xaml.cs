@@ -16,6 +16,7 @@ namespace SmartPS.Views.Customers
         public int FinalSelectedVehicleId { get; private set; }
         public int FinalDurationMonths { get; private set; }
         public decimal FinalPrice { get; private set; }
+        public PaymentMethod FinalPaymentMethod { get; private set; } = PaymentMethod.Cash;
 
         public IssueTicketDialog(List<Customer> customers, List<Vehicle> vehicles, List<PricingRule>? pricingRules = null, int? preselectedCustomerId = null)
         {
@@ -139,6 +140,12 @@ namespace SmartPS.Views.Customers
             FinalSelectedCustomerId = customerId;
             FinalSelectedVehicleId = vehicleId;
             FinalDurationMonths = GetCurrentDurationMonths();
+            FinalPaymentMethod = cboPaymentMethod.SelectedIndex switch
+            {
+                1 => PaymentMethod.VietQR,
+                2 => PaymentMethod.Card,
+                _ => PaymentMethod.Cash
+            };
             UpdatePricePreview();
 
             DialogResult = true;

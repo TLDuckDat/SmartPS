@@ -9,6 +9,7 @@ namespace SmartPS.Views.Customers
     public partial class CustomerDialog : Window
     {
         private List<Household> _households;
+        private List<VehicleType> _vehicleTypes;
 
         public string FinalFullName { get; private set; } = string.Empty;
         public string FinalPhoneNumber { get; private set; } = string.Empty;
@@ -16,17 +17,38 @@ namespace SmartPS.Views.Customers
         public string FinalLicensePlate { get; private set; } = string.Empty;
         public int FinalSelectedVehicleType { get; private set; }
 
-        public CustomerDialog(List<Household> households, Customer? existing = null)
+        public CustomerDialog(List<Household> households, List<VehicleType>? vehicleTypes = null, Customer? existing = null)
         {
             InitializeComponent();
             
             _households = new List<Household>();
             _households.Add(new Household { HouseholdId = -1, ApartmentCode = "-- Khách bên ngoài --" });
             _households.AddRange(households);
+            _vehicleTypes = vehicleTypes ?? new List<VehicleType>();
             
             cboHousehold.ItemsSource = _households;
             cboHousehold.DisplayMemberPath = "ApartmentCode";
             cboHousehold.SelectedIndex = 0;
+
+            if (_vehicleTypes.Count > 0)
+            {
+                cboType.ItemsSource = _vehicleTypes;
+                cboType.DisplayMemberPath = "TypeName";
+                cboType.SelectedValuePath = "VehicleTypeId";
+                cboType.SelectedIndex = 0;
+            }
+            else
+            {
+                cboType.ItemsSource = new[]
+                {
+                    new { TypeName = "Xe máy", VehicleTypeId = 1 },
+                    new { TypeName = "Xe ô tô", VehicleTypeId = 2 },
+                    new { TypeName = "Xe đạp / Xe điện", VehicleTypeId = 3 }
+                };
+                cboType.DisplayMemberPath = "TypeName";
+                cboType.SelectedValuePath = "VehicleTypeId";
+                cboType.SelectedIndex = 0;
+            }
             
             if (existing != null)
             {
@@ -87,7 +109,17 @@ namespace SmartPS.Views.Customers
             // MessageBox.Show(debugInfo, "Debug Info");
 
             FinalLicensePlate = txtPlate.Text.Trim().ToUpperInvariant();
-            FinalSelectedVehicleType = cboType.SelectedIndex + 1;
+            
+            int vtId = 1;
+            if (cboType.SelectedValue is int idVal)
+            {
+                vtId = idVal;
+            }
+            else if (cboType.SelectedItem is VehicleType vt)
+            {
+                vtId = vt.VehicleTypeId;
+            }
+            FinalSelectedVehicleType = vtId;
 
             DialogResult = true;
             Close();

@@ -19,6 +19,7 @@ namespace SmartPS.Views.Customers
         private void BtnSave_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(ApartmentCode)) { MessageBox.Show("Mã căn hộ không được để trống"); return; }
+            if (MaxVehicles < 1) { MessageBox.Show("Số xe tối đa của căn hộ phải từ 1 xe trở lên!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
             DialogResult = true;
             Close();
         }

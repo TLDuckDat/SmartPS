@@ -12,6 +12,7 @@ namespace SmartPS.Views.Customers
         public int FinalDurationMonths { get; private set; }
         public decimal FinalFee { get; private set; }
         public DateTime FinalNewExpiry { get; private set; }
+        public PaymentMethod FinalPaymentMethod { get; private set; } = PaymentMethod.Cash;
 
         public RenewTicketDialog(MonthlyTicket ticket, PricingRule? rule)
         {
@@ -79,6 +80,12 @@ namespace SmartPS.Views.Customers
         private void BtnSave_Click(object sender, RoutedEventArgs e)
         {
             UpdatePreview();
+            FinalPaymentMethod = cboPaymentMethod.SelectedIndex switch
+            {
+                1 => PaymentMethod.VietQR,
+                2 => PaymentMethod.Card,
+                _ => PaymentMethod.Cash
+            };
             DialogResult = true;
             Close();
         }

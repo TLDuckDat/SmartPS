@@ -83,6 +83,31 @@ public class PricingViewModel : ViewModelBase
     {
         try
         {
+            // 1. Validate số xe tối đa mỗi hộ
+            if (DefaultMaxVehicles < 1)
+            {
+                _dialogService.ShowError("Số xe tối đa mặc định cho mỗi hộ gia đình phải từ 1 xe trở lên!");
+                return;
+            }
+
+            // 2. Validate biểu phí từng loại phương tiện
+            foreach (var vm in PricingRules)
+            {
+                if (vm.Block4hPrice < 0 || vm.DailyPrice < 0 || vm.Monthly1Price < 0 || vm.Monthly3Price < 0 || vm.Monthly6Price < 0)
+                {
+                    _dialogService.ShowError($"Biểu phí của '{vm.VehicleTypeName}' không được có giá trị âm!");
+                    return;
+                }
+
+                // Với xe máy và ô tô, giá vé lượt và vé tháng không được bằng 0
+                if ((vm.VehicleTypeName.Contains("máy", StringComparison.OrdinalIgnoreCase) || vm.VehicleTypeName.Contains("ô tô", StringComparison.OrdinalIgnoreCase))
+                    && (vm.Block4hPrice <= 0 || vm.DailyPrice <= 0 || vm.Monthly1Price <= 0))
+                {
+                    _dialogService.ShowError($"Giá vé lượt và vé tháng của '{vm.VehicleTypeName}' phải lớn hơn 0đ!");
+                    return;
+                }
+            }
+
             await using var db = await _dbContextFactory.CreateDbContextAsync();
             
             // Save pricing rules
