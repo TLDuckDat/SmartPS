@@ -40,7 +40,7 @@ public class ParkingSessionConfiguration : IEntityTypeConfiguration<ParkingSessi
                .HasDefaultValue(false);
 
         builder.Property(x => x.CustomerType)
-               .HasDefaultValue(CustomerType.Regular);
+               .HasDefaultValue(CustomerType.External);
 
         builder.HasIndex(x => x.TicketCode);
         builder.HasIndex(x => x.LicensePlate);

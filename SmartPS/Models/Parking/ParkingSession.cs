@@ -28,7 +28,7 @@ public class ParkingSession
     public int? CustomerId { get; set; }
     public Customer? Customer { get; set; }
     public bool IsMonthlyPass { get; set; } = false;
-    public CustomerType CustomerType { get; set; } = CustomerType.Regular;
+    public CustomerType CustomerType { get; set; } = CustomerType.External;
 
     public int? CreatedByUserId { get; set; }
     public User? CreatedByUser { get; set; }
