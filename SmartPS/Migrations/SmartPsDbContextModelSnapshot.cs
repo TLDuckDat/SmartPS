@@ -217,6 +217,41 @@ namespace SmartPS.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
+            modelBuilder.Entity("SmartPS.Models.Parking.BlacklistedVehicle", b =>
+                {
+                    b.Property<int>("BlacklistId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BlacklistId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LicensePlate")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("BlacklistId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.ToTable("BlacklistedVehicles");
+                });
+
             modelBuilder.Entity("SmartPS.Models.Parking.Customer", b =>
                 {
                     b.Property<int>("CustomerId")
@@ -1126,6 +1161,15 @@ namespace SmartPS.Migrations
                         .IsRequired();
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("SmartPS.Models.Parking.BlacklistedVehicle", b =>
+                {
+                    b.HasOne("SmartPS.Models.Parking.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId");
+
+                    b.Navigation("Customer");
                 });
 
             modelBuilder.Entity("SmartPS.Models.Parking.Customer", b =>

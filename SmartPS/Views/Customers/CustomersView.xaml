@@ -305,6 +305,30 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
+
+                            <!-- Thao tác xóa từng dòng -->
+                            <DataGridTemplateColumn Header="Thao Tác" Width="100">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Xóa xe"
+                                                ToolTip="Xóa phương tiện này (không xóa khách hàng nếu khách còn xe khác)"
+                                                Command="{Binding DataContext.DeleteRowVehicleCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"
+                                                Padding="8,3" Height="26"
+                                                Background="#FEE2E2" Foreground="#B91C1C"
+                                                BorderBrush="#FCA5A5" BorderThickness="1"
+                                                FontSize="11" FontWeight="SemiBold"
+                                                Cursor="Hand"
+                                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Button.Resources>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="CornerRadius" Value="4"/>
+                                                </Style>
+                                            </Button.Resources>
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                         </StackPanel>
@@ -459,6 +483,288 @@
                                                         </TextBlock.Style>
                                                     </TextBlock>
                                                 </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Thao tác trên từng dòng vé -->
+                                    <DataGridTemplateColumn Header="Thao Tác" Width="150">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Button Content="Hủy vé"
+                                                            ToolTip="Hủy vé tháng này (giữ lại lịch sử cước phí để đối soát)"
+                                                            Command="{Binding DataContext.CancelTicketCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                            CommandParameter="{Binding}"
+                                                            Padding="6,2" Height="26" Margin="0,0,6,0"
+                                                            Background="#FEE2E2" Foreground="#B91C1C"
+                                                            BorderBrush="#FCA5A5" BorderThickness="1"
+                                                            FontSize="11" FontWeight="SemiBold" Cursor="Hand">
+                                                        <Button.Resources>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="CornerRadius" Value="3"/>
+                                                            </Style>
+                                                        </Button.Resources>
+                                                    </Button>
+
+                                                    <Button Command="{Binding DataContext.ToggleTicketCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                            CommandParameter="{Binding}"
+                                                            Padding="6,2" Height="26"
+                                                            FontSize="11" FontWeight="SemiBold" Cursor="Hand">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Setter Property="Content" Value="Khóa"/>
+                                                                <Setter Property="Background" Value="#FEF3C7"/>
+                                                                <Setter Property="Foreground" Value="#D97706"/>
+                                                                <Setter Property="BorderBrush" Value="#FCD34D"/>
+                                                                <Setter Property="BorderThickness" Value="1"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Suspended">
+                                                                        <Setter Property="Content" Value="Mở"/>
+                                                                        <Setter Property="Background" Value="#DCFCE7"/>
+                                                                        <Setter Property="Foreground" Value="#15803D"/>
+                                                                        <Setter Property="BorderBrush" Value="#86EFAC"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Cancelled">
+                                                                        <Setter Property="Content" Value="Mở lại"/>
+                                                                        <Setter Property="Background" Value="#DCFCE7"/>
+                                                                        <Setter Property="Foreground" Value="#15803D"/>
+                                                                        <Setter Property="BorderBrush" Value="#86EFAC"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                        <Button.Resources>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="CornerRadius" Value="3"/>
+                                                            </Style>
+                                                        </Button.Resources>
+                                                    </Button>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+                </TabItem>
+
+                <!-- TAB 4: DANH SÁCH CẤM (BLACKLIST) -->
+                <TabItem Header="Danh Sách Cấm" FontSize="13" FontWeight="Bold" Foreground="#DC2626">
+                    <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="20" Margin="0,16,0,0">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="⛔ DANH SÁCH PHƯƠNG TIỆN BỊ CẤM VÀO BÃI" FontSize="13.5" FontWeight="Bold" Foreground="#DC2626" VerticalAlignment="Center"/>
+                                    <Border Background="#FEE2E2" CornerRadius="10" Padding="8,2" Margin="10,0,0,0">
+                                        <TextBlock Text="{Binding BlacklistedCount, StringFormat='{}{0} xe đang bị cấm'}" FontSize="11" FontWeight="Bold" Foreground="#B91C1C"/>
+                                    </Border>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Button Content="+ Thêm Vào Danh Sách Cấm" Command="{Binding AddBlacklistCommand}" Padding="12,6" Background="#EF4444" Foreground="White" FontWeight="Bold" BorderThickness="0" Cursor="Hand">
+                                        <Button.Resources>
+                                            <Style TargetType="Border">
+                                                <Setter Property="CornerRadius" Value="4"/>
+                                            </Style>
+                                        </Button.Resources>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Thanh Tìm Kiếm Blacklist -->
+                            <Border Background="#F8FAFC" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="4" Padding="12,10" Margin="0,0,0,14">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="360"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Background="White" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Height="34">
+                                        <Grid>
+                                            <TextBlock Text="🔍 Tìm theo biển số, lý do, chủ xe..." VerticalAlignment="Center" Margin="10,0" Foreground="{StaticResource TextDimBrush}" IsHitTestVisible="False">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding BlacklistSearchKeyword}" Value="">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding BlacklistSearchKeyword}" Value="{x:Null}">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <TextBox Text="{Binding BlacklistSearchKeyword, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center" Padding="8,0" CharacterCasing="Upper"/>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <!-- Bảng Danh Sách Xe Bị Cấm -->
+                            <DataGrid ItemsSource="{Binding BlacklistVehicles}"
+                                      SelectedItem="{Binding SelectedBlacklist}"
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      CanUserAddRows="False"
+                                      RowHeight="38"
+                                      MaxHeight="450"
+                                      GridLinesVisibility="Horizontal"
+                                      HorizontalGridLinesBrush="{StaticResource DividerBrush}"
+                                      Background="Transparent"
+                                      BorderThickness="1"
+                                      BorderBrush="{StaticResource DividerBrush}"
+                                      RowHeaderWidth="0"
+                                      HeadersVisibility="Column"
+                                      SelectionMode="Single">
+
+                                <DataGrid.Columns>
+                                    <!-- Biển số xe -->
+                                    <DataGridTextColumn Header="Biển Số Xe" Binding="{Binding LicensePlate}" Width="130">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="Margin" Value="10,0"/>
+                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                <Setter Property="FontSize" Value="13"/>
+                                                <Setter Property="Foreground" Value="#DC2626"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+
+                                    <!-- Lý do cấm -->
+                                    <DataGridTextColumn Header="Lý Do Bị Cấm" Binding="{Binding Reason}" Width="250">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="Margin" Value="10,0"/>
+                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+
+                                    <!-- Chủ xe liên quan -->
+                                    <DataGridTextColumn Header="Chủ Xe (Nếu Có)" Binding="{Binding Customer.FullName, TargetNullValue='-- Chưa xác định --'}" Width="160">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="Margin" Value="10,0"/>
+                                                <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+
+                                    <!-- Thời gian lập lệnh cấm -->
+                                    <DataGridTextColumn Header="Thời Điểm Cấm" Binding="{Binding CreatedAt, StringFormat={}{0:dd/MM/yyyy HH:mm}}" Width="140">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="Margin" Value="10,0"/>
+                                                <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+
+                                    <!-- Ghi chú chi tiết -->
+                                    <DataGridTextColumn Header="Ghi Chú" Binding="{Binding Notes, TargetNullValue='--'}" Width="*">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="Margin" Value="10,0"/>
+                                                <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
+                                                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+
+                                    <!-- Trạng thái cấm -->
+                                    <DataGridTemplateColumn Header="Trạng Thái" Width="130">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border CornerRadius="3" Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#FEE2E2"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                                    <Setter Property="Background" Value="#F3F4F6"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock FontSize="11" FontWeight="Bold">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Text" Value="⛔ Đang cấm"/>
+                                                                <Setter Property="Foreground" Value="#DC2626"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                                        <Setter Property="Text" Value="✔ Đã gỡ cấm"/>
+                                                                        <Setter Property="Foreground" Value="#6B7280"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Cột Thao Tác (Gỡ cấm / Cấm lại & Xóa) -->
+                                    <DataGridTemplateColumn Header="Thao Tác" Width="160">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Button Command="{Binding DataContext.ToggleBlacklistCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                            CommandParameter="{Binding}"
+                                                            Padding="6,2" Height="26" Margin="0,0,6,0"
+                                                            FontSize="11" FontWeight="SemiBold" Cursor="Hand">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Setter Property="Content" Value="Gỡ cấm"/>
+                                                                <Setter Property="Background" Value="#DCFCE7"/>
+                                                                <Setter Property="Foreground" Value="#15803D"/>
+                                                                <Setter Property="BorderBrush" Value="#86EFAC"/>
+                                                                <Setter Property="BorderThickness" Value="1"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                                        <Setter Property="Content" Value="Cấm lại"/>
+                                                                        <Setter Property="Background" Value="#FEE2E2"/>
+                                                                        <Setter Property="Foreground" Value="#B91C1C"/>
+                                                                        <Setter Property="BorderBrush" Value="#FCA5A5"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                        <Button.Resources>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="CornerRadius" Value="3"/>
+                                                            </Style>
+                                                        </Button.Resources>
+                                                    </Button>
+
+                                                    <Button Content="Xóa"
+                                                            ToolTip="Xóa hoàn toàn khỏi danh sách đen"
+                                                            Command="{Binding DataContext.DeleteBlacklistCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                            CommandParameter="{Binding}"
+                                                            Padding="6,2" Height="26"
+                                                            Background="#F3F4F6" Foreground="#4B5563"
+                                                            BorderBrush="#D1D5DB" BorderThickness="1"
+                                                            FontSize="11" FontWeight="SemiBold" Cursor="Hand">
+                                                        <Button.Resources>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="CornerRadius" Value="3"/>
+                                                            </Style>
+                                                        </Button.Resources>
+                                                    </Button>
+                                                </StackPanel>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
