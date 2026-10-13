@@ -670,17 +670,30 @@ public class GateControlService : IGateControlService
                 if (session == null || session.Status != SessionStatus.Active)
                     return new GateCheckOutResult { Success = false, Message = "Phiên gửi xe không còn hoạt động." };
 
-                var method = request.TotalFee <= 0 ? PaymentMethod.Free : request.PaymentMethod;
-                if (request.TotalFee < 0 || (request.TotalFee > 0 && method == PaymentMethod.Free))
+                // Phí luôn do máy chủ tính lại bằng công thức và bảng giá hiện hành; số tiền từ máy trạm bị bỏ qua.
+                var checkOutTime = DateTime.UtcNow;
+                var pricingRule = await db.PricingRules.AsNoTracking()
+                    .FirstOrDefaultAsync(r => r.VehicleTypeId == session.VehicleTypeId, cancellationToken);
+                if (pricingRule == null)
+                {
+                    lock (_syncLock)
+                    {
+                        pricingRule = _memoryPricingRules.FirstOrDefault(r => r.VehicleTypeId == session.VehicleTypeId);
+                    }
+                }
+
+                var serverFee = _feeCalculator.CalculateFee(session, pricingRule, checkOutTime).TotalFee;
+                var method = serverFee <= 0 ? PaymentMethod.Free : request.PaymentMethod;
+                if (serverFee < 0 || (serverFee > 0 && method == PaymentMethod.Free))
                     return new GateCheckOutResult { Success = false, Message = "Số tiền hoặc phương thức thanh toán không hợp lệ." };
-                if (request.TotalFee > 0 && method == PaymentMethod.VietQR)
+                if (serverFee > 0 && method == PaymentMethod.VietQR)
                     return new GateCheckOutResult { Success = false, Message = "Thanh toán VietQR phải được xác nhận qua cổng thanh toán." };
 
                 await ShiftAccounting.AddParkingFeeAsync(db, shift, request.ActorUserId,
-                    session.SessionId, method, request.TotalFee, null, cancellationToken);
-                session.CheckOutTime = DateTime.UtcNow;
+                    session.SessionId, method, serverFee, null, cancellationToken);
+                session.CheckOutTime = checkOutTime;
                 session.CheckOutImagePath = archivedOutImage ?? request.CheckOutImagePath;
-                session.TotalFee = request.TotalFee;
+                session.TotalFee = serverFee;
                 session.PaymentMethod = method;
                 session.Status = SessionStatus.Completed;
                 if (session.Slot != null)
@@ -699,7 +712,7 @@ public class GateControlService : IGateControlService
                         SessionId = session.SessionId,
                         LicensePlate = session.LicensePlate,
                         TicketCode = session.TicketCode,
-                        Fee = request.TotalFee,
+                        Fee = serverFee,
                         PaymentMethod = method.ToString(),
                         ShiftId = shift.ShiftId
                     }), cancellationToken);
@@ -723,7 +736,7 @@ public class GateControlService : IGateControlService
                     }
                 }
                 SaveOfflineSessions();
-                AppendAuditLog("CHECK_OUT", completedSession, request.TotalFee, completedMethod.ToString());
+                AppendAuditLog("CHECK_OUT", completedSession, completedSession.TotalFee, completedMethod.ToString());
             }
             return new GateCheckOutResult { Success = true, Message = "Xuất bãi và thanh toán hoàn tất.", CompletedSession = completedSession };
         }
