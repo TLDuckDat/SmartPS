@@ -7,20 +7,6 @@ public enum OperationError
     PermissionDenied,
     Validation,
     NotFound,
-    CustomerInactive,
-    PlateInvalid,
-    PlateOwnedByOtherCustomer,
-    PlateAlreadyOnCustomer,
-    VehicleHasActiveTicket,
-    PlateNotOwnedByCustomer,
-    PlanNotFound,
-    PlanVehicleTypeMismatch,
-    TicketOverlap,
-    TicketSuspended,
-    InvalidTicketState,
-    BlacklistAlreadyActive,
-    BlacklistNotActive,
-    ReasonRequired,
     DatabaseError
 }
 
@@ -33,43 +19,11 @@ public class OperationResult
 
     public string Message { get; init; } = string.Empty;
 
-    public IReadOnlyList<SmartPS.Services.Customers.CustomerValidationError> ValidationErrors { get; init; }
-        = Array.Empty<SmartPS.Services.Customers.CustomerValidationError>();
-
     public bool IsPermissionDenied => Error == OperationError.PermissionDenied;
 
     public static OperationResult Ok(string message = "")
         => new() { Success = true, Message = message };
 
-    public static OperationResult Fail(
-        OperationError error,
-        string message,
-        IReadOnlyList<SmartPS.Services.Customers.CustomerValidationError>? validationErrors = null)
-        => new()
-        {
-            Success = false,
-            Error = error,
-            Message = message,
-            ValidationErrors = validationErrors ?? Array.Empty<SmartPS.Services.Customers.CustomerValidationError>()
-        };
-}
-
-public sealed class OperationResult<T> : OperationResult
-{
-    public T? Value { get; init; }
-
-    public static OperationResult<T> Ok(T value, string message = "")
-        => new() { Success = true, Value = value, Message = message };
-
-    public static new OperationResult<T> Fail(
-        OperationError error,
-        string message,
-        IReadOnlyList<SmartPS.Services.Customers.CustomerValidationError>? validationErrors = null)
-        => new()
-        {
-            Success = false,
-            Error = error,
-            Message = message,
-            ValidationErrors = validationErrors ?? Array.Empty<SmartPS.Services.Customers.CustomerValidationError>()
-        };
+    public static OperationResult Fail(OperationError error, string message)
+        => new() { Success = false, Error = error, Message = message };
 }
