@@ -410,7 +410,7 @@
 
     <!-- GATE CONTROL: RESIDENT / VISITOR FLOW -->
     <sys:String x:Key="Str_Gate_Badge_Visitor">一般利用者</sys:String>
-    <sys:String x:Key="Str_Gate_Badge_Resident">🏠 居住者: {0} · {1}号室 · 有効期限 {2}</sys:String>
+    <sys:String x:Key="Str_Gate_Badge_Resident">🏠 居住者: {0} · {1}号室</sys:String>
     <sys:String x:Key="Str_Gate_Badge_MonthlyPass">👑 月極券: {0}（有効期限 {1}）</sys:String>
     <sys:String x:Key="Str_Gate_Badge_Blacklisted">⛔ ブラックリスト: {0}</sys:String>
     <sys:String x:Key="Str_Gate_Badge_CustomerLocked">顧客がロックされているため一般利用者として扱います</sys:String>
@@ -449,6 +449,7 @@
     <sys:String x:Key="Msg_Gate_PlateInvalid">ナンバーが正しくありません（英数字5〜12文字、ASCIIのみ）。</sys:String>
     <sys:String x:Key="Msg_Gate_ClassificationFailed">システムエラーのため車両を分類できませんでした。ゲートは閉じたままです。もう一度お試しください。</sys:String>
     <sys:String x:Key="Str_Gate_Badge_TicketVehicleTypeMismatch">月極券は別の車種用のため一般利用者として扱います</sys:String>
+    <sys:String x:Key="Str_Gate_Badge_TicketUntil">月極券 有効期限 {0}</sys:String>
     <sys:String x:Key="Str_Map_Legend_Maintenance">保守中の区画</sys:String>
 
 </ResourceDictionary>

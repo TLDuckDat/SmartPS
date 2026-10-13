@@ -760,59 +760,105 @@ public class GateControlViewModel : ViewModelBase
         }
     }
 
+    private VehicleCategory _inCategory = VehicleCategory.Visitor;
+
     private async Task CheckMonthlyPassInAsync(string plate)
     {
         if (string.IsNullOrWhiteSpace(plate))
         {
-            InCustomerBadge = "Khách vãng lai";
+            _inCategory = VehicleCategory.Visitor;
+            InCustomerBadge = _localizationService.GetString("Str_Gate_Badge_Visitor");
             IsMonthlyTicketIn = false;
             return;
         }
 
-        var blacklisted = await _gateControlService.CheckBlacklistAsync(plate);
-        if (blacklisted != null)
+        var classification = await _gateControlService.ClassifyVehicleAsync(plate);
+        ApplyInClassification(classification);
+        await SuggestSlotInAsync();
+    }
+
+    private void ApplyInClassification(VehicleClassification classification)
+    {
+        _inCategory = classification.Category;
+        IsMonthlyTicketIn = classification.IsMonthlyPass;
+
+        var owner = classification.Owner;
+        var ticket = classification.Ticket;
+        var name = owner?.OwnerName ?? string.Empty;
+        var ticketUntil = ticket == null
+            ? string.Empty
+            : " · " + _localizationService.GetString("Str_Gate_Badge_TicketUntil", ticket.EndDateUtc.ToLocalTime().ToString("dd/MM/yyyy"));
+
+        switch (classification.Category)
         {
-            IsMonthlyTicketIn = false;
-            InCustomerBadge = $"⛔ XE BỊ CẤM: {blacklisted.Reason}";
-            return;
+            case VehicleCategory.Blacklisted:
+                InCustomerBadge = _localizationService.GetString("Str_Gate_Badge_Blacklisted", classification.Blacklist?.Reason ?? string.Empty);
+                return;
+            case VehicleCategory.Resident:
+                InCustomerBadge = _localizationService.GetString("Str_Gate_Badge_Resident", name, owner?.ApartmentCode ?? string.Empty) + ticketUntil;
+                break;
+            case VehicleCategory.MonthlyPass:
+                InCustomerBadge = _localizationService.GetString("Str_Gate_Badge_MonthlyPass", name, ticket!.EndDateUtc.ToLocalTime().ToString("dd/MM/yyyy"));
+                break;
+            default:
+                InCustomerBadge = _localizationService.GetString("Str_Gate_Badge_Visitor");
+                break;
         }
 
-        var ticket = await _gateControlService.FindActiveMonthlyTicketAsync(plate);
-        if (ticket != null)
+        if (classification.Warning == ClassificationWarning.CustomerLocked)
         {
-            IsMonthlyTicketIn = true;
-            InCustomerBadge = $"👑 VÉ THÁNG: {ticket.Customer?.FullName ?? "Cư dân"} (Hiệu lực: {ticket.EndDate:dd/MM/yyyy})";
-            if (ticket.VehicleTypeId > 0 && VehicleTypes.Any(v => v.VehicleTypeId == ticket.VehicleTypeId))
-            {
-                InSelectedVehicleType = VehicleTypes.First(v => v.VehicleTypeId == ticket.VehicleTypeId);
-            }
+            InCustomerBadge += " (" + _localizationService.GetString("Str_Gate_Badge_CustomerLocked") + ")";
         }
-        else
+        else if (classification.Warning == ClassificationWarning.TicketVehicleTypeMismatch)
         {
-            IsMonthlyTicketIn = false;
-            var vehicle = await _gateControlService.FindVehicleOwnerAsync(plate);
-            if (vehicle != null && (vehicle.OwnerCustomer?.Type == CustomerType.Resident || vehicle.OwnerCustomer?.HouseholdId.HasValue == true))
-            {
-                var apt = !string.IsNullOrEmpty(vehicle.OwnerCustomer?.Household?.ApartmentCode) ? $" - P.{vehicle.OwnerCustomer.Household.ApartmentCode}" : "";
-                InCustomerBadge = $"🏠 CƯ DÂN (Chưa có vé tháng): {vehicle.OwnerCustomer?.FullName}{apt}";
-                if (vehicle.VehicleTypeId > 0 && VehicleTypes.Any(v => v.VehicleTypeId == vehicle.VehicleTypeId))
-                {
-                    InSelectedVehicleType = VehicleTypes.First(v => v.VehicleTypeId == vehicle.VehicleTypeId);
-                }
-            }
-            else
-            {
-                InCustomerBadge = "Khách vãng lai";
-            }
+            InCustomerBadge += " (" + _localizationService.GetString("Str_Gate_Badge_TicketVehicleTypeMismatch") + ")";
+        }
+
+        var typeId = ticket?.VehicleTypeId ?? owner?.VehicleTypeId ?? 0;
+        if (typeId > 0 && VehicleTypes.Any(v => v.VehicleTypeId == typeId))
+        {
+            InSelectedVehicleType = VehicleTypes.First(v => v.VehicleTypeId == typeId);
         }
     }
 
     private async Task SuggestSlotInAsync()
     {
         if (InSelectedVehicleType == null) return;
-        var slot = await _gateControlService.SuggestAvailableSlotAsync(InSelectedVehicleType.VehicleTypeId);
+        var slot = await _gateControlService.SuggestAvailableSlotAsync(InSelectedVehicleType.VehicleTypeId, _inCategory);
         InSuggestedSlotCode = slot?.SlotCode ?? "Tự do";
     }
+
+    private string LocalizeCheckInFailure(GateCheckInResult result)
+    {
+        if (result.IsPermissionDenied) return _localizationService.GetString("Msg_Auth_PermissionDenied");
+
+        var group = _localizationService.GetString(result.Category switch
+        {
+            VehicleCategory.Resident => "Str_Gate_Group_Resident",
+            VehicleCategory.MonthlyPass => "Str_Gate_Group_MonthlyPass",
+            _ => "Str_Gate_Group_Visitor"
+        });
+
+        return result.RejectReason switch
+        {
+            CheckInRejectReason.Blacklisted => _localizationService.GetString("Msg_Gate_BlacklistBlocked", result.BlacklistReason ?? string.Empty),
+            CheckInRejectReason.NoSlotAvailable => _localizationService.GetString("Msg_Gate_NoSlotFor", group),
+            CheckInRejectReason.SlotNotFound => _localizationService.GetString("Msg_Gate_SlotNotFound"),
+            CheckInRejectReason.SlotVehicleTypeMismatch => _localizationService.GetString("Msg_Gate_SlotVehicleTypeMismatch"),
+            CheckInRejectReason.SlotAudienceNotAllowed => _localizationService.GetString("Msg_Gate_SlotAudienceNotAllowed"),
+            CheckInRejectReason.SlotNotAvailable => _localizationService.GetString("Msg_Gate_SlotNotAvailable"),
+            CheckInRejectReason.PlateInvalid => _localizationService.GetString("Msg_Gate_PlateInvalid"),
+            CheckInRejectReason.ClassificationFailed => _localizationService.GetString("Msg_Gate_ClassificationFailed"),
+            _ => result.Message
+        };
+    }
+
+    private string LocalizeCheckInSuccess(GateCheckInResult result) => _localizationService.GetString(result.Category switch
+    {
+        VehicleCategory.Resident => "Msg_Gate_CheckInResident",
+        VehicleCategory.MonthlyPass => "Msg_Gate_CheckInMonthly",
+        _ => "Msg_Gate_CheckInVisitor"
+    });
 
     private async Task ExecuteConfirmCheckInAsync()
     {
@@ -858,13 +904,13 @@ public class GateControlViewModel : ViewModelBase
 
             if (!silent)
             {
-                _dialogService.ShowSuccess(result.Message);
+                _dialogService.ShowSuccess(LocalizeCheckInSuccess(result));
             }
             return true;
         }
         else
         {
-            var denyMessage = result.IsPermissionDenied ? _localizationService.GetString("Msg_Auth_PermissionDenied") : result.Message;
+            var denyMessage = LocalizeCheckInFailure(result);
             InStatusMessage = $"🔴 [TỪ CHỐI VÀO] {denyMessage}";
             if (!silent) _dialogService.ShowError(denyMessage);
             return false;
