@@ -487,13 +487,17 @@ namespace SmartPS.Migrations
 
                     b.HasIndex("LicensePlate");
 
-                    b.HasIndex("SlotId");
-
                     b.HasIndex("Status");
 
                     b.HasIndex("TicketCode");
 
                     b.HasIndex("VehicleTypeId");
+
+                    b.HasIndex(new[] { "SlotId" }, "IX_ParkingSessions_SlotId");
+
+                    b.HasIndex(new[] { "SlotId" }, "IX_ParkingSessions_SlotId_Active")
+                        .IsUnique()
+                        .HasFilter("\"Status\" = 0 AND \"SlotId\" IS NOT NULL");
 
                     b.ToTable("ParkingSessions", (string)null);
                 });
@@ -588,6 +592,11 @@ namespace SmartPS.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ZoneId"));
+
+                    b.Property<int>("Audience")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
 
                     b.Property<string>("Description")
                         .HasMaxLength(255)
