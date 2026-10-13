@@ -12,17 +12,23 @@ public class PricingRuleConfiguration : IEntityTypeConfiguration<PricingRule>
 
         builder.HasKey(x => x.RuleId);
 
-        builder.Property(x => x.FirstBlockMinutes)
-               .HasDefaultValue(120);
-
-        builder.Property(x => x.FirstBlockPrice)
+        builder.Property(x => x.Block4hPrice)
                .HasPrecision(18, 2);
 
-        builder.Property(x => x.AdditionalPricePerHour)
+        builder.Property(x => x.DailyPrice)
                .HasPrecision(18, 2);
 
-        builder.Property(x => x.OvernightPrice)
+        builder.Property(x => x.Monthly1Price)
                .HasPrecision(18, 2);
+
+        builder.Property(x => x.Monthly3Price)
+               .HasPrecision(18, 2);
+
+        builder.Property(x => x.Monthly6Price)
+               .HasPrecision(18, 2);
+
+        builder.HasIndex(x => x.VehicleTypeId)
+               .IsUnique();
 
         builder.Property(x => x.Description)
                .HasMaxLength(255);

@@ -41,10 +41,10 @@ public class MonthlyTicketConfiguration : IEntityTypeConfiguration<MonthlyTicket
                .HasForeignKey(x => x.CustomerId)
                .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.Plan)
+        builder.HasOne(x => x.Vehicle)
                .WithMany()
-               .HasForeignKey(x => x.PlanId)
-               .OnDelete(DeleteBehavior.SetNull);
+               .HasForeignKey(x => x.VehicleId)
+               .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(x => x.VehicleType)
                .WithMany()
