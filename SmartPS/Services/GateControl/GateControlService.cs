@@ -309,12 +309,15 @@ public class GateControlService : IGateControlService
         }
     }
 
-    public async Task<Vehicle?> FindVehicleOwnerAsync(string licensePlate, CancellationToken cancellationToken = default)
+    public Task<Vehicle?> FindVehicleOwnerAsync(string licensePlate, CancellationToken cancellationToken = default)
+        => FindVehicleOwnerAsync(licensePlate, cancellationToken, null);
+
+    private async Task<Vehicle?> FindVehicleOwnerAsync(string licensePlate, CancellationToken cancellationToken, DbProbe? probe)
     {
         var norm = NormalizePlate(licensePlate);
         if (string.IsNullOrEmpty(norm)) return null;
 
-        if (_dbContextFactory != null)
+        if (_dbContextFactory != null && probe?.Failed != true)
         {
             try
             {
@@ -328,18 +331,22 @@ public class GateControlService : IGateControlService
 
                 return vehicles.FirstOrDefault(v => NormalizePlate(v.LicensePlate) == norm);
             }
-            catch { /* Dùng fallback */ }
+            catch (OperationCanceledException) { throw; }
+            catch { probe?.MarkFailed(); /* Dùng fallback */ }
         }
 
         return null;
     }
 
-    public async Task<BlacklistedVehicle?> CheckBlacklistAsync(string licensePlate, CancellationToken cancellationToken = default)
+    public Task<BlacklistedVehicle?> CheckBlacklistAsync(string licensePlate, CancellationToken cancellationToken = default)
+        => CheckBlacklistAsync(licensePlate, cancellationToken, null);
+
+    private async Task<BlacklistedVehicle?> CheckBlacklistAsync(string licensePlate, CancellationToken cancellationToken, DbProbe? probe)
     {
         var norm = NormalizePlate(licensePlate);
         if (string.IsNullOrEmpty(norm)) return null;
 
-        if (_dbContextFactory != null)
+        if (_dbContextFactory != null && probe?.Failed != true)
         {
             try
             {
@@ -351,7 +358,8 @@ public class GateControlService : IGateControlService
 
                 return blacklists.FirstOrDefault(b => NormalizePlate(b.LicensePlate) == norm);
             }
-            catch { /* Dùng fallback */ }
+            catch (OperationCanceledException) { throw; }
+            catch { probe?.MarkFailed(); /* Dùng fallback */ }
         }
 
         return null;
@@ -396,7 +404,7 @@ public class GateControlService : IGateControlService
         var probe = new DbProbe();
 
         // 1. Kiểm tra danh sách cấm (Blacklist)
-        var blacklisted = await CheckBlacklistAsync(cleanPlate, cancellationToken);
+        var blacklisted = await CheckBlacklistAsync(cleanPlate, cancellationToken, probe);
         if (blacklisted != null)
         {
             return new GateCheckInResult
@@ -422,7 +430,7 @@ public class GateControlService : IGateControlService
         var isMonthly = monthlyTicket != null;
         
         // Kiểm tra thông tin chủ xe (nếu không có vé tháng vẫn nhận diện được cư dân)
-        var registeredVehicle = isMonthly ? null : await FindVehicleOwnerAsync(cleanPlate, cancellationToken);
+        var registeredVehicle = isMonthly ? null : await FindVehicleOwnerAsync(cleanPlate, cancellationToken, probe);
         var ownerCustomer = monthlyTicket?.Customer ?? registeredVehicle?.OwnerCustomer;
         var isResident = monthlyTicket != null ? (monthlyTicket.Customer?.Type == CustomerType.Resident || monthlyTicket.Customer?.HouseholdId.HasValue == true) : (registeredVehicle?.OwnerCustomer?.Type == CustomerType.Resident || registeredVehicle?.OwnerCustomer?.HouseholdId.HasValue == true);
         var customerType = isResident ? CustomerType.Resident : CustomerType.External;
