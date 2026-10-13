@@ -60,11 +60,16 @@ namespace SmartPS.Views.Customers
 
         private void BtnSave_Click(object sender, RoutedEventArgs e)
         {
-            var licensePlate = txtPlate.Text.Trim().ToUpperInvariant();
+            var licensePlate = System.Text.RegularExpressions.Regex.Replace(txtPlate.Text.Trim(), @"[^a-zA-Z0-9]", "").ToUpperInvariant();
             if (string.IsNullOrEmpty(licensePlate)) 
             { 
-                MessageBox.Show("Biển số không được để trống", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning); 
+                MessageBox.Show("Biển số không hợp lệ hoặc để trống!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning); 
                 return; 
+            }
+            if (licensePlate.Length > 20)
+            {
+                MessageBox.Show("Biển số xe không được vượt quá 20 ký tự!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
             }
 
             int customerId = 0;

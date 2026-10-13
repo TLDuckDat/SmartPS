@@ -134,8 +134,14 @@ namespace SmartPS.Views.Customers
             var vehicle = GetCurrentSelectedVehicle();
             int vehicleId = vehicle?.VehicleId ?? 0;
 
-            if (customerId == 0) { MessageBox.Show("Chưa chọn khách hàng"); return; }
-            if (vehicleId == 0) { MessageBox.Show("Chưa chọn xe"); return; }
+            if (customerId == 0) { MessageBox.Show("Chưa chọn khách hàng", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+            if (vehicle == null || vehicleId == 0) { MessageBox.Show("Chưa chọn xe", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+
+            if (vehicle.OwnerCustomerId != customerId)
+            {
+                MessageBox.Show("Phương tiện đã chọn không thuộc về khách hàng này!", "Lỗi xác thực", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
             FinalSelectedCustomerId = customerId;
             FinalSelectedVehicleId = vehicleId;
