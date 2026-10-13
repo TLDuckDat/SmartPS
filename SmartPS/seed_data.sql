@@ -179,5 +179,50 @@ ON CONFLICT ("SlotCode") DO NOTHING;
 INSERT INTO "ParkingSettings" ("SettingsId", "DefaultMaxVehiclesPerHousehold") VALUES (1, 2)
 ON CONFLICT ("SettingsId") DO NOTHING;
 
+-- -----------------------------------------------------------------------------------
+-- 11. KHU DÀNH RIÊNG CHO CƯ DÂN (ZONE_R) - Audience: 0 = Mixed, 1 = ResidentOnly, 2 = VisitorOnly
+-- ZONE_A và ZONE_B giữ mặc định Mixed.
+-- -----------------------------------------------------------------------------------
+INSERT INTO "ParkingZones" ("ZoneCode", "ZoneName", "TotalCapacity", "Description", "VehicleTypeId", "Audience")
+VALUES ('ZONE_R', 'Khu Cư dân (B2)', 6, 'Khu dành riêng cho cư dân (xe máy và ô tô)', NULL, 1)
+ON CONFLICT ("ZoneCode") DO NOTHING;
+
+-- 4 ô xe máy R-M01 đến R-M04
+INSERT INTO "ParkingSlots" ("SlotCode", "ZoneName", "ZoneId", "VehicleTypeId", "Status", "CoordX", "CoordY", "Width", "Height")
+SELECT
+    'R-M' || LPAD(s::text, 2, '0'),
+    z."ZoneName",
+    z."ZoneId",
+    v."VehicleTypeId",
+    0, -- SlotStatus.Available
+    40.0 + ((s - 1) % 4) * 90.0,
+    40.0,
+    70.0,
+    110.0
+FROM "ParkingZones" z
+JOIN "VehicleTypes" v ON v."TypeName" = 'Xe máy'
+CROSS JOIN generate_series(1, 4) s
+WHERE z."ZoneCode" = 'ZONE_R'
+ON CONFLICT ("SlotCode") DO NOTHING;
+
+-- 2 ô ô tô R-C01 đến R-C02
+INSERT INTO "ParkingSlots" ("SlotCode", "ZoneName", "ZoneId", "VehicleTypeId", "Status", "CoordX", "CoordY", "Width", "Height")
+SELECT
+    'R-C' || LPAD(s::text, 2, '0'),
+    z."ZoneName",
+    z."ZoneId",
+    v."VehicleTypeId",
+    0, -- SlotStatus.Available
+    50.0 + ((s - 1) % 2) * 120.0,
+    190.0,
+    95.0,
+    150.0
+FROM "ParkingZones" z
+JOIN "VehicleTypes" v ON v."TypeName" = 'Xe ô tô'
+CROSS JOIN generate_series(1, 2) s
+WHERE z."ZoneCode" = 'ZONE_R'
+ON CONFLICT ("SlotCode") DO NOTHING;
+
+
 COMMIT;
 
