@@ -23,7 +23,7 @@ public class NavigationAccessPolicyTests
         { NavigationItemType.Incidents, new[] { "Parking.View" } },
         { NavigationItemType.GateControl, new[] { "Parking.CheckIn", "Parking.CheckOut" } },
         { NavigationItemType.Shifts, new[] { "Shift.View" } },
-        { NavigationItemType.Customers, new[] { "Customer.View" } },
+        { NavigationItemType.Customers, new[] { "Parking.Configure" } },
         { NavigationItemType.Reports, new[] { "Report.View" } },
         { NavigationItemType.Transactions, new[] { "Report.View" } },
         { NavigationItemType.Pricing, new[] { "Pricing.Manage" } },
@@ -54,21 +54,19 @@ public class NavigationAccessPolicyTests
     [Fact]
     public void Operator_seed_sees_exactly_the_AC1_items()
     {
-        // AC-1: Given Operator (seed), Then visible = Overview, GateControl, Shifts, ParkingMap, Incidents, Reports, Transactions
-        // (+ Customers, read-only, since the resident/visitor flow grants Customer.View to Operator).
+        // AC-1: Given Operator (seed), Then visible = Overview, GateControl, Shifts, ParkingMap, Incidents, Reports, Transactions.
         var visible = Visible(For(TestUsers.Operator()));
 
         Assert.Equal(new HashSet<NavigationItemType>
         {
             NavigationItemType.Overview, NavigationItemType.GateControl, NavigationItemType.Shifts, NavigationItemType.ParkingMap,
-            NavigationItemType.Incidents, NavigationItemType.Reports, NavigationItemType.Transactions,
-            NavigationItemType.Customers
+            NavigationItemType.Incidents, NavigationItemType.Reports, NavigationItemType.Transactions
         }, visible);
 
         foreach (var hidden in new[]
                  {
                      NavigationItemType.UserManagement, NavigationItemType.RolePermissions, NavigationItemType.AuditLog,
-                     NavigationItemType.Settings, NavigationItemType.Pricing
+                     NavigationItemType.Settings, NavigationItemType.Pricing, NavigationItemType.Customers
                  })
         {
             Assert.DoesNotContain(hidden, visible);

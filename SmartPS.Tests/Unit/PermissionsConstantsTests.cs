@@ -1,6 +1,6 @@
 namespace SmartPS.Tests.Unit;
 
-/// <summary>R2 (5 new permissions), R9 (module grouping), R14 (action catalogue), AC-15 (permission count; 26 after the resident/visitor flow).</summary>
+/// <summary>R2 (5 new permissions), R9 (module grouping), R14 (action catalogue), AC-15 (23 permissions).</summary>
 public class PermissionsConstantsTests
 {
     [Fact]
@@ -8,7 +8,7 @@ public class PermissionsConstantsTests
     {
         var all = Permissions.GetAll();
 
-        Assert.Equal(TestUsers.TotalPermissionCount, all.Count);
+        Assert.Equal(23, all.Count);
         Assert.Equal(all.Count, all.Distinct(StringComparer.Ordinal).Count());
         foreach (var p in TestUsers.LegacyPermissions.Concat(TestUsers.NewPermissions))
         {
@@ -30,7 +30,7 @@ public class PermissionsConstantsTests
     public void ModuleOrder_is_the_R9_grouping()
     {
         Assert.Equal(
-            new[] { "User", "Role", "Parking", "Pricing", "Report", "Shift", "Payment", "Audit", "Settings", "Incident", "Customer", "Blacklist" },
+            new[] { "User", "Role", "Parking", "Pricing", "Report", "Shift", "Payment", "Audit", "Settings", "Incident" },
             Permissions.ModuleOrder);
     }
 
@@ -70,9 +70,8 @@ public class PermissionsConstantsTests
             "USER_CREATE", "USER_UPDATE", "USER_DELETE",
             "ROLE_PERMISSIONS_UPDATE", "PARKING_CHECKIN", "PARKING_CHECKOUT",
             "PAYMENT_REFUND", "PAYMENT_CANCEL", "SHIFT_OPEN", "SHIFT_CLOSE", "SHIFT_REVIEW", "SHIFT_ADJUSTMENT", "AUDIT_VERIFY",
-            "CUSTOMER_CREATE", "CUSTOMER_UPDATE", "CUSTOMER_VEHICLE_ADD", "CUSTOMER_VEHICLE_REMOVE",
-            "TICKET_CREATE", "TICKET_RENEW", "TICKET_SUSPEND", "TICKET_RESUME",
-            "BLACKLIST_ADD", "BLACKLIST_REMOVE", "GATE_BLACKLIST_BLOCKED", "GATE_BLACKLIST_EXIT_WARNING", "ZONE_UPDATE"
+            // Gate flow (Task 1) appends exactly these two after AUDIT_VERIFY.
+            "GATE_BLACKLIST_BLOCKED", "ZONE_UPDATE"
         }, AuditActions.All);
     }
 

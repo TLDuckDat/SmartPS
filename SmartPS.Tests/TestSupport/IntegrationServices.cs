@@ -4,7 +4,6 @@ using SmartPS.Data;
 using SmartPS.DTOs.Auth;
 using SmartPS.Models.Auth;
 using SmartPS.Services.Auth;
-using SmartPS.Services.Customers;
 using SmartPS.Services.GateControl;
 using SmartPS.Services.Payment;
 using SmartPS.Services.Payment.Mock;
@@ -45,10 +44,8 @@ public static class IntegrationServices
         services.AddSingleton<IPaymentGateway>(sp => sp.GetRequiredService<MockPaymentGateway>());
         services.AddSingleton<IPaymentService, PaymentService>();
 
-        // Resident/visitor flow (C7, C9)
-        services.AddSingleton<ICustomerService, CustomerService>();
-        services.AddSingleton<IMonthlyTicketService, MonthlyTicketService>();
-        services.AddSingleton<IBlacklistService, BlacklistService>();
+        // Gate flow (Task 1): read-only plate ownership over the household/vehicle tables, zone audience service
+        services.AddSingleton<IPlateOwnershipReader, PlateOwnershipReader>();
         services.AddSingleton<IParkingZoneService, ParkingZoneService>();
 
         overrides?.Invoke(services);
