@@ -853,6 +853,22 @@ public class GateControlViewModel : ViewModelBase
         };
     }
 
+    private string BuildCheckInWarning(GateCheckInResult result)
+    {
+        var parts = new List<string>();
+        if (result.TicketVehicleTypeMismatchWarning)
+        {
+            parts.Add(_localizationService.GetString("Str_Gate_Badge_TicketVehicleTypeMismatch"));
+        }
+
+        if (result.CustomerLockedWarning)
+        {
+            parts.Add(_localizationService.GetString("Str_Gate_Badge_CustomerLocked"));
+        }
+
+        return string.Join("; ", parts);
+    }
+
     private string LocalizeCheckInSuccess(GateCheckInResult result) => _localizationService.GetString(result.Category switch
     {
         VehicleCategory.Resident => "Msg_Gate_CheckInResident",
@@ -892,6 +908,12 @@ public class GateControlViewModel : ViewModelBase
 
             InStatusMessage = $"🟢 [VÀO THÀNH CÔNG] Biển số: {InPlateText} | Thời gian vào: {LastInTimeFormatted} | Mã vé: {LastInTicketCode} | Ô đỗ: {LastInSlotCode}";
 
+            var warning = BuildCheckInWarning(result);
+            if (warning.Length > 0)
+            {
+                InStatusMessage += $" | ⚠ {warning}";
+            }
+
             // Mở barrier làn vào 3 giây
             IsBarrierInOpen = true;
             _barrierInTimer.Stop();
@@ -904,7 +926,14 @@ public class GateControlViewModel : ViewModelBase
 
             if (!silent)
             {
-                _dialogService.ShowSuccess(LocalizeCheckInSuccess(result));
+                if (warning.Length > 0)
+                {
+                    _dialogService.ShowWarning(LocalizeCheckInSuccess(result) + Environment.NewLine + warning);
+                }
+                else
+                {
+                    _dialogService.ShowSuccess(LocalizeCheckInSuccess(result));
+                }
             }
             return true;
         }
