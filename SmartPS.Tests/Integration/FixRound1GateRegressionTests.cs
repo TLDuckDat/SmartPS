@@ -150,17 +150,22 @@ public class FixRound1GateRegressionTests : IClassFixture<PostgresDatabaseFixtur
 
         var cyrillic = await gate.ProcessCheckInAsync(Req(plate.Replace('V', 'В'), vt));        // Cyrillic VE
         var fullWidth = await gate.ProcessCheckInAsync(Req(new string(plate.Select(ToFullWidth).ToArray()), vt));
-        var zeroWidth = await gate.ProcessCheckInAsync(Req(plate[..3] + "​" + plate[3..], vt)); // zero-width space is a separator
+        var zeroWidth = await gate.ProcessCheckInAsync(Req(plate[..3] + "​" + plate[3..], vt)); // zero-width space (format character)
         var nbspTab = await gate.ProcessCheckInAsync(Req(plate[..2] + " " + plate[2..5] + "\t" + plate[5..], vt));
 
         Assert.False(cyrillic.Success);
         Assert.Equal(CheckInRejectReason.PlateInvalid, cyrillic.RejectReason);
         Assert.False(fullWidth.Success);
         Assert.Equal(CheckInRejectReason.PlateInvalid, fullWidth.RejectReason);
+        // Branch 2 fix round 1 (H4): control/format characters now make the plate invalid before any lookup.
         Assert.False(zeroWidth.Success);
-        Assert.Equal(CheckInRejectReason.Blacklisted, zeroWidth.RejectReason);
+        Assert.Equal(CheckInRejectReason.PlateInvalid, zeroWidth.RejectReason);
         Assert.False(nbspTab.Success);
-        Assert.Equal(CheckInRejectReason.Blacklisted, nbspTab.RejectReason);
+        Assert.Equal(CheckInRejectReason.PlateInvalid, nbspTab.RejectReason);
+        // A visible-space spelling of the blacklisted plate is still caught by the blacklist.
+        var nbspOnly = await gate.ProcessCheckInAsync(Req(plate[..2] + " " + plate[2..5] + " " + plate[5..], vt));
+        Assert.False(nbspOnly.Success);
+        Assert.Equal(CheckInRejectReason.Blacklisted, nbspOnly.RejectReason);
         Assert.Equal(0, await _data.ActiveSessionCountForVehicleTypeAsync(vt));
     }
 

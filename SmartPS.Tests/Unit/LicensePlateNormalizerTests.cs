@@ -60,9 +60,9 @@ public class LicensePlateNormalizerTests
     }
 
     [Theory]
-    [InlineData("51F\u200B12345")]    // zero-width space is a separator
-    [InlineData("51F\u00A0123\t45")]  // NBSP and tab are separators
-    public void G3_invisible_separators_are_ignored(string plate)
+    [InlineData("51F\u00A0123 45")]  // NBSP and space are visible separators
+    [InlineData("51F\u2009123-45")]  // thin space
+    public void G3_visible_space_separators_are_ignored(string plate)
     {
         Assert.True(LicensePlateNormalizer.IsValid(plate));
         Assert.Equal("51F12345", LicensePlateNormalizer.Normalize(plate));
@@ -83,13 +83,50 @@ public class LicensePlateNormalizerTests
     }
 
     [Theory]
-    [InlineData("51F\u200B12345")]        // zero-width space (Cf)
-    [InlineData("51F\u00A0123\t45")]      // NBSP (Zs) and tab (Cc)
-    [InlineData("51F\u200D123\u2009" + "45")] // zero-width joiner (Cf) and thin space (Zs)
+    [InlineData("51F\u00A0123\u2009" + "45")] // NBSP (Zs) and thin space (Zs)
     [InlineData(" 51F-123.45 ")]
     public void H1_separators_remain_valid(string plate)
     {
         Assert.True(LicensePlateNormalizer.IsValid(plate));
         Assert.Equal("51F12345", LicensePlateNormalizer.Normalize(plate));
+    }
+
+    // ---- Branch 2 fix round 1, H4: control / format characters and raw length over the 20-char column -------------
+
+    [Theory]
+    [InlineData("51F\u200B12345")]   // zero-width space (Cf)
+    [InlineData("51F\u200D12345")]   // zero-width joiner (Cf)
+    [InlineData("51F\uFEFF12345")]   // zero-width no-break space / BOM (Cf)
+    [InlineData("51F\u202E12345")]   // right-to-left override (Cf)
+    [InlineData("51F123\t45")]       // tab (Cc)
+    [InlineData("51F123\n45")]       // line feed (Cc)
+    [InlineData("51F123\u000045")]   // NUL (Cc)
+    [InlineData("51F123\u007F45")]   // DEL (Cc)
+    [InlineData("51F123\u008545")]   // NEL (Cc)
+    public void H4_control_and_format_characters_make_the_plate_invalid(string plate)
+    {
+        Assert.False(LicensePlateNormalizer.IsValid(plate));
+        Assert.Equal("51F12345", LicensePlateNormalizer.Normalize(plate)); // Normalize itself is unchanged
+    }
+
+    [Theory]
+    [InlineData(20, true)]
+    [InlineData(21, false)]
+    [InlineData(40, false)]
+    public void H4_trimmed_raw_plate_longer_than_20_characters_is_invalid(int rawLength, bool expected)
+    {
+        // "51F" + dashes + "12345": the normalized form stays 8 characters, only the raw length changes.
+        var plate = "51F" + new string('-', rawLength - 8) + "12345";
+        Assert.Equal(rawLength, plate.Length);
+
+        Assert.Equal(expected, LicensePlateNormalizer.IsValid(plate));
+    }
+
+    [Fact]
+    public void H4_surrounding_whitespace_does_not_count_towards_the_raw_length()
+    {
+        var plate = new string(' ', 15) + "51F-123.45" + new string(' ', 15);
+
+        Assert.True(LicensePlateNormalizer.IsValid(plate));
     }
 }
