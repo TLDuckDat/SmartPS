@@ -5,6 +5,7 @@ public static class LicensePlateNormalizer
 {
     public const int MinLength = 5;
     public const int MaxLength = 12;
+    public const int MaxRawLength = 20;
 
     public static string Normalize(string? plate)
     {
@@ -33,10 +34,22 @@ public static class LicensePlateNormalizer
             return false;
         }
 
+        // Cột lưu biển số dài 20 ký tự: chuỗi thô (đã cắt khoảng trắng hai đầu) dài hơn bị từ chối.
+        if (plate.Trim().Length > MaxRawLength)
+        {
+            return false;
+        }
+
         // Chữ hoặc số ngoài ASCII (toàn chiều rộng, Cyrillic...) làm biển số không hợp lệ thay vì âm thầm biến mất khi chuẩn hoá.
         // Ký tự cách/điều khiển/vô hình vẫn là dấu phân cách.
         foreach (var ch in plate)
         {
+            var kind = char.GetUnicodeCategory(ch);
+            if (kind is System.Globalization.UnicodeCategory.Control or System.Globalization.UnicodeCategory.Format)
+            {
+                return false;
+            }
+
             if (char.IsAscii(ch))
             {
                 continue;
