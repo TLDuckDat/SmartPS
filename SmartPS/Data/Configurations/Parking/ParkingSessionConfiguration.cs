@@ -45,7 +45,6 @@ public class ParkingSessionConfiguration : IEntityTypeConfiguration<ParkingSessi
         builder.HasIndex(x => x.TicketCode);
         builder.HasIndex(x => x.LicensePlate);
         builder.HasIndex(x => x.CheckInTime);
-        builder.HasIndex(x => x.CheckOutTime);
         builder.HasIndex(x => x.Status);
 
         builder.HasOne(x => x.VehicleType)
