@@ -219,7 +219,6 @@ public sealed class ReportService : IReportService
         return await db.ParkingSessions.AsNoTracking()
             .Include(s => s.VehicleType)
             .Include(s => s.Slot)
-            .Include(s => s.Customer)
             .OrderByDescending(s => s.CheckInTime).ThenByDescending(s => s.SessionId)
             .Take(count)
             .ToListAsync(cancellationToken);
