@@ -14,5 +14,6 @@ public enum CheckInRejectReason
     SlotAudienceNotAllowed,
     SlotNotAvailable,
     PlateInvalid,
-    ClassificationFailed
+    ClassificationFailed,
+    PersistFailed
 }
