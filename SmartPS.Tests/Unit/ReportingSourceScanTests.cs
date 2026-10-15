@@ -108,6 +108,8 @@ public class ReportingSourceScanTests
     {
         Assert.Equal("REPORT_EXPORT", AuditActions.ReportExport);
         Assert.Equal(AuditActions.ReportExport, AuditActions.All[^1]);
-        Assert.Equal(31, AuditActions.All.Count);
+        // Task 2's 17 actions + GATE_BLACKLIST_BLOCKED + ZONE_UPDATE (gate flow) + REPORT_EXPORT
+        Assert.Equal(20, AuditActions.All.Count);
+        Assert.Equal(new[] { AuditActions.GateBlacklistBlocked, AuditActions.ZoneUpdate, AuditActions.ReportExport }, AuditActions.All.Skip(17).ToArray());
     }
 }

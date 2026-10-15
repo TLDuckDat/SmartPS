@@ -113,7 +113,7 @@ public sealed class CommandHookInterceptor : DbCommandInterceptor
 
     /// <summary>
     /// Override for <see cref="IntegrationServices.Create"/>: replaces the container's context factory with one whose
-    /// contexts carry <paramref name="hook"/>. Test helpers (ResidentVisitorData, AuditDb, fixture.Factory) stay unhooked.
+    /// contexts carry <paramref name="hook"/>. Test helpers (GateTestData, ReportSeed, AuditDb, fixture.Factory) stay unhooked.
     /// </summary>
     public static Action<IServiceCollection> Install(PostgresDatabaseFixture fixture, CommandHookInterceptor hook) => services =>
     {

@@ -111,7 +111,12 @@ public class GateFixRoundB2SourceTests
         using var ctx = PostgresDatabaseFixture.CreateContext(PostgresDatabaseFixture.DefaultConnectionString);
 
         Assert.False(ctx.Database.HasPendingModelChanges(), "moving the configuration must not change the model");
-        Assert.Equal(GateMigrationId, ctx.Database.GetMigrations().Last());
+        // on the reporting branch the only migration after the gate migration is the reporting index migration
+        var migrations = ctx.Database.GetMigrations().ToList();
+        var afterGate = migrations.SkipWhile(m => m != GateMigrationId).ToList();
+        Assert.Equal(2, afterGate.Count);
+        Assert.Equal(GateMigrationId, afterGate[0]);
+        Assert.EndsWith("_AddReportingIndexes", afterGate[1], StringComparison.Ordinal);
         Assert.Single(Directory.EnumerateFiles(Path.Combine(RepoPaths.AppProject, "Migrations"), "*_AddGateZoneAudience.cs"));
     }
 }

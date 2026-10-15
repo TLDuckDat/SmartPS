@@ -16,13 +16,13 @@ public class ReportServiceRegressionTests : IClassFixture<PostgresDatabaseFixtur
 
     private readonly PostgresDatabaseFixture _db;
     private readonly ReportSeed _seed;
-    private readonly ResidentVisitorData _data;
+    private readonly GateTestData _data;
 
     public ReportServiceRegressionTests(PostgresDatabaseFixture db)
     {
         _db = db;
         _seed = new ReportSeed(db);
-        _data = new ResidentVisitorData(db);
+        _data = new GateTestData(db);
     }
 
     private static DateTime Vn(int y, int mo, int d, int h, int mi = 0) => new DateTime(y, mo, d, h, mi, 0, DateTimeKind.Utc) - AuditTime.VietnamOffset;

@@ -141,7 +141,6 @@ public class GateCheckInWarningMessageTests
         public Task<List<ParkingSession>> GetActiveSessionsAsync(CancellationToken cancellationToken = default) => Task.FromResult(new List<ParkingSession>());
         public Task<List<ParkingSlot>> GetAllSlotsAsync(CancellationToken cancellationToken = default) => Task.FromResult(new List<ParkingSlot>());
         public Task<List<ParkingSession>> GetAllSessionsHistoryAsync(CancellationToken cancellationToken = default) => Task.FromResult(new List<ParkingSession>());
-        public Task<OverviewKpiData> GetOverviewKpiAsync(CancellationToken cancellationToken = default) => Task.FromResult(new OverviewKpiData());
         public event EventHandler<ParkingSession>? SessionCompleted { add { } remove { } }
         public void NotifySessionCompleted(ParkingSession session) { }
     }

@@ -75,7 +75,9 @@ public class GateZoneAudienceMigrationTests : IClassFixture<PostgresDatabaseFixt
         Assert.True(string.CompareOrdinal(gate, AuditMigration) > 0, $"{gate} must sort after {AuditMigration}");
         Assert.True(string.CompareOrdinal(AuditMigration, BlacklistMigration) > 0);
         Assert.True(string.CompareOrdinal(BlacklistMigration, HouseholdMigration) > 0);
-        Assert.Equal(gate, migrations[^1]);
+        // the reporting branch adds exactly one migration after the gate migration
+        Assert.Equal(gate, migrations[^2]);
+        Assert.EndsWith("_AddReportingIndexes", migrations[^1], StringComparison.Ordinal);
         Assert.Equal(migrations.OrderBy(m => m, StringComparer.Ordinal), migrations);
         Assert.DoesNotContain(migrations, m => m.Contains("ResidentVisitor", StringComparison.Ordinal));
         Assert.DoesNotContain(migrations, m => m.Contains("HardenAuditTriggers", StringComparison.Ordinal));

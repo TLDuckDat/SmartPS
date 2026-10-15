@@ -16,13 +16,13 @@ public class OverviewSnapshotTests : IClassFixture<PostgresDatabaseFixture>
 {
     private readonly PostgresDatabaseFixture _db;
     private readonly ReportSeed _seed;
-    private readonly ResidentVisitorData _data;
+    private readonly GateTestData _data;
 
     public OverviewSnapshotTests(PostgresDatabaseFixture db)
     {
         _db = db;
         _seed = new ReportSeed(db);
-        _data = new ResidentVisitorData(db);
+        _data = new GateTestData(db);
     }
 
     private static DateTime Utc(int y, int mo, int d, int h, int mi = 0, int s = 0) => new(y, mo, d, h, mi, s, DateTimeKind.Utc);
@@ -97,9 +97,11 @@ public class OverviewSnapshotTests : IClassFixture<PostgresDatabaseFixture>
         var (sp, service) = await OperatorAsync(Utc(2031, 6, 10, 1));
         using var spScope = sp;
         var car = await _seed.CarTypeIdAsync();
+        // household model: resident with ticket, resident without ticket, non-resident ticket holder, visitor
         await _seed.SessionAsync(Utc(2031, 6, 9, 20), customerType: CustomerType.Resident, isMonthlyPass: true);
-        await _seed.SessionAsync(Utc(2031, 6, 9, 21), customerType: CustomerType.Regular, isMonthlyPass: true, vehicleTypeId: car);
-        await _seed.SessionAsync(Utc(2031, 6, 9, 22), customerType: CustomerType.VIP);
+        await _seed.SessionAsync(Utc(2031, 6, 9, 20, 30), customerType: CustomerType.Resident, isMonthlyPass: false);
+        await _seed.SessionAsync(Utc(2031, 6, 9, 21), customerType: CustomerType.External, isMonthlyPass: true, vehicleTypeId: car);
+        await _seed.SessionAsync(Utc(2031, 6, 9, 22), customerType: CustomerType.External);
         await _seed.SessionAsync(Utc(2031, 6, 9, 22), Utc(2031, 6, 9, 23)); // completed: not parked
 
         var snapshot = await service.GetOverviewSnapshotAsync();

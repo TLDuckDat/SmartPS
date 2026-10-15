@@ -133,10 +133,10 @@ public class MigrationTests : IClassFixture<PostgresDatabaseFixture>
         Assert.Equal(1, await CountAsync(cs, "SELECT count(*) FROM pg_proc WHERE proname = 'fn_AuditLogs_BlockMutation'"));
         Assert.Equal(1, await CountAsync(cs, "SELECT count(*) FROM \"__EFMigrationsHistory\" WHERE \"MigrationId\" LIKE '%\\_AddRbacAndAuditTrail'"));
         // Single audit migration, triggers hardened inside it (no separate hardening migration). The gate flow's
-        // AddGateZoneAudience now follows it, so "last applied" is checked on the audit migrations only.
+        // AddGateZoneAudience and the reporting AddReportingIndexes now follow it, so "last applied" is checked on the audit migrations only.
         Assert.Equal(0, await CountAsync(cs, "SELECT count(*) FROM \"__EFMigrationsHistory\" WHERE \"MigrationId\" LIKE '%HardenAuditTriggers%'"));
         var lastAuditMigration = await PostgresDatabaseFixture.ScalarAsync<string>(cs,
-            "SELECT \"MigrationId\" FROM \"__EFMigrationsHistory\" WHERE \"MigrationId\" NOT LIKE '%\\_AddGateZoneAudience' ORDER BY \"MigrationId\" DESC LIMIT 1");
+            "SELECT \"MigrationId\" FROM \"__EFMigrationsHistory\" WHERE \"MigrationId\" NOT LIKE '%\\_AddGateZoneAudience' AND \"MigrationId\" NOT LIKE '%\\_AddReportingIndexes' ORDER BY \"MigrationId\" DESC LIMIT 1");
         Assert.EndsWith("_AddRbacAndAuditTrail", lastAuditMigration, StringComparison.Ordinal);
 
         // When Down() runs

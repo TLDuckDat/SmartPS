@@ -3,30 +3,44 @@ using SmartPS.Models.Parking;
 namespace SmartPS.Tests.Unit;
 
 /// <summary>
-/// R1 / AC-4 customer groups over sessions (plan §1.3, Task 1 A9): Resident ⇔ CustomerType.Resident;
-/// MonthlyPass ⇔ IsMonthlyPass and not resident; Visitor ⇔ neither.
+/// R1 / AC-4 / AC-R9 customer groups over sessions on the household model (Resident = 0, External = 1):
+/// Resident ⇔ CustomerType.Resident (with or without a monthly ticket); MonthlyPass ⇔ IsMonthlyPass and CustomerType ≠ Resident;
+/// Visitor ⇔ neither.
 /// </summary>
 public class ReportCustomerGroupRulesTests
 {
     [Theory]
     [InlineData(CustomerType.Resident, true, ReportCustomerGroup.Resident)]
     [InlineData(CustomerType.Resident, false, ReportCustomerGroup.Resident)]
-    [InlineData(CustomerType.Regular, true, ReportCustomerGroup.MonthlyPass)]
-    [InlineData(CustomerType.Loyal, true, ReportCustomerGroup.MonthlyPass)]
-    [InlineData(CustomerType.VIP, true, ReportCustomerGroup.MonthlyPass)]
-    [InlineData(CustomerType.Regular, false, ReportCustomerGroup.Visitor)]
-    [InlineData(CustomerType.Loyal, false, ReportCustomerGroup.Visitor)]
-    [InlineData(CustomerType.VIP, false, ReportCustomerGroup.Visitor)]
+    [InlineData(CustomerType.External, true, ReportCustomerGroup.MonthlyPass)]
+    [InlineData(CustomerType.External, false, ReportCustomerGroup.Visitor)]
     public void Classify(CustomerType type, bool isMonthlyPass, ReportCustomerGroup expected)
     {
         Assert.Equal(expected, ReportCustomerGroupRules.Classify(type, isMonthlyPass));
     }
 
     [Fact]
-    public void Resident_value_is_the_Task1_enum_value()
+    public void Resident_value_is_the_household_model_enum_value()
     {
-        Assert.Equal(3, ReportCustomerGroupRules.ResidentCustomerTypeValue);
+        Assert.Equal(0, ReportCustomerGroupRules.ResidentCustomerTypeValue);
         Assert.Equal((int)CustomerType.Resident, ReportCustomerGroupRules.ResidentCustomerTypeValue);
+    }
+
+    [Fact]
+    public void CustomerType_has_only_Resident_0_and_External_1()
+    {
+        Assert.Equal(new[] { 0, 1 }, Enum.GetValues<CustomerType>().Select(v => (int)v).OrderBy(v => v));
+        Assert.Equal(new[] { "External", "Resident" }, Enum.GetNames<CustomerType>().OrderBy(n => n, StringComparer.Ordinal));
+        Assert.Equal(1, (int)CustomerType.External);
+    }
+
+    [Fact]
+    public void Sql_group_case_values_match_the_report_group_enum()
+    {
+        Assert.Equal("CASE WHEN s.\"CustomerType\" = @res THEN 1 WHEN s.\"IsMonthlyPass\" THEN 2 ELSE 3 END", ReportCustomerGroupRules.SqlGroupCase);
+        Assert.Equal(1, (int)ReportCustomerGroup.Resident);
+        Assert.Equal(2, (int)ReportCustomerGroup.MonthlyPass);
+        Assert.Equal(3, (int)ReportCustomerGroup.Visitor);
     }
 
     [Fact]
@@ -51,9 +65,9 @@ public class ReportCustomerGroupRulesTests
 
         Add(CustomerType.Resident, true, 2);
         Add(CustomerType.Resident, false, 1);
-        Add(CustomerType.Regular, true, 2);
-        Add(CustomerType.VIP, false, 3);
-        Add(CustomerType.Regular, false, 1);
+        Add(CustomerType.External, true, 2);
+        Add(CustomerType.External, false, 3);
+        Add(CustomerType.External, false, 1);
         return list.AsQueryable();
     }
 

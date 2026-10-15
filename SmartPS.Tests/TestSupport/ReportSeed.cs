@@ -95,7 +95,7 @@ public sealed class ReportSeed
     public async Task<ParkingSession> SessionAsync(
         DateTime checkInUtc,
         DateTime? checkOutUtc = null,
-        CustomerType customerType = CustomerType.Regular,
+        CustomerType customerType = CustomerType.External,
         bool isMonthlyPass = false,
         int? vehicleTypeId = null,
         int? slotId = null,
@@ -108,12 +108,13 @@ public sealed class ReportSeed
         await using var db = await _db.Factory.CreateDbContextAsync();
         db.ParkingSessions.Add(session);
         await db.SaveChangesAsync();
+        await KeepResidentTypeAsync(db, new[] { session }, new[] { customerType });
         return session;
     }
 
     /// <summary>Inserts <paramref name="count"/> completed-or-active sessions in one SaveChanges; <paramref name="checkIn"/> gives the i-th check-in.</summary>
     public async Task<IReadOnlyList<ParkingSession>> SessionsAsync(int count, Func<int, DateTime> checkIn, Func<int, DateTime?>? checkOut = null,
-        CustomerType customerType = CustomerType.Regular, bool isMonthlyPass = false, int? vehicleTypeId = null)
+        CustomerType customerType = CustomerType.External, bool isMonthlyPass = false, int? vehicleTypeId = null)
     {
         var sessions = new List<ParkingSession>(count);
         for (var i = 0; i < count; i++)
@@ -124,7 +125,42 @@ public sealed class ReportSeed
         await using var db = await _db.Factory.CreateDbContextAsync();
         db.ParkingSessions.AddRange(sessions);
         await db.SaveChangesAsync();
+        await KeepResidentTypeAsync(db, sessions, sessions.Select(_ => customerType).ToList());
         return sessions;
+    }
+
+    /// <summary>
+    /// ParkingSessions.CustomerType has the column default External (household model), so EF treats the CLR default
+    /// Resident (= 0) as "not set" on insert and the row is stored as External. Write Resident explicitly afterwards,
+    /// like the gate does, so a seeded resident session really is a resident session.
+    /// </summary>
+    private static async Task KeepResidentTypeAsync(SmartPS.Data.SmartPsDbContext db, IReadOnlyList<ParkingSession> sessions, IReadOnlyList<CustomerType> wanted)
+    {
+        var changed = false;
+        for (var i = 0; i < sessions.Count; i++)
+        {
+            if (wanted[i] == CustomerType.Resident && sessions[i].CustomerType != CustomerType.Resident)
+            {
+                sessions[i].CustomerType = CustomerType.Resident;
+                db.Entry(sessions[i]).Property(x => x.CustomerType).IsModified = true;
+                changed = true;
+            }
+        }
+
+        if (changed)
+        {
+            await db.SaveChangesAsync();
+        }
+
+        if (wanted.Contains(CustomerType.Resident))
+        {
+            var ids = sessions.Where((_, i) => wanted[i] == CustomerType.Resident).Select(s => s.SessionId).ToList();
+            var stored = await db.ParkingSessions.AsNoTracking().Where(s => ids.Contains(s.SessionId)).Select(s => s.CustomerType).ToListAsync();
+            if (stored.Count != ids.Count || stored.Any(t => t != CustomerType.Resident))
+            {
+                throw new InvalidOperationException("Seeded resident sessions were not stored as CustomerType.Resident.");
+            }
+        }
     }
 
     /// <summary>Inserts one FinancialTransaction (Refund amounts are passed already negative, like ShiftService/PaymentService store them).</summary>
@@ -150,50 +186,11 @@ public sealed class ReportSeed
 
     /// <summary>Completed session plus its single ParkingFee transaction recorded at check-out time.</summary>
     public async Task<ParkingSession> PaidSessionAsync(DateTime checkInUtc, DateTime checkOutUtc, decimal fee, PaymentMethod method = PaymentMethod.Cash,
-        CustomerType customerType = CustomerType.Regular, bool isMonthlyPass = false, int? vehicleTypeId = null, string? plate = null, int? slotId = null)
+        CustomerType customerType = CustomerType.External, bool isMonthlyPass = false, int? vehicleTypeId = null, string? plate = null, int? slotId = null)
     {
         var session = await SessionAsync(checkInUtc, checkOutUtc, customerType, isMonthlyPass, vehicleTypeId, slotId, plate, fee, method);
         await FinancialAsync(FinancialTransactionType.ParkingFee, method, fee, checkOutUtc, session.SessionId);
         return session;
-    }
-
-    /// <summary>
-    /// M2: a customer (<paramref name="isResident"/>), one monthly ticket and its MonthlyTicketPurchases rows with explicit
-    /// <c>Kind</c>, <c>Price</c> and <c>CreatedAtUtc</c> (Task 1 ADDENDUM A table).
-    /// </summary>
-    public async Task<(int CustomerId, int TicketId)> CreateTicketWithPurchasesAsync(
-        bool isResident,
-        int vehicleTypeId,
-        params (TicketPurchaseKind Kind, decimal Price, DateTime CreatedAtUtc)[] purchases)
-    {
-        if (purchases.Length == 0)
-        {
-            throw new ArgumentException("At least one purchase is required.", nameof(purchases));
-        }
-
-        var data = new ResidentVisitorData(_db);
-        var customerId = await data.CreateCustomerAsync(isResident);
-        var plate = ResidentVisitorData.UniqueNormalizedPlate();
-        await data.AddVehicleAsync(customerId, plate, vehicleTypeId);
-
-        var ordered = purchases.OrderBy(p => p.CreatedAtUtc).ToArray();
-        var start = Utc(ordered[0].CreatedAtUtc);
-        var end = Utc(ordered[^1].CreatedAtUtc).AddDays(30);
-        var ticketId = await data.CreateTicketAsync(customerId, plate, vehicleTypeId, start, end,
-            withCreatePurchase: false, price: ordered[^1].Price);
-
-        var adminId = await AdminUserIdAsync();
-        var periodStart = start;
-        foreach (var p in ordered)
-        {
-            await _db.ExecuteAsync(
-                "INSERT INTO \"MonthlyTicketPurchases\" (\"TicketId\",\"Kind\",\"PlanId\",\"Price\",\"PeriodStartUtc\",\"PeriodEndUtc\",\"CreatedAtUtc\",\"CreatedByUserId\") " +
-                "VALUES (@t,@k,NULL,@price,@s,@e,@c,@u)",
-                ("t", ticketId), ("k", (int)p.Kind), ("price", p.Price), ("s", periodStart), ("e", periodStart.AddDays(30)), ("c", Utc(p.CreatedAtUtc)), ("u", adminId));
-            periodStart = periodStart.AddDays(30);
-        }
-
-        return (customerId, ticketId);
     }
 
     /// <summary>Totals of a performance seed, computed from the inserted rows.</summary>
@@ -203,7 +200,7 @@ public sealed class ReportSeed
     /// AC-10 / N1 data set: <paramref name="sessions"/> sessions with check-ins spread pseudo-randomly (setseed 0.42) over
     /// <paramref name="days"/> VN days from <paramref name="startVn"/>, 95% Completed; one ParkingFee per completed session
     /// (respects IX_FinancialTransactions_OneParkingFeePerSession); the remaining transactions up to
-    /// <paramref name="financials"/> are session-less Refunds / Adjustments. Mixed CustomerType / IsMonthlyPass, motorbike and car.
+    /// <paramref name="financials"/> are session-less Refunds / Adjustments. Mixed CustomerType (Resident / External, the only household-model values) / IsMonthlyPass, motorbike and car.
     /// One Locked shift opened by the seed admin owns every transaction (ADDENDUM N3). Codes are 'PERF-' || g.
     /// </summary>
     public static async Task<PerformanceSeed> SeedPerformanceAsync(PostgresDatabaseFixture fixture, DateOnly startVn, int days = 30,
@@ -236,7 +233,7 @@ public sealed class ReportSeed
                    CASE WHEN x.g % 10 = 9 OR x.g % 7 IN (0, 1) THEN 3 WHEN x.g % 10 IN (6, 7) THEN 1 WHEN x.g % 10 = 8 THEN 2 ELSE 0 END,
                    NULL,
                    x.g % 7 IN (0, 1),
-                   CASE WHEN x.g % 7 = 0 THEN 3 WHEN x.g % 11 = 0 THEN 2 ELSE 0 END,
+                   CASE WHEN x.g % 7 = 0 THEN @resident ELSE @external END,
                    @admin
             FROM (
                 SELECT g,
@@ -283,6 +280,8 @@ public sealed class ReportSeed
             cmd.Parameters.AddWithValue("car", car);
             cmd.Parameters.AddWithValue("admin", adminId);
             cmd.Parameters.AddWithValue("shift", shift.ShiftId);
+            cmd.Parameters.AddWithValue("resident", (int)CustomerType.Resident);
+            cmd.Parameters.AddWithValue("external", (int)CustomerType.External);
             await cmd.ExecuteNonQueryAsync();
         }
 

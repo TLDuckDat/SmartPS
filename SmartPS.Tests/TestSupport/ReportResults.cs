@@ -22,7 +22,7 @@ public static class ReportResults
     public static KpiComparison Cmp(decimal current, decimal? previous, decimal? change, KpiTrend trend)
         => new(current, previous, change, trend);
 
-    public static ReportKpis SampleKpis(KpiComparison? checkIns = null, decimal netRevenue = SampleNetRevenue, bool zoneFiltered = false)
+    public static ReportKpis SampleKpis(KpiComparison? checkIns = null, decimal netRevenue = SampleNetRevenue)
         => new(
             CheckIns: checkIns ?? Cmp(SampleCheckIns, 12, 25m, KpiTrend.Up),
             CheckOuts: Cmp(SampleCheckOuts, 14, 0m, KpiTrend.Flat),
@@ -40,9 +40,7 @@ public static class ReportResults
             AverageOccupancyPercent: Cmp(22.5m, 20m, 12.5m, KpiTrend.Up),
             PeakOccupancyPercent: Cmp(60m, 50m, 20m, KpiTrend.Up),
             ResidentSharePercent: Cmp(26.7m, 25m, 6.8m, KpiTrend.Up),
-            VisitorSharePercent: 73.3m,
-            MonthlyTicketRevenue: zoneFiltered ? null : Cmp(420_000m, 300_000m, 40m, KpiTrend.Up),
-            MonthlyTicketSales: zoneFiltered ? null : new MonthlyTicketSales(120_000m, 1, 300_000m, 1));
+            VisitorSharePercent: 73.3m);
 
     public static IReadOnlyList<DailyReportRow> SampleDaily() => new[]
     {
@@ -120,8 +118,7 @@ public static class ReportResults
             FreeCheckOuts: zero, AverageDurationMinutes: null,
             PeakHour: null, PreviousPeakHour: null,
             AverageOccupancyPercent: null, PeakOccupancyPercent: null,
-            ResidentSharePercent: null, VisitorSharePercent: null,
-            MonthlyTicketRevenue: zero, MonthlyTicketSales: MonthlyTicketSales.Empty);
+            ResidentSharePercent: null, VisitorSharePercent: null);
         return new ReportResult(
             Filter: new ReportFilter(r),
             PreviousRange: ReportPeriodCalculator.PreviousOf(r),

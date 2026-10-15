@@ -1,15 +1,15 @@
 using Microsoft.Extensions.DependencyInjection;
 using SmartPS.Models.Parking;
 using SmartPS.Models.Shifts;
-using SmartPS.Services.Customers;
 using SmartPS.Services.RolePermissions;
 
 namespace SmartPS.Tests.Integration;
 
 /// <summary>
-/// R1 / R2 / R4 / R6 against PostgreSQL: AC-1, AC-2, AC-3, AC-4, AC-5, AC-6, E1, E2, E3, E4, spec §6.1 (monthly-ticket
-/// revenue from MonthlyTicketPurchases, M2 / M2b), occupancy, Report.View / Report.Export guards. Every test uses its own
-/// 2031 date window so tests in this class never see each other's sessions or transactions.
+/// R1 / R2 / R4 / R6 against PostgreSQL: AC-1, AC-2, AC-3, AC-4, AC-5, AC-6, E1, E2, E3, E4, occupancy,
+/// Report.View / Report.Export guards. Customer groups follow the household model (Resident = CustomerType.Resident;
+/// MonthlyPass = External + IsMonthlyPass; Visitor = External without pass). Monthly-ticket revenue is hidden (D5).
+/// Every test uses its own 2031 date window so tests in this class never see each other's sessions or transactions.
 /// </summary>
 [Collection(PostgresCollection.Name)]
 [Trait("Category", "Integration")]
@@ -20,13 +20,13 @@ public class ReportServiceTests : IClassFixture<PostgresDatabaseFixture>
 
     private readonly PostgresDatabaseFixture _db;
     private readonly ReportSeed _seed;
-    private readonly ResidentVisitorData _data;
+    private readonly GateTestData _data;
 
     public ReportServiceTests(PostgresDatabaseFixture db)
     {
         _db = db;
         _seed = new ReportSeed(db);
-        _data = new ResidentVisitorData(db);
+        _data = new GateTestData(db);
     }
 
     private static DateTime Utc(int y, int mo, int d, int h, int mi = 0) => new(y, mo, d, h, mi, 0, DateTimeKind.Utc);
@@ -178,11 +178,13 @@ public class ReportServiceTests : IClassFixture<PostgresDatabaseFixture>
         await _seed.PaidSessionAsync(In(7), In(8), 10_000m, customerType: CustomerType.Resident, isMonthlyPass: true, plate: residentPlates[0]);
         await _seed.PaidSessionAsync(In(9), In(10), 10_000m, customerType: CustomerType.Resident, isMonthlyPass: false, plate: residentPlates[1]);
         await _seed.SessionAsync(In(11), customerType: CustomerType.Resident, isMonthlyPass: true, slotId: zone.SlotIds[0], plate: residentPlates[2]);
-        await _seed.PaidSessionAsync(In(7), In(8), 10_000m, customerType: CustomerType.Regular, isMonthlyPass: true);
-        await _seed.PaidSessionAsync(In(8), In(9), 10_000m, customerType: CustomerType.Loyal, isMonthlyPass: true);
+        // non-resident ticket holders (External + IsMonthlyPass)
+        await _seed.PaidSessionAsync(In(7), In(8), 10_000m, customerType: CustomerType.External, isMonthlyPass: true);
+        await _seed.PaidSessionAsync(In(8), In(9), 10_000m, customerType: CustomerType.External, isMonthlyPass: true);
+        // visitors (External, no pass); the default CustomerType of the seed is External
         await _seed.PaidSessionAsync(In(7), In(9), 10_000m);
-        await _seed.PaidSessionAsync(In(8), In(10), 10_000m, customerType: CustomerType.VIP);
-        await _seed.PaidSessionAsync(In(9), In(12), 10_000m, customerType: CustomerType.Loyal);
+        await _seed.PaidSessionAsync(In(8), In(10), 10_000m, customerType: CustomerType.External);
+        await _seed.PaidSessionAsync(In(9), In(12), 10_000m, customerType: CustomerType.External, isMonthlyPass: false);
         await _seed.SessionAsync(In(12), slotId: zone.SlotIds[1]);
         await _seed.FinancialAsync(FinancialTransactionType.Adjustment, PaymentMethod.Cash, 7_000m, In(15));
 
@@ -244,8 +246,6 @@ public class ReportServiceTests : IClassFixture<PostgresDatabaseFixture>
         Assert.Equal(0, byType.VehicleTypes.Where(v => v.VehicleTypeId != isolated).Sum(v => v.CheckIns));
         Assert.Equal(1m, byZone.Kpis.CheckIns.Current);
         Assert.Equal(12_000m, byZone.Kpis.NetRevenue.Current);
-        Assert.Null(byZone.Kpis.MonthlyTicketRevenue);
-        Assert.Null(byZone.Kpis.MonthlyTicketSales);
     }
 
     // ---- AC-5 ------------------------------------------------------------------------------------------------------
@@ -336,82 +336,6 @@ public class ReportServiceTests : IClassFixture<PostgresDatabaseFixture>
         Assert.Equal(-40_000m, refundPeriod.Kpis.RefundTotal);
         Assert.Equal(0m, refundPeriod.Kpis.CashRevenue.Current);
         Assert.Equal(-40_000m, refundPeriod.Daily.Single(d => d.DayVn == new DateOnly(2031, 9, 20)).NetRevenue);
-    }
-
-    // ---- spec §6.1: monthly-ticket revenue (M2 / M2b) --------------------------------------------------------------
-
-    [Fact]
-    public async Task M2_MonthlyTickets_create_and_renew_by_purchase_time()
-    {
-        _db.RequireAvailable();
-        var (sp, service) = await AdminAsync();
-        using var spScope = sp;
-        var moto = await _seed.MotorbikeTypeIdAsync();
-        // Resident T1: Create in June (previous window), Renew in July (current window)
-        await _seed.CreateTicketWithPurchasesAsync(isResident: true, moto,
-            (TicketPurchaseKind.Create, 300_000m, Utc(2031, 6, 15, 3)),
-            (TicketPurchaseKind.Renew, 300_000m, Utc(2031, 7, 10, 3)));
-        // Non-resident T2: Create at 2031-06-30T17:30Z = 00:30 VN on 01/07 (inside July by the VN boundary)
-        await _seed.CreateTicketWithPurchasesAsync(isResident: false, moto,
-            (TicketPurchaseKind.Create, 120_000m, Utc(2031, 6, 30, 17, 30)));
-        var july = (From: new DateOnly(2031, 7, 1), To: new DateOnly(2031, 7, 31));
-
-        var all = await service.GetReportAsync(Filter(july.From, july.To));
-        var residents = await service.GetReportAsync(Filter(july.From, july.To, ReportCustomerGroup.Resident));
-        var monthly = await service.GetReportAsync(Filter(july.From, july.To, ReportCustomerGroup.MonthlyPass));
-        var visitors = await service.GetReportAsync(Filter(july.From, july.To, ReportCustomerGroup.Visitor));
-        var cars = await service.GetReportAsync(Filter(july.From, july.To, vehicleTypeId: await _seed.CarTypeIdAsync()));
-        var zoned = await service.GetReportAsync(Filter(july.From, july.To, zoneId: await _data.ZoneIdAsync("ZONE_A")));
-
-        var sales = all.Kpis.MonthlyTicketSales!;
-        Assert.Equal(120_000m, sales.NewRevenue);
-        Assert.Equal(1, sales.NewCount);
-        Assert.Equal(300_000m, sales.RenewRevenue);
-        Assert.Equal(1, sales.RenewCount);
-        Assert.Equal(420_000m, all.Kpis.MonthlyTicketRevenue!.Current);
-        Assert.Equal(300_000m, all.Kpis.MonthlyTicketRevenue.Previous);
-        Assert.Equal(40m, all.Kpis.MonthlyTicketRevenue.ChangePercent);
-        Assert.Equal(0m, all.Kpis.NetRevenue.Current); // ticket purchases are not FinancialTransactions
-
-        Assert.Equal(300_000m, residents.Kpis.MonthlyTicketRevenue!.Current);
-        Assert.Equal(0, residents.Kpis.MonthlyTicketSales!.NewCount);
-        Assert.Equal(1, residents.Kpis.MonthlyTicketSales.RenewCount);
-        Assert.Equal(120_000m, monthly.Kpis.MonthlyTicketRevenue!.Current);
-        Assert.Equal(1, monthly.Kpis.MonthlyTicketSales!.NewCount);
-        Assert.Equal(0m, visitors.Kpis.MonthlyTicketRevenue!.Current);
-        Assert.Equal(0, visitors.Kpis.MonthlyTicketSales!.TotalCount);
-        Assert.Equal(0m, cars.Kpis.MonthlyTicketRevenue!.Current);
-        Assert.Null(zoned.Kpis.MonthlyTicketRevenue);
-        Assert.Null(zoned.Kpis.MonthlyTicketSales);
-    }
-
-    [Fact]
-    public async Task M2b_MonthlyTickets_through_Task1_service()
-    {
-        _db.RequireAvailable();
-        var manager = await TestUsers.CreateAsync(_db.Factory, "Manager"); // Customer.Manage + Report.View
-        using var sp = IntegrationServices.Create(_db);
-        await sp.LoginAsync(manager.Username);
-        var moto = await _seed.MotorbikeTypeIdAsync();
-        var planId = await _data.PlanIdAsync("Gói Xe Máy 1 Tháng");
-        var subscriber = await _data.CreateSubscriberAsync(moto, isResident: true, withTicket: false);
-        var tickets = sp.GetRequiredService<IMonthlyTicketService>();
-
-        var created = await tickets.CreateTicketAsync(new CreateTicketRequest(subscriber.CustomerId, subscriber.Plate, planId));
-        Assert.True(created.Success, $"{created.Error}: {created.Message}");
-        var renewed = await tickets.RenewTicketAsync(created.Value, planId);
-        Assert.True(renewed.Success, $"{renewed.Error}: {renewed.Message}");
-
-        var planPrice = await _db.ScalarAsync<decimal>("SELECT \"TotalPrice\" FROM \"MonthlyTicketPlans\" WHERE \"PlanId\" = @p", ("p", planId));
-        var today = ReportPeriodCalculator.TodayVn(DateTime.UtcNow);
-        var service = sp.GetRequiredService<IReportService>();
-
-        var report = await service.GetReportAsync(new ReportFilter(new ReportDateRange(today, today), Preset: ReportPeriodPreset.Today));
-
-        var sales = report.Kpis.MonthlyTicketSales!;
-        Assert.True(sales.NewCount >= 1, $"NewCount = {sales.NewCount}");
-        Assert.True(sales.RenewCount >= 1, $"RenewCount = {sales.RenewCount}");
-        Assert.True(sales.RenewRevenue >= planPrice, $"RenewRevenue {sales.RenewRevenue} < plan price {planPrice}");
     }
 
     // ---- occupancy -------------------------------------------------------------------------------------------------
@@ -591,6 +515,5 @@ public class ReportServiceTests : IClassFixture<PostgresDatabaseFixture>
         Assert.False(ReportChartMapper.CustomerGroups(report).HasData);
         Assert.False(ReportChartMapper.VehicleTypeMix(report).HasData);
         Assert.Equal(await _db.ScalarAsync<long>("SELECT count(*) FROM \"VehicleTypes\""), report.VehicleTypes.Count);
-        Assert.Equal(0m, report.Kpis.MonthlyTicketRevenue!.Current);
     }
 }

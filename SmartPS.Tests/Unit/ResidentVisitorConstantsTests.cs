@@ -54,7 +54,9 @@ public class ResidentVisitorConstantsTests
 
         Assert.True(start > 0);
         Assert.Equal(ResidentVisitorAuditActions.All, all.Skip(start).Take(2));
-        Assert.Equal(19, all.Count);
+        // Task 2's 17 + the 2 gate actions + REPORT_EXPORT (reporting, declared last)
+        Assert.Equal(20, all.Count);
+        Assert.Equal(AuditActions.ReportExport, all[^1]);
     }
 
     [Theory]

@@ -186,7 +186,7 @@ public class ReportWorkbookWriterTests
     }
 
     [Fact]
-    public void Overview_sheet_has_period_kpis_monthly_new_and_renew_and_top_plates()
+    public void Overview_sheet_has_period_kpis_and_top_plates_and_no_monthly_ticket_rows()
     {
         var (wb, _) = Write(ReportResults.Sample(), ReportResults.Sessions());
         var sheet = wb.Worksheet(ReportSheetNames.Overview);
@@ -196,12 +196,12 @@ public class ReportWorkbookWriterTests
         Assert.Contains(cells, c => c.GetString().Contains("Str_Rpt_Xlsx_PreviousPeriod", StringComparison.Ordinal));
         Assert.Contains(cells, c => c.GetString() == "Str_Rpt_Kpi_NetRevenue");
 
-        Assert.Contains(cells, c => c.GetString() == "Str_Rpt_Kpi_MonthlyTicketNew");
-        Assert.Contains(cells, c => c.GetString() == "Str_Rpt_Kpi_MonthlyTicketRenew");
-        var newRow = cells.First(c => c.GetString() == "Str_Rpt_Kpi_MonthlyTicketNew").WorksheetRow();
-        var renewRow = cells.First(c => c.GetString() == "Str_Rpt_Kpi_MonthlyTicketRenew").WorksheetRow();
-        Assert.Contains(newRow.CellsUsed(), c => c.DataType == XLDataType.Number && c.GetValue<decimal>() == 120_000m);
-        Assert.Contains(renewRow.CellsUsed(), c => c.DataType == XLDataType.Number && c.GetValue<decimal>() == 300_000m);
+        Assert.Contains(cells, c => c.GetString() == "Str_Rpt_Kpi_ResidentShare");
+        // D5: no monthly-ticket revenue / new / renewed rows on any sheet
+        foreach (var ws in wb.Worksheets)
+        {
+            Assert.DoesNotContain(AllCells(ws), c => c.GetString().Contains("MonthlyTicket", StringComparison.Ordinal));
+        }
 
         Assert.Contains(cells, c => c.GetString() == "29A-123.45");
     }

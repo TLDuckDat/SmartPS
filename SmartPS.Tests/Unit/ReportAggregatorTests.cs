@@ -5,7 +5,7 @@ namespace SmartPS.Tests.Unit;
 
 /// <summary>
 /// N2 / R2 / R4 metric rules over aggregate rows: VN day bucketing (AC-1, E2), revenue from FinancialTransaction (AC-3),
-/// zero-filled days and hours, resident share, KPI comparison (AC-5, E5) and monthly-ticket sales (spec §6.1).
+/// zero-filled days and hours, resident share and KPI comparison (AC-5, E5). Monthly-ticket sales are hidden (D5).
 /// </summary>
 public class ReportAggregatorTests
 {
@@ -21,10 +21,9 @@ public class ReportAggregatorTests
         IReadOnlyList<FinancialDayBucket>? financials = null,
         IReadOnlyList<GroupVehicleCount>? groups = null,
         int initialOccupancy = 0,
-        int capacity = 10,
-        MonthlyTicketSales? tickets = null)
+        int capacity = 10)
         => new(range, hours ?? Array.Empty<HourBucket>(), financials ?? Array.Empty<FinancialDayBucket>(),
-            groups ?? Array.Empty<GroupVehicleCount>(), initialOccupancy, capacity, tickets);
+            groups ?? Array.Empty<GroupVehicleCount>(), initialOccupancy, capacity);
 
     private static HourBucket Hour(DateTime hourUtc, int checkIns = 0, int checkOuts = 0, int free = 0, double durationSeconds = 0)
         => new(hourUtc, checkIns, checkOuts, free, durationSeconds);
@@ -32,9 +31,9 @@ public class ReportAggregatorTests
     private static FinancialDayBucket Ft(DateOnly day, FinancialTransactionType type, PaymentMethod method, decimal amount)
         => new(day, type, method, amount);
 
-    private static PeriodSummary Summary(int checkIns = 0, decimal net = 0m, MonthlyTicketSales? tickets = null, int? peakHour = null)
+    private static PeriodSummary Summary(int checkIns = 0, decimal net = 0m, int? peakHour = null)
         => new(checkIns, 0, 0, null, net, 0m, 0m, 0m, 0m, 0m, peakHour,
-            new OccupancyStats(null, null, 0, null, 0), new CustomerGroupBreakdown(0, 0, 0), null, tickets);
+            new OccupancyStats(null, null, 0, null, 0), new CustomerGroupBreakdown(0, 0, 0), null);
 
     [Fact]
     public void AC1_hour_16Z_is_VN_hour_23_of_the_same_VN_day()
@@ -264,50 +263,6 @@ public class ReportAggregatorTests
         Assert.Equal(KpiTrend.None, kpis.CheckIns.Trend);
         Assert.Null(kpis.NetRevenue.ChangePercent);
         Assert.Equal("—", ReportFormat.Change(kpis.CheckIns));
-    }
-
-    [Fact]
-    public void Monthly_ticket_sales_split_and_total_comparison()
-    {
-        var current = new MonthlyTicketSales(120_000m, 1, 300_000m, 1);
-        var previous = new MonthlyTicketSales(300_000m, 1, 0m, 0);
-
-        var kpis = ReportAggregator.BuildKpis(Summary(tickets: current), Summary(tickets: previous), 0);
-
-        Assert.NotNull(kpis.MonthlyTicketRevenue);
-        Assert.Equal(420_000m, kpis.MonthlyTicketRevenue!.Current);
-        Assert.Equal(300_000m, kpis.MonthlyTicketRevenue.Previous);
-        Assert.Equal(40m, kpis.MonthlyTicketRevenue.ChangePercent);
-        Assert.Equal(current, kpis.MonthlyTicketSales);
-    }
-
-    [Fact]
-    public void Monthly_ticket_sales_null_passes_through_as_null()
-    {
-        var kpis = ReportAggregator.BuildKpis(Summary(tickets: null), Summary(tickets: null), 0);
-
-        Assert.Null(kpis.MonthlyTicketRevenue);
-        Assert.Null(kpis.MonthlyTicketSales);
-    }
-
-    [Fact]
-    public void Summarize_carries_monthly_ticket_sales_from_raw_data()
-    {
-        var sales = new MonthlyTicketSales(1m, 1, 2m, 2);
-
-        Assert.Equal(sales, ReportAggregator.Summarize(Raw(Days(1), tickets: sales), Now).MonthlyTickets);
-        Assert.Null(ReportAggregator.Summarize(Raw(Days(1), tickets: null), Now).MonthlyTickets);
-    }
-
-    [Fact]
-    public void MonthlyTicketSales_totals_and_empty()
-    {
-        var sales = new MonthlyTicketSales(120_000m, 1, 300_000m, 2);
-
-        Assert.Equal(420_000m, sales.TotalRevenue);
-        Assert.Equal(3, sales.TotalCount);
-        Assert.Equal(0m, MonthlyTicketSales.Empty.TotalRevenue);
-        Assert.Equal(0, MonthlyTicketSales.Empty.TotalCount);
     }
 
     [Fact]

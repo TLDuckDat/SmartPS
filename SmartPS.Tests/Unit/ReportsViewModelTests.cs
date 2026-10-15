@@ -237,7 +237,7 @@ public class ReportsViewModelTests
     }
 
     [Fact]
-    public async Task Fourteen_kpi_tiles_in_the_plan_order_with_comparison_text()
+    public async Task Thirteen_kpi_tiles_in_the_plan_order_with_comparison_text_and_no_monthly_ticket_tile()
     {
         var h = Create(TestUsers.Manager());
         h.Reports.ResultFactory = f => ReportResults.Sample(ReportResults.Cmp(120, 100, 20m, KpiTrend.Up), f);
@@ -249,8 +249,10 @@ public class ReportsViewModelTests
             "Str_Rpt_Kpi_CheckIns", "Str_Rpt_Kpi_CheckOuts", "Str_Rpt_Kpi_InLotNow", "Str_Rpt_Kpi_NetRevenue",
             "Str_Rpt_Kpi_Cash", "Str_Rpt_Kpi_VietQr", "Str_Rpt_Kpi_Card", "Str_Rpt_Kpi_FreeCheckOuts",
             "Str_Rpt_Kpi_AvgDuration", "Str_Rpt_Kpi_PeakHour", "Str_Rpt_Kpi_AvgOccupancy", "Str_Rpt_Kpi_PeakOccupancy",
-            "Str_Rpt_Kpi_ResidentShare", "Str_Rpt_Kpi_MonthlyTicketRevenue"
+            "Str_Rpt_Kpi_ResidentShare"
         }, h.Vm.KpiTiles.Select(t => t.TitleKey).ToArray());
+        // D5: the monthly-ticket revenue tile is hidden
+        Assert.DoesNotContain(h.Vm.KpiTiles, t => t.TitleKey.Contains("MonthlyTicket", StringComparison.Ordinal));
 
         KpiTileViewModel Tile(string key) => h.Vm.KpiTiles.Single(t => t.TitleKey == key);
         Assert.Equal("▲20%", Tile("Str_Rpt_Kpi_CheckIns").ChangeText);
@@ -259,7 +261,6 @@ public class ReportsViewModelTests
         Assert.Equal("▼12,5%", Tile("Str_Rpt_Kpi_Cash").ChangeText);
         Assert.Equal("—", Tile("Str_Rpt_Kpi_VietQr").ChangeText);
         Assert.Equal(ReportFormat.HourRange(8), Tile("Str_Rpt_Kpi_PeakHour").ValueText);
-        Assert.Equal("420.000 ₫", Tile("Str_Rpt_Kpi_MonthlyTicketRevenue").ValueText);
         Assert.Equal("Str_Rpt_Kpi_CheckIns", Tile("Str_Rpt_Kpi_CheckIns").Title);
     }
 
@@ -306,7 +307,7 @@ public class ReportsViewModelTests
         Assert.False(h.Vm.CustomerGroupHasData);
         Assert.False(h.Vm.ZoneHasData);
         Assert.False(h.Vm.VehicleTypeHasData);
-        Assert.Equal(14, h.Vm.KpiTiles.Count);
+        Assert.Equal(13, h.Vm.KpiTiles.Count);
         Assert.False(h.Vm.HasError);
     }
 
