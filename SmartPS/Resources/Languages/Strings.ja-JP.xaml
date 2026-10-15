@@ -485,10 +485,6 @@
     <sys:String x:Key="Str_Rpt_Kpi_AvgOccupancy">平均稼働率</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_PeakOccupancy">最大稼働率</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_ResidentShare">住民の割合</sys:String>
-    <sys:String x:Key="Str_Rpt_Kpi_MonthlyTicketRevenue">月極売上</sys:String>
-    <sys:String x:Key="Str_Rpt_Kpi_MonthlyTicketSplit">新規 {0} ({1}) · 更新 {2} ({3})</sys:String>
-    <sys:String x:Key="Str_Rpt_Kpi_MonthlyTicketNew">新規月極</sys:String>
-    <sys:String x:Key="Str_Rpt_Kpi_MonthlyTicketRenew">更新月極</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_RefundAdjustment">返金 {0} · 調整 {1}</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_PreviousPeakHour">前期間: {0}</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_ResidentVisitorSplit">住民 {0} · 来訪者 {1}</sys:String>

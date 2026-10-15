@@ -119,15 +119,4 @@ internal static class ReportSql
         SessionFrom +
         "WHERE s.\"CheckInTime\" >= @from AND s.\"CheckInTime\" < @to AND " + SessionFilter + " " +
         "GROUP BY 1 ORDER BY 3 DESC, 1 ASC LIMIT " + ReportLimits.TopPlateCount.ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-    /// <summary>Q12: monthly-ticket purchases created or renewed in the period, by kind.</summary>
-    public const string MonthlyTicketSalesByKind =
-        "SELECT p.\"Kind\" AS \"Kind\", COALESCE(SUM(p.\"Price\"), 0) AS \"Amount\", COUNT(*)::int AS \"Count\" " +
-        "FROM \"MonthlyTicketPurchases\" p " +
-        "JOIN \"MonthlyTickets\" t ON t.\"TicketId\" = p.\"TicketId\" " +
-        "JOIN \"Customers\" c ON c.\"CustomerId\" = t.\"CustomerId\" " +
-        "WHERE p.\"CreatedAtUtc\" >= @from AND p.\"CreatedAtUtc\" < @to " +
-        "AND (@vt IS NULL OR t.\"VehicleTypeId\" = @vt) " +
-        "AND (@grp = 0 OR (@grp = 1 AND c.\"IsResident\") OR (@grp = 2 AND NOT c.\"IsResident\")) " +
-        "GROUP BY p.\"Kind\"";
 }

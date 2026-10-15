@@ -88,12 +88,3 @@ internal sealed class TopPlateSqlRow
 
     public DateTime LastCheckIn { get; set; }
 }
-
-internal sealed class TicketKindRow
-{
-    public int Kind { get; set; }
-
-    public decimal Amount { get; set; }
-
-    public int Count { get; set; }
-}

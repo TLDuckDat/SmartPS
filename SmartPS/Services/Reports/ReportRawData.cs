@@ -23,8 +23,7 @@ public sealed record PeriodRawData(
     IReadOnlyList<FinancialDayBucket> Financials,
     IReadOnlyList<GroupVehicleCount> GroupVehicleCounts,
     int InitialOccupancy,
-    int Capacity,
-    MonthlyTicketSales? MonthlyTickets);
+    int Capacity);
 
 public sealed record PeriodSummary(
     int CheckIns,
@@ -40,5 +39,4 @@ public sealed record PeriodSummary(
     int? PeakHour,
     OccupancyStats Occupancy,
     CustomerGroupBreakdown Groups,
-    decimal? ResidentSharePercent,
-    MonthlyTicketSales? MonthlyTickets);
+    decimal? ResidentSharePercent);

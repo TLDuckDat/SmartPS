@@ -52,8 +52,7 @@ public static class ReportAggregator
             PeakHourCalculator.FindPeakHour(byHour),
             OccupancyCalculator.Compute(data.InitialOccupancy, data.Hours, start, end, nowUtc, data.Capacity),
             groups,
-            share is null ? null : Math.Round(share.Value, 1, MidpointRounding.AwayFromZero),
-            data.MonthlyTickets);
+            share is null ? null : Math.Round(share.Value, 1, MidpointRounding.AwayFromZero));
     }
 
     public static IReadOnlyList<DailyReportRow> BuildDaily(PeriodRawData data)
@@ -119,7 +118,6 @@ public static class ReportAggregator
         ArgumentNullException.ThrowIfNull(previous);
 
         var residentShare = ReportMath.Compare(current.ResidentSharePercent, previous.ResidentSharePercent);
-        var currentTickets = current.MonthlyTickets;
 
         return new ReportKpis(
             CheckIns: ReportMath.Compare(current.CheckIns, previous.CheckIns),
@@ -138,11 +136,7 @@ public static class ReportAggregator
             AverageOccupancyPercent: ReportMath.Compare(ToDecimal(current.Occupancy.AveragePercent), ToDecimal(previous.Occupancy.AveragePercent)),
             PeakOccupancyPercent: ReportMath.Compare(ToDecimal(current.Occupancy.PeakPercent), ToDecimal(previous.Occupancy.PeakPercent)),
             ResidentSharePercent: residentShare,
-            VisitorSharePercent: current.ResidentSharePercent is null ? null : 100m - current.ResidentSharePercent.Value,
-            MonthlyTicketRevenue: currentTickets is null
-                ? null
-                : ReportMath.Compare(currentTickets.TotalRevenue, previous.MonthlyTickets?.TotalRevenue),
-            MonthlyTicketSales: currentTickets);
+            VisitorSharePercent: current.ResidentSharePercent is null ? null : 100m - current.ResidentSharePercent.Value);
     }
 
     public static IReadOnlyList<VehicleTypeReportRow> BuildVehicleTypes(

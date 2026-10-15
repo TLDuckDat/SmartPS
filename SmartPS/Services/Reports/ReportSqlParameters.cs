@@ -28,9 +28,7 @@ internal static class ReportSqlParameters
             Integer("fee", (int)FinancialTransactionType.ParkingFee),
             Integer("refund", (int)FinancialTransactionType.Refund),
             Integer("adjust", (int)FinancialTransactionType.Adjustment),
-            new NpgsqlParameter("sessionFiltered", NpgsqlDbType.Boolean) { Value = filter.HasSessionFilter },
-            Integer("kindCreate", (int)TicketPurchaseKind.Create),
-            Integer("kindRenew", (int)TicketPurchaseKind.Renew)
+            new NpgsqlParameter("sessionFiltered", NpgsqlDbType.Boolean) { Value = filter.HasSessionFilter }
         };
     }
 

@@ -264,7 +264,6 @@ public sealed class ReportService : IReportService
         var groups = await QueryAsync<TypeGroupRow>(db, ReportSql.CheckInsByTypeAndGroup, fromUtc, toUtc, filter, ct);
         var money = await QueryAsync<FinancialDayRow>(db, ReportSql.FinancialsByDay, fromUtc, toUtc, filter, ct);
         var initial = await ScalarAsync(db, ReportSql.InitialOccupancy, fromUtc, toUtc, filter, ct);
-        var tickets = await MonthlyTicketRevenueQuery.ExecuteAsync(db, fromUtc, toUtc, filter, ct);
 
         var hours = new Dictionary<DateTime, HourBucket>();
         foreach (var row in ins)
@@ -287,8 +286,7 @@ public sealed class ReportService : IReportService
             money.Select(m => new FinancialDayBucket(m.DayVn, (FinancialTransactionType)m.Type, (PaymentMethod)m.Method, m.Amount)).ToList(),
             groups.Select(g => new GroupVehicleCount(g.VehicleTypeId, (ReportCustomerGroup)g.Group, g.Count)).ToList(),
             initial,
-            capacity,
-            tickets);
+            capacity);
     }
 
     private static async Task<List<ShiftReportRow>> LoadShiftsAsync(SmartPsDbContext db, DateTime fromUtc, DateTime toUtc, CancellationToken ct)

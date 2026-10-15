@@ -485,10 +485,6 @@
     <sys:String x:Key="Str_Rpt_Kpi_AvgOccupancy">Average occupancy</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_PeakOccupancy">Peak occupancy</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_ResidentShare">Resident share</sys:String>
-    <sys:String x:Key="Str_Rpt_Kpi_MonthlyTicketRevenue">Monthly ticket revenue</sys:String>
-    <sys:String x:Key="Str_Rpt_Kpi_MonthlyTicketSplit">New {0} ({1}) · Renewed {2} ({3})</sys:String>
-    <sys:String x:Key="Str_Rpt_Kpi_MonthlyTicketNew">New monthly tickets</sys:String>
-    <sys:String x:Key="Str_Rpt_Kpi_MonthlyTicketRenew">Renewed monthly tickets</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_RefundAdjustment">Refunds {0} · Adjustments {1}</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_PreviousPeakHour">Previous: {0}</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_ResidentVisitorSplit">Residents {0} · Guests {1}</sys:String>

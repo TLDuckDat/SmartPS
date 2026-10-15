@@ -16,6 +16,5 @@ public sealed record ReportResult(
     /// <summary>False when the period has no traffic and no money movement; "in the lot now" is a live figure and does not count.</summary>
     public bool HasActivity =>
         Daily.Any(d => d.CheckIns != 0 || d.CheckOuts != 0 || d.NetRevenue != 0m || d.RefundTotal != 0m || d.AdjustmentTotal != 0m)
-        || Kpis.CheckIns.Current != 0m || Kpis.CheckOuts.Current != 0m || Kpis.NetRevenue.Current != 0m
-        || (Kpis.MonthlyTicketRevenue?.Current ?? 0m) != 0m;
+        || Kpis.CheckIns.Current != 0m || Kpis.CheckOuts.Current != 0m || Kpis.NetRevenue.Current != 0m;
 }

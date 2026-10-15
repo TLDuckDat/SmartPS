@@ -96,9 +96,6 @@ public sealed class ReportWorkbookWriter
         row = KpiRow(ws, row, ReportTextKeys.KpiAvgOccupancy, kpis.AverageOccupancyPercent, OneDecimal);
         row = KpiRow(ws, row, ReportTextKeys.KpiPeakOccupancy, kpis.PeakOccupancyPercent, OneDecimal);
         row = KpiRow(ws, row, ReportTextKeys.KpiResidentShare, kpis.ResidentSharePercent, OneDecimal);
-        row = KpiRow(ws, row, ReportTextKeys.KpiMonthlyTicketRevenue, kpis.MonthlyTicketRevenue, MoneyFormat);
-        row = SingleRow(ws, row, ReportTextKeys.KpiMonthlyTicketNew, kpis.MonthlyTicketSales?.NewRevenue, MoneyFormat);
-        row = SingleRow(ws, row, ReportTextKeys.KpiMonthlyTicketRenew, kpis.MonthlyTicketSales?.RenewRevenue, MoneyFormat);
 
         row++;
         ws.Cell(row, 1).Value = _labels[ReportTextKeys.XlsxTopPlates];

@@ -18,7 +18,7 @@ public class ReportsViewModel : ViewModelBase
         ReportTextKeys.KpiCheckIns, ReportTextKeys.KpiCheckOuts, ReportTextKeys.KpiInLotNow, ReportTextKeys.KpiNetRevenue,
         ReportTextKeys.KpiCash, ReportTextKeys.KpiVietQr, ReportTextKeys.KpiCard, ReportTextKeys.KpiFreeCheckOuts,
         ReportTextKeys.KpiAvgDuration, ReportTextKeys.KpiPeakHour, ReportTextKeys.KpiAvgOccupancy, ReportTextKeys.KpiPeakOccupancy,
-        ReportTextKeys.KpiResidentShare, ReportTextKeys.KpiMonthlyTicketRevenue
+        ReportTextKeys.KpiResidentShare
     };
 
     private readonly IReportService _reportService;
@@ -614,18 +614,6 @@ public class ReportsViewModel : ViewModelBase
                 : Format(ReportTextKeys.KpiResidentVisitorSplit,
                     ReportFormat.Percent(ToDouble(k.ResidentSharePercent)),
                     ReportFormat.Percent(k.VisitorSharePercent is null ? null : (double)k.VisitorSharePercent.Value)));
-
-        if (k.MonthlyTicketRevenue is null || k.MonthlyTicketSales is null)
-        {
-            Set(ReportTextKeys.KpiMonthlyTicketRevenue, ReportFormat.Dash, null, L(ReportTextKeys.KpiNotApplicableZone));
-        }
-        else
-        {
-            var sales = k.MonthlyTicketSales;
-            Set(ReportTextKeys.KpiMonthlyTicketRevenue, ReportFormat.Currency(k.MonthlyTicketRevenue.Current), k.MonthlyTicketRevenue,
-                Format(ReportTextKeys.KpiMonthlyTicketSplit,
-                    ReportFormat.Currency(sales.NewRevenue), sales.NewCount, ReportFormat.Currency(sales.RenewRevenue), sales.RenewCount));
-        }
     }
 
     private void ApplyCharts(ReportResult result)

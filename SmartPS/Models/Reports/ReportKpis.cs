@@ -17,6 +17,4 @@ public sealed record ReportKpis(
     KpiComparison? AverageOccupancyPercent,
     KpiComparison? PeakOccupancyPercent,
     KpiComparison? ResidentSharePercent,
-    decimal? VisitorSharePercent,
-    KpiComparison? MonthlyTicketRevenue,
-    MonthlyTicketSales? MonthlyTicketSales);
+    decimal? VisitorSharePercent);

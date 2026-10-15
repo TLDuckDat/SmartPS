@@ -485,10 +485,6 @@
     <sys:String x:Key="Str_Rpt_Kpi_AvgOccupancy">Lấp đầy trung bình</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_PeakOccupancy">Lấp đầy đỉnh</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_ResidentShare">Tỷ lệ cư dân</sys:String>
-    <sys:String x:Key="Str_Rpt_Kpi_MonthlyTicketRevenue">Doanh thu vé tháng</sys:String>
-    <sys:String x:Key="Str_Rpt_Kpi_MonthlyTicketSplit">Mới {0} ({1}) · Gia hạn {2} ({3})</sys:String>
-    <sys:String x:Key="Str_Rpt_Kpi_MonthlyTicketNew">Vé tháng mới</sys:String>
-    <sys:String x:Key="Str_Rpt_Kpi_MonthlyTicketRenew">Vé tháng gia hạn</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_RefundAdjustment">Hoàn tiền {0} · Điều chỉnh {1}</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_PreviousPeakHour">Kỳ trước: {0}</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_ResidentVisitorSplit">Cư dân {0} · Khách {1}</sys:String>

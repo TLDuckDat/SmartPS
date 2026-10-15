@@ -41,10 +41,6 @@ public static class ReportTextKeys
     public const string KpiAvgOccupancy = "Str_Rpt_Kpi_AvgOccupancy";
     public const string KpiPeakOccupancy = "Str_Rpt_Kpi_PeakOccupancy";
     public const string KpiResidentShare = "Str_Rpt_Kpi_ResidentShare";
-    public const string KpiMonthlyTicketRevenue = "Str_Rpt_Kpi_MonthlyTicketRevenue";
-    public const string KpiMonthlyTicketSplit = "Str_Rpt_Kpi_MonthlyTicketSplit";
-    public const string KpiMonthlyTicketNew = "Str_Rpt_Kpi_MonthlyTicketNew";
-    public const string KpiMonthlyTicketRenew = "Str_Rpt_Kpi_MonthlyTicketRenew";
     public const string KpiRefundAdjustment = "Str_Rpt_Kpi_RefundAdjustment";
     public const string KpiPreviousPeakHour = "Str_Rpt_Kpi_PreviousPeakHour";
     public const string KpiResidentVisitorSplit = "Str_Rpt_Kpi_ResidentVisitorSplit";
@@ -184,10 +180,6 @@ public static class ReportTextKeys
         KpiAvgOccupancy,
         KpiPeakOccupancy,
         KpiResidentShare,
-        KpiMonthlyTicketRevenue,
-        KpiMonthlyTicketSplit,
-        KpiMonthlyTicketNew,
-        KpiMonthlyTicketRenew,
         KpiRefundAdjustment,
         KpiPreviousPeakHour,
         KpiResidentVisitorSplit,
