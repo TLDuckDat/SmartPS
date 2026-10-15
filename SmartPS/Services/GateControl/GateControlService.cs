@@ -10,6 +10,7 @@ using SmartPS.Services.Storage;
 using SmartPS.Services.Shifts;
 using System.IO;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace SmartPS.Services.GateControl;
 
@@ -20,6 +21,7 @@ public class GateControlService : IGateControlService
     private readonly IDbContextFactory<SmartPsDbContext>? _dbContextFactory;
     private readonly IParkingFeeCalculator _feeCalculator;
     private readonly IImageStorageService _imageStorageService;
+    private readonly IPlateOwnershipReader _plateOwnershipReader;
 
     // Đường dẫn tệp lưu trữ ngoại tuyến và nhật ký kiểm toán
     private readonly string _offlineFilePath;
@@ -40,13 +42,15 @@ public class GateControlService : IGateControlService
         IAuditService auditService,
         IDbContextFactory<SmartPsDbContext>? dbContextFactory = null,
         IParkingFeeCalculator? feeCalculator = null,
-        IImageStorageService? imageStorageService = null)
+        IImageStorageService? imageStorageService = null,
+        IPlateOwnershipReader? plateOwnershipReader = null)
     {
         _guard = guard ?? throw new ArgumentNullException(nameof(guard));
         _auditService = auditService ?? throw new ArgumentNullException(nameof(auditService));
         _dbContextFactory = dbContextFactory;
         _feeCalculator = feeCalculator ?? new StandardParkingFeeCalculator();
         _imageStorageService = imageStorageService ?? new ImageStorageService();
+        _plateOwnershipReader = plateOwnershipReader ?? new PlateOwnershipReader();
 
         var storageDir = Path.Combine(AppContext.BaseDirectory, "Storage");
         Directory.CreateDirectory(storageDir);
@@ -70,18 +74,18 @@ public class GateControlService : IGateControlService
         {
             new PricingRule
             {
-                RuleId = 1, VehicleTypeId = 1, FirstBlockMinutes = 120, FirstBlockPrice = 5000,
-                AdditionalPricePerHour = 2000, OvernightPrice = 15000, Description = "Biểu phí xe máy tiêu chuẩn"
+                RuleId = 1, VehicleTypeId = 1, Block4hPrice = 5000,
+                DailyPrice = 25000, Monthly1Price = 100000, Description = "Biểu phí xe máy tiêu chuẩn"
             },
             new PricingRule
             {
-                RuleId = 2, VehicleTypeId = 2, FirstBlockMinutes = 120, FirstBlockPrice = 25000,
-                AdditionalPricePerHour = 10000, OvernightPrice = 70000, Description = "Biểu phí ô tô con tiêu chuẩn"
+                RuleId = 2, VehicleTypeId = 2, Block4hPrice = 25000,
+                DailyPrice = 100000, Monthly1Price = 1200000, Description = "Biểu phí ô tô con tiêu chuẩn"
             },
             new PricingRule
             {
-                RuleId = 3, VehicleTypeId = 3, FirstBlockMinutes = 120, FirstBlockPrice = 40000,
-                AdditionalPricePerHour = 15000, OvernightPrice = 120000, Description = "Biểu phí xe tải tiêu chuẩn"
+                RuleId = 3, VehicleTypeId = 3, Block4hPrice = 2000,
+                DailyPrice = 10000, Monthly1Price = 50000, Description = "Biểu phí xe tải tiêu chuẩn"
             }
         });
 
@@ -98,7 +102,11 @@ public class GateControlService : IGateControlService
         }
     }
 
-    private static string NormalizePlate(string? plate) => LicensePlateNormalizer.Normalize(plate);
+    private static string NormalizePlate(string? plate)
+    {
+        if (string.IsNullOrWhiteSpace(plate)) return string.Empty;
+        return Regex.Replace(plate, @"[^a-zA-Z0-9]", "").ToUpperInvariant();
+    }
 
     private void SaveOfflineSessions()
     {
@@ -173,8 +181,8 @@ public class GateControlService : IGateControlService
                         Status = item.Status,
                         IsMonthlyPass = item.IsMonthlyPass,
                         CustomerId = item.CustomerId,
-                        Customer = !string.IsNullOrEmpty(item.CustomerName) ? new Customer { CustomerId = item.CustomerId ?? 0, FullName = item.CustomerName, Type = item.CustomerType } : null,
-                        CustomerType = item.CustomerType,
+                        Customer = !string.IsNullOrEmpty(item.CustomerName) ? new Customer { CustomerId = item.CustomerId ?? 0, FullName = item.CustomerName, Type = (item.CustomerType == 0 && !item.IsMonthlyPass && item.CustomerId == null) ? CustomerType.External : item.CustomerType } : null,
+                        CustomerType = (item.CustomerType == 0 && !item.IsMonthlyPass && item.CustomerId == null) ? CustomerType.External : item.CustomerType,
                         CreatedByUserId = item.CreatedByUserId,
                         TotalFee = item.TotalFee
                     });
@@ -249,7 +257,7 @@ public class GateControlService : IGateControlService
     public Task<ParkingSlot?> SuggestAvailableSlotAsync(int vehicleTypeId, VehicleCategory category, CancellationToken cancellationToken = default)
         => SuggestAvailableSlotAsync(vehicleTypeId, category, cancellationToken, null);
 
-    /// <summary>Gợi ý ô theo cùng quy tắc cấp ô khi check-in, không khoá hay thay đổi trạng thái ô.</summary>
+    /// <summary>Gợi ý ô theo cùng quy tắc cấp ô khi check-in (theo đối tượng của khu), không khoá hay thay đổi trạng thái ô.</summary>
     private async Task<ParkingSlot?> SuggestAvailableSlotAsync(int vehicleTypeId, VehicleCategory category, CancellationToken cancellationToken, DbProbe? probe)
     {
         if (category == VehicleCategory.Blacklisted) return null;
@@ -293,6 +301,7 @@ public class GateControlService : IGateControlService
         }
     }
 
+    /// <summary>Phân loại xe theo biển số để hiển thị trước khi check-in/check-out; ngoại tuyến hoặc lỗi thì coi là khách vãng lai.</summary>
     public async Task<VehicleClassification> ClassifyVehicleAsync(string licensePlate, CancellationToken cancellationToken = default)
     {
         var norm = NormalizePlate(licensePlate);
@@ -305,51 +314,18 @@ public class GateControlService : IGateControlService
             return VehicleClassification.Visitor(norm);
         }
 
-        return await ClassifyAsync(norm, cancellationToken, null);
-    }
+        if (string.IsNullOrEmpty(norm) || _dbContextFactory == null) return VehicleClassification.Visitor(norm);
 
-    /// <summary>Phân loại theo DB; khi DB lỗi thì quay về bộ nhớ (chế độ ngoại tuyến) và đánh dấu probe.</summary>
-    private sealed class ClassificationFailedException : Exception
-    {
-        public ClassificationFailedException(Exception inner) : base("Classification failed", inner)
+        try
         {
+            await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+            var blacklist = await GateClassificationQueries.FindActiveBlacklistAsync(db, norm, cancellationToken);
+            return await GateClassificationQueries.ClassifyAsync(db, _plateOwnershipReader, blacklist, norm, 0, DateTime.UtcNow, cancellationToken);
         }
-    }
-
-    private async Task<VehicleClassification> ClassifyAsync(string norm, CancellationToken cancellationToken, DbProbe? probe, bool failClosed = false)
-    {
-        if (string.IsNullOrEmpty(norm)) return VehicleClassification.Visitor(norm);
-
-        if (_dbContextFactory != null && probe?.Failed != true)
+        catch (OperationCanceledException) { throw; }
+        catch
         {
-            try
-            {
-                await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
-                return await GateClassificationQueries.ClassifyAsync(db, norm, DateTime.UtcNow, cancellationToken);
-            }
-            catch (OperationCanceledException) { throw; }
-            catch (Exception ex) when (failClosed && !DbConnectionHelper.IsConnectionException(ex))
-            {
-                throw new ClassificationFailedException(ex);
-            }
-            catch { probe?.MarkFailed(); }
-        }
-
-        return ClassifyFromMemory(norm);
-    }
-
-    private VehicleClassification ClassifyFromMemory(string norm)
-    {
-        lock (_syncLock)
-        {
-            var ticket = _memoryMonthlyTickets.FirstOrDefault(t => NormalizePlate(t.RegisteredLicensePlate) == norm && t.IsCurrentlyValid);
-            if (ticket == null) return VehicleClassification.Visitor(norm);
-
-            var candidate = new TicketCandidate(ticket.TicketId, ticket.TicketCode, ticket.CustomerId,
-                ticket.Customer?.FullName ?? string.Empty, true, ticket.Customer?.IsResident ?? false,
-                ticket.Customer?.ApartmentCode, ticket.Customer?.Building, ticket.VehicleTypeId, ticket.Status,
-                ticket.StartDate, ticket.EndDate);
-            return VehicleClassifier.Classify(norm, null, new[] { candidate }, DateTime.UtcNow);
+            return VehicleClassification.Visitor(norm);
         }
     }
 
@@ -367,20 +343,19 @@ public class GateControlService : IGateControlService
             {
                 await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
                 var now = DateTime.UtcNow;
-                var matched = await db.MonthlyTickets
-                    .AsNoTracking()
-                    .Include(t => t.Customer)
-                    .Include(t => t.VehicleType)
-                    .Where(t => t.RegisteredLicensePlate == norm
-                                && t.Status == MonthlyTicketStatus.Active
-                                && t.StartDate <= now
-                                && t.EndDate > now
-                                && t.Customer!.IsActive
-                                && db.CustomerVehicles.Any(v => v.CustomerId == t.CustomerId && v.LicensePlate == t.RegisteredLicensePlate && v.IsActive))
-                    .OrderByDescending(t => t.EndDate)
-                    .ThenByDescending(t => t.TicketId)
-                    .FirstOrDefaultAsync(cancellationToken);
-                if (matched != null) return matched;
+                var ownership = await _plateOwnershipReader.ReadAsync(db, norm, now, cancellationToken);
+                var honoured = VehicleClassifier.Classify(norm, null, ownership, 0, now).Ticket;
+                if (honoured != null)
+                {
+                    var matched = await db.MonthlyTickets
+                        .AsNoTracking()
+                        .Include(t => t.Customer)
+                        .Include(t => t.VehicleType)
+                        .FirstOrDefaultAsync(t => t.TicketId == honoured.TicketId, cancellationToken);
+                    if (matched != null) return matched;
+                }
+
+                return null;
             }
             catch (OperationCanceledException) { throw; }
             catch { probe?.MarkFailed(); }
@@ -390,6 +365,62 @@ public class GateControlService : IGateControlService
         {
             return _memoryMonthlyTickets.FirstOrDefault(t => NormalizePlate(t.RegisteredLicensePlate) == norm && t.IsCurrentlyValid);
         }
+    }
+
+    public Task<Vehicle?> FindVehicleOwnerAsync(string licensePlate, CancellationToken cancellationToken = default)
+        => FindVehicleOwnerAsync(licensePlate, cancellationToken, null);
+
+    private async Task<Vehicle?> FindVehicleOwnerAsync(string licensePlate, CancellationToken cancellationToken, DbProbe? probe)
+    {
+        var norm = NormalizePlate(licensePlate);
+        if (string.IsNullOrEmpty(norm)) return null;
+
+        if (_dbContextFactory != null && probe?.Failed != true)
+        {
+            try
+            {
+                await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+                var vehicles = await db.Vehicles
+                    .Include(v => v.OwnerCustomer)
+                        .ThenInclude(c => c!.Household)
+                    .Include(v => v.VehicleType)
+                    .Where(v => v.IsActive)
+                    .ToListAsync(cancellationToken);
+
+                return vehicles.FirstOrDefault(v => NormalizePlate(v.LicensePlate) == norm);
+            }
+            catch (OperationCanceledException) { throw; }
+            catch { probe?.MarkFailed(); /* Dùng fallback */ }
+        }
+
+        return null;
+    }
+
+    public Task<BlacklistedVehicle?> CheckBlacklistAsync(string licensePlate, CancellationToken cancellationToken = default)
+        => CheckBlacklistAsync(licensePlate, cancellationToken, null);
+
+    private async Task<BlacklistedVehicle?> CheckBlacklistAsync(string licensePlate, CancellationToken cancellationToken, DbProbe? probe)
+    {
+        var norm = NormalizePlate(licensePlate);
+        if (string.IsNullOrEmpty(norm)) return null;
+
+        if (_dbContextFactory != null && probe?.Failed != true)
+        {
+            try
+            {
+                await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+                var blacklists = await db.BlacklistedVehicles
+                    .Include(b => b.Customer)
+                    .Where(b => b.IsActive)
+                    .ToListAsync(cancellationToken);
+
+                return blacklists.FirstOrDefault(b => NormalizePlate(b.LicensePlate) == norm);
+            }
+            catch (OperationCanceledException) { throw; }
+            catch { probe?.MarkFailed(); /* Dùng fallback */ }
+        }
+
+        return null;
     }
 
     /// <summary>Remembers that a database call of the current request failed, so the request can skip further database work.</summary>
@@ -438,60 +469,89 @@ public class GateControlService : IGateControlService
         var cleanPlate = request.LicensePlate.Trim().ToUpperInvariant();
         var normPlate = NormalizePlate(cleanPlate);
 
-        // Kiểm tra xem xe này có đang trong bãi hay chưa (phiên Active trùng biển số)
         var probe = new DbProbe();
-        var activeSessions = await GetActiveSessionsAsync(cancellationToken, probe);
-        if (activeSessions.Any(s => NormalizePlate(s.LicensePlate) == normPlate))
+        VehicleClassification? classified = null;
+
+        if (_dbContextFactory != null)
         {
-            return new GateCheckInResult
+            try
             {
-                Success = false,
-                RejectReason = CheckInRejectReason.AlreadyInside,
-                Message = $"Biển số '{cleanPlate}' hiện đang có phiên gửi xe chưa xuất bãi!"
-            };
+                await using var classifyDb = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+                var nowUtc = DateTime.UtcNow;
+
+                // 1. Danh sách cấm (bảng của nhóm quản lý khách hàng). Lỗi không phải mất kết nối thì từ chối (fail-closed).
+                var blacklist = await GateClassificationQueries.FindActiveBlacklistAsync(classifyDb, normPlate, cancellationToken);
+                if (blacklist != null)
+                {
+                    PlateOwnership? blockedOwner = null;
+                    try
+                    {
+                        blockedOwner = await _plateOwnershipReader.ReadAsync(classifyDb, normPlate, nowUtc, cancellationToken);
+                    }
+                    catch (OperationCanceledException) { throw; }
+                    catch { /* vẫn chặn; chỉ thiếu thông tin vé cho nhật ký */ }
+
+                    var blocked = VehicleClassifier.Classify(normPlate, blacklist, blockedOwner, request.VehicleTypeId, nowUtc);
+                    await _auditService.LogAsync(
+                        GateAuditEntries.BlacklistBlocked(cleanPlate, normPlate, blocked.Ticket != null),
+                        cancellationToken);
+                    return BlacklistedResult(cleanPlate, blacklist);
+                }
+
+                // 2. Xe đang trong bãi (phiên Active trùng biển số đã chuẩn hoá)
+                if (await GateClassificationQueries.HasActiveSessionAsync(classifyDb, normPlate, cancellationToken))
+                {
+                    return RejectedResult(CheckInRejectReason.AlreadyInside, VehicleCategory.Visitor, cleanPlate);
+                }
+
+                // 3. Chủ xe, hộ và vé tháng
+                classified = await GateClassificationQueries.ClassifyAsync(
+                    classifyDb, _plateOwnershipReader, null, normPlate, request.VehicleTypeId, nowUtc, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex) when (DbConnectionHelper.IsConnectionException(ex))
+            {
+                probe.MarkFailed();
+                classified = null;
+            }
+            catch (Exception ex) when (ex is not PermissionDeniedException and not AuditLockHeldException)
+            {
+                // Lỗi không phải mất kết nối: không đoán, không cho vào (tránh bỏ qua danh sách đen)
+                System.Diagnostics.Debug.WriteLine($"[GateControlService Classification Error]: {ex.GetType().Name}");
+                return new GateCheckInResult
+                {
+                    Success = false,
+                    RejectReason = CheckInRejectReason.ClassificationFailed,
+                    Message = "Không thể phân loại xe do lỗi hệ thống. Vui lòng thử lại."
+                };
+            }
         }
 
-        // Phân loại xe (danh sách đen, cư dân, vé tháng, vãng lai) trên DB; lỗi DB thì chuyển sang bộ nhớ.
-        VehicleClassification classification;
-        try
+        if (classified == null)
         {
-            classification = await ClassifyAsync(normPlate, cancellationToken, probe, failClosed: true);
-        }
-        catch (ClassificationFailedException)
-        {
-            // Lỗi không phải mất kết nối: không đoán, không cho vào (tránh bỏ qua danh sách đen)
-            return new GateCheckInResult
+            // Ngoại tuyến: chỉ kiểm tra phiên trong bộ nhớ, coi là khách vãng lai
+            probe.MarkFailed();
+            var memoryActive = await GetActiveSessionsAsync(cancellationToken, probe);
+            if (memoryActive.Any(s => NormalizePlate(s.LicensePlate) == normPlate))
             {
-                Success = false,
-                RejectReason = CheckInRejectReason.ClassificationFailed,
-                Message = "Không thể phân loại xe do lỗi hệ thống. Vui lòng thử lại."
-            };
+                return RejectedResult(CheckInRejectReason.AlreadyInside, VehicleCategory.Visitor, cleanPlate);
+            }
+
+            classified = ClassifyFromMemory(normPlate);
         }
 
+        var classification = classified;
         var dbReachable = _dbContextFactory != null && !probe.Failed;
-
-        // Vé tháng chỉ áp dụng cho đúng loại phương tiện đã đăng ký (G10)
-        var ticketVehicleTypeMismatch = false;
-        if (classification.IsMonthlyPass && request.VehicleTypeId > 0 && classification.Ticket!.VehicleTypeId != request.VehicleTypeId)
-        {
-            ticketVehicleTypeMismatch = true;
-            classification = new VehicleClassification(VehicleCategory.Visitor, classification.NormalizedPlate, null, null,
-                ClassificationWarning.TicketVehicleTypeMismatch);
-        }
-
-        if (classification.IsBlacklisted)
-        {
-            var match = classification.Blacklist!;
-            await _auditService.LogAsync(
-                GateAuditEntries.BlacklistBlocked(cleanPlate, normPlate, match, classification.Ticket != null),
-                cancellationToken);
-            return BlacklistedResult(cleanPlate, match);
-        }
 
         var category = classification.Category;
         var ticket = classification.Ticket;
+        var owner = classification.Owner;
         var isMonthly = classification.IsMonthlyPass;
-        var vehicleTypeId = request.VehicleTypeId > 0 ? request.VehicleTypeId : (ticket?.VehicleTypeId ?? 1);
+        var vehicleTypeId = request.VehicleTypeId > 0 ? request.VehicleTypeId : (ticket?.VehicleTypeId ?? owner?.VehicleTypeId ?? 1);
+        var activeOwner = owner is { OwnerIsActive: true, OwnerCustomerId: not null } ? owner : null;
 
         var ticketCode = isMonthly
             ? ticket!.TicketCode
@@ -503,6 +563,8 @@ public class GateControlService : IGateControlService
         var vTypes = await GetVehicleTypesAsync(cancellationToken, probe);
         var matchedVType = vTypes.FirstOrDefault(v => v.VehicleTypeId == vehicleTypeId);
 
+        dbReachable = dbReachable && !probe.Failed;
+
         var session = new ParkingSession
         {
             TicketCode = ticketCode,
@@ -513,9 +575,14 @@ public class GateControlService : IGateControlService
             CheckInImagePath = archivedImagePath ?? request.ImagePath,
             Status = SessionStatus.Active,
             IsMonthlyPass = isMonthly,
-            CustomerId = isMonthly ? ticket!.CustomerId : null,
-            Customer = isMonthly ? ToCustomer(ticket!) : null,
-            CustomerType = category == VehicleCategory.Resident ? CustomerType.Resident : CustomerType.Regular,
+            CustomerId = activeOwner?.OwnerCustomerId,
+            Customer = activeOwner == null ? null : new Customer
+            {
+                CustomerId = activeOwner.OwnerCustomerId!.Value,
+                FullName = activeOwner.OwnerName ?? string.Empty,
+                HouseholdId = activeOwner.HouseholdId
+            },
+            CustomerType = category == VehicleCategory.Resident ? CustomerType.Resident : CustomerType.External,
             CreatedByUserId = createdByUserId,
             TotalFee = 0
         };
@@ -537,10 +604,9 @@ public class GateControlService : IGateControlService
                     // Kiểm tra lại danh sách đen trong giao dịch: biển số có thể vừa được thêm sau khi phân loại.
                     blockedBy = await GateClassificationQueries.FindActiveBlacklistAsync(db, normPlate, cancellationToken);
 
-                    // Kiểm tra lại xe chưa ra bãi trong giao dịch: hai lượt vào song song cùng biển số chỉ một lượt thành công (G1)
-                    var alreadyInside = blockedBy == null && await db.Database
-                        .SqlQuery<int>($"""SELECT count(*)::int AS "Value" FROM "ParkingSessions" WHERE "Status" = 0 AND upper(regexp_replace("LicensePlate", '[^a-zA-Z0-9]', '', 'g')) = {normPlate}""")
-                        .SingleAsync(cancellationToken) > 0;
+                    // Kiểm tra lại xe chưa ra bãi trong giao dịch: hai lượt vào song song cùng biển số chỉ một lượt thành công
+                    var alreadyInside = blockedBy == null
+                        && await GateClassificationQueries.HasActiveSessionAsync(db, normPlate, cancellationToken);
                     if (alreadyInside)
                     {
                         rejection = CheckInRejectReason.AlreadyInside;
@@ -574,6 +640,15 @@ public class GateControlService : IGateControlService
 
                             db.ParkingSessions.Add(dbSession);
                             await db.SaveChangesAsync(cancellationToken);
+
+                            // Cột CustomerType có giá trị mặc định External trong cấu hình bảng nên EF bỏ qua Resident (= 0) khi chèn.
+                            // Luôn ghi lại rõ ràng, không phụ thuộc giá trị EF đọc lại; có thể bỏ khi mặc định được sửa.
+                            if (session.CustomerType == CustomerType.Resident)
+                            {
+                                dbSession.CustomerType = CustomerType.Resident;
+                                db.Entry(dbSession).Property(x => x.CustomerType).IsModified = true;
+                            }
+
                             await _auditService.AppendAsync(db, new AuditEntry(
                                 AuditActions.ParkingCheckIn,
                                 AuditOutcome.Success,
@@ -613,10 +688,12 @@ public class GateControlService : IGateControlService
                 // Mất kết nối cơ sở dữ liệu: tiếp tục ở chế độ ngoại tuyến (bộ nhớ + JSONL)
                 System.Diagnostics.Debug.WriteLine($"[GateControlService DB Error]: {ex.Message}");
                 allocatedSlot = null;
+                blockedBy = null;
+                rejection = CheckInRejectReason.None;
             }
             catch (Exception ex)
             {
-                // Lỗi khác (ghi nhật ký thất bại, hết thời gian chờ khóa nhật ký...): không lưu ngoại tuyến
+                // Lỗi khác (tra cứu danh sách đen, ghi nhật ký thất bại, hết thời gian chờ khóa nhật ký...): không lưu ngoại tuyến
                 System.Diagnostics.Debug.WriteLine($"[GateControlService Audit Error]: {ex.GetType().Name}");
                 return new GateCheckInResult
                 {
@@ -629,7 +706,7 @@ public class GateControlService : IGateControlService
             {
                 // Ghi nhật ký sau khi giao dịch đã đóng (không giữ khoá nhật ký)
                 await _auditService.LogAsync(
-                    GateAuditEntries.BlacklistBlocked(cleanPlate, normPlate, blockedBy, classification.Ticket != null),
+                    GateAuditEntries.BlacklistBlocked(cleanPlate, normPlate, ticket != null),
                     cancellationToken);
                 return BlacklistedResult(cleanPlate, blockedBy);
             }
@@ -701,27 +778,19 @@ public class GateControlService : IGateControlService
             Category = category,
             IsMonthlyTicket = isMonthly,
             IsResident = category == VehicleCategory.Resident,
-            ApartmentCode = ticket?.ApartmentCode,
+            ApartmentCode = category == VehicleCategory.Resident ? owner?.ApartmentCode : null,
             TicketValidUntilUtc = ticket?.EndDateUtc,
             CustomerLockedWarning = classification.Warning == ClassificationWarning.CustomerLocked,
-            TicketVehicleTypeMismatchWarning = ticketVehicleTypeMismatch,
-            CustomerName = ticket?.CustomerName,
+            TicketVehicleTypeMismatchWarning = classification.Warning == ClassificationWarning.TicketVehicleTypeMismatch,
+            CustomerName = activeOwner?.OwnerName,
             AssignedSlotCode = assignedSlot?.SlotCode,
             AssignedZoneCode = allocatedSlot?.ZoneCode,
             AssignedZoneAudience = allocatedSlot?.Audience
         };
     }
 
-    private static Customer ToCustomer(TicketCandidate ticket) => new()
-    {
-        CustomerId = ticket.CustomerId,
-        FullName = ticket.CustomerName,
-        IsActive = ticket.CustomerIsActive,
-        IsResident = ticket.IsResident,
-        ApartmentCode = ticket.ApartmentCode,
-        Building = ticket.Building,
-        Type = ticket.IsResident ? CustomerType.Resident : CustomerType.Regular
-    };
+    /// <summary>Ngoại tuyến không có dữ liệu chủ xe và vé: mọi xe được coi là khách vãng lai.</summary>
+    private static VehicleClassification ClassifyFromMemory(string norm) => VehicleClassification.Visitor(norm);
 
     private static GateCheckInResult BlacklistedResult(string licensePlate, BlacklistMatch match) => new()
     {
@@ -730,7 +799,7 @@ public class GateControlService : IGateControlService
         RejectReason = CheckInRejectReason.Blacklisted,
         IsBlacklisted = true,
         BlacklistReason = match.Reason,
-        Message = $"Biển số '{licensePlate}' nằm trong danh sách đen: {match.Reason}"
+        Message = $"XE BỊ CẤM VÀO BÃI! Biển số '{licensePlate}' nằm trong danh sách đen: {match.Reason}"
     };
 
     private static GateCheckInResult RejectedResult(CheckInRejectReason reason, VehicleCategory category, string licensePlate) => new()
@@ -765,11 +834,6 @@ public class GateControlService : IGateControlService
         }
 
         var norm = NormalizePlate(licensePlate);
-        if (norm.Length == 0)
-        {
-            return new GateCheckOutCalculationResult { Success = false, Message = $"Biển số '{licensePlate}' không hợp lệ." };
-        }
-
         var activeSessions = await GetActiveSessionsAsync(cancellationToken);
         var session = activeSessions.FirstOrDefault(s => NormalizePlate(s.LicensePlate) == norm);
 
@@ -784,31 +848,7 @@ public class GateControlService : IGateControlService
 
         var now = DateTime.UtcNow;
         var pricingRule = await GetPricingRuleAsync(session.VehicleTypeId, cancellationToken);
-
-        // Hiệu lực vé tháng và danh sách đen tra trên DB; lỗi DB thì giữ hành vi cũ (miễn phí vé tháng, không cảnh báo).
-        MonthlyCoverage? coverage = null;
-        BlacklistMatch? blacklist = null;
-        if (_dbContextFactory != null)
-        {
-            try
-            {
-                await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
-                if (session.IsMonthlyPass)
-                {
-                    coverage = await GateClassificationQueries.GetMonthlyCoverageAsync(db, norm, session.CheckInTime, cancellationToken);
-                }
-
-                blacklist = await GateClassificationQueries.FindActiveBlacklistAsync(db, norm, cancellationToken);
-            }
-            catch (OperationCanceledException) { throw; }
-            catch
-            {
-                coverage = null;
-                blacklist = null;
-            }
-        }
-
-        var feeResult = _feeCalculator.CalculateFee(session, pricingRule, now, coverage);
+        var feeResult = _feeCalculator.CalculateFee(session, pricingRule, now);
 
         return new GateCheckOutCalculationResult
         {
@@ -817,18 +857,11 @@ public class GateControlService : IGateControlService
             CheckOutTime = now,
             Duration = feeResult.Duration,
             RawFee = feeResult.RawFee,
-            DiscountPercentage = feeResult.DiscountPercentage,
             TotalFee = feeResult.TotalFee,
             IsMonthlyTicket = feeResult.IsMonthlyTicket,
             CustomerName = session.Customer?.FullName,
             Message = feeResult.Message,
-            TicketExpiredDuringStay = feeResult.ChargeReason == MonthlyChargeReason.ExpiredDuringStay,
-            TicketNoLongerValid = feeResult.ChargeReason == MonthlyChargeReason.NotCovered,
-            TicketValidUntilUtc = feeResult.TicketValidUntilUtc,
-            ChargeFromUtc = feeResult.ChargeFromUtc,
-            IsBlacklisted = blacklist != null,
-            BlacklistReason = blacklist?.Reason,
-            BlacklistEntryId = blacklist?.BlacklistEntryId
+            FeeDetails = feeResult.FeeDetails
         };
     }
 
@@ -868,24 +901,26 @@ public class GateControlService : IGateControlService
                 if (shift == null)
                     return new GateCheckOutResult { Success = false, Message = "Bạn cần mở ca trực trước khi checkout." };
 
-                var session = await db.ParkingSessions.Include(s => s.Slot).Include(s => s.Customer)
+                var session = await db.ParkingSessions.Include(s => s.Slot)
                     .FirstOrDefaultAsync(s => s.SessionId == request.SessionId, cancellationToken);
                 if (session == null || session.Status != SessionStatus.Active)
                     return new GateCheckOutResult { Success = false, Message = "Phiên gửi xe không còn hoạt động." };
 
-                // Cước do máy chủ tính lại (vé tháng còn hạn, phần hết hạn, giảm giá hạng); không tin số tiền từ máy trạm (G9)
+                // Phí luôn do máy chủ tính lại bằng công thức và bảng giá hiện hành; số tiền từ máy trạm bị bỏ qua.
                 var checkOutTime = DateTime.UtcNow;
                 var pricingRule = await db.PricingRules.AsNoTracking()
-                    .FirstOrDefaultAsync(r => r.VehicleTypeId == session.VehicleTypeId, cancellationToken)
-                    ?? _memoryPricingRules.FirstOrDefault(r => r.VehicleTypeId == session.VehicleTypeId);
-                var plateNorm = NormalizePlate(session.LicensePlate);
-                MonthlyCoverage? coverage = session.IsMonthlyPass
-                    ? await GateClassificationQueries.GetMonthlyCoverageAsync(db, plateNorm, session.CheckInTime, cancellationToken)
-                    : null;
-                var serverFee = _feeCalculator.CalculateFee(session, pricingRule, checkOutTime, coverage).TotalFee;
+                    .FirstOrDefaultAsync(r => r.VehicleTypeId == session.VehicleTypeId, cancellationToken);
+                if (pricingRule == null)
+                {
+                    lock (_syncLock)
+                    {
+                        pricingRule = _memoryPricingRules.FirstOrDefault(r => r.VehicleTypeId == session.VehicleTypeId);
+                    }
+                }
 
+                var serverFee = _feeCalculator.CalculateFee(session, pricingRule, checkOutTime).TotalFee;
                 var method = serverFee <= 0 ? PaymentMethod.Free : request.PaymentMethod;
-                if (serverFee > 0 && method == PaymentMethod.Free)
+                if (serverFee < 0 || (serverFee > 0 && method == PaymentMethod.Free))
                     return new GateCheckOutResult { Success = false, Message = "Số tiền hoặc phương thức thanh toán không hợp lệ." };
                 if (serverFee > 0 && method == PaymentMethod.VietQR)
                     return new GateCheckOutResult { Success = false, Message = "Thanh toán VietQR phải được xác nhận qua cổng thanh toán." };
@@ -917,15 +952,6 @@ public class GateControlService : IGateControlService
                         PaymentMethod = method.ToString(),
                         ShiftId = shift.ShiftId
                     }), cancellationToken);
-
-                // Xe vào danh sách đen sau khi đã vào bãi: vẫn cho ra, ghi nhận cảnh báo cạnh bản ghi checkout (R16)
-                var exitBlacklist = await GateClassificationQueries.FindActiveBlacklistAsync(
-                    db, NormalizePlate(session.LicensePlate), cancellationToken);
-                if (exitBlacklist != null)
-                {
-                    await _auditService.AppendAsync(db, GateAuditEntries.BlacklistExitWarning(session, exitBlacklist), cancellationToken);
-                }
-
                 await db.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
 
@@ -1022,7 +1048,6 @@ public class GateControlService : IGateControlService
                 var list = await db.ParkingSlots
                     .AsNoTracking()
                     .Include(s => s.VehicleType)
-                    .Include(s => s.Zone)
                     .OrderBy(s => s.SlotCode)
                     .ToListAsync(cancellationToken);
                 if (list.Any()) return list;

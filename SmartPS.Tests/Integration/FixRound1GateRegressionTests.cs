@@ -3,26 +3,26 @@ using Microsoft.Extensions.DependencyInjection;
 using SmartPS.Models.GateControl;
 using SmartPS.Models.Parking;
 using SmartPS.Services.Audit;
-using SmartPS.Services.Customers;
 using SmartPS.Services.GateControl;
 
 namespace SmartPS.Tests.Integration;
 
 /// <summary>
-/// Fix round 1 regression tests for the gate (G1, G2, G3, G4, G9, G10, G11), ported from the challenge repros
-/// (Attacks.C2, A1, A2, D3, D6, G2; Attacks2.H1).
+/// Fix round 1 regression tests for the gate (G1, G3, G9, G10, G11, H1), ported from the challenge repros
+/// (Attacks.C2, A1, A2, D6, G2; Attacks2.H1). G2/G4 and the partial monthly charge tested the removed
+/// monthly fee split and are gone; the fee formula is the household module's calculator.
 /// </summary>
 [Collection(PostgresCollection.Name)]
 [Trait("Category", "Integration")]
 public class FixRound1GateRegressionTests : IClassFixture<PostgresDatabaseFixture>
 {
     private readonly PostgresDatabaseFixture _db;
-    private readonly ResidentVisitorData _data;
+    private readonly GateTestData _data;
 
     public FixRound1GateRegressionTests(PostgresDatabaseFixture db)
     {
         _db = db;
-        _data = new ResidentVisitorData(db);
+        _data = new GateTestData(db);
     }
 
     private async Task<(ServiceProvider Sp, int UserId)> LoginAsync(string roleName)
@@ -55,8 +55,6 @@ public class FixRound1GateRegressionTests : IClassFixture<PostgresDatabaseFixtur
             "SELECT \"CheckInTime\" FROM \"ParkingSessions\" WHERE \"SessionId\" = @id", ("id", sessionId));
     }
 
-    private static DateTime VnMidnight(DateOnly date) => AuditTime.VietnamDateStartUtc(date);
-
     // ---------------------------------------------------------------- G1 (CH1-01, Attacks.C2) ----------------------
 
     [Fact]
@@ -72,7 +70,7 @@ public class FixRound1GateRegressionTests : IClassFixture<PostgresDatabaseFixtur
         {
             var vt = await _data.CreateIsolatedVehicleTypeAsync();
             var zone = await _data.CreateZoneAsync(ZoneAudience.Mixed, vt, 3);
-            var plate = ResidentVisitorData.UniqueNormalizedPlate();
+            var plate = GateTestData.UniqueNormalizedPlate();
             using var start = new ManualResetEventSlim(false);
 
             Task<GateCheckInResult> Run(IServiceProvider sp, string typed) => Task.Run(async () =>
@@ -82,7 +80,7 @@ public class FixRound1GateRegressionTests : IClassFixture<PostgresDatabaseFixtur
             });
 
             var a = Run(sp1, plate);
-            var b = Run(sp2, ResidentVisitorData.Decorate(plate)); // same plate, different formatting
+            var b = Run(sp2, GateTestData.Decorate(plate)); // same plate, different formatting
             start.Set();
             var results = await Task.WhenAll(a, b);
 
@@ -92,71 +90,6 @@ public class FixRound1GateRegressionTests : IClassFixture<PostgresDatabaseFixtur
             Assert.Equal(1, await _data.SessionCountForPlateAsync(plate, activeOnly: true));
             Assert.Equal(1, await _data.CountAsync("SELECT count(*) FROM \"ParkingSlots\" WHERE \"ZoneId\" = @z AND \"Status\" <> 0", ("z", zone.ZoneId)));
         }
-    }
-
-    // ---------------------------------------------------------------- G2 (review F1) -------------------------------
-
-    [Fact]
-    public async Task G2_legacy_ticket_renewed_while_active_still_covers_the_original_period()
-    {
-        _db.RequireAvailable();
-        var vt = await _data.CreateIsolatedVehicleTypeAsync();
-        await _data.CreateZoneAsync(ZoneAudience.Mixed, vt, 2);
-        var today = TicketDates.TodayVn(DateTime.UtcNow);
-        var customerId = await _data.CreateCustomerAsync(isResident: true);
-        var plate = ResidentVisitorData.UniqueNormalizedPlate();
-        await _data.AddVehicleAsync(customerId, plate, vt);
-        // Legacy ticket: no Kind=Create purchase row
-        var ticketId = await _data.CreateTicketAsync(customerId, plate, vt, VnMidnight(today.AddDays(-10)), VnMidnight(today.AddDays(20)), withCreatePurchase: false);
-        var planId = await _data.CreateIsolatedPlanAsync(vt, durationMonths: 1, totalPrice: 150_000m);
-
-        var (op, _) = await LoginAsync("Operator");
-        using var opScope = op;
-        var checkIn = await Gate(op).ProcessCheckInAsync(Req(plate, vt));
-        Assert.True(checkIn.Success, checkIn.Message);
-        Assert.True(checkIn.Session!.IsMonthlyPass);
-        await SetCheckInAsync(checkIn.Session.SessionId, DateTime.UtcNow.AddHours(-4));
-
-        // Renew while active: the only purchase row is Renew [oldEnd, newEnd)
-        var (mgr, _) = await LoginAsync("Manager");
-        using var mgrScope = mgr;
-        var renew = await mgr.GetRequiredService<IMonthlyTicketService>().RenewTicketAsync(ticketId, planId);
-        Assert.True(renew.Success, $"{renew.Error}: {renew.Message}");
-        Assert.Equal(1, await _data.CountAsync("SELECT count(*) FROM \"MonthlyTicketPurchases\" WHERE \"TicketId\" = @t", ("t", ticketId)));
-
-        // Checkout inside the original (legacy) period is still free
-        var calc = await Gate(op).CalculateCheckOutAsync(plate);
-
-        Assert.True(calc.Success, calc.Message);
-        Assert.Equal(0m, calc.TotalFee);
-        Assert.True(calc.IsMonthlyTicket);
-        Assert.False(calc.TicketExpiredDuringStay);
-        Assert.False(calc.TicketNoLongerValid);
-        Assert.True(calc.TicketValidUntilUtc > DateTime.UtcNow.AddDays(20), $"coverage must chain into the renewal, got {calc.TicketValidUntilUtc:o}");
-    }
-
-    [Fact]
-    public async Task G2_legacy_ticket_without_purchases_covers_its_interval()
-    {
-        _db.RequireAvailable();
-        var vt = await _data.CreateIsolatedVehicleTypeAsync();
-        await _data.CreateZoneAsync(ZoneAudience.Mixed, vt, 1);
-        var today = TicketDates.TodayVn(DateTime.UtcNow);
-        var customerId = await _data.CreateCustomerAsync(isResident: false);
-        var plate = ResidentVisitorData.UniqueNormalizedPlate();
-        await _data.AddVehicleAsync(customerId, plate, vt);
-        await _data.CreateTicketAsync(customerId, plate, vt, VnMidnight(today.AddDays(-10)), VnMidnight(today.AddDays(20)), withCreatePurchase: false);
-        var (op, _) = await LoginAsync("Operator");
-        using var opScope = op;
-        var checkIn = await Gate(op).ProcessCheckInAsync(Req(plate, vt));
-        Assert.True(checkIn.Success, checkIn.Message);
-        await SetCheckInAsync(checkIn.Session!.SessionId, DateTime.UtcNow.AddHours(-4));
-
-        var calc = await Gate(op).CalculateCheckOutAsync(plate);
-
-        Assert.Equal(0m, calc.TotalFee);
-        Assert.True(calc.IsMonthlyTicket);
-        Assert.Equal(VnMidnight(today.AddDays(20)), calc.TicketValidUntilUtc);
     }
 
     // ---------------------------------------------------------------- G3 (CH1-02, Attacks.A1/A2, Attacks2.H1) ------
@@ -209,25 +142,30 @@ public class FixRound1GateRegressionTests : IClassFixture<PostgresDatabaseFixtur
         _db.RequireAvailable();
         var vt = await _data.CreateIsolatedVehicleTypeAsync();
         await _data.CreateZoneAsync(ZoneAudience.Mixed, vt, 3);
-        var plate = ResidentVisitorData.UniqueNormalizedPlate(); // starts with "RV"
-        await _data.AddBlacklistAsync(plate, "challenge");
+        var plate = GateTestData.UniqueNormalizedPlate(); // starts with "RV"
+        await _data.AddBlacklistAsync(GateTestData.Raw(plate), "challenge");
         var (sp, _) = await LoginAsync("Operator");
         using var scope = sp;
         var gate = Gate(sp);
 
         var cyrillic = await gate.ProcessCheckInAsync(Req(plate.Replace('V', 'В'), vt));        // Cyrillic VE
         var fullWidth = await gate.ProcessCheckInAsync(Req(new string(plate.Select(ToFullWidth).ToArray()), vt));
-        var zeroWidth = await gate.ProcessCheckInAsync(Req(plate[..3] + "​" + plate[3..], vt)); // zero-width space is a separator
+        var zeroWidth = await gate.ProcessCheckInAsync(Req(plate[..3] + "​" + plate[3..], vt)); // zero-width space (format character)
         var nbspTab = await gate.ProcessCheckInAsync(Req(plate[..2] + " " + plate[2..5] + "\t" + plate[5..], vt));
 
         Assert.False(cyrillic.Success);
         Assert.Equal(CheckInRejectReason.PlateInvalid, cyrillic.RejectReason);
         Assert.False(fullWidth.Success);
         Assert.Equal(CheckInRejectReason.PlateInvalid, fullWidth.RejectReason);
+        // Branch 2 fix round 1 (H4): control/format characters now make the plate invalid before any lookup.
         Assert.False(zeroWidth.Success);
-        Assert.Equal(CheckInRejectReason.Blacklisted, zeroWidth.RejectReason);
+        Assert.Equal(CheckInRejectReason.PlateInvalid, zeroWidth.RejectReason);
         Assert.False(nbspTab.Success);
-        Assert.Equal(CheckInRejectReason.Blacklisted, nbspTab.RejectReason);
+        Assert.Equal(CheckInRejectReason.PlateInvalid, nbspTab.RejectReason);
+        // A visible-space spelling of the blacklisted plate is still caught by the blacklist.
+        var nbspOnly = await gate.ProcessCheckInAsync(Req(plate[..2] + " " + plate[2..5] + " " + plate[5..], vt));
+        Assert.False(nbspOnly.Success);
+        Assert.Equal(CheckInRejectReason.Blacklisted, nbspOnly.RejectReason);
         Assert.Equal(0, await _data.ActiveSessionCountForVehicleTypeAsync(vt));
     }
 
@@ -247,43 +185,6 @@ public class FixRound1GateRegressionTests : IClassFixture<PostgresDatabaseFixtur
     private static char ToFullWidth(char c)
         => c is >= '0' and <= '9' ? (char)(c - '0' + 0xFF10) : c is >= 'A' and <= 'Z' ? (char)(c - 'A' + 0xFF21) : c;
 
-    // ---------------------------------------------------------------- G4 (CH1-03, Attacks.D3) ----------------------
-
-    [Fact]
-    public async Task G4_removing_the_vehicle_after_a_legitimate_expiry_does_not_change_the_fee()
-    {
-        _db.RequireAvailable();
-        var vt = await _data.CreateIsolatedVehicleTypeAsync();
-        await _data.CreateZoneAsync(ZoneAudience.Mixed, vt, 2);
-        var sub = await _data.CreateSubscriberAsync(vt, isResident: true);
-        var (op, _) = await LoginAsync("Operator");
-        using var opScope = op;
-        var checkIn = await Gate(op).ProcessCheckInAsync(Req(sub.Plate, vt));
-        Assert.True(checkIn.Success, checkIn.Message);
-        await SetCheckInAsync(checkIn.Session!.SessionId, DateTime.UtcNow.AddHours(-4));
-        var expiry = DateTime.UtcNow.AddMinutes(-90);
-        await _data.SetTicketEndAsync(sub.TicketId!.Value, expiry);
-        await _data.SetPurchaseEndAsync(sub.TicketId.Value, TicketPurchaseKind.Create, expiry);
-
-        var before = await Gate(op).CalculateCheckOutAsync(sub.Plate);
-        Assert.True(before.TicketExpiredDuringStay);
-
-        // Staff removes the (now expired) vehicle through the service — allowed because the ticket is expired
-        var (mgr, _) = await LoginAsync("Manager");
-        using var mgrScope = mgr;
-        var removed = await mgr.GetRequiredService<ICustomerService>().RemoveVehicleAsync(sub.CustomerVehicleId);
-        Assert.True(removed.Success, $"{removed.Error}: {removed.Message}");
-
-        var after = await Gate(op).CalculateCheckOutAsync(sub.Plate);
-
-        Assert.True(after.TicketExpiredDuringStay);
-        Assert.False(after.TicketNoLongerValid);
-        Assert.Equal(before.ChargeFromUtc, after.ChargeFromUtc);
-        Assert.Equal(before.TicketValidUntilUtc, after.TicketValidUntilUtc);
-        var rule = await RuleAsync(vt);
-        Assert.Equal(VisitorFee(rule, vt, after.ChargeFromUtc!.Value, after.CheckOutTime), after.TotalFee);
-    }
-
     // ---------------------------------------------------------------- G9 (CH1-08, Attacks.D6) ----------------------
 
     [Fact]
@@ -295,7 +196,7 @@ public class FixRound1GateRegressionTests : IClassFixture<PostgresDatabaseFixtur
         var (sp, userId) = await LoginAsync("Operator");
         using var scope = sp;
         await ParkingFlows.OpenShiftAsync(sp, userId);
-        var plate = ResidentVisitorData.UniqueNormalizedPlate();
+        var plate = GateTestData.UniqueNormalizedPlate();
         var checkIn = await Gate(sp).ProcessCheckInAsync(Req(plate, vt));
         Assert.True(checkIn.Success, checkIn.Message);
         var checkInUtc = await SetCheckInAsync(checkIn.Session!.SessionId, DateTime.UtcNow.AddHours(-3));
@@ -330,7 +231,7 @@ public class FixRound1GateRegressionTests : IClassFixture<PostgresDatabaseFixtur
         var (sp, userId) = await LoginAsync("Operator");
         using var scope = sp;
         await ParkingFlows.OpenShiftAsync(sp, userId);
-        var plate = ResidentVisitorData.UniqueNormalizedPlate();
+        var plate = GateTestData.UniqueNormalizedPlate();
         var checkIn = await Gate(sp).ProcessCheckInAsync(Req(plate, vt));
         Assert.True(checkIn.Success, checkIn.Message);
         await SetCheckInAsync(checkIn.Session!.SessionId, DateTime.UtcNow.AddHours(-3));
@@ -356,11 +257,11 @@ public class FixRound1GateRegressionTests : IClassFixture<PostgresDatabaseFixtur
         _db.RequireAvailable();
         var vt = await _data.CreateIsolatedVehicleTypeAsync();
         await _data.CreateZoneAsync(ZoneAudience.Mixed, vt, 1);
-        var sub = await _data.CreateSubscriberAsync(vt, isResident: true);
+        var sub = await _data.CreateResidentAsync(vt, withTicket: true);
         var (sp, userId) = await LoginAsync("Operator");
         using var scope = sp;
         await ParkingFlows.OpenShiftAsync(sp, userId);
-        var checkIn = await Gate(sp).ProcessCheckInAsync(Req(sub.Plate, vt));
+        var checkIn = await Gate(sp).ProcessCheckInAsync(Req(sub.NormalizedPlate, vt));
         Assert.True(checkIn.Success, checkIn.Message);
 
         var done = await Gate(sp).CompleteCheckOutAsync(new GateCheckOutRequest
@@ -375,40 +276,6 @@ public class FixRound1GateRegressionTests : IClassFixture<PostgresDatabaseFixtur
         Assert.Equal(0m, done.CompletedSession!.TotalFee);
     }
 
-    [Fact]
-    public async Task G9_partial_monthly_charge_ignores_a_client_fee_of_zero()
-    {
-        _db.RequireAvailable();
-        var vt = await _data.CreateIsolatedVehicleTypeAsync();
-        await _data.CreateZoneAsync(ZoneAudience.Mixed, vt, 1);
-        var sub = await _data.CreateSubscriberAsync(vt, isResident: true);
-        var (sp, userId) = await LoginAsync("Operator");
-        using var scope = sp;
-        await ParkingFlows.OpenShiftAsync(sp, userId);
-        var checkIn = await Gate(sp).ProcessCheckInAsync(Req(sub.Plate, vt));
-        Assert.True(checkIn.Success, checkIn.Message);
-        await SetCheckInAsync(checkIn.Session!.SessionId, DateTime.UtcNow.AddHours(-4));
-        var expiry = DateTime.UtcNow.AddMinutes(-90);
-        await _data.SetTicketEndAsync(sub.TicketId!.Value, expiry);
-        await _data.SetPurchaseEndAsync(sub.TicketId.Value, TicketPurchaseKind.Create, expiry);
-
-        var done = await Gate(sp).CompleteCheckOutAsync(new GateCheckOutRequest
-        {
-            SessionId = checkIn.Session.SessionId,
-            ActorUserId = userId,
-            PaymentMethod = PaymentMethod.Cash,
-            TotalFee = 0m
-        });
-
-        Assert.True(done.Success, done.Message);
-        await using var ctx = _db.CreateContext();
-        var session = await ctx.ParkingSessions.AsNoTracking().SingleAsync(s => s.SessionId == checkIn.Session.SessionId);
-        var storedExpiry = await PostgresDatabaseFixture.ScalarAsync<DateTime>(_db.ConnectionString,
-            "SELECT \"PeriodEndUtc\" FROM \"MonthlyTicketPurchases\" WHERE \"TicketId\" = @t AND \"Kind\" = 0", ("t", sub.TicketId.Value));
-        Assert.Equal(VisitorFee(await RuleAsync(vt), vt, storedExpiry, session.CheckOutTime!.Value), session.TotalFee);
-        Assert.True(session.TotalFee > 0);
-    }
-
     // ---------------------------------------------------------------- G10 (CH1-09, Attacks.G2) ---------------------
 
     [Fact]
@@ -419,12 +286,12 @@ public class FixRound1GateRegressionTests : IClassFixture<PostgresDatabaseFixtur
         var car = await _data.CreateIsolatedVehicleTypeAsync();
         var carResident = await _data.CreateZoneAsync(ZoneAudience.ResidentOnly, car, 1);
         await _data.CreateZoneAsync(ZoneAudience.Mixed, car, 1);
-        var sub = await _data.CreateSubscriberAsync(moto, isResident: true); // ticket + vehicle are motorbike
+        var sub = await _data.CreateExternalAsync(moto, withTicket: true); // ticket + vehicle are motorbike, no household
         var (sp, userId) = await LoginAsync("Operator");
         using var scope = sp;
         await ParkingFlows.OpenShiftAsync(sp, userId);
 
-        var result = await Gate(sp).ProcessCheckInAsync(Req(sub.Plate, car));
+        var result = await Gate(sp).ProcessCheckInAsync(Req(sub.NormalizedPlate, car));
 
         Assert.True(result.Success, result.Message);
         Assert.Equal(VehicleCategory.Visitor, result.Category);
@@ -437,12 +304,12 @@ public class FixRound1GateRegressionTests : IClassFixture<PostgresDatabaseFixtur
         {
             var session = await ctx.ParkingSessions.AsNoTracking().SingleAsync(s => s.SessionId == result.Session!.SessionId);
             Assert.False(session.IsMonthlyPass);
-            Assert.Equal(CustomerType.Regular, session.CustomerType);
-            Assert.Null(session.CustomerId);
+            Assert.Equal(CustomerType.External, session.CustomerType);
+            Assert.Equal(sub.CustomerId, session.CustomerId);
         }
 
         await SetCheckInAsync(result.Session!.SessionId, DateTime.UtcNow.AddHours(-3));
-        var calc = await Gate(sp).CalculateCheckOutAsync(sub.Plate);
+        var calc = await Gate(sp).CalculateCheckOutAsync(sub.NormalizedPlate);
         Assert.False(calc.IsMonthlyTicket);
         Assert.True(calc.TotalFee > 0);
     }
@@ -453,14 +320,15 @@ public class FixRound1GateRegressionTests : IClassFixture<PostgresDatabaseFixtur
         _db.RequireAvailable();
         var moto = await _data.CreateIsolatedVehicleTypeAsync();
         await _data.CreateZoneAsync(ZoneAudience.ResidentOnly, moto, 1);
-        var sub = await _data.CreateSubscriberAsync(moto, isResident: true);
+        var sub = await _data.CreateResidentAsync(moto, withTicket: true);
         var (sp, _) = await LoginAsync("Operator");
         using var scope = sp;
 
-        var result = await Gate(sp).ProcessCheckInAsync(Req(sub.Plate, moto));
+        var result = await Gate(sp).ProcessCheckInAsync(Req(sub.NormalizedPlate, moto));
 
         Assert.True(result.Success, result.Message);
         Assert.Equal(VehicleCategory.Resident, result.Category);
+        Assert.True(result.IsMonthlyTicket);
         Assert.False(result.TicketVehicleTypeMismatchWarning);
     }
 
@@ -473,11 +341,11 @@ public class FixRound1GateRegressionTests : IClassFixture<PostgresDatabaseFixtur
         var vt = await _data.CreateIsolatedVehicleTypeAsync();
         var zone = await _data.CreateZoneAsync(ZoneAudience.Mixed, vt, 2);
         var op = await TestUsers.CreateAsync(_db.Factory, "Operator");
-        var hook = new CommandHookInterceptor("BlacklistEntries", occurrence: 1, throwInstead: true,
+        var hook = new CommandHookInterceptor("\"BlacklistedVehicles\"", occurrence: 1, throwInstead: true,
             exceptionFactory: () => new InvalidOperationException("Simulated query bug"));
         using var sp = IntegrationServices.Create(_db, CommandHookInterceptor.Install(_db, hook));
         await sp.LoginAsync(op.Username);
-        var plate = ResidentVisitorData.UniqueNormalizedPlate();
+        var plate = GateTestData.UniqueNormalizedPlate();
         var idBefore = await AuditDb.MaxIdAsync(_db.Factory);
 
         var result = await Gate(sp).ProcessCheckInAsync(Req(plate, vt));
@@ -511,8 +379,8 @@ public class FixRound1GateRegressionTests : IClassFixture<PostgresDatabaseFixtur
         _db.RequireAvailable();
         var vt = await _data.CreateIsolatedVehicleTypeAsync();
         var zone = await _data.CreateZoneAsync(ZoneAudience.Mixed, vt, 2);
-        var plate = ResidentVisitorData.UniqueNormalizedPlate();
-        await _data.AddBlacklistAsync(plate, "challenge r2");
+        var plate = GateTestData.UniqueNormalizedPlate();
+        await _data.AddBlacklistAsync(GateTestData.Raw(plate), "challenge r2");
         var (sp, _) = await LoginAsync("Operator");
         using var scope = sp;
         var idBefore = await AuditDb.MaxIdAsync(_db.Factory);

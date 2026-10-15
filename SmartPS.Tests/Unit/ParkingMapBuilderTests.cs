@@ -28,7 +28,7 @@ public class ParkingMapBuilderTests
             CurrentLicensePlate = plate
         };
 
-    private static ParkingSession ActiveSession(int slotId, string plate, CustomerType type = CustomerType.Regular, bool monthly = false)
+    private static ParkingSession ActiveSession(int slotId, string plate, CustomerType type = CustomerType.External, bool monthly = false)
         => new()
         {
             SessionId = 100 + slotId,

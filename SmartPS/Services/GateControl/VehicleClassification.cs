@@ -1,5 +1,4 @@
 using SmartPS.Models.GateControl;
-using SmartPS.Models.Parking;
 
 namespace SmartPS.Services.GateControl;
 
@@ -10,77 +9,74 @@ public enum ClassificationWarning
     TicketVehicleTypeMismatch = 2
 }
 
-public sealed record BlacklistMatch(int BlacklistEntryId, string LicensePlate, string Reason);
-
-public sealed record TicketCandidate(
-    int TicketId,
-    string TicketCode,
-    int CustomerId,
-    string CustomerName,
-    bool CustomerIsActive,
-    bool IsResident,
-    string? ApartmentCode,
-    string? Building,
-    int VehicleTypeId,
-    MonthlyTicketStatus Status,
-    DateTime StartDateUtc,
-    DateTime EndDateUtc);
+/// <summary>Mục danh sách đen đang hiệu lực (đọc từ bảng của nhóm quản lý khách hàng).</summary>
+public sealed record BlacklistMatch(string NormalizedPlate, string Reason);
 
 public sealed record VehicleClassification(
     VehicleCategory Category,
     string NormalizedPlate,
     BlacklistMatch? Blacklist,
-    TicketCandidate? Ticket,
+    PlateOwnership? Owner,
+    PlateTicket? Ticket,
     ClassificationWarning Warning)
 {
     public bool IsBlacklisted => Category == VehicleCategory.Blacklisted;
 
-    public bool IsMonthlyPass => Category is VehicleCategory.MonthlyPass or VehicleCategory.Resident;
+    public bool IsResident => Category == VehicleCategory.Resident;
+
+    public bool IsMonthlyPass => Ticket is not null;
 
     public static VehicleClassification Visitor(string normalizedPlate)
-        => new(VehicleCategory.Visitor, normalizedPlate, null, null, ClassificationWarning.None);
+        => new(VehicleCategory.Visitor, normalizedPlate, null, null, null, ClassificationWarning.None);
 }
 
-/// <summary>Phân loại xe vào bãi (R10): danh sách đen, cư dân, vé tháng, vãng lai.</summary>
+/// <summary>
+/// Phân loại xe vào bãi: danh sách đen, cư dân (hộ đang hoạt động), vé tháng, vãng lai.
+/// Cư dân chỉ được xác định bởi hộ của chủ xe, không bao giờ từ vé tháng hay <c>Customer.Type</c>.
+/// </summary>
 public static class VehicleClassifier
 {
-    /// <summary>Vé hiệu lực theo khoảng nửa mở [StartDate, EndDate).</summary>
-    public static bool IsTicketValidAt(TicketCandidate ticket, DateTime nowUtc)
-    {
-        ArgumentNullException.ThrowIfNull(ticket);
-        return ticket.Status == MonthlyTicketStatus.Active
-               && ticket.StartDateUtc <= nowUtc
-               && nowUtc < ticket.EndDateUtc;
-    }
-
     public static VehicleClassification Classify(
         string normalizedPlate,
         BlacklistMatch? blacklist,
-        IEnumerable<TicketCandidate> tickets,
+        PlateOwnership? ownership,
+        int requestedVehicleTypeId,
         DateTime nowUtc)
     {
-        var valid = tickets
-            .Where(t => IsTicketValidAt(t, nowUtc))
-            .OrderByDescending(t => t.EndDateUtc)
-            .ThenByDescending(t => t.TicketId)
-            .ToList();
-        var best = valid.FirstOrDefault(t => t.CustomerIsActive);
+        var ownerLocked = ownership is { HasOwner: true, OwnerIsActive: false };
+
+        var valid = ownerLocked || ownership is null
+            ? new List<PlateTicket>()
+            : ownership.ValidTickets.Where(t => t.StartDateUtc <= nowUtc && nowUtc <= t.EndDateUtc).ToList();
+
+        var honoured = valid.FirstOrDefault(t => requestedVehicleTypeId <= 0 || t.VehicleTypeId == requestedVehicleTypeId);
+
+        var warning = ClassificationWarning.None;
+        if (ownerLocked)
+        {
+            warning = ClassificationWarning.CustomerLocked;
+        }
+        else if (valid.Count > 0 && honoured is null)
+        {
+            warning = ClassificationWarning.TicketVehicleTypeMismatch;
+        }
 
         if (blacklist is not null)
         {
-            // Danh sách đen luôn thắng vé tháng; giữ vé hợp lệ tốt nhất để ghi nhận hadValidTicket.
-            return new VehicleClassification(VehicleCategory.Blacklisted, normalizedPlate, blacklist,
-                best ?? valid.FirstOrDefault(), ClassificationWarning.None);
+            return new VehicleClassification(VehicleCategory.Blacklisted, normalizedPlate, blacklist, ownership,
+                honoured ?? valid.FirstOrDefault(), warning);
         }
 
-        if (best is not null)
+        if (ownership is { IsResident: true })
         {
-            var category = best.IsResident ? VehicleCategory.Resident : VehicleCategory.MonthlyPass;
-            return new VehicleClassification(category, normalizedPlate, null, best, ClassificationWarning.None);
+            return new VehicleClassification(VehicleCategory.Resident, normalizedPlate, null, ownership, honoured, warning);
         }
 
-        // Khách bị khoá nhưng vé còn hạn: coi là khách vãng lai kèm cảnh báo (E3).
-        var warning = valid.Count > 0 ? ClassificationWarning.CustomerLocked : ClassificationWarning.None;
-        return new VehicleClassification(VehicleCategory.Visitor, normalizedPlate, null, null, warning);
+        if (honoured is not null)
+        {
+            return new VehicleClassification(VehicleCategory.MonthlyPass, normalizedPlate, null, ownership, honoured, warning);
+        }
+
+        return new VehicleClassification(VehicleCategory.Visitor, normalizedPlate, null, ownership, null, warning);
     }
 }

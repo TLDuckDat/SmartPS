@@ -11,12 +11,12 @@ namespace SmartPS.Tests.Integration;
 public class GateSlotSelectionTests : IClassFixture<PostgresDatabaseFixture>
 {
     private readonly PostgresDatabaseFixture _db;
-    private readonly ResidentVisitorData _data;
+    private readonly GateTestData _data;
 
     public GateSlotSelectionTests(PostgresDatabaseFixture db)
     {
         _db = db;
-        _data = new ResidentVisitorData(db);
+        _data = new GateTestData(db);
     }
 
     private async Task<ServiceProvider> OperatorAsync()
@@ -49,12 +49,12 @@ public class GateSlotSelectionTests : IClassFixture<PostgresDatabaseFixture>
         var visitorZone = await _data.CreateZoneAsync(ZoneAudience.VisitorOnly, vt, 1);
 
         // Fill VisitorOnly and Mixed with visitors
-        Assert.Equal(visitorZone.SlotIds[0], await CheckedInSlotAsync(sp, ResidentVisitorData.UniqueNormalizedPlate(), vt));
-        Assert.Equal(mixed.SlotIds[0], await CheckedInSlotAsync(sp, ResidentVisitorData.UniqueNormalizedPlate(), vt));
+        Assert.Equal(visitorZone.SlotIds[0], await CheckedInSlotAsync(sp, GateTestData.UniqueNormalizedPlate(), vt));
+        Assert.Equal(mixed.SlotIds[0], await CheckedInSlotAsync(sp, GateTestData.UniqueNormalizedPlate(), vt));
         var idBefore = await AuditDb.MaxIdAsync(_db.Factory);
 
         // When another visitor arrives
-        var plate = ResidentVisitorData.UniqueNormalizedPlate();
+        var plate = GateTestData.UniqueNormalizedPlate();
         var rejected = await CheckInAsync(sp, plate, vt);
 
         // Then no session, barrier stays closed (Success=false), resident slot untouched
@@ -69,8 +69,8 @@ public class GateSlotSelectionTests : IClassFixture<PostgresDatabaseFixture>
         Assert.Empty(await AuditDb.RowsAfterAsync(_db.Factory, idBefore, AuditActions.ParkingCheckIn));
 
         // A resident still gets the ResidentOnly slot
-        var resident = await _data.CreateSubscriberAsync(vt, isResident: true);
-        Assert.Equal(residentZone.SlotIds[0], await CheckedInSlotAsync(sp, resident.Plate, vt));
+        var resident = await _data.CreateResidentAsync(vt);
+        Assert.Equal(residentZone.SlotIds[0], await CheckedInSlotAsync(sp, resident.NormalizedPlate, vt));
     }
 
     [Fact]
@@ -83,24 +83,24 @@ public class GateSlotSelectionTests : IClassFixture<PostgresDatabaseFixture>
         var mixed = await _data.CreateZoneAsync(ZoneAudience.Mixed, vt, 1);
         var residentZone = await _data.CreateZoneAsync(ZoneAudience.ResidentOnly, vt, 1);
 
-        var r1 = await _data.CreateSubscriberAsync(vt, isResident: true);
-        var r2 = await _data.CreateSubscriberAsync(vt, isResident: true);
-        var r3 = await _data.CreateSubscriberAsync(vt, isResident: true);
-        var r4 = await _data.CreateSubscriberAsync(vt, isResident: true);
+        var r1 = await _data.CreateResidentAsync(vt);
+        var r2 = await _data.CreateResidentAsync(vt);
+        var r3 = await _data.CreateResidentAsync(vt);
+        var r4 = await _data.CreateResidentAsync(vt);
 
-        Assert.Equal(residentZone.SlotIds[0], await CheckedInSlotAsync(sp, r1.Plate, vt));
-        Assert.Equal(mixed.SlotIds[0], await CheckedInSlotAsync(sp, r2.Plate, vt));
-        var third = await CheckInAsync(sp, r3.Plate, vt);
+        Assert.Equal(residentZone.SlotIds[0], await CheckedInSlotAsync(sp, r1.NormalizedPlate, vt));
+        Assert.Equal(mixed.SlotIds[0], await CheckedInSlotAsync(sp, r2.NormalizedPlate, vt));
+        var third = await CheckInAsync(sp, r3.NormalizedPlate, vt);
         Assert.True(third.Success, third.Message);
         Assert.Equal(visitorZone.SlotIds[0], third.Session!.SlotId);
         Assert.Equal(ZoneAudience.VisitorOnly, third.AssignedZoneAudience);
         Assert.Equal(visitorZone.ZoneCode, third.AssignedZoneCode);
 
-        var fourth = await CheckInAsync(sp, r4.Plate, vt);
+        var fourth = await CheckInAsync(sp, r4.NormalizedPlate, vt);
         Assert.False(fourth.Success);
         Assert.Equal(CheckInRejectReason.NoSlotAvailable, fourth.RejectReason);
         Assert.Equal(VehicleCategory.Resident, fourth.Category);
-        Assert.Equal(0, await _data.SessionCountForPlateAsync(r4.Plate));
+        Assert.Equal(0, await _data.SessionCountForPlateAsync(r4.NormalizedPlate));
     }
 
     [Fact]
@@ -112,8 +112,8 @@ public class GateSlotSelectionTests : IClassFixture<PostgresDatabaseFixture>
         var mixed = await _data.CreateZoneAsync(ZoneAudience.Mixed, vt, 1);
         var visitorZone = await _data.CreateZoneAsync(ZoneAudience.VisitorOnly, vt, 1);
 
-        Assert.Equal(visitorZone.SlotIds[0], await CheckedInSlotAsync(sp, ResidentVisitorData.UniqueNormalizedPlate(), vt));
-        Assert.Equal(mixed.SlotIds[0], await CheckedInSlotAsync(sp, ResidentVisitorData.UniqueNormalizedPlate(), vt));
+        Assert.Equal(visitorZone.SlotIds[0], await CheckedInSlotAsync(sp, GateTestData.UniqueNormalizedPlate(), vt));
+        Assert.Equal(mixed.SlotIds[0], await CheckedInSlotAsync(sp, GateTestData.UniqueNormalizedPlate(), vt));
     }
 
     [Fact]
@@ -124,15 +124,15 @@ public class GateSlotSelectionTests : IClassFixture<PostgresDatabaseFixture>
         var vt = await _data.CreateIsolatedVehicleTypeAsync();
         var residentZone = await _data.CreateZoneAsync(ZoneAudience.ResidentOnly, vt, 1);
         var mixed = await _data.CreateZoneAsync(ZoneAudience.Mixed, vt, 1);
-        var m1 = await _data.CreateSubscriberAsync(vt, isResident: false);
-        var m2 = await _data.CreateSubscriberAsync(vt, isResident: false);
+        var m1 = await _data.CreateExternalAsync(vt);
+        var m2 = await _data.CreateExternalAsync(vt);
 
-        var first = await CheckInAsync(sp, m1.Plate, vt);
+        var first = await CheckInAsync(sp, m1.NormalizedPlate, vt);
         Assert.True(first.Success, first.Message);
         Assert.Equal(VehicleCategory.MonthlyPass, first.Category);
         Assert.Equal(mixed.SlotIds[0], first.Session!.SlotId);
 
-        var second = await CheckInAsync(sp, m2.Plate, vt);
+        var second = await CheckInAsync(sp, m2.NormalizedPlate, vt);
         Assert.False(second.Success);
         Assert.Equal(CheckInRejectReason.NoSlotAvailable, second.RejectReason);
         Assert.Equal(SlotStatus.Available, await _data.SlotStatusAsync(residentZone.SlotIds[0]));
@@ -147,8 +147,8 @@ public class GateSlotSelectionTests : IClassFixture<PostgresDatabaseFixture>
         var broken = await _data.CreateZoneAsync(ZoneAudience.VisitorOnly, vt, 1, SlotStatus.Maintenance);
         var mixed = await _data.CreateZoneAsync(ZoneAudience.Mixed, vt, 1);
 
-        Assert.Equal(mixed.SlotIds[0], await CheckedInSlotAsync(sp, ResidentVisitorData.UniqueNormalizedPlate(), vt));
-        var rejected = await CheckInAsync(sp, ResidentVisitorData.UniqueNormalizedPlate(), vt);
+        Assert.Equal(mixed.SlotIds[0], await CheckedInSlotAsync(sp, GateTestData.UniqueNormalizedPlate(), vt));
+        var rejected = await CheckInAsync(sp, GateTestData.UniqueNormalizedPlate(), vt);
         Assert.Equal(CheckInRejectReason.NoSlotAvailable, rejected.RejectReason);
         Assert.Equal(SlotStatus.Maintenance, await _data.SlotStatusAsync(broken.SlotIds[0]));
     }
@@ -161,9 +161,9 @@ public class GateSlotSelectionTests : IClassFixture<PostgresDatabaseFixture>
         var vt = await _data.CreateIsolatedVehicleTypeAsync();
         var mixed = await _data.CreateZoneAsync(ZoneAudience.Mixed, vt, 3);
 
-        Assert.Equal(mixed.SlotIds[0], await CheckedInSlotAsync(sp, ResidentVisitorData.UniqueNormalizedPlate(), vt));
-        Assert.Equal(mixed.SlotIds[1], await CheckedInSlotAsync(sp, ResidentVisitorData.UniqueNormalizedPlate(), vt));
-        Assert.Equal(mixed.SlotIds[2], await CheckedInSlotAsync(sp, ResidentVisitorData.UniqueNormalizedPlate(), vt));
+        Assert.Equal(mixed.SlotIds[0], await CheckedInSlotAsync(sp, GateTestData.UniqueNormalizedPlate(), vt));
+        Assert.Equal(mixed.SlotIds[1], await CheckedInSlotAsync(sp, GateTestData.UniqueNormalizedPlate(), vt));
+        Assert.Equal(mixed.SlotIds[2], await CheckedInSlotAsync(sp, GateTestData.UniqueNormalizedPlate(), vt));
     }
 
     [Fact]
@@ -173,7 +173,7 @@ public class GateSlotSelectionTests : IClassFixture<PostgresDatabaseFixture>
         using var sp = await OperatorAsync();
         var vt = await _data.CreateIsolatedVehicleTypeAsync();
 
-        var result = await CheckInAsync(sp, ResidentVisitorData.UniqueNormalizedPlate(), vt);
+        var result = await CheckInAsync(sp, GateTestData.UniqueNormalizedPlate(), vt);
 
         Assert.True(result.Success, result.Message);
         Assert.Null(result.Session!.SlotId);
@@ -187,9 +187,9 @@ public class GateSlotSelectionTests : IClassFixture<PostgresDatabaseFixture>
         using var sp = await OperatorAsync();
         var vt = await _data.CreateIsolatedVehicleTypeAsync();
         var mixed = await _data.CreateZoneAsync(ZoneAudience.Mixed, vt, 1);
-        var plate = ResidentVisitorData.UniqueNormalizedPlate();
+        var plate = GateTestData.UniqueNormalizedPlate();
 
-        var result = await CheckInAsync(sp, ResidentVisitorData.Decorate(plate), vt);
+        var result = await CheckInAsync(sp, GateTestData.Decorate(plate), vt);
 
         Assert.True(result.Success, result.Message);
         Assert.Equal(mixed.SlotIds[0], result.Session!.SlotId);

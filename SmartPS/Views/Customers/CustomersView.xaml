@@ -3,40 +3,19 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:cust="clr-namespace:SmartPS.Services.Customers"
              mc:Ignorable="d"
              d:DesignHeight="850" d:DesignWidth="1100">
-
-    <UserControl.Resources>
-        <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
-            <Setter Property="Margin" Value="0,0,0,4"/>
-        </Style>
-        <Style x:Key="CellTextStyle" TargetType="TextBlock">
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Margin" Value="10,0"/>
-            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
-        </Style>
-        <Style x:Key="CellBoldStyle" TargetType="TextBlock" BasedOn="{StaticResource CellTextStyle}">
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-        </Style>
-        <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource AppBorderBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="6"/>
-            <Setter Property="Padding" Value="16"/>
-        </Style>
-    </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="{StaticResource AppBackgroundBrush}">
         <StackPanel Margin="28,24">
 
-            <!-- 1. Header -->
-            <Border Style="{StaticResource CardStyle}" Padding="24,16" Margin="0,0,0,16">
+            <!-- 1. Header Phân Hệ -->
+            <Border Background="{StaticResource CardBackgroundBrush}"
+                    CornerRadius="6"
+                    BorderBrush="{StaticResource AppBorderBrush}"
+                    BorderThickness="1"
+                    Padding="24,16"
+                    Margin="0,0,0,20">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -45,441 +24,754 @@
                     <StackPanel Grid.Column="0">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="👥" FontSize="20" Margin="0,0,8,0"/>
-                            <TextBlock Text="{DynamicResource Str_Cust_Title}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{DynamicResource Str_Menu_Customers}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         </StackPanel>
-                        <TextBlock Text="{DynamicResource Str_Cust_Subtitle}" TextWrapping="Wrap"
+                        <TextBlock Text="Quản lý thông tin cư dân, khách hàng thân thiết và danh mục vé gửi xe định kỳ hàng tháng" 
                                    FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
                     </StackPanel>
-                    <Button Grid.Column="1" Command="{Binding RefreshCommand}" Style="{StaticResource PrimaryButtonStyle}"
-                            Content="{DynamicResource Str_Dash_Btn_Refresh}" Padding="16,0" VerticalAlignment="Center"/>
+
+                    <!-- Nút bấm Làm mới dữ liệu -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Command="{Binding RefreshCommand}"
+                                Height="36" Padding="14,0"
+                                Background="{StaticResource PrimaryButtonBrush}"
+                                BorderThickness="0"
+                                Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="🔄" FontSize="12" Margin="0,0,6,0"/>
+                                            <TextBlock Text="Cập Nhật Danh Sách" FontSize="12" FontWeight="SemiBold" Foreground="White"/>
+                                        </StackPanel>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- 2. Read-only notice (AC-10) -->
-            <Border Background="{StaticResource WarningBackgroundBrush}" BorderBrush="{StaticResource WarningBorderBrush}"
-                    BorderThickness="1" CornerRadius="6" Padding="14,10" Margin="0,0,0,16"
-                    Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVisConverter}}">
-                <TextBlock Text="{DynamicResource Str_Cust_ReadOnlyNotice}" TextWrapping="Wrap"
-                           FontSize="12.5" Foreground="{StaticResource WarningTextBrush}"/>
-            </Border>
+            <!-- 2. Hàng Thẻ KPI Khách Hàng (4 Cột) -->
+            <Grid Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
 
-            <TabControl Background="Transparent" BorderThickness="0">
+                <!-- KPI 1: Tổng khách hàng -->
+                <Border Grid.Column="0" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
+                    <StackPanel>
+                        <Grid>
+                            <TextBlock Text="TỔNG KHÁCH HÀNG" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
+                            <TextBlock Text="👥" FontSize="16" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <TextBlock Text="{Binding TotalCustomers, StringFormat='{}{0} hồ sơ'}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}" Margin="0,8,0,2"/>
+                        <TextBlock Text="Đã đăng ký trong hệ thống" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    </StackPanel>
+                </Border>
 
-                <!-- ===================== TAB: CUSTOMERS ===================== -->
-                <TabItem Header="{DynamicResource Str_Cust_Tab_Customers}">
+                <!-- KPI 2: Vé tháng đang hoạt động -->
+                <Border Grid.Column="2" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
+                    <StackPanel>
+                        <Grid>
+                            <TextBlock Text="VÉ THÁNG HOẠT ĐỘNG" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
+                            <TextBlock Text="🎟" FontSize="16" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <TextBlock Text="{Binding ActiveTicketsCount, StringFormat='{}{0} vé'}" FontSize="24" FontWeight="Bold" Foreground="#15803D" Margin="0,8,0,2"/>
+                        <TextBlock Text="Đang còn thời hạn gửi xe" FontSize="11.5" Foreground="#16A34A"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- KPI 3: Sắp hết hạn (dưới 15 ngày) -->
+                <Border Grid.Column="4" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
+                    <StackPanel>
+                        <Grid>
+                            <TextBlock Text="SẮP HẾT HẠN (≤15 NGÀY)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
+                            <TextBlock Text="⏰" FontSize="16" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <TextBlock Text="{Binding ExpiringSoonCount, StringFormat='{}{0} vé'}" FontSize="24" FontWeight="Bold" Foreground="#D97706" Margin="0,8,0,2"/>
+                        <TextBlock Text="Cần nhắc thông báo gia hạn" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- KPI 4: Doanh thu vé tháng -->
+                <Border Grid.Column="6" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
+                    <StackPanel>
+                        <Grid>
+                            <TextBlock Text="DOANH THU ĐỊNH KỲ" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
+                            <TextBlock Text="💵" FontSize="16" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <TextBlock Text="{Binding MonthlyRevenueTotalFormatted}" FontSize="22" FontWeight="Bold" Foreground="#7C3AED" Margin="0,8,0,2"/>
+                        <TextBlock Text="Thu từ gói thuê tháng" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <TabControl Background="Transparent" BorderThickness="0" Margin="0,0,0,20">
+                <!-- TAB 1: KHÁCH HÀNG & PHƯƠNG TIỆN -->
+                <TabItem Header="Khách Hàng &amp; Phương Tiện" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}">
                     <StackPanel Margin="0,16,0,0">
-
-                        <!-- KPI -->
-                        <UniformGrid Rows="1" Margin="0,0,0,16">
-                            <Border Style="{StaticResource CardStyle}" Margin="0,0,10,0">
-                                <StackPanel>
-                                    <TextBlock Text="{DynamicResource Str_Cust_Kpi_Total}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                                    <TextBlock Text="{Binding TotalCustomers}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}" Margin="0,8,0,0"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Style="{StaticResource CardStyle}" Margin="0,0,10,0">
-                                <StackPanel>
-                                    <TextBlock Text="{DynamicResource Str_Cust_Kpi_Residents}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                                    <TextBlock Text="{Binding ResidentCount}" FontSize="24" FontWeight="Bold" Foreground="#15803D" Margin="0,8,0,0"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Style="{StaticResource CardStyle}" Margin="0,0,10,0">
-                                <StackPanel>
-                                    <TextBlock Text="{DynamicResource Str_Cust_Kpi_ActiveTickets}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                                    <TextBlock Text="{Binding ActiveTicketsCount}" FontSize="24" FontWeight="Bold" Foreground="#1D4ED8" Margin="0,8,0,0"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Style="{StaticResource CardStyle}" Margin="0,0,10,0">
-                                <StackPanel>
-                                    <TextBlock Text="{DynamicResource Str_Cust_Kpi_ExpiringSoon}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                                    <TextBlock Text="{Binding ExpiringSoonCount}" FontSize="24" FontWeight="Bold" Foreground="#D97706" Margin="0,8,0,0"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Style="{StaticResource CardStyle}">
-                                <StackPanel>
-                                    <TextBlock Text="{DynamicResource Str_Cust_Kpi_Revenue}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                                    <TextBlock Text="{Binding ActiveTicketRevenueFormatted}" FontSize="20" FontWeight="Bold" Foreground="#7C3AED" Margin="0,8,0,0"/>
-                                </StackPanel>
-                            </Border>
-                        </UniformGrid>
-
-                        <!-- Search / filter / new -->
-                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+                        <!-- 3. Thanh Tìm Kiếm Khách Hàng -->
+                        <Border Background="{StaticResource CardBackgroundBrush}"
+                                BorderBrush="{StaticResource AppBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="16"
+                                Margin="0,0,0,20">
                             <Grid>
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="380"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBox Grid.Column="0" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource ModernTextBoxStyle}"
-                                         ToolTip="{DynamicResource Str_Cust_SearchHint}"/>
-                                <ComboBox Grid.Column="1" Width="170" Height="36" Margin="12,0,0,0" VerticalContentAlignment="Center"
-                                          SelectedValue="{Binding Filter, Mode=TwoWay}" SelectedValuePath="Tag">
-                                    <ComboBoxItem Content="{DynamicResource Str_Cust_Filter_All}" Tag="{x:Static cust:CustomerListFilter.All}"/>
-                                    <ComboBoxItem Content="{DynamicResource Str_Cust_Filter_Residents}" Tag="{x:Static cust:CustomerListFilter.Residents}"/>
-                                    <ComboBoxItem Content="{DynamicResource Str_Cust_Filter_NonResidents}" Tag="{x:Static cust:CustomerListFilter.NonResidents}"/>
-                                </ComboBox>
-                                <Button Grid.Column="2" Command="{Binding NewCustomerCommand}" Style="{StaticResource PrimaryButtonStyle}"
-                                        Content="{DynamicResource Str_Cust_New}" Margin="12,0,0,0" Padding="16,0"/>
+
+                                <Border Grid.Column="0" Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Height="36">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="32"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="🔍" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        <TextBox Grid.Column="1"
+                                                 Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}"
+                                                 BorderThickness="0"
+                                                 Background="Transparent"
+                                                 VerticalContentAlignment="Center"
+                                                 FontSize="13"
+                                                 Foreground="{StaticResource TextPrimaryBrush}"
+                                                 Padding="0,0,8,0"/>
+                                    </Grid>
+                                </Border>
+
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="Sắp xếp:" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12.5" Margin="0,0,8,0"/>
+                                    <ComboBox ItemsSource="{Binding CustomerSortOptions}" SelectedIndex="{Binding SelectedCustomerSortIndex}" Width="200" Height="34" VerticalContentAlignment="Center"/>
+                                </StackPanel>
                             </Grid>
                         </Border>
 
-                        <!-- Customer list -->
-                        <Border Style="{StaticResource CardStyle}" Padding="20" Margin="0,0,0,16">
+                        <!-- 4. Bảng Danh Sách Khách Hàng & Vé Tháng -->
+                        <Border Background="{StaticResource CardBackgroundBrush}"
+                                BorderBrush="{StaticResource AppBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="20">
                             <StackPanel>
-                                <DataGrid ItemsSource="{Binding Customers}"
-                                          SelectedItem="{Binding SelectedCustomer}"
-                                          AutoGenerateColumns="False"
-                                          IsReadOnly="True"
-                                          CanUserAddRows="False"
-                                          RowHeight="38"
-                                          MaxHeight="450"
-                                          GridLinesVisibility="Horizontal"
-                                          HorizontalGridLinesBrush="{StaticResource DividerBrush}"
-                                          Background="Transparent"
-                                          BorderThickness="1"
-                                          BorderBrush="{StaticResource DividerBrush}"
-                                          RowHeaderWidth="0"
-                                          HeadersVisibility="Column"
-                                          SelectionMode="Single">
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn Binding="{Binding FullName}" Width="170" ElementStyle="{StaticResource CellBoldStyle}">
-                                            <DataGridTextColumn.HeaderTemplate>
-                                                <DataTemplate><TextBlock Text="{DynamicResource Str_Cust_Col_Name}"/></DataTemplate>
-                                            </DataGridTextColumn.HeaderTemplate>
-                                        </DataGridTextColumn>
-                                        <DataGridTextColumn Binding="{Binding PhoneNumber}" Width="110" ElementStyle="{StaticResource CellTextStyle}">
-                                            <DataGridTextColumn.HeaderTemplate>
-                                                <DataTemplate><TextBlock Text="{DynamicResource Str_Cust_Col_Phone}"/></DataTemplate>
-                                            </DataGridTextColumn.HeaderTemplate>
-                                        </DataGridTextColumn>
-                                        <DataGridTextColumn Binding="{Binding ApartmentCode}" Width="90" ElementStyle="{StaticResource CellTextStyle}">
-                                            <DataGridTextColumn.HeaderTemplate>
-                                                <DataTemplate><TextBlock Text="{DynamicResource Str_Cust_Col_Apartment}"/></DataTemplate>
-                                            </DataGridTextColumn.HeaderTemplate>
-                                        </DataGridTextColumn>
-                                        <DataGridTextColumn Binding="{Binding LicensePlatesText}" Width="170" ElementStyle="{StaticResource CellBoldStyle}">
-                                            <DataGridTextColumn.HeaderTemplate>
-                                                <DataTemplate><TextBlock Text="{DynamicResource Str_Cust_Col_Plates}"/></DataTemplate>
-                                            </DataGridTextColumn.HeaderTemplate>
-                                        </DataGridTextColumn>
-                                        <DataGridTextColumn Binding="{Binding TypeText}" Width="120" ElementStyle="{StaticResource CellTextStyle}">
-                                            <DataGridTextColumn.HeaderTemplate>
-                                                <DataTemplate><TextBlock Text="{DynamicResource Str_Cust_Col_Type}"/></DataTemplate>
-                                            </DataGridTextColumn.HeaderTemplate>
-                                        </DataGridTextColumn>
-                                        <DataGridTemplateColumn Width="130">
-                                            <DataGridTemplateColumn.HeaderTemplate>
-                                                <DataTemplate><TextBlock Text="{DynamicResource Str_Cust_Col_TicketStatus}"/></DataTemplate>
-                                            </DataGridTemplateColumn.HeaderTemplate>
-                                            <DataGridTemplateColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <Border CornerRadius="3" Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0">
-                                                        <Border.Style>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="Background" Value="#F1F5F9"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding HasActiveTicket}" Value="True">
-                                                                        <Setter Property="Background" Value="#DCFCE7"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding IsExpiringSoon}" Value="True">
-                                                                        <Setter Property="Background" Value="#FEF3C7"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding IsExpired}" Value="True">
-                                                                        <Setter Property="Background" Value="#FEE2E2"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Border.Style>
-                                                        <TextBlock Text="{Binding TicketStatusText}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </DataGridTemplateColumn.CellTemplate>
-                                        </DataGridTemplateColumn>
-                                        <DataGridTextColumn Binding="{Binding TicketEndText}" Width="100" ElementStyle="{StaticResource CellTextStyle}">
-                                            <DataGridTextColumn.HeaderTemplate>
-                                                <DataTemplate><TextBlock Text="{DynamicResource Str_Cust_Col_TicketEnd}"/></DataTemplate>
-                                            </DataGridTextColumn.HeaderTemplate>
-                                        </DataGridTextColumn>
-                                        <DataGridTextColumn Binding="{Binding LockedText}" Width="*" ElementStyle="{StaticResource CellTextStyle}">
-                                            <DataGridTextColumn.HeaderTemplate>
-                                                <DataTemplate><TextBlock Text="{DynamicResource Str_Cust_Col_Active}"/></DataTemplate>
-                                            </DataGridTextColumn.HeaderTemplate>
-                                        </DataGridTextColumn>
-                                    </DataGrid.Columns>
-                                </DataGrid>
-
-                                <Grid Margin="0,12,0,0">
+                                <Grid Margin="0,0,0,14">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <Button Grid.Column="0" Command="{Binding PrevPageCommand}" Style="{StaticResource SecondaryButtonStyle}" Content="{DynamicResource Str_Cust_PrevPage}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding PageInfoText}" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                               FontSize="12" Foreground="{StaticResource TextDimBrush}"/>
-                                    <Button Grid.Column="2" Command="{Binding NextPageCommand}" Style="{StaticResource SecondaryButtonStyle}" Content="{DynamicResource Str_Cust_NextPage}"/>
+                                    <TextBlock Grid.Column="0" Text="DANH SÁCH KHÁCH HÀNG &amp; HỢP ĐỒNG GỬI XE" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <Button Content="Thêm Khách Hàng" Command="{Binding AddCustomerCommand}" Padding="10,5" Margin="0,0,10,0" Background="#10B981" Foreground="White" BorderThickness="0"/>
+                                        <Button Content="Thêm Phương Tiện" Command="{Binding AddVehicleCommand}" Padding="10,5" Margin="0,0,10,0" Background="#3B82F6" Foreground="White" BorderThickness="0"/>
+                                        <Button Content="Xóa" Command="{Binding DeleteCustomerCommand}" Padding="10,5" Background="#EF4444" Foreground="White" BorderThickness="0" ToolTip="Xóa khách hàng đang chọn"/>
+                                    </StackPanel>
                                 </Grid>
-                            </StackPanel>
-                        </Border>
 
-                        <!-- Editor -->
-                        <Border Style="{StaticResource CardStyle}" Padding="20" DataContext="{Binding Editor}"
-                                Visibility="{Binding IsOpen, Converter={StaticResource BoolToVisConverter}}">
-                            <StackPanel IsEnabled="{Binding CanManage}">
+                    <DataGrid ItemsSource="{Binding FilteredCustomers}"
+                              SelectedItem="{Binding SelectedCustomer}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              CanUserAddRows="False"
+                              RowHeight="38"
+                              MaxHeight="450"
+                              GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="{StaticResource DividerBrush}"
+                              Background="Transparent"
+                              BorderThickness="1"
+                              BorderBrush="{StaticResource DividerBrush}"
+                              RowHeaderWidth="0"
+                              HeadersVisibility="Column"
+                              SelectionMode="Single">
 
-                                <!-- Profile -->
-                                <WrapPanel Orientation="Horizontal">
-                                    <StackPanel Margin="0,0,12,10" Width="220">
-                                        <TextBlock Text="{DynamicResource Str_Cust_Field_FullName}" Style="{StaticResource FieldLabelStyle}"/>
-                                        <TextBox Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
-                                    </StackPanel>
-                                    <StackPanel Margin="0,0,12,10" Width="150">
-                                        <TextBlock Text="{DynamicResource Str_Cust_Field_Phone}" Style="{StaticResource FieldLabelStyle}"/>
-                                        <TextBox Text="{Binding PhoneNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
-                                    </StackPanel>
-                                    <StackPanel Margin="0,0,12,10" Width="220">
-                                        <TextBlock Text="{DynamicResource Str_Cust_Field_Email}" Style="{StaticResource FieldLabelStyle}"/>
-                                        <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
-                                    </StackPanel>
-                                    <StackPanel Margin="0,0,12,10" Width="160">
-                                        <TextBlock Text="{DynamicResource Str_Cust_Field_IdentityCard}" Style="{StaticResource FieldLabelStyle}"/>
-                                        <TextBox Text="{Binding IdentityCard, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
-                                    </StackPanel>
-                                    <StackPanel Margin="0,0,12,10" Width="130" VerticalAlignment="Bottom">
-                                        <CheckBox IsChecked="{Binding IsResident}" Content="{DynamicResource Str_Cust_Field_IsResident}" Margin="0,0,0,10"/>
-                                    </StackPanel>
-                                    <StackPanel Margin="0,0,12,10" Width="140">
-                                        <TextBlock Text="{DynamicResource Str_Cust_Field_Apartment}" Style="{StaticResource FieldLabelStyle}"/>
-                                        <TextBox Text="{Binding ApartmentCode, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
-                                    </StackPanel>
-                                    <StackPanel Margin="0,0,12,10" Width="100">
-                                        <TextBlock Text="{DynamicResource Str_Cust_Field_Building}" Style="{StaticResource FieldLabelStyle}"/>
-                                        <TextBox Text="{Binding Building, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
-                                    </StackPanel>
-                                    <StackPanel Margin="0,0,12,10" Width="160">
-                                        <TextBlock Text="{DynamicResource Str_Cust_Field_Type}" Style="{StaticResource FieldLabelStyle}"/>
-                                        <ComboBox ItemsSource="{Binding TypeOptions}" SelectedValue="{Binding SelectedType, Mode=TwoWay}"
-                                                  SelectedValuePath="Value" DisplayMemberPath="DisplayName" Height="36" VerticalContentAlignment="Center"/>
-                                    </StackPanel>
-                                    <StackPanel Margin="0,0,12,10" Width="360">
-                                        <TextBlock Text="{DynamicResource Str_Cust_Field_Notes}" Style="{StaticResource FieldLabelStyle}"/>
-                                        <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
-                                    </StackPanel>
-                                </WrapPanel>
+                        <DataGrid.Columns>
+                            <!-- Mã vé tháng -->
+                            <DataGridTextColumn Header="Mã Vé Tháng" Binding="{Binding MonthlyTicketCode}" Width="130">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="Margin" Value="10,0"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Foreground" Value="{StaticResource PrimaryButtonBrush}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
 
-                                <StackPanel Orientation="Horizontal" Margin="0,4,0,16">
-                                    <Button Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButtonStyle}" Content="{DynamicResource Str_Cust_Save}" Padding="18,0"/>
-                                    <Button Command="{Binding CancelCommand}" Style="{StaticResource SecondaryButtonStyle}" Content="{DynamicResource Str_Cust_Cancel}"/>
-                                    <Button Command="{Binding ToggleActiveCommand}" Style="{StaticResource SecondaryButtonStyle}" Content="{Binding ToggleActiveText}"/>
-                                </StackPanel>
+                            <!-- Họ và tên -->
+                            <DataGridTextColumn Header="Họ Và Tên" Binding="{Binding FullName}" Width="160">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="Margin" Value="10,0"/>
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
 
-                                <!-- Vehicles -->
-                                <TextBlock Text="{DynamicResource Str_Cust_Vehicles}" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                                <DataGrid ItemsSource="{Binding Vehicles}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False"
-                                          RowHeight="34" MaxHeight="200" GridLinesVisibility="Horizontal"
-                                          HorizontalGridLinesBrush="{StaticResource DividerBrush}" Background="Transparent"
-                                          BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0"
-                                          HeadersVisibility="Column" SelectionMode="Single">
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn Binding="{Binding LicensePlate}" Width="170" ElementStyle="{StaticResource CellBoldStyle}">
-                                            <DataGridTextColumn.HeaderTemplate>
-                                                <DataTemplate><TextBlock Text="{DynamicResource Str_Cust_Field_Plate}"/></DataTemplate>
-                                            </DataGridTextColumn.HeaderTemplate>
-                                        </DataGridTextColumn>
-                                        <DataGridTextColumn Binding="{Binding VehicleTypeName}" Width="*" ElementStyle="{StaticResource CellTextStyle}">
-                                            <DataGridTextColumn.HeaderTemplate>
-                                                <DataTemplate><TextBlock Text="{DynamicResource Str_Cust_Field_VehicleType}"/></DataTemplate>
-                                            </DataGridTextColumn.HeaderTemplate>
-                                        </DataGridTextColumn>
-                                        <DataGridTemplateColumn Width="130">
-                                            <DataGridTemplateColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <Button Content="{DynamicResource Str_Cust_RemoveVehicle}" Style="{StaticResource SecondaryButtonStyle}" Height="26" Padding="10,0" FontSize="11"
-                                                            Command="{Binding DataContext.RemoveVehicleCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                            CommandParameter="{Binding}"/>
-                                                </DataTemplate>
-                                            </DataGridTemplateColumn.CellTemplate>
-                                        </DataGridTemplateColumn>
-                                    </DataGrid.Columns>
-                                </DataGrid>
-                                <StackPanel Orientation="Horizontal" Margin="0,10,0,16">
-                                    <TextBox Text="{Binding NewVehiclePlate, UpdateSourceTrigger=PropertyChanged}" Width="180"
-                                             Style="{StaticResource ModernTextBoxStyle}" ToolTip="{DynamicResource Str_Cust_Field_Plate}"/>
-                                    <ComboBox ItemsSource="{Binding VehicleTypeOptions}" SelectedItem="{Binding NewVehicleType}" DisplayMemberPath="TypeName"
-                                              Width="160" Height="36" Margin="10,0,0,0" VerticalContentAlignment="Center"/>
-                                    <Button Command="{Binding AddVehicleCommand}" Style="{StaticResource SecondaryButtonStyle}" Content="{DynamicResource Str_Cust_AddVehicle}" Margin="10,0,0,0"/>
-                                </StackPanel>
+                            <!-- Số điện thoại -->
+                            <DataGridTextColumn Header="Số Điện Thoại" Binding="{Binding PhoneNumber}" Width="120">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="Margin" Value="10,0"/>
+                                        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
 
-                                <!-- Tickets (existing customers only) -->
-                                <StackPanel Visibility="{Binding CanShowTickets, Converter={StaticResource BoolToVisConverter}}">
-                                    <TextBlock Text="{DynamicResource Str_Cust_Tickets}" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                                    <DataGrid ItemsSource="{Binding Tickets}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False"
-                                              RowHeight="36" MaxHeight="240" GridLinesVisibility="Horizontal"
-                                              HorizontalGridLinesBrush="{StaticResource DividerBrush}" Background="Transparent"
-                                              BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0"
-                                              HeadersVisibility="Column" SelectionMode="Single">
-                                        <DataGrid.Columns>
-                                            <DataGridTextColumn Header="#" Binding="{Binding TicketCode}" Width="130" ElementStyle="{StaticResource CellBoldStyle}"/>
-                                            <DataGridTextColumn Binding="{Binding LicensePlate}" Width="110" ElementStyle="{StaticResource CellTextStyle}">
-                                                <DataGridTextColumn.HeaderTemplate>
-                                                    <DataTemplate><TextBlock Text="{DynamicResource Str_Cust_Field_Plate}"/></DataTemplate>
-                                                </DataGridTextColumn.HeaderTemplate>
-                                            </DataGridTextColumn>
-                                            <DataGridTextColumn Binding="{Binding PlanName}" Width="190" ElementStyle="{StaticResource CellTextStyle}">
-                                                <DataGridTextColumn.HeaderTemplate>
-                                                    <DataTemplate><TextBlock Text="{DynamicResource Str_Cust_Field_Plan}"/></DataTemplate>
-                                                </DataGridTextColumn.HeaderTemplate>
-                                            </DataGridTextColumn>
-                                            <DataGridTextColumn Binding="{Binding StartText}" Width="95" ElementStyle="{StaticResource CellTextStyle}">
-                                                <DataGridTextColumn.HeaderTemplate>
-                                                    <DataTemplate><TextBlock Text="{DynamicResource Str_Cust_Field_StartDate}"/></DataTemplate>
-                                                </DataGridTextColumn.HeaderTemplate>
-                                            </DataGridTextColumn>
-                                            <DataGridTextColumn Binding="{Binding EndText}" Width="95" ElementStyle="{StaticResource CellTextStyle}">
-                                                <DataGridTextColumn.HeaderTemplate>
-                                                    <DataTemplate><TextBlock Text="{DynamicResource Str_Cust_Col_TicketEnd}"/></DataTemplate>
-                                                </DataGridTextColumn.HeaderTemplate>
-                                            </DataGridTextColumn>
-                                            <DataGridTextColumn Binding="{Binding StatusText}" Width="110" ElementStyle="{StaticResource CellTextStyle}">
-                                                <DataGridTextColumn.HeaderTemplate>
-                                                    <DataTemplate><TextBlock Text="{DynamicResource Str_Cust_Col_TicketStatus}"/></DataTemplate>
-                                                </DataGridTextColumn.HeaderTemplate>
-                                            </DataGridTextColumn>
-                                            <DataGridTemplateColumn Width="*">
-                                                <DataGridTemplateColumn.CellTemplate>
-                                                    <DataTemplate>
-                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                            <Button Content="{DynamicResource Str_Cust_RenewTicket}" Style="{StaticResource SecondaryButtonStyle}" Height="26" Padding="10,0" FontSize="11"
-                                                                    Command="{Binding DataContext.RenewTicketCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                                    CommandParameter="{Binding Dto}"/>
-                                                            <Button Content="{DynamicResource Str_Cust_SuspendTicket}" Style="{StaticResource SecondaryButtonStyle}" Height="26" Padding="10,0" FontSize="11"
-                                                                    Command="{Binding DataContext.SuspendTicketCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                                    CommandParameter="{Binding Dto}"/>
-                                                            <Button Content="{DynamicResource Str_Cust_ResumeTicket}" Style="{StaticResource SecondaryButtonStyle}" Height="26" Padding="10,0" FontSize="11"
-                                                                    Command="{Binding DataContext.ResumeTicketCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                                    CommandParameter="{Binding Dto}"/>
-                                                        </StackPanel>
-                                                    </DataTemplate>
-                                                </DataGridTemplateColumn.CellTemplate>
-                                            </DataGridTemplateColumn>
-                                        </DataGrid.Columns>
-                                    </DataGrid>
+                            <!-- Biển số xe đăng ký -->
+                            <DataGridTextColumn Header="Biển Số Xe" Binding="{Binding DefaultLicensePlate}" Width="120">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="Margin" Value="10,0"/>
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
 
-                                    <WrapPanel Orientation="Horizontal" Margin="0,12,0,0">
-                                        <StackPanel Margin="0,0,12,8" Width="170">
-                                            <TextBlock Text="{DynamicResource Str_Cust_Field_Plate}" Style="{StaticResource FieldLabelStyle}"/>
-                                            <ComboBox ItemsSource="{Binding Vehicles}" SelectedItem="{Binding SelectedVehicle}" DisplayMemberPath="LicensePlate"
-                                                      Height="36" VerticalContentAlignment="Center"/>
-                                        </StackPanel>
-                                        <StackPanel Margin="0,0,12,8" Width="240">
-                                            <TextBlock Text="{DynamicResource Str_Cust_Field_Plan}" Style="{StaticResource FieldLabelStyle}"/>
-                                            <ComboBox ItemsSource="{Binding PlanOptions}" SelectedItem="{Binding SelectedPlan}" DisplayMemberPath="PlanName"
-                                                      Height="36" VerticalContentAlignment="Center"/>
-                                        </StackPanel>
-                                        <StackPanel Margin="0,0,12,8" Width="150">
-                                            <TextBlock Text="{DynamicResource Str_Cust_Field_StartDate}" Style="{StaticResource FieldLabelStyle}"/>
-                                            <DatePicker SelectedDate="{Binding StartDate, Mode=TwoWay}" Height="36" VerticalContentAlignment="Center"/>
-                                        </StackPanel>
-                                        <StackPanel Margin="0,0,12,8" Width="220">
-                                            <TextBlock Text="{DynamicResource Str_Cust_SuspendReason}" Style="{StaticResource FieldLabelStyle}"/>
-                                            <TextBox Text="{Binding SuspendReason, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
-                                        </StackPanel>
-                                        <Button Command="{Binding CreateTicketCommand}" Style="{StaticResource PrimaryButtonStyle}" Content="{DynamicResource Str_Cust_CreateTicket}"
-                                                VerticalAlignment="Bottom" Margin="0,0,0,8" Padding="16,0"/>
-                                    </WrapPanel>
-                                </StackPanel>
-                            </StackPanel>
+                            <!-- Loại phương tiện -->
+                            <DataGridTextColumn Header="Loại Xe" Binding="{Binding VehicleTypeName}" Width="130">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="Margin" Value="10,0"/>
+                                        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Phân hạng -->
+                            <DataGridTextColumn Header="Phân Hạng" Binding="{Binding CustomerTypeDisplay}" Width="140">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="Margin" Value="10,0"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Foreground" Value="#7C3AED"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Hạn sử dụng vé -->
+                            <DataGridTextColumn Header="Hạn Sử Dụng" Binding="{Binding TicketExpiry, StringFormat={}{0:dd/MM/yyyy}}" Width="120">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="Margin" Value="10,0"/>
+                                        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Trạng thái -->
+                            <DataGridTemplateColumn Header="Trạng Thái Vé" Width="*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="3" Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#FEE2E2"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasActiveTicket}" Value="True">
+                                                            <Setter Property="Background" Value="#DCFCE7"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding StatusText}" FontSize="11" FontWeight="SemiBold">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Foreground" Value="#B91C1C"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding HasActiveTicket}" Value="True">
+                                                                <Setter Property="Foreground" Value="#15803D"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <!-- Thao tác xóa từng dòng -->
+                            <DataGridTemplateColumn Header="Thao Tác" Width="100">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Xóa xe"
+                                                ToolTip="Xóa phương tiện này (không xóa khách hàng nếu khách còn xe khác)"
+                                                Command="{Binding DataContext.DeleteRowVehicleCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"
+                                                Padding="8,3" Height="26"
+                                                Background="#FEE2E2" Foreground="#B91C1C"
+                                                BorderBrush="#FCA5A5" BorderThickness="1"
+                                                FontSize="11" FontWeight="SemiBold"
+                                                Cursor="Hand"
+                                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Button.Resources>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="CornerRadius" Value="4"/>
+                                                </Style>
+                                            </Button.Resources>
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                        </StackPanel>
                         </Border>
                     </StackPanel>
                 </TabItem>
+                
+                <!-- TAB 2: QUẢN LÝ HỘ GIA ĐÌNH -->
+                <TabItem Header="Quản Lý Hộ Gia Đình" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}">
+                    <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="20" Margin="0,16,0,0">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="DANH SÁCH HỘ GIA ĐÌNH CƯ DÂN" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Button Content="Thêm Hộ Gia Đình" Command="{Binding AddHouseholdCommand}" Padding="10,5" Margin="0,0,10,0" Background="#10B981" Foreground="White" BorderThickness="0"/>
+                                    <Button Content="Xóa" Command="{Binding DeleteHouseholdCommand}" Padding="10,5" Background="#EF4444" Foreground="White" BorderThickness="0" ToolTip="Xóa hộ đang chọn"/>
+                                </StackPanel>
+                            </Grid>
 
-                <!-- ===================== TAB: BLACKLIST ===================== -->
-                <TabItem Header="{DynamicResource Str_Cust_Tab_Blacklist}">
-                    <StackPanel Margin="0,16,0,0" DataContext="{Binding Blacklist}">
-
-                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
-                            <StackPanel>
-                                <WrapPanel Orientation="Horizontal" IsEnabled="{Binding CanManageBlacklist}">
-                                    <StackPanel Margin="0,0,12,8" Width="170">
-                                        <TextBlock Text="{DynamicResource Str_Blacklist_Plate}" Style="{StaticResource FieldLabelStyle}"/>
-                                        <TextBox Text="{Binding NewPlate, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
+                            <!-- Thanh Tìm Kiếm & Sắp Xếp Hộ Gia Đình -->
+                            <Border Background="#F8FAFC" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="4" Padding="12,10" Margin="0,0,0,14">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="320"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Background="White" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Height="34">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="30"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="🔍" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                            <TextBox Grid.Column="1" Text="{Binding HouseholdSearchKeyword, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center" FontSize="12.5" Foreground="{StaticResource TextPrimaryBrush}" Padding="0,0,6,0"/>
+                                        </Grid>
+                                    </Border>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="Sắp xếp:" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12.5" Margin="0,0,8,0"/>
+                                        <ComboBox ItemsSource="{Binding HouseholdSortOptions}" SelectedIndex="{Binding SelectedHouseholdSortIndex}" Width="190" Height="34" VerticalContentAlignment="Center"/>
                                     </StackPanel>
-                                    <StackPanel Margin="0,0,12,8" Width="380">
-                                        <TextBlock Text="{DynamicResource Str_Blacklist_Reason}" Style="{StaticResource FieldLabelStyle}"/>
-                                        <TextBox Text="{Binding NewReason, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
-                                    </StackPanel>
-                                    <Button Command="{Binding AddCommand}" Style="{StaticResource PrimaryButtonStyle}" Content="{DynamicResource Str_Blacklist_Add}"
-                                            VerticalAlignment="Bottom" Margin="0,0,0,8" Padding="16,0"/>
-                                </WrapPanel>
-                                <CheckBox IsChecked="{Binding IncludeHistory}" Content="{DynamicResource Str_Blacklist_ShowHistory}" Margin="0,4,0,0"/>
-                            </StackPanel>
-                        </Border>
+                                </Grid>
+                            </Border>
 
-                        <Border Style="{StaticResource CardStyle}" Padding="20" Margin="0,0,0,16">
-                            <DataGrid ItemsSource="{Binding Entries}" SelectedItem="{Binding SelectedEntry}"
-                                      AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False"
-                                      RowHeight="36" MaxHeight="420" GridLinesVisibility="Horizontal"
-                                      HorizontalGridLinesBrush="{StaticResource DividerBrush}" Background="Transparent"
-                                      BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0"
-                                      HeadersVisibility="Column" SelectionMode="Single">
+                            <DataGrid ItemsSource="{Binding Households}" SelectedItem="{Binding SelectedHousehold}" AutoGenerateColumns="False" IsReadOnly="True" RowHeight="38" MaxHeight="550" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{StaticResource DividerBrush}" Background="Transparent" BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0" HeadersVisibility="Column">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Binding="{Binding LicensePlate}" Width="130" ElementStyle="{StaticResource CellBoldStyle}">
-                                        <DataGridTextColumn.HeaderTemplate>
-                                            <DataTemplate><TextBlock Text="{DynamicResource Str_Blacklist_Plate}"/></DataTemplate>
-                                        </DataGridTextColumn.HeaderTemplate>
-                                    </DataGridTextColumn>
-                                    <DataGridTextColumn Binding="{Binding Reason}" Width="260" ElementStyle="{StaticResource CellTextStyle}">
-                                        <DataGridTextColumn.HeaderTemplate>
-                                            <DataTemplate><TextBlock Text="{DynamicResource Str_Blacklist_Reason}"/></DataTemplate>
-                                        </DataGridTextColumn.HeaderTemplate>
-                                    </DataGridTextColumn>
-                                    <DataGridTextColumn Binding="{Binding CreatedAt, StringFormat={}{0:dd/MM/yyyy HH:mm}}" Width="130" ElementStyle="{StaticResource CellTextStyle}">
-                                        <DataGridTextColumn.HeaderTemplate>
-                                            <DataTemplate><TextBlock Text="{DynamicResource Str_Blacklist_CreatedAt}"/></DataTemplate>
-                                        </DataGridTextColumn.HeaderTemplate>
-                                    </DataGridTextColumn>
-                                    <DataGridTextColumn Binding="{Binding CreatedByUsername}" Width="110" ElementStyle="{StaticResource CellTextStyle}">
-                                        <DataGridTextColumn.HeaderTemplate>
-                                            <DataTemplate><TextBlock Text="{DynamicResource Str_Blacklist_CreatedBy}"/></DataTemplate>
-                                        </DataGridTextColumn.HeaderTemplate>
-                                    </DataGridTextColumn>
-                                    <DataGridCheckBoxColumn Binding="{Binding IsActive, Mode=OneWay}" Width="90">
-                                        <DataGridCheckBoxColumn.HeaderTemplate>
-                                            <DataTemplate><TextBlock Text="{DynamicResource Str_Blacklist_Active}"/></DataTemplate>
-                                        </DataGridCheckBoxColumn.HeaderTemplate>
-                                    </DataGridCheckBoxColumn>
-                                    <DataGridTextColumn Binding="{Binding RemovedAt, StringFormat={}{0:dd/MM/yyyy HH:mm}}" Width="130" ElementStyle="{StaticResource CellTextStyle}">
-                                        <DataGridTextColumn.HeaderTemplate>
-                                            <DataTemplate><TextBlock Text="{DynamicResource Str_Blacklist_RemovedAt}"/></DataTemplate>
-                                        </DataGridTextColumn.HeaderTemplate>
-                                    </DataGridTextColumn>
-                                    <DataGridTextColumn Binding="{Binding RemovedByUsername}" Width="110" ElementStyle="{StaticResource CellTextStyle}">
-                                        <DataGridTextColumn.HeaderTemplate>
-                                            <DataTemplate><TextBlock Text="{DynamicResource Str_Blacklist_RemovedBy}"/></DataTemplate>
-                                        </DataGridTextColumn.HeaderTemplate>
-                                    </DataGridTextColumn>
-                                    <DataGridTextColumn Binding="{Binding RemoveReason}" Width="*" ElementStyle="{StaticResource CellTextStyle}">
-                                        <DataGridTextColumn.HeaderTemplate>
-                                            <DataTemplate><TextBlock Text="{DynamicResource Str_Blacklist_RemoveReason}"/></DataTemplate>
-                                        </DataGridTextColumn.HeaderTemplate>
-                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="Mã Căn Hộ" Binding="{Binding ApartmentCode}" Width="150"/>
+                                    <DataGridTextColumn Header="Số Xe Tối Đa" Binding="{Binding MaxVehicles}" Width="120"/>
+                                    <DataGridTextColumn Header="Ghi Chú" Binding="{Binding Notes}" Width="*"/>
+                                    <DataGridTextColumn Header="Ngày Tạo" Binding="{Binding CreatedAt, StringFormat={}{0:dd/MM/yyyy}}" Width="120"/>
                                 </DataGrid.Columns>
                             </DataGrid>
-                        </Border>
+                        </StackPanel>
+                    </Border>
+                </TabItem>
 
-                        <Border Style="{StaticResource CardStyle}" IsEnabled="{Binding CanManageBlacklist}">
-                            <WrapPanel Orientation="Horizontal">
-                                <StackPanel Margin="0,0,12,0" Width="420">
-                                    <TextBlock Text="{DynamicResource Str_Blacklist_RemoveReason}" Style="{StaticResource FieldLabelStyle}"/>
-                                    <TextBox Text="{Binding RemoveReason, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
+                <!-- TAB 3: QUẢN LÝ VÉ THÁNG -->
+                <TabItem Header="Quản Lý Vé Tháng" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}">
+                    <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="20" Margin="0,16,0,0">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="DANH SÁCH VÉ THÁNG ĐANG HOẠT ĐỘNG" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Button Content="Đăng Ký Vé Tháng" Command="{Binding AddTicketCommand}" Padding="10,5" Margin="0,0,10,0" Background="#8B5CF6" Foreground="White" BorderThickness="0"/>
+                                    <Button Content="Khóa/Mở Thẻ" Command="{Binding ToggleTicketCommand}" Padding="10,5" Margin="0,0,10,0" Background="#F59E0B" Foreground="White" BorderThickness="0" ToolTip="Khóa hoặc mở khóa thẻ"/>
+                                    <Button Content="Gia Hạn" Command="{Binding RenewTicketCommand}" Padding="10,5" Margin="0,0,10,0" Background="#3B82F6" Foreground="White" BorderThickness="0" ToolTip="Gia hạn thêm 1 tháng"/>
+                                    <Button Content="Xóa Vé" Command="{Binding DeleteTicketCommand}" Padding="10,5" Background="#EF4444" Foreground="White" BorderThickness="0" ToolTip="Xóa vé đang chọn"/>
                                 </StackPanel>
-                                <Button Command="{Binding RemoveCommand}" Style="{StaticResource SecondaryButtonStyle}" Content="{DynamicResource Str_Blacklist_Remove}"
-                                        VerticalAlignment="Bottom" Padding="16,0"/>
-                            </WrapPanel>
-                        </Border>
-                    </StackPanel>
+                            </Grid>
+
+                            <!-- Thanh Tìm Kiếm & Sắp Xếp Vé Tháng -->
+                            <Border Background="#F8FAFC" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="4" Padding="12,10" Margin="0,0,0,14">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="360"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Background="White" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Height="34">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="30"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="🔍" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                            <TextBox Grid.Column="1" Text="{Binding TicketSearchKeyword, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center" FontSize="12.5" Foreground="{StaticResource TextPrimaryBrush}" Padding="0,0,6,0"/>
+                                        </Grid>
+                                    </Border>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="Sắp xếp:" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12.5" Margin="0,0,8,0"/>
+                                        <ComboBox ItemsSource="{Binding TicketSortOptions}" SelectedIndex="{Binding SelectedTicketSortIndex}" Width="220" Height="34" VerticalContentAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <DataGrid ItemsSource="{Binding Tickets}" SelectedItem="{Binding SelectedTicket}" AutoGenerateColumns="False" IsReadOnly="True" RowHeight="38" MaxHeight="550" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{StaticResource DividerBrush}" Background="Transparent" BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0" HeadersVisibility="Column">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Mã Vé" Binding="{Binding TicketCode}" Width="150">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock"><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Margin" Value="10,0"/><Setter Property="Foreground" Value="{StaticResource PrimaryButtonBrush}"/></Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="Khách Hàng" Binding="{Binding Customer.FullName}" Width="160"/>
+                                    <DataGridTextColumn Header="Biển Số" Binding="{Binding RegisteredLicensePlate}" Width="120"/>
+                                    <DataGridTextColumn Header="Tháng ĐK" Binding="{Binding DurationMonths}" Width="80"/>
+                                    <DataGridTextColumn Header="Tiền Vé" Binding="{Binding MonthlyPrice, StringFormat={}{0:N0} đ}" Width="110"/>
+                                    <DataGridTextColumn Header="Hạn Dùng" Binding="{Binding EndDate, StringFormat={}{0:dd/MM/yyyy}}" Width="110"/>
+                                    <DataGridTextColumn Header="Ngày Đăng Ký" Binding="{Binding CreatedAt, StringFormat={}{0:dd/MM/yyyy}}" Width="110"/>
+
+                                    <!-- Trạng thái thẻ -->
+                                    <DataGridTemplateColumn Header="Trạng Thái Thẻ" Width="135">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border CornerRadius="3" Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#FEE2E2"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsActiveValid}" Value="True">
+                                                                    <Setter Property="Background" Value="#DCFCE7"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="Suspended">
+                                                                    <Setter Property="Background" Value="#FEF3C7"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding StatusDisplay}" FontSize="11" FontWeight="SemiBold">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="#B91C1C"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsActiveValid}" Value="True">
+                                                                        <Setter Property="Foreground" Value="#15803D"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Suspended">
+                                                                        <Setter Property="Foreground" Value="#D97706"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Cancelled">
+                                                                        <Setter Property="Foreground" Value="#DC2626"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Thao tác trên từng dòng vé -->
+                                    <DataGridTemplateColumn Header="Thao Tác" Width="150">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Button Content="Hủy vé"
+                                                            ToolTip="Hủy vé tháng này (giữ lại lịch sử cước phí để đối soát)"
+                                                            Command="{Binding DataContext.CancelTicketCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                            CommandParameter="{Binding}"
+                                                            Padding="6,2" Height="26" Margin="0,0,6,0"
+                                                            Background="#FEE2E2" Foreground="#B91C1C"
+                                                            BorderBrush="#FCA5A5" BorderThickness="1"
+                                                            FontSize="11" FontWeight="SemiBold" Cursor="Hand">
+                                                        <Button.Resources>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="CornerRadius" Value="3"/>
+                                                            </Style>
+                                                        </Button.Resources>
+                                                    </Button>
+
+                                                    <Button Command="{Binding DataContext.ToggleTicketCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                            CommandParameter="{Binding}"
+                                                            Padding="6,2" Height="26"
+                                                            FontSize="11" FontWeight="SemiBold" Cursor="Hand">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Setter Property="Content" Value="Khóa"/>
+                                                                <Setter Property="Background" Value="#FEF3C7"/>
+                                                                <Setter Property="Foreground" Value="#D97706"/>
+                                                                <Setter Property="BorderBrush" Value="#FCD34D"/>
+                                                                <Setter Property="BorderThickness" Value="1"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Suspended">
+                                                                        <Setter Property="Content" Value="Mở"/>
+                                                                        <Setter Property="Background" Value="#DCFCE7"/>
+                                                                        <Setter Property="Foreground" Value="#15803D"/>
+                                                                        <Setter Property="BorderBrush" Value="#86EFAC"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Cancelled">
+                                                                        <Setter Property="Content" Value="Mở lại"/>
+                                                                        <Setter Property="Background" Value="#DCFCE7"/>
+                                                                        <Setter Property="Foreground" Value="#15803D"/>
+                                                                        <Setter Property="BorderBrush" Value="#86EFAC"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                        <Button.Resources>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="CornerRadius" Value="3"/>
+                                                            </Style>
+                                                        </Button.Resources>
+                                                    </Button>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+                </TabItem>
+
+                <!-- TAB 4: DANH SÁCH CẤM (BLACKLIST) -->
+                <TabItem Header="Danh Sách Cấm" FontSize="13" FontWeight="Bold" Foreground="#DC2626">
+                    <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="20" Margin="0,16,0,0">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="⛔ DANH SÁCH PHƯƠNG TIỆN BỊ CẤM VÀO BÃI" FontSize="13.5" FontWeight="Bold" Foreground="#DC2626" VerticalAlignment="Center"/>
+                                    <Border Background="#FEE2E2" CornerRadius="10" Padding="8,2" Margin="10,0,0,0">
+                                        <TextBlock Text="{Binding BlacklistedCount, StringFormat='{}{0} xe đang bị cấm'}" FontSize="11" FontWeight="Bold" Foreground="#B91C1C"/>
+                                    </Border>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Button Content="+ Thêm Vào Danh Sách Cấm" Command="{Binding AddBlacklistCommand}" Padding="12,6" Background="#EF4444" Foreground="White" FontWeight="Bold" BorderThickness="0" Cursor="Hand">
+                                        <Button.Resources>
+                                            <Style TargetType="Border">
+                                                <Setter Property="CornerRadius" Value="4"/>
+                                            </Style>
+                                        </Button.Resources>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Thanh Tìm Kiếm Blacklist -->
+                            <Border Background="#F8FAFC" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="4" Padding="12,10" Margin="0,0,0,14">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="360"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Background="White" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Height="34">
+                                        <Grid>
+                                            <TextBlock Text="🔍 Tìm theo biển số, lý do, chủ xe..." VerticalAlignment="Center" Margin="10,0" Foreground="{StaticResource TextDimBrush}" IsHitTestVisible="False">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding BlacklistSearchKeyword}" Value="">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding BlacklistSearchKeyword}" Value="{x:Null}">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <TextBox Text="{Binding BlacklistSearchKeyword, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center" Padding="8,0" CharacterCasing="Upper"/>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <!-- Bảng Danh Sách Xe Bị Cấm -->
+                            <DataGrid ItemsSource="{Binding BlacklistVehicles}"
+                                      SelectedItem="{Binding SelectedBlacklist}"
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      CanUserAddRows="False"
+                                      RowHeight="38"
+                                      MaxHeight="450"
+                                      GridLinesVisibility="Horizontal"
+                                      HorizontalGridLinesBrush="{StaticResource DividerBrush}"
+                                      Background="Transparent"
+                                      BorderThickness="1"
+                                      BorderBrush="{StaticResource DividerBrush}"
+                                      RowHeaderWidth="0"
+                                      HeadersVisibility="Column"
+                                      SelectionMode="Single">
+
+                                <DataGrid.Columns>
+                                    <!-- Biển số xe -->
+                                    <DataGridTextColumn Header="Biển Số Xe" Binding="{Binding LicensePlate}" Width="130">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="Margin" Value="10,0"/>
+                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                <Setter Property="FontSize" Value="13"/>
+                                                <Setter Property="Foreground" Value="#DC2626"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+
+                                    <!-- Lý do cấm -->
+                                    <DataGridTextColumn Header="Lý Do Bị Cấm" Binding="{Binding Reason}" Width="250">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="Margin" Value="10,0"/>
+                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+
+                                    <!-- Chủ xe liên quan -->
+                                    <DataGridTextColumn Header="Chủ Xe (Nếu Có)" Binding="{Binding Customer.FullName, TargetNullValue='-- Chưa xác định --'}" Width="160">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="Margin" Value="10,0"/>
+                                                <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+
+                                    <!-- Thời gian lập lệnh cấm -->
+                                    <DataGridTextColumn Header="Thời Điểm Cấm" Binding="{Binding CreatedAt, StringFormat={}{0:dd/MM/yyyy HH:mm}}" Width="140">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="Margin" Value="10,0"/>
+                                                <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+
+                                    <!-- Ghi chú chi tiết -->
+                                    <DataGridTextColumn Header="Ghi Chú" Binding="{Binding Notes, TargetNullValue='--'}" Width="*">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="Margin" Value="10,0"/>
+                                                <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
+                                                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+
+                                    <!-- Trạng thái cấm -->
+                                    <DataGridTemplateColumn Header="Trạng Thái" Width="130">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border CornerRadius="3" Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#FEE2E2"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                                    <Setter Property="Background" Value="#F3F4F6"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock FontSize="11" FontWeight="Bold">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Text" Value="⛔ Đang cấm"/>
+                                                                <Setter Property="Foreground" Value="#DC2626"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                                        <Setter Property="Text" Value="✔ Đã gỡ cấm"/>
+                                                                        <Setter Property="Foreground" Value="#6B7280"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Cột Thao Tác (Gỡ cấm / Cấm lại & Xóa) -->
+                                    <DataGridTemplateColumn Header="Thao Tác" Width="160">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Button Command="{Binding DataContext.ToggleBlacklistCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                            CommandParameter="{Binding}"
+                                                            Padding="6,2" Height="26" Margin="0,0,6,0"
+                                                            FontSize="11" FontWeight="SemiBold" Cursor="Hand">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Setter Property="Content" Value="Gỡ cấm"/>
+                                                                <Setter Property="Background" Value="#DCFCE7"/>
+                                                                <Setter Property="Foreground" Value="#15803D"/>
+                                                                <Setter Property="BorderBrush" Value="#86EFAC"/>
+                                                                <Setter Property="BorderThickness" Value="1"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                                        <Setter Property="Content" Value="Cấm lại"/>
+                                                                        <Setter Property="Background" Value="#FEE2E2"/>
+                                                                        <Setter Property="Foreground" Value="#B91C1C"/>
+                                                                        <Setter Property="BorderBrush" Value="#FCA5A5"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                        <Button.Resources>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="CornerRadius" Value="3"/>
+                                                            </Style>
+                                                        </Button.Resources>
+                                                    </Button>
+
+                                                    <Button Content="Xóa"
+                                                            ToolTip="Xóa hoàn toàn khỏi danh sách đen"
+                                                            Command="{Binding DataContext.DeleteBlacklistCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                            CommandParameter="{Binding}"
+                                                            Padding="6,2" Height="26"
+                                                            Background="#F3F4F6" Foreground="#4B5563"
+                                                            BorderBrush="#D1D5DB" BorderThickness="1"
+                                                            FontSize="11" FontWeight="SemiBold" Cursor="Hand">
+                                                        <Button.Resources>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="CornerRadius" Value="3"/>
+                                                            </Style>
+                                                        </Button.Resources>
+                                                    </Button>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
                 </TabItem>
             </TabControl>
         </StackPanel>

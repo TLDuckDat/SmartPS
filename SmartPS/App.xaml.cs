@@ -7,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using SmartPS.Data;
 using SmartPS.Services.Auth;
 using SmartPS.Services.Authorization;
-using SmartPS.Services.Customers;
 using SmartPS.Services.Dialog;
 using SmartPS.Services.Localization;
 using SmartPS.Services.ParkingZones;
@@ -81,6 +80,7 @@ public partial class App : Application
         services.AddSingleton<SmartPS.Services.Storage.IImageStorageService, SmartPS.Services.Storage.ImageStorageService>();
         services.AddSingleton<SmartPS.Services.GateControl.IParkingFeeCalculator, SmartPS.Services.GateControl.StandardParkingFeeCalculator>();
         services.AddSingleton<SmartPS.Services.OcrLisencePlate.IOcrLicensePlateService, SmartPS.Services.OcrLisencePlate.LicensePlateOcrService>();
+        services.AddSingleton<SmartPS.Services.GateControl.IPlateOwnershipReader, SmartPS.Services.GateControl.PlateOwnershipReader>();
         services.AddSingleton<SmartPS.Services.GateControl.IGateControlService, SmartPS.Services.GateControl.GateControlService>();
         services.AddSingleton<SmartPS.Services.GateControl.ICameraWatcherService, SmartPS.Services.GateControl.CameraWatcherService>();
 
@@ -119,9 +119,6 @@ public partial class App : Application
         services.AddSingleton<SmartPS.Services.Reports.IReportService, SmartPS.Services.Reports.ReportService>();
         services.AddSingleton<SmartPS.Services.Reports.IReportExportService, SmartPS.Services.Reports.ReportExportService>();
         services.AddSingleton<SmartPS.Services.Dialog.IFileDialogService, SmartPS.Services.Dialog.FileDialogService>();
-        services.AddSingleton<ICustomerService, CustomerService>();
-        services.AddSingleton<IMonthlyTicketService, MonthlyTicketService>();
-        services.AddSingleton<IBlacklistService, BlacklistService>();
         services.AddSingleton<IParkingZoneService, ParkingZoneService>();
         services.AddSingleton<PaymentWebhookServer>();
 

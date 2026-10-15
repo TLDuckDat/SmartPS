@@ -3,8 +3,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:conv="clr-namespace:SmartPS.Converters"
              mc:Ignorable="d"
              d:DesignHeight="850" d:DesignWidth="1100">
+
+    <UserControl.Resources>
+        <conv:CurrencyConverter x:Key="CurrencyConverter"/>
+    </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="{StaticResource AppBackgroundBrush}">
         <StackPanel Margin="28,24">
@@ -23,7 +28,7 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="🏷" FontSize="20" Margin="0,0,8,0"/>
+                            <TextBlock Text="🏷️" FontSize="20" Margin="0,0,8,0"/>
                             <TextBlock Text="{DynamicResource Str_Menu_Pricing}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         </StackPanel>
                         <TextBlock Text="Bảng biểu phí tính cước gửi xe theo lượt, phụ thu qua đêm và các gói cước vé tháng định kỳ" 
@@ -60,17 +65,27 @@
                                 <Border Background="#F8FAFC" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="4" Padding="14" Margin="0,0,0,12">
                                     <StackPanel>
                                         <TextBlock Text="CƯỚC THEO LƯỢT (VÃNG LAI)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,8"/>
+                                        
                                         <Grid Margin="0,4">
-                                            <TextBlock Text="Khung 2 giờ đầu:" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                            <TextBlock Text="{Binding FirstBlockPrice, StringFormat='{}{0:N0} đ'}" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}" HorizontalAlignment="Right"/>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Khung 4 giờ:" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Block4hPrice, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Padding="4" HorizontalContentAlignment="Right" />
+                                            <TextBlock Grid.Column="2" Text="VNĐ" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                         </Grid>
+
                                         <Grid Margin="0,4">
-                                            <TextBlock Text="Giờ tiếp theo:" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                            <TextBlock Text="{Binding AdditionalPricePerHour, StringFormat='{}{0:N0} đ/h'}" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}" HorizontalAlignment="Right"/>
-                                        </Grid>
-                                        <Grid Margin="0,4">
-                                            <TextBlock Text="Phụ thu qua đêm:" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                            <TextBlock Text="{Binding OvernightPrice, StringFormat='{}{0:N0} đ'}" FontSize="12.5" FontWeight="Bold" Foreground="#D97706" HorizontalAlignment="Right"/>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Giá 1 ngày (24h):" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                            <TextBox Grid.Column="1" Text="{Binding DailyPrice, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Padding="4" HorizontalContentAlignment="Right" />
+                                            <TextBlock Grid.Column="2" Text="VNĐ" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                         </Grid>
                                     </StackPanel>
                                 </Border>
@@ -78,10 +93,40 @@
                                 <Border Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="4" Padding="14">
                                     <StackPanel>
                                         <TextBlock Text="GÓI THUÊ THÁNG ĐỊNH KỲ" FontSize="11" FontWeight="Bold" Foreground="#15803D" Margin="0,0,0,8"/>
+                                        
                                         <Grid Margin="0,4">
-                                            <TextBlock Text="Phí trọn gói:" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                            <TextBlock Text="{Binding MonthlyPassFormatted}" FontSize="13.5" FontWeight="Bold" Foreground="#15803D" HorizontalAlignment="Right"/>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Gói 1 tháng:" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Monthly1Price, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Padding="4" HorizontalContentAlignment="Right" />
+                                            <TextBlock Grid.Column="2" Text="VNĐ" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                         </Grid>
+
+                                        <Grid Margin="0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Gói 3 tháng:" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Monthly3Price, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Padding="4" HorizontalContentAlignment="Right" />
+                                            <TextBlock Grid.Column="2" Text="VNĐ" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Gói 6 tháng:" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Monthly6Price, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Padding="4" HorizontalContentAlignment="Right" />
+                                            <TextBlock Grid.Column="2" Text="VNĐ" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                        </Grid>
+
                                         <TextBlock Text="Ra vào không giới hạn lượt trong tháng" FontSize="11" Foreground="#16A34A" Margin="0,4,0,0"/>
                                     </StackPanel>
                                 </Border>
@@ -91,27 +136,22 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <!-- 3. Quy Tắc Tính Cước Tự Động Trong Hệ Thống -->
-            <Border Background="{StaticResource CardBackgroundBrush}"
-                    BorderBrush="{StaticResource AppBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="6"
-                    Padding="22">
-                <StackPanel>
-                    <TextBlock Text="CÔNG THỨC &amp; QUY TRÌNH TỰ ĐỘNG TÍNH TOÁN CƯỚC PHÍ" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
-                    <TextBlock Text="Hệ thống tự động áp dụng công thức tính cước ngay khi camera nhận diện biển số ở làn ra:" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,12"/>
 
-                    <Border Background="#F8FAFC" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="16">
-                        <StackPanel>
-                            <TextBlock Text="1. Nếu xe sở hữu Vé tháng còn hiệu lực (Active &amp; trong khoảng ngày): Cước phí = 0 đ (Tự động mở Barrier)." FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,3"/>
-                            <TextBlock Text="2. Nếu thời gian đỗ dưới 15 phút (Thời gian ân hạn đón trả khách): Cước phí = 0 đ." FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,3"/>
-                            <TextBlock Text="3. Nếu thời gian đỗ trong khung đầu: Áp dụng giá block đầu tiên (FirstBlockPrice)." FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,3"/>
-                            <TextBlock Text="4. Nếu thời gian đỗ vượt khung: Cước = Giá block đầu + (Số giờ vượt * Giá mỗi giờ)." FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,3"/>
-                            <TextBlock Text="5. Phiên gửi xe qua khung giờ đêm (23h00 - 06h00): Tự động cộng phụ thu qua đêm tương ứng." FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,3"/>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </Border>
+            <Button Content="LƯU THAY ĐỔI"
+                    Command="{Binding SaveCommand}"
+                    Background="{StaticResource PrimaryButtonBrush}"
+                    Foreground="White"
+                    FontWeight="Bold"
+                    Padding="12,10"
+                    HorizontalAlignment="Right"
+                    Width="160"
+                    Cursor="Hand">
+                <Button.Resources>
+                    <Style TargetType="Border">
+                        <Setter Property="CornerRadius" Value="4"/>
+                    </Style>
+                </Button.Resources>
+            </Button>
 
         </StackPanel>
     </ScrollViewer>

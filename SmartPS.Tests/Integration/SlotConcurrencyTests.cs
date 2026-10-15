@@ -12,12 +12,12 @@ namespace SmartPS.Tests.Integration;
 public class SlotConcurrencyTests : IClassFixture<PostgresDatabaseFixture>
 {
     private readonly PostgresDatabaseFixture _db;
-    private readonly ResidentVisitorData _data;
+    private readonly GateTestData _data;
 
     public SlotConcurrencyTests(PostgresDatabaseFixture db)
     {
         _db = db;
-        _data = new ResidentVisitorData(db);
+        _data = new GateTestData(db);
     }
 
     private async Task<ServiceProvider> OperatorAsync()
@@ -39,8 +39,8 @@ public class SlotConcurrencyTests : IClassFixture<PostgresDatabaseFixture>
         {
             var vt = await _data.CreateIsolatedVehicleTypeAsync();
             var zone = await _data.CreateZoneAsync(ZoneAudience.Mixed, vt, 1);
-            var plateA = ResidentVisitorData.UniqueNormalizedPlate();
-            var plateB = ResidentVisitorData.UniqueNormalizedPlate();
+            var plateA = GateTestData.UniqueNormalizedPlate();
+            var plateB = GateTestData.UniqueNormalizedPlate();
             using var start = new ManualResetEventSlim(false);
 
             Task<GateCheckInResult> Run(IServiceProvider sp, string plate) => Task.Run(async () =>
@@ -175,14 +175,14 @@ public class SlotConcurrencyTests : IClassFixture<PostgresDatabaseFixture>
 
         await using (var db = _db.CreateContext())
         {
-            db.ParkingSessions.Add(NewSession(ResidentVisitorData.UniqueNormalizedPlate()));
+            db.ParkingSessions.Add(NewSession(GateTestData.UniqueNormalizedPlate()));
             await db.SaveChangesAsync();
         }
 
         Exception? caught = null;
         await using (var db = _db.CreateContext())
         {
-            db.ParkingSessions.Add(NewSession(ResidentVisitorData.UniqueNormalizedPlate()));
+            db.ParkingSessions.Add(NewSession(GateTestData.UniqueNormalizedPlate()));
             try
             {
                 await db.SaveChangesAsync();
@@ -201,7 +201,7 @@ public class SlotConcurrencyTests : IClassFixture<PostgresDatabaseFixture>
         // A completed session on the same slot is allowed
         await using (var db = _db.CreateContext())
         {
-            var done = NewSession(ResidentVisitorData.UniqueNormalizedPlate());
+            var done = NewSession(GateTestData.UniqueNormalizedPlate());
             done.Status = SessionStatus.Completed;
             done.CheckOutTime = DateTime.UtcNow;
             db.ParkingSessions.Add(done);

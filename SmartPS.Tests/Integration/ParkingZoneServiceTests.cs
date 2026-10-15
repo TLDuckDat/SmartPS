@@ -13,12 +13,12 @@ namespace SmartPS.Tests.Integration;
 public class ParkingZoneServiceTests : IClassFixture<PostgresDatabaseFixture>
 {
     private readonly PostgresDatabaseFixture _db;
-    private readonly ResidentVisitorData _data;
+    private readonly GateTestData _data;
 
     public ParkingZoneServiceTests(PostgresDatabaseFixture db)
     {
         _db = db;
-        _data = new ResidentVisitorData(db);
+        _data = new GateTestData(db);
     }
 
     private async Task<(ServiceProvider Sp, int UserId)> LoginAsync(string roleName)
@@ -100,6 +100,25 @@ public class ParkingZoneServiceTests : IClassFixture<PostgresDatabaseFixture>
         Assert.Equal(OperationError.NotFound, result.Error);
     }
 
+    /// <summary>Fix round 1, G12 (review F2), moved here from the removed service regression tests.</summary>
+    [Fact]
+    public async Task G12_undefined_audience_value_is_a_validation_error()
+    {
+        _db.RequireAvailable();
+        var vt = await _data.CreateIsolatedVehicleTypeAsync();
+        var zone = await _data.CreateZoneAsync(ZoneAudience.Mixed, vt, 1);
+        var (sp, _) = await LoginAsync("Manager");
+        using var scope = sp;
+        var idBefore = await AuditDb.MaxIdAsync(_db.Factory);
+
+        var result = await sp.GetRequiredService<IParkingZoneService>().UpdateAudienceAsync(zone.ZoneId, (ZoneAudience)99);
+
+        Assert.False(result.Success);
+        Assert.Equal(OperationError.Validation, result.Error);
+        Assert.Equal(0, await AudienceAsync(zone.ZoneId));
+        Assert.Equal(idBefore, await AuditDb.MaxIdAsync(_db.Factory));
+    }
+
     [Fact]
     public async Task Operator_is_denied_with_Parking_Configure()
     {
@@ -131,7 +150,7 @@ public class ParkingZoneServiceTests : IClassFixture<PostgresDatabaseFixture>
         var gate = opSp.GetRequiredService<IGateControlService>();
         var vt = await _data.CreateIsolatedVehicleTypeAsync();
         var zone = await _data.CreateZoneAsync(ZoneAudience.Mixed, vt, 2);
-        var parked = await gate.ProcessCheckInAsync(new GateCheckInRequest { LicensePlate = ResidentVisitorData.UniqueNormalizedPlate(), VehicleTypeId = vt });
+        var parked = await gate.ProcessCheckInAsync(new GateCheckInRequest { LicensePlate = GateTestData.UniqueNormalizedPlate(), VehicleTypeId = vt });
         Assert.True(parked.Success, parked.Message);
 
         var update = await managerSp.GetRequiredService<IParkingZoneService>().UpdateAudienceAsync(zone.ZoneId, ZoneAudience.ResidentOnly);
@@ -143,11 +162,11 @@ public class ParkingZoneServiceTests : IClassFixture<PostgresDatabaseFixture>
         Assert.Equal(SlotStatus.Occupied, await _data.SlotStatusAsync(zone.SlotIds[0]));
 
         // A new visitor can no longer use the zone; a resident can
-        var visitor = await gate.ProcessCheckInAsync(new GateCheckInRequest { LicensePlate = ResidentVisitorData.UniqueNormalizedPlate(), VehicleTypeId = vt });
+        var visitor = await gate.ProcessCheckInAsync(new GateCheckInRequest { LicensePlate = GateTestData.UniqueNormalizedPlate(), VehicleTypeId = vt });
         Assert.False(visitor.Success);
         Assert.Equal(CheckInRejectReason.NoSlotAvailable, visitor.RejectReason);
-        var resident = await _data.CreateSubscriberAsync(vt, isResident: true);
-        var residentCheckIn = await gate.ProcessCheckInAsync(new GateCheckInRequest { LicensePlate = resident.Plate, VehicleTypeId = vt });
+        var resident = await _data.CreateResidentAsync(vt);
+        var residentCheckIn = await gate.ProcessCheckInAsync(new GateCheckInRequest { LicensePlate = resident.NormalizedPlate, VehicleTypeId = vt });
         Assert.True(residentCheckIn.Success, residentCheckIn.Message);
         Assert.Equal(zone.SlotIds[1], residentCheckIn.Session!.SlotId);
     }

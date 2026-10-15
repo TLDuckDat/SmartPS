@@ -38,14 +38,9 @@ public static class Permissions
     public const string SettingsManage = "Settings.Manage";
     public const string IncidentManage = "Incident.Manage";
 
-    // Khách hàng, vé tháng & danh sách đen
-    public const string CustomerView = "Customer.View";
-    public const string CustomerManage = "Customer.Manage";
-    public const string BlacklistManage = "Blacklist.Manage";
-
     public static readonly IReadOnlyList<string> ModuleOrder = new[]
     {
-        "User", "Role", "Parking", "Pricing", "Report", "Shift", "Payment", "Audit", "Settings", "Incident", "Customer", "Blacklist"
+        "User", "Role", "Parking", "Pricing", "Report", "Shift", "Payment", "Audit", "Settings", "Incident"
     };
 
     public static IReadOnlyList<string> GetAll()

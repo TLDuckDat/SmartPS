@@ -1,4 +1,4 @@
-﻿namespace SmartPS.Models.Parking;
+namespace SmartPS.Models.Parking;
 
 public enum SlotStatus
 {
@@ -24,29 +24,15 @@ public enum PaymentMethod
 
 public enum CustomerType
 {
-    Regular = 0,     // Khách lạ / Vãng lai
-    Loyal = 1,       // Khách thân quen
-    VIP = 2,         // Khách VIP
-    Resident = 3     // Cư dân
+    Resident = 0,    // Cư dân
+    External = 1     // Khách bên ngoài
 }
 
 public enum MonthlyTicketStatus
 {
     Active = 0,      // Còn hiệu lực
     Expired = 1,     // Đã hết hạn
-    Suspended = 2    // Tạm khóa
+    Suspended = 2,   // Tạm khóa
+    Cancelled = 3    // Đã hủy
 }
 
-
-public enum ZoneAudience
-{
-    Mixed = 0,        // Dùng chung
-    ResidentOnly = 1, // Chỉ dành cho cư dân
-    VisitorOnly = 2   // Chỉ dành cho khách vãng lai
-}
-
-public enum TicketPurchaseKind
-{
-    Create = 0,      // Mua mới
-    Renew = 1        // Gia hạn
-}
