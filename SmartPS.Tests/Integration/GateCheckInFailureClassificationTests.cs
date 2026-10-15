@@ -23,13 +23,13 @@ public class GateCheckInFailureClassificationTests : IClassFixture<PostgresDatab
     private static bool PlateInJsonl(string plate)
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Storage", "gate_audit_log.jsonl");
-        return File.Exists(path) && File.ReadAllLines(path).Any(l => l.Contains(plate, StringComparison.Ordinal));
+        return GateStorageFiles.ReadLines(path).Any(l => l.Contains(plate, StringComparison.Ordinal));
     }
 
     private static bool PlateInOfflineSessions(string plate)
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Storage", "offline_active_sessions.json");
-        return File.Exists(path) && File.ReadAllText(path).Contains(plate, StringComparison.Ordinal);
+        return GateStorageFiles.ReadText(path).Contains(plate, StringComparison.Ordinal);
     }
 
     private async Task AssertNothingPersistedAsync(string plate, long idBefore)
