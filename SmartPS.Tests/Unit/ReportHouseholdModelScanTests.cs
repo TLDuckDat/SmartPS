@@ -207,6 +207,6 @@ public class ReportHouseholdModelScanTests
         var xaml = File.ReadAllText(Path.Combine(Views, "Overview", "OverviewView.xaml"));
         Assert.DoesNotContain("RegularParked", vmText, StringComparison.Ordinal);
         Assert.DoesNotContain("RegularParked", xaml, StringComparison.Ordinal);
-        Assert.Matches(new Regex(@"\{Binding\s+(Path=)?VisitorParkedCount"), xaml);
+        Assert.Matches(new Regex(@"\{Binding\s+(Path=)?VisitorParkedCount\b"), xaml);
     }
 }
