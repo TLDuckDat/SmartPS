@@ -488,7 +488,6 @@
     <sys:String x:Key="Str_Rpt_Kpi_RefundAdjustment">Refunds {0} · Adjustments {1}</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_PreviousPeakHour">Previous: {0}</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_ResidentVisitorSplit">Residents {0} · Guests {1}</sys:String>
-    <sys:String x:Key="Str_Rpt_Kpi_NotApplicableZone">Not applicable when filtering by zone</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_NoComparison">No previous-period data</sys:String>
     <sys:String x:Key="Str_Rpt_Duration_Format">{0} h {1} min</sys:String>
     <sys:String x:Key="Str_Rpt_Duration_Minutes">{0} min</sys:String>

@@ -488,7 +488,6 @@
     <sys:String x:Key="Str_Rpt_Kpi_RefundAdjustment">Hoàn tiền {0} · Điều chỉnh {1}</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_PreviousPeakHour">Kỳ trước: {0}</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_ResidentVisitorSplit">Cư dân {0} · Khách {1}</sys:String>
-    <sys:String x:Key="Str_Rpt_Kpi_NotApplicableZone">Không áp dụng khi lọc theo khu</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_NoComparison">Không có dữ liệu kỳ trước</sys:String>
     <sys:String x:Key="Str_Rpt_Duration_Format">{0} giờ {1} phút</sys:String>
     <sys:String x:Key="Str_Rpt_Duration_Minutes">{0} phút</sys:String>

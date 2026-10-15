@@ -44,7 +44,6 @@ public static class ReportTextKeys
     public const string KpiRefundAdjustment = "Str_Rpt_Kpi_RefundAdjustment";
     public const string KpiPreviousPeakHour = "Str_Rpt_Kpi_PreviousPeakHour";
     public const string KpiResidentVisitorSplit = "Str_Rpt_Kpi_ResidentVisitorSplit";
-    public const string KpiNotApplicableZone = "Str_Rpt_Kpi_NotApplicableZone";
     public const string KpiNoComparison = "Str_Rpt_Kpi_NoComparison";
     public const string DurationFormat = "Str_Rpt_Duration_Format";
     public const string DurationMinutes = "Str_Rpt_Duration_Minutes";
@@ -183,7 +182,6 @@ public static class ReportTextKeys
         KpiRefundAdjustment,
         KpiPreviousPeakHour,
         KpiResidentVisitorSplit,
-        KpiNotApplicableZone,
         KpiNoComparison,
         DurationFormat,
         DurationMinutes,

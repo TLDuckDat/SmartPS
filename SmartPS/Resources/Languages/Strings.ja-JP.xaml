@@ -488,7 +488,6 @@
     <sys:String x:Key="Str_Rpt_Kpi_RefundAdjustment">返金 {0} · 調整 {1}</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_PreviousPeakHour">前期間: {0}</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_ResidentVisitorSplit">住民 {0} · 来訪者 {1}</sys:String>
-    <sys:String x:Key="Str_Rpt_Kpi_NotApplicableZone">ゾーンで絞り込むと適用されません</sys:String>
     <sys:String x:Key="Str_Rpt_Kpi_NoComparison">前期間のデータがありません</sys:String>
     <sys:String x:Key="Str_Rpt_Duration_Format">{0}時間{1}分</sys:String>
     <sys:String x:Key="Str_Rpt_Duration_Minutes">{0}分</sys:String>
