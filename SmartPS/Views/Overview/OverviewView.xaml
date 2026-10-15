@@ -175,7 +175,7 @@
                         <Separator Background="{StaticResource DividerBrush}" Margin="0,8"/>
                         <Grid Margin="0,4">
                             <TextBlock Text="{DynamicResource Str_Rpt_Group_Visitor}" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding RegularParkedCount, StringFormat='{}{0} xe'}" FontSize="13" FontWeight="Bold" Foreground="#D97706" HorizontalAlignment="Right"/>
+                            <TextBlock Text="{Binding VisitorParkedCount, StringFormat='{}{0} xe'}" FontSize="13" FontWeight="Bold" Foreground="#D97706" HorizontalAlignment="Right"/>
                         </Grid>
                     </StackPanel>
                 </Border>

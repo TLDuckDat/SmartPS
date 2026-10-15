@@ -91,11 +91,11 @@ public class OverviewViewModel : ViewModelBase
     }
 
     // Visitors: neither residents nor monthly-pass holders.
-    private int _regularParkedCount;
-    public int RegularParkedCount
+    private int _visitorParkedCount;
+    public int VisitorParkedCount
     {
-        get => _regularParkedCount;
-        set => SetProperty(ref _regularParkedCount, value);
+        get => _visitorParkedCount;
+        set => SetProperty(ref _visitorParkedCount, value);
     }
 
     private bool _isLoading;
@@ -151,7 +151,7 @@ public class OverviewViewModel : ViewModelBase
             TodayRevenue = snapshot.TodayNetRevenue;
             ResidentParkedCount = snapshot.ParkedResidents;
             MonthlyParkedCount = snapshot.ParkedMonthlyPass;
-            RegularParkedCount = snapshot.ParkedVisitors;
+            VisitorParkedCount = snapshot.ParkedVisitors;
 
             ParkedByVehicleType.Clear();
             foreach (var item in snapshot.ParkedByVehicleType)
