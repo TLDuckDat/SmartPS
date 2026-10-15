@@ -693,12 +693,13 @@ public class GateControlService : IGateControlService
             }
             catch (Exception ex)
             {
-                // Lỗi khác (tra cứu danh sách đen, ghi nhật ký thất bại, hết thời gian chờ khóa nhật ký...): không lưu ngoại tuyến
-                System.Diagnostics.Debug.WriteLine($"[GateControlService Audit Error]: {ex.GetType().Name}");
+                // Lỗi khác trong giao dịch (tra cứu lại, khoá ngoại, ghi nhật ký, hết thời gian chờ khóa...): không lưu ngoại tuyến
+                System.Diagnostics.Debug.WriteLine($"[GateControlService Check-in Persist Error]: {ex.GetType().Name}");
                 return new GateCheckInResult
                 {
                     Success = false,
-                    Message = "Không thể ghi nhận lượt vào bãi vì lỗi ghi nhật ký kiểm toán. Vui lòng thử lại."
+                    RejectReason = CheckInRejectReason.PersistFailed,
+                    Message = "Không thể ghi nhận lượt vào bãi. Vui lòng thử lại."
                 };
             }
 

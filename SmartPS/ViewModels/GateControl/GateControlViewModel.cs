@@ -849,7 +849,9 @@ public class GateControlViewModel : ViewModelBase
             CheckInRejectReason.SlotNotAvailable => _localizationService.GetString("Msg_Gate_SlotNotAvailable"),
             CheckInRejectReason.PlateInvalid => _localizationService.GetString("Msg_Gate_PlateInvalid"),
             CheckInRejectReason.ClassificationFailed => _localizationService.GetString("Msg_Gate_ClassificationFailed"),
-            _ => result.Message
+            CheckInRejectReason.AlreadyInside => _localizationService.GetString("Msg_Gate_AlreadyInside"),
+            CheckInRejectReason.EmptyPlate => _localizationService.GetString("Msg_Gate_EmptyPlate"),
+            _ => _localizationService.GetString("Msg_Gate_CheckInFailed")
         };
     }
 

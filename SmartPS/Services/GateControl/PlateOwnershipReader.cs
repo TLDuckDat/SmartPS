@@ -64,8 +64,10 @@ public sealed class PlateOwnershipReader : IPlateOwnershipReader
             return PlateOwnership.None(norm);
         }
 
+        // Chỉ khớp vé, không có xe đang hoạt động mang biển số này: không đủ căn cứ để coi là cư dân
+        // (cư dân = chủ của xe đang hoạt động thuộc hộ đang hoạt động), nên không trả thông tin hộ.
         return new PlateOwnership(norm, null, null, first.Ticket.CustomerId, first.Name, true,
-            first.HouseholdId, first.HouseholdActive, first.Apartment,
+            null, false, null,
             tickets.Select(t => t.Ticket).ToList());
     }
 
@@ -82,6 +84,8 @@ public sealed class PlateOwnershipReader : IPlateOwnershipReader
                 """)
             .AsNoTracking()
             .Where(t => t.Customer!.IsActive)
+            // Vé gắn với xe đã ngừng hoạt động thì không được công nhận.
+            .Where(t => t.Vehicle == null || t.Vehicle.IsActive)
             .OrderByDescending(t => t.EndDate).ThenByDescending(t => t.TicketId)
             .Select(t => new
             {
