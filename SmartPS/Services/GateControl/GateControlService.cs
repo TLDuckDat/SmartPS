@@ -641,12 +641,14 @@ public class GateControlService : IGateControlService
                             db.ParkingSessions.Add(dbSession);
                             await db.SaveChangesAsync(cancellationToken);
 
-                            // Cột CustomerType có giá trị mặc định External nên EF bỏ qua giá trị Resident (= 0) khi chèn: ghi lại rõ ràng.
-                            if (dbSession.CustomerType != session.CustomerType)
+                            // Cột CustomerType có giá trị mặc định External trong cấu hình bảng nên EF bỏ qua Resident (= 0) khi chèn.
+                            // Luôn ghi lại rõ ràng, không phụ thuộc giá trị EF đọc lại; có thể bỏ khi mặc định được sửa.
+                            if (session.CustomerType == CustomerType.Resident)
                             {
-                                dbSession.CustomerType = session.CustomerType;
+                                dbSession.CustomerType = CustomerType.Resident;
                                 db.Entry(dbSession).Property(x => x.CustomerType).IsModified = true;
                             }
+
                             await _auditService.AppendAsync(db, new AuditEntry(
                                 AuditActions.ParkingCheckIn,
                                 AuditOutcome.Success,
