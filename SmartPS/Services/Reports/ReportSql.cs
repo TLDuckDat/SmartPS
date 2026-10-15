@@ -112,7 +112,7 @@ internal static class ReportSql
         "WHERE s.\"Status\" = @active AND sl.\"ZoneId\" IS NOT NULL AND " + SessionFilter + " " +
         "GROUP BY sl.\"ZoneId\"";
 
-    /// <summary>Q11: most frequent plates (normalized like Task 1's LicensePlateNormalizer).</summary>
+    /// <summary>Q11: most frequent plates (normalized like the gate's LicensePlateNormalizer).</summary>
     public static readonly string TopPlates =
         "SELECT upper(regexp_replace(s.\"LicensePlate\", '[^A-Za-z0-9]', '', 'g')) AS \"PlateKey\", " +
         "MIN(s.\"LicensePlate\") AS \"LicensePlate\", COUNT(*)::int AS \"Visits\", MAX(s.\"CheckInTime\") AS \"LastCheckIn\" " +

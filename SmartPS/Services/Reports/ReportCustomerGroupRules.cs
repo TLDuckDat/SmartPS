@@ -4,8 +4,10 @@ using SmartPS.Models.Reports;
 namespace SmartPS.Services.Reports;
 
 /// <summary>
-/// Customer groups over sessions (Task 1 contract): Resident is <c>CustomerType.Resident</c>; a non-resident monthly
-/// pass has <c>IsMonthlyPass</c>; everything else is a visitor.
+/// Customer groups over sessions, following the household model written by the gate: a session is Resident when
+/// <c>CustomerType = Resident</c> (the vehicle owner belongs to an active household, with or without a monthly ticket);
+/// a non-resident (<c>CustomerType = External</c>) with <c>IsMonthlyPass</c> is a monthly-pass holder; every other
+/// non-resident session is a visitor.
 /// </summary>
 public static class ReportCustomerGroupRules
 {
