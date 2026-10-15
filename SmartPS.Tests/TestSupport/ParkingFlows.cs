@@ -56,12 +56,62 @@ public static class ParkingFlows
         return (request, result);
     }
 
+    /// <summary>
+    /// Creates a VietQR payment, making sure its gateway order code cannot collide with another transaction of the
+    /// same test database.
+    /// <para>
+    /// Root cause of the rare "Sai payment reference" failures: <c>TransactionReferenceGenerator.CreateOrderCode()</c>
+    /// returns <c>unixSeconds * 1000 + random(100..999)</c>, i.e. only 900 distinct codes per second. Two payments created
+    /// in the same second can get the same code, and the webhook looks the transaction up by GatewayOrderCode
+    /// (FirstOrDefault), so it may pick the other payment. Production code is not changed here; the fixture waits until
+    /// the wall-clock second is later than the second encoded in every existing order code of the database, so codes of
+    /// this database never share a second, then asserts the new code is unique.
+    /// </para>
+    /// </summary>
     public static async Task<PaymentCreationResult> CreateVietQrAsync(IServiceProvider sp, int sessionId, int actorUserId)
-        => await sp.GetRequiredService<IPaymentService>().CreatePaymentAsync(new CreatePaymentRequest
+    {
+        var lastSecond = await LastOrderCodeSecondAsync(sp.DbFactory());
+        for (var waited = 0; DateTimeOffset.UtcNow.ToUnixTimeSeconds() <= lastSecond && waited < 3000; waited += 50)
+        {
+            await Task.Delay(50);
+        }
+
+        var result = await sp.GetRequiredService<IPaymentService>().CreatePaymentAsync(new CreatePaymentRequest
         {
             SessionId = sessionId,
             ActorUserId = actorUserId
         });
+
+        if (result.Success)
+        {
+            await using var db = await sp.DbFactory().CreateDbContextAsync();
+            var codes = await db.PaymentTransactions.AsNoTracking()
+                .Where(t => t.PaymentId == result.PaymentId)
+                .Select(t => t.GatewayOrderCode)
+                .ToListAsync();
+            foreach (var code in codes.Where(c => !string.IsNullOrWhiteSpace(c)))
+            {
+                var sameCode = await db.PaymentTransactions.AsNoTracking().CountAsync(t => t.GatewayOrderCode == code);
+                Assert.True(sameCode == 1, $"gateway order code {code} is used by {sameCode} transactions");
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>The unix second encoded in the newest gateway order code of the database (0 when there is none).</summary>
+    private static async Task<long> LastOrderCodeSecondAsync(IDbContextFactory<SmartPsDbContext> factory)
+    {
+        await using var db = await factory.CreateDbContextAsync();
+        var codes = await db.PaymentTransactions.AsNoTracking()
+            .Where(t => t.GatewayOrderCode != null)
+            .Select(t => t.GatewayOrderCode!)
+            .ToListAsync();
+        return codes
+            .Select(c => long.TryParse(c, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var v) ? v / 1000 : 0)
+            .DefaultIfEmpty(0)
+            .Max();
+    }
 
     /// <summary>Builds a correctly signed "paid" webhook payload for the latest transaction of the payment.</summary>
     public static async Task<string> PaidWebhookPayloadAsync(IServiceProvider sp, int paymentId, MockPaymentGateway gateway)

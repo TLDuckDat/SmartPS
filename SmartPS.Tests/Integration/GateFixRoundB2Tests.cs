@@ -148,10 +148,17 @@ public class GateFixRoundB2Tests : IClassFixture<PostgresDatabaseFixture>
         return plate;
     }
 
-    private static bool InJsonl(string text)
-        => File.Exists(JsonlPath) && File.ReadAllLines(JsonlPath).Any(l => l.Contains(text, StringComparison.Ordinal));
+    /// <summary>
+    /// True when a JSONL line written after <paramref name="linesBefore"/> contains <paramref name="text"/>. The log is
+    /// append-only and survives between runs, so only this test's lines are searched (a short plate fragment would
+    /// otherwise eventually match an unrelated old line).
+    /// </summary>
+    private static bool InJsonlSince(int linesBefore, string text)
+        => GateStorageFiles.ReadLines(JsonlPath).Skip(linesBefore).Any(l => l.Contains(text, StringComparison.Ordinal));
 
-    private async Task AssertRejectedAsInvalidAsync(GateCheckInResult result, string normalizedPlate, TestZone zone, long idBefore)
+    private static int JsonlLineCount() => GateStorageFiles.ReadLines(JsonlPath).Length;
+
+    private async Task AssertRejectedAsInvalidAsync(GateCheckInResult result, string normalizedPlate, TestZone zone, long idBefore, int jsonlBefore)
     {
         Assert.False(result.Success);
         Assert.Equal(CheckInRejectReason.PlateInvalid, result.RejectReason);
@@ -160,7 +167,7 @@ public class GateFixRoundB2Tests : IClassFixture<PostgresDatabaseFixture>
         Assert.Equal(0, await _data.SessionCountForPlateAsync(normalizedPlate));
         Assert.Equal(0, await _data.OccupiedSlotCountInZoneAsync(zone.ZoneId));
         Assert.Empty(await AuditDb.RowsAfterAsync(_db.Factory, idBefore));
-        Assert.False(InJsonl(normalizedPlate[4..]), "no JSONL line may be written for an invalid plate");
+        Assert.False(InJsonlSince(jsonlBefore, normalizedPlate[4..]), "no JSONL line may be written for an invalid plate");
     }
 
     [Theory]
@@ -174,10 +181,11 @@ public class GateFixRoundB2Tests : IClassFixture<PostgresDatabaseFixture>
         var norm = GateTestData.UniqueNormalizedPlate();
         using var sp = await OperatorAsync();
         var idBefore = await AuditDb.MaxIdAsync(_db.Factory);
+        var jsonlBefore = JsonlLineCount();
 
         var result = await CheckInAsync(sp, Padded(norm, rawLength), vt);
 
-        await AssertRejectedAsInvalidAsync(result, norm, zone, idBefore);
+        await AssertRejectedAsInvalidAsync(result, norm, zone, idBefore, jsonlBefore);
     }
 
     [Fact]
@@ -236,10 +244,11 @@ public class GateFixRoundB2Tests : IClassFixture<PostgresDatabaseFixture>
         var norm = GateTestData.UniqueNormalizedPlate();
         using var sp = await OperatorAsync();
         var idBefore = await AuditDb.MaxIdAsync(_db.Factory);
+        var jsonlBefore = JsonlLineCount();
 
         var result = await CheckInAsync(sp, norm[..4] + hidden + norm[4..], vt);
 
-        await AssertRejectedAsInvalidAsync(result, norm, zone, idBefore);
+        await AssertRejectedAsInvalidAsync(result, norm, zone, idBefore, jsonlBefore);
     }
 
     [Fact]
@@ -255,6 +264,7 @@ public class GateFixRoundB2Tests : IClassFixture<PostgresDatabaseFixture>
         var vehicleHook = new CommandHookInterceptor("\"Vehicles\"", throwInstead: true, exceptionFactory: () => new InvalidOperationException("lookup ran"));
         using var sp = await OperatorAsync(InterceptorInstall.With(_db, blacklistHook, vehicleHook));
         var idBefore = await AuditDb.MaxIdAsync(_db.Factory);
+        var jsonlBefore = JsonlLineCount();
 
         var tooLong = await CheckInAsync(sp, Padded(norm, 21), vt);
         var withTab = await CheckInAsync(sp, norm[..4] + "\t" + norm[4..], vt);
@@ -264,6 +274,6 @@ public class GateFixRoundB2Tests : IClassFixture<PostgresDatabaseFixture>
         Assert.Equal(CheckInRejectReason.PlateInvalid, tooLong.RejectReason);
         Assert.Equal(CheckInRejectReason.PlateInvalid, withTab.RejectReason);
         Assert.False(tooLong.IsBlacklisted);
-        await AssertRejectedAsInvalidAsync(tooLong, norm, zone, idBefore);
+        await AssertRejectedAsInvalidAsync(tooLong, norm, zone, idBefore, jsonlBefore);
     }
 }

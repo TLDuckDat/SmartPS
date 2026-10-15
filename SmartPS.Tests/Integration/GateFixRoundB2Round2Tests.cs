@@ -219,10 +219,10 @@ public class GateFixRoundB2Round2Tests : IClassFixture<PostgresDatabaseFixture>
     // ---- H7 -------------------------------------------------------------------------------------------------------------
 
     private static bool InJsonl(string text)
-        => File.Exists(JsonlPath) && File.ReadAllLines(JsonlPath).Any(l => l.Contains(text, StringComparison.Ordinal));
+        => GateStorageFiles.ReadLines(JsonlPath).Any(l => l.Contains(text, StringComparison.Ordinal));
 
     private static bool InOfflineSessions(string text)
-        => File.Exists(OfflinePath) && File.ReadAllText(OfflinePath).Contains(text, StringComparison.Ordinal);
+        => GateStorageFiles.ReadText(OfflinePath).Contains(text, StringComparison.Ordinal);
 
     private async Task AssertPersistFailedAsync(GateCheckInResult result, string normalizedPlate, TestZone? zone, long idBefore, long occupiedBefore)
     {

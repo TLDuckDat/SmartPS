@@ -11,6 +11,8 @@ namespace SmartPS.Tests.Unit;
 /// N3 / A6: with the database offline the new classification and slot-preview paths never throw and fall back to
 /// legacy memory behaviour; m6: <c>ClassifyVehicleAsync</c> is guarded by Parking.CheckIn OR Parking.CheckOut.
 /// </summary>
+// Writes the shared gate storage files (Storage/*.json[l]) like the integration gate tests: never run in parallel with them.
+[Collection(PostgresCollection.Name)]
 public class GateOfflineResidentVisitorTests
 {
     private const string OfflineConnection = "Host=127.0.0.1;Port=1;Database=x;Username=x;Password=x;Timeout=1;Pooling=false";

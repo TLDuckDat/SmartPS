@@ -28,7 +28,7 @@ public class GateCheckOutAuditTests : IClassFixture<PostgresDatabaseFixture>
             return null;
         }
 
-        var line = File.ReadAllLines(JsonlPath).LastOrDefault(l => l.Contains(plate, StringComparison.Ordinal) && l.Contains($"\"{action}\"", StringComparison.Ordinal));
+        var line = GateStorageFiles.ReadLines(JsonlPath).LastOrDefault(l => l.Contains(plate, StringComparison.Ordinal) && l.Contains($"\"{action}\"", StringComparison.Ordinal));
         if (line is null)
         {
             return null;

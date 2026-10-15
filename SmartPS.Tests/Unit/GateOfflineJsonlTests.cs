@@ -11,6 +11,8 @@ namespace SmartPS.Tests.Unit;
 /// T-E2 (E2): with the database offline the gate keeps working from memory, writes the legacy JSONL line
 /// flagged <c>"DbAudit":false</c>, and does not throw. Also R5/A13 denial paths that return results (m8).
 /// </summary>
+// Writes the shared gate storage files (Storage/*.json[l]) like the integration gate tests: never run in parallel with them.
+[Collection(PostgresCollection.Name)]
 public class GateOfflineJsonlTests
 {
     private const string OfflineConnection = "Host=127.0.0.1;Port=1;Database=x;Username=x;Password=x;Timeout=1;Pooling=false";
@@ -40,7 +42,7 @@ public class GateOfflineJsonlTests
             return new List<JsonElement>();
         }
 
-        return File.ReadAllLines(JsonlPath)
+        return GateStorageFiles.ReadLines(JsonlPath)
             .Where(l => l.Contains(plate, StringComparison.Ordinal))
             .Select(l =>
             {
@@ -260,6 +262,6 @@ public class GateOfflineJsonlTests
         Assert.True(thrown is not null || result is { Success: false }, $"cancelled check-in returned Success={result?.Success}");
         Assert.Empty(JsonlLinesFor(plate));
         var offlinePath = Path.Combine(AppContext.BaseDirectory, "Storage", "offline_active_sessions.json");
-        Assert.False(File.Exists(offlinePath) && File.ReadAllText(offlinePath).Contains(plate, StringComparison.Ordinal));
+        Assert.False(GateStorageFiles.ReadText(offlinePath).Contains(plate, StringComparison.Ordinal));
     }
 }

@@ -44,7 +44,7 @@ public class GateClassificationFailureTests : IClassFixture<PostgresDatabaseFixt
             return null;
         }
 
-        var line = File.ReadAllLines(JsonlPath)
+        var line = GateStorageFiles.ReadLines(JsonlPath)
             .LastOrDefault(l => l.Contains(plate, StringComparison.Ordinal) && l.Contains($"\"{action}\"", StringComparison.Ordinal));
         if (line is null)
         {
@@ -56,7 +56,7 @@ public class GateClassificationFailureTests : IClassFixture<PostgresDatabaseFixt
     }
 
     private static bool PlateInOfflineSessions(string plate)
-        => File.Exists(OfflinePath) && File.ReadAllText(OfflinePath).Contains(plate, StringComparison.Ordinal);
+        => GateStorageFiles.ReadText(OfflinePath).Contains(plate, StringComparison.Ordinal);
 
     private async Task<ServiceProvider> HookedOperatorAsync(CommandHookInterceptor hook)
     {
