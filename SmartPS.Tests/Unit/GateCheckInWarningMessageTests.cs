@@ -113,6 +113,72 @@ public class GateCheckInWarningMessageTests
         Assert.DoesNotContain("CustomerLocked", ShownMessages(dialogs), StringComparison.Ordinal);
     }
 
+    // ---- fix round 2, H6: every rejection is localized ------------------------------------------------------------
+
+    private const string RawServiceMessage = "RAW-SERVICE-MESSAGE (không được hiển thị)";
+
+    private static GateCheckInResult Rejected(CheckInRejectReason reason) => new()
+    {
+        Success = false,
+        Message = RawServiceMessage,
+        Category = VehicleCategory.Visitor,
+        RejectReason = reason
+    };
+
+    private static async Task AssertRejectionShowsAsync(GateCheckInResult scripted, string expectedKey)
+    {
+        var (vm, dialogs) = CreateVm(scripted);
+
+        await CheckInAsync(vm, dialogs);
+
+        var shown = Assert.Single(dialogs.Errors);
+        Assert.Equal(expectedKey, shown);
+        Assert.Contains(expectedKey, vm.InStatusMessage, StringComparison.Ordinal);
+        Assert.DoesNotContain(RawServiceMessage, vm.InStatusMessage, StringComparison.Ordinal);
+        Assert.Empty(dialogs.Successes);
+    }
+
+    [Fact]
+    public Task H6_already_inside_is_localized()
+        => AssertRejectionShowsAsync(Rejected(CheckInRejectReason.AlreadyInside), "Msg_Gate_AlreadyInside");
+
+    [Fact]
+    public Task H6_empty_plate_from_the_service_is_localized()
+        => AssertRejectionShowsAsync(Rejected(CheckInRejectReason.EmptyPlate), "Msg_Gate_EmptyPlate");
+
+    [Fact]
+    public Task H6_generic_failure_without_a_reason_is_localized()
+        => AssertRejectionShowsAsync(Rejected(CheckInRejectReason.None), "Msg_Gate_CheckInFailed");
+
+    [Fact]
+    public Task H7_persist_failure_is_shown_with_the_generic_check_in_failed_message()
+        => AssertRejectionShowsAsync(Rejected(Enum.Parse<CheckInRejectReason>("PersistFailed")), "Msg_Gate_CheckInFailed");
+
+    [Theory]
+    [InlineData(CheckInRejectReason.PlateInvalid, "Msg_Gate_PlateInvalid")]
+    [InlineData(CheckInRejectReason.ClassificationFailed, "Msg_Gate_ClassificationFailed")]
+    [InlineData(CheckInRejectReason.SlotNotFound, "Msg_Gate_SlotNotFound")]
+    [InlineData(CheckInRejectReason.SlotNotAvailable, "Msg_Gate_SlotNotAvailable")]
+    [InlineData(CheckInRejectReason.SlotAudienceNotAllowed, "Msg_Gate_SlotAudienceNotAllowed")]
+    [InlineData(CheckInRejectReason.SlotVehicleTypeMismatch, "Msg_Gate_SlotVehicleTypeMismatch")]
+    [InlineData(CheckInRejectReason.NoSlotAvailable, "Msg_Gate_NoSlotFor")]
+    [InlineData(CheckInRejectReason.Blacklisted, "Msg_Gate_BlacklistBlocked")]
+    public Task H6_existing_rejections_stay_localized(CheckInRejectReason reason, string expectedKey)
+        => AssertRejectionShowsAsync(Rejected(reason), expectedKey);
+
+    [Fact]
+    public void H6_failure_mapping_never_falls_back_to_the_raw_service_message()
+    {
+        // Source guard: AlreadyInside and EmptyPlate are mapped explicitly; everything else uses the generic key.
+        var text = File.ReadAllText(Path.Combine(RepoPaths.ViewModels, "GateControl", "GateControlViewModel.cs"));
+
+        Assert.Contains("CheckInRejectReason.AlreadyInside", text, StringComparison.Ordinal);
+        Assert.Contains("CheckInRejectReason.EmptyPlate", text, StringComparison.Ordinal);
+
+        Assert.Contains("Msg_Gate_CheckInFailed", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("_ => result.Message", text, StringComparison.Ordinal);
+    }
+
     // ---- fakes ----------------------------------------------------------------------------------------------------
 
     private sealed class ScriptedGate : IGateControlService

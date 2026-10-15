@@ -35,7 +35,9 @@ public class ResidentVisitorLocalizationTests
         keys.AddRange(new[]
         {
             "BlacklistBlocked", "NoSlotFor", "SlotNotFound", "SlotVehicleTypeMismatch", "SlotAudienceNotAllowed", "SlotNotAvailable",
-            "CheckInResident", "CheckInMonthly", "CheckInVisitor", "PlateInvalid", "ClassificationFailed"
+            "CheckInResident", "CheckInMonthly", "CheckInVisitor", "PlateInvalid", "ClassificationFailed",
+            // Fix round 2, H6: every check-in rejection is localized
+            "AlreadyInside", "EmptyPlate", "CheckInFailed"
         }.Select(s => $"Msg_Gate_{s}"));
 
         // Operation errors used by the zone service

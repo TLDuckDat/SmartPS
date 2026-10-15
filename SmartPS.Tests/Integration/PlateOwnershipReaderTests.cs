@@ -95,13 +95,16 @@ public class PlateOwnershipReaderTests : IClassFixture<PostgresDatabaseFixture>
         var vt = await _data.CreateIsolatedVehicleTypeAsync(withPricingRule: false);
         var norm = GateTestData.UniqueNormalizedPlate();
         var customerId = await _data.CreateCustomerAsync(null, fullName: "Chủ vé theo biển");
-        // The ticket's vehicle row is inactive and carries another plate; only RegisteredLicensePlate matches.
-        var oldVehicle = await _data.AddVehicleAsync(customerId, GateTestData.Raw(GateTestData.UniqueNormalizedPlate()), vt, isActive: false);
-        var ticketId = await TicketAsync(customerId, oldVehicle, (norm[..3] + " " + norm[3..6] + "-" + norm[6..]).ToLowerInvariant(), vt, Now.AddDays(-5), Now.AddDays(25));
+        // The ticket's vehicle row is ACTIVE but carries another plate; only RegisteredLicensePlate matches the gate plate.
+        // (Fix round 2, H5a: a ticket bound to an inactive vehicle is no longer honoured, so the vehicle must be active.)
+        var otherVehicle = await _data.AddVehicleAsync(customerId, GateTestData.Raw(GateTestData.UniqueNormalizedPlate()), vt);
+        var ticketId = await TicketAsync(customerId, otherVehicle, (norm[..3] + " " + norm[3..6] + "-" + norm[6..]).ToLowerInvariant(), vt, Now.AddDays(-5), Now.AddDays(25));
 
         var owner = await ReadAsync(norm);
 
         Assert.Null(owner.VehicleId);
+        Assert.Null(owner.HouseholdId);
+        Assert.False(owner.HouseholdIsActive);
         Assert.Equal(customerId, owner.OwnerCustomerId);
         Assert.Equal("Chủ vé theo biển", owner.OwnerName);
         Assert.True(owner.OwnerIsActive);
@@ -221,13 +224,75 @@ public class PlateOwnershipReaderTests : IClassFixture<PostgresDatabaseFixture>
         var vt = await _data.CreateIsolatedVehicleTypeAsync(withPricingRule: false);
         var norm = GateTestData.UniqueNormalizedPlate();
         var customerId = await _data.CreateCustomerAsync(null, isActive: false);
-        var oldVehicle = await _data.AddVehicleAsync(customerId, GateTestData.Raw(GateTestData.UniqueNormalizedPlate()), vt, isActive: false);
-        await TicketAsync(customerId, oldVehicle, GateTestData.Raw(norm), vt, Now.AddDays(-5), Now.AddDays(25));
+        // Active vehicle with another plate, so only the customer's inactivity can exclude the ticket (H5a).
+        var otherVehicle = await _data.AddVehicleAsync(customerId, GateTestData.Raw(GateTestData.UniqueNormalizedPlate()), vt);
+        await TicketAsync(customerId, otherVehicle, GateTestData.Raw(norm), vt, Now.AddDays(-5), Now.AddDays(25));
 
         var owner = await ReadAsync(norm);
 
         Assert.Empty(owner.ValidTickets);
         Assert.False(owner.IsResident);
+    }
+
+    // ---- Fix round 2, H5: residency only through an active Vehicle; tickets of inactive vehicles are not honoured ------
+
+    [Fact]
+    public async Task H5a_ticket_bound_to_an_inactive_vehicle_is_not_honoured_even_if_its_registered_plate_matches()
+    {
+        _db.RequireAvailable();
+        var vt = await _data.CreateIsolatedVehicleTypeAsync(withPricingRule: false);
+        var norm = GateTestData.UniqueNormalizedPlate();
+        var customerId = await _data.CreateCustomerAsync(null);
+        var removedVehicle = await _data.AddVehicleAsync(customerId, GateTestData.Raw(norm), vt, isActive: false);
+        await TicketAsync(customerId, removedVehicle, GateTestData.Raw(norm), vt, Now.AddDays(-5), Now.AddDays(25));
+
+        var owner = await ReadAsync(norm);
+
+        Assert.Empty(owner.ValidTickets);
+        Assert.False(owner.IsResident);
+    }
+
+    [Fact]
+    public async Task H5a_ticket_of_the_removed_vehicle_is_not_honoured_for_the_re_registered_active_vehicle()
+    {
+        _db.RequireAvailable();
+        var vt = await _data.CreateIsolatedVehicleTypeAsync(withPricingRule: false);
+        var norm = GateTestData.UniqueNormalizedPlate();
+        var householdId = await _data.CreateHouseholdAsync();
+        var customerId = await _data.CreateCustomerAsync(householdId);
+        var removedVehicle = await _data.AddVehicleAsync(customerId, GateTestData.Raw(norm), vt, isActive: false, createdAtUtc: Now.AddDays(-90));
+        var activeVehicle = await _data.AddVehicleAsync(customerId, norm, vt, createdAtUtc: Now.AddDays(-1));
+        await TicketAsync(customerId, removedVehicle, GateTestData.Raw(norm), vt, Now.AddDays(-5), Now.AddDays(25));
+
+        var owner = await ReadAsync(norm);
+
+        Assert.Equal(activeVehicle, owner.VehicleId);
+        Assert.True(owner.IsResident);   // D1: household through the active vehicle's owner
+        Assert.Empty(owner.ValidTickets); // the ticket's vehicle is inactive
+    }
+
+    [Fact]
+    public async Task H5b_ticket_only_match_of_a_household_member_has_no_household_and_is_not_resident()
+    {
+        _db.RequireAvailable();
+        var vt = await _data.CreateIsolatedVehicleTypeAsync(withPricingRule: false);
+        var norm = GateTestData.UniqueNormalizedPlate();
+        var householdId = await _data.CreateHouseholdAsync("H5B-0101");
+        var holder = await _data.CreateCustomerAsync(householdId, CustomerType.Resident, fullName: "Chủ vé trong hộ");
+        // The holder's active vehicle carries another plate; the gate plate matches only the ticket's registered plate.
+        var holderVehicle = await _data.AddVehicleAsync(holder, GateTestData.Raw(GateTestData.UniqueNormalizedPlate()), vt);
+        var ticketId = await TicketAsync(holder, holderVehicle, GateTestData.Raw(norm), vt, Now.AddDays(-5), Now.AddDays(25));
+
+        var owner = await ReadAsync(norm);
+
+        Assert.Null(owner.VehicleId);
+        Assert.Equal(holder, owner.OwnerCustomerId);
+        Assert.True(owner.OwnerIsActive);
+        Assert.Null(owner.HouseholdId);
+        Assert.False(owner.HouseholdIsActive);
+        Assert.Null(owner.ApartmentCode);
+        Assert.False(owner.IsResident);
+        Assert.Equal(ticketId, Assert.Single(owner.ValidTickets).TicketId);
     }
 
     // ---- vehicles and owners ----------------------------------------------------------------------------------------
