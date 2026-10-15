@@ -481,6 +481,8 @@ namespace SmartPS.Migrations
 
                     b.HasIndex("CheckInTime");
 
+                    b.HasIndex("CheckOutTime");
+
                     b.HasIndex("CreatedByUserId");
 
                     b.HasIndex("CustomerId");
