@@ -49,7 +49,8 @@ public class OverviewViewModelTests
         Assert.Equal("150.000 ₫", vm.TodayRevenueFormatted);
         Assert.Equal(3, vm.ResidentParkedCount);
         Assert.Equal(1, vm.MonthlyParkedCount);
-        Assert.Equal(4, vm.RegularParkedCount);
+        // r1 m3: the visitor count is VisitorParkedCount (read by name so the suite compiles before the rename)
+        Assert.Equal(4, VisitorParkedCount(vm));
         Assert.Equal(new[] { "Xe máy", "Xe ô tô" }, vm.ParkedByVehicleType.Select(v => v.Name).ToArray());
         Assert.Equal(26.7, vm.OccupancyRate, 1);
         Assert.False(vm.HasError);
@@ -66,5 +67,12 @@ public class OverviewViewModelTests
         Assert.Equal("Msg_Ov_LoadError", vm.ErrorMessage);
         Assert.True(vm.HasError);
         Assert.False(vm.IsLoading);
+    }
+
+    private static int VisitorParkedCount(OverviewViewModel vm)
+    {
+        var property = typeof(OverviewViewModel).GetProperty("VisitorParkedCount");
+        Assert.True(property is not null, "OverviewViewModel.VisitorParkedCount does not exist (review r1 m3)");
+        return (int)property!.GetValue(vm)!;
     }
 }

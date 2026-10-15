@@ -1,4 +1,7 @@
+using System.Collections.Concurrent;
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using SmartPS.Models.Parking;
 using SmartPS.Models.Shifts;
@@ -142,6 +145,49 @@ public class OverviewSnapshotTests : IClassFixture<PostgresDatabaseFixture>
         Assert.Equal(recent.OrderByDescending(s => s.CheckInTime).Select(s => s.SessionId), recent.Select(s => s.SessionId));
         Assert.Equal(3, three.Count);
         Assert.Equal(recent.Take(3).Select(s => s.SessionId), three.Select(s => s.SessionId));
+    }
+
+    /// <summary>Records the text of every reader command run through the hooked context factory.</summary>
+    private sealed class CommandTextCapture : DbCommandInterceptor
+    {
+        public ConcurrentQueue<string> Texts { get; } = new();
+
+        public override ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(DbCommand command, CommandEventData eventData,
+            InterceptionResult<DbDataReader> result, CancellationToken cancellationToken = default)
+        {
+            Texts.Enqueue(command.CommandText);
+            return base.ReaderExecutingAsync(command, eventData, result, cancellationToken);
+        }
+
+        public override InterceptionResult<DbDataReader> ReaderExecuting(DbCommand command, CommandEventData eventData, InterceptionResult<DbDataReader> result)
+        {
+            Texts.Enqueue(command.CommandText);
+            return base.ReaderExecuting(command, eventData, result);
+        }
+    }
+
+    [Fact]
+    public async Task Review_r1_m2_recent_sessions_query_does_not_join_customers()
+    {
+        _db.RequireAvailable();
+        var op = await TestUsers.CreateAsync(_db.Factory, "Operator");
+        var capture = new CommandTextCapture();
+        using var sp = IntegrationServices.Create(_db, InterceptorInstall.With(_db, capture));
+        await sp.LoginAsync(op.Username);
+        var service = new ReportService(sp.DbFactory(), sp.GetRequiredService<IAuthorizationGuard>(), new FixedTimeProvider(Utc(2031, 9, 10, 12)));
+        await _seed.SessionsAsync(2, i => Utc(2031, 9, 10, 1).AddMinutes(i * 5));
+        while (capture.Texts.TryDequeue(out _))
+        {
+        }
+
+        var recent = await service.GetRecentSessionsAsync(5);
+
+        Assert.NotEmpty(recent);
+        var sessionQueries = capture.Texts.Where(t => t.Contains("\"ParkingSessions\"", StringComparison.Ordinal)).ToList();
+        Assert.NotEmpty(sessionQueries);
+        Assert.All(sessionQueries, t => Assert.DoesNotContain("\"Customers\"", t, StringComparison.Ordinal));
+        Assert.All(recent, s => Assert.Null(s.Customer));
+        Assert.All(recent, s => Assert.NotNull(s.VehicleType)); // the vehicle type is still loaded for the list
     }
 
     [Fact]

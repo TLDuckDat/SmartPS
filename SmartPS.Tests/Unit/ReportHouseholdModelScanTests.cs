@@ -8,8 +8,9 @@ namespace SmartPS.Tests.Unit;
 /// AC-R9 / R-C / D5 source and model scans: the monthly-ticket revenue KPI, its Overview rows, its tile and its text keys
 /// do not exist anywhere in the reporting code, model, views or dictionaries; reports no longer depend on
 /// MonthlyTicketPurchases or Customer.IsResident; the old customer tiers (Regular / Loyal / VIP, Resident = 3) are gone;
-/// revenue SQL reads FinancialTransactions and never the pricing table. The zone-not-applicable key is kept (unused is
-/// acceptable), and the keys that still serve other figures stay.
+/// revenue SQL reads FinancialTransactions and never the pricing table. Review r1 m1: the zone-not-applicable key, which only
+/// served the removed tile, is gone too (constant, All entry and the three dictionaries); the keys that still serve other
+/// figures stay.
 /// </summary>
 public class ReportHouseholdModelScanTests
 {
@@ -48,6 +49,7 @@ public class ReportHouseholdModelScanTests
     [InlineData("CustomerType.VIP")]
     [InlineData("\"PricingRules\"")]
     [InlineData("MonthlyPrice")]
+    [InlineData("NotApplicableZone")]
     public void Reporting_sources_do_not_mention(string token)
     {
         var offenders = ReportingSources()
@@ -105,9 +107,12 @@ public class ReportHouseholdModelScanTests
         Assert.DoesNotContain(constants, c => c.Name.Contains("MonthlyTicket", StringComparison.Ordinal) || c.Value.Contains("MonthlyTicket", StringComparison.Ordinal));
         Assert.DoesNotContain(ReportTextKeys.All, k => k.Contains("MonthlyTicket", StringComparison.Ordinal));
 
-        // kept: zone-not-applicable (unused now, accepted), the session ticket-code column and the MonthlyPass group label
-        Assert.Equal("Str_Rpt_Kpi_NotApplicableZone", ReportTextKeys.KpiNotApplicableZone);
-        Assert.Contains(ReportTextKeys.KpiNotApplicableZone, ReportTextKeys.All);
+        // r1 m1: the zone-not-applicable key served only the removed monthly tile; constant and All entry are gone
+        Assert.DoesNotContain(constants, c => c.Name == "KpiNotApplicableZone" || c.Value == "Str_Rpt_Kpi_NotApplicableZone");
+        Assert.DoesNotContain("Str_Rpt_Kpi_NotApplicableZone", ReportTextKeys.All);
+        Assert.DoesNotContain(ReportTextKeys.All, k => k.Contains("NotApplicable", StringComparison.Ordinal));
+
+        // kept: the session ticket-code column and the group labels
         Assert.Contains("Str_Rpt_Col_TicketCode", ReportTextKeys.All);
         Assert.Contains("Str_Rpt_Group_MonthlyPass", ReportTextKeys.All);
         Assert.Contains("Str_Rpt_Group_Resident", ReportTextKeys.All);
@@ -125,7 +130,8 @@ public class ReportHouseholdModelScanTests
         var keys = doc.Root!.Elements().Select(e => (string?)e.Attribute(x + "Key")).Where(k => k is not null).ToList();
 
         Assert.DoesNotContain(keys, k => k!.StartsWith("Str_Rpt_Kpi_MonthlyTicket", StringComparison.Ordinal));
-        Assert.Contains("Str_Rpt_Kpi_NotApplicableZone", keys);
+        Assert.DoesNotContain("Str_Rpt_Kpi_NotApplicableZone", keys); // r1 m1
+        Assert.DoesNotContain(keys, k => k!.Contains("NotApplicable", StringComparison.Ordinal));
         Assert.Contains("Str_Rpt_Group_MonthlyPass", keys);
         Assert.Contains("Str_Rpt_Col_TicketCode", keys);
     }
@@ -154,5 +160,53 @@ public class ReportHouseholdModelScanTests
         Assert.Contains("(@grp = 2 AND s.\"IsMonthlyPass\" AND s.\"CustomerType\" <> @res)", ReportSql.SessionFilter, StringComparison.Ordinal);
         Assert.Contains("(@grp = 3 AND NOT s.\"IsMonthlyPass\" AND s.\"CustomerType\" <> @res)", ReportSql.SessionFilter, StringComparison.Ordinal);
         Assert.Equal((int)SmartPS.Models.Parking.CustomerType.Resident, ReportCustomerGroupRules.ResidentCustomerTypeValue);
+    }
+
+    // ---- review r1 m1: no source file anywhere in the app mentions the zone-not-applicable key -------------------------
+
+    [Fact]
+    public void No_app_source_or_dictionary_mentions_the_zone_not_applicable_key()
+    {
+        var offenders = Directory.EnumerateFiles(RepoPaths.AppProject, "*.*", SearchOption.AllDirectories)
+            .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase)
+                     && !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
+            .Where(f => f.EndsWith(".cs", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".xaml", StringComparison.OrdinalIgnoreCase))
+            .Where(f => File.ReadAllText(f).Contains("NotApplicableZone", StringComparison.Ordinal))
+            .Select(Rel)
+            .ToList();
+
+        Assert.True(offenders.Count == 0, $"'NotApplicableZone' found in: {string.Join(", ", offenders)}");
+    }
+
+    // ---- review r1 m2: the recent-sessions query does not load the customer ----------------------------------------------
+
+    [Fact]
+    public void Recent_sessions_query_does_not_include_the_customer()
+    {
+        var text = File.ReadAllText(Path.Combine(RepoPaths.Services, "Reports", "ReportService.cs"));
+        var start = text.IndexOf("GetRecentSessionsAsync(", StringComparison.Ordinal);
+        Assert.True(start >= 0, "GetRecentSessionsAsync not found");
+        var end = text.IndexOf("ToListAsync", start, StringComparison.Ordinal);
+        Assert.True(end > start, "GetRecentSessionsAsync body not found");
+        var body = text[start..end];
+
+        Assert.DoesNotMatch(new Regex(@"\.Include\(\s*\w+\s*=>\s*\w+\.Customer\s*\)"), body);
+        Assert.DoesNotContain("Customer", body, StringComparison.Ordinal);
+    }
+
+    // ---- review r1 m3: Overview visitor count is named VisitorParkedCount (VM and XAML binding) ---------------------------
+
+    [Fact]
+    public void Overview_visitor_count_is_named_VisitorParkedCount_in_the_view_model_and_the_view()
+    {
+        var vmType = typeof(SmartPS.ViewModels.Overview.OverviewViewModel);
+        Assert.NotNull(vmType.GetProperty("VisitorParkedCount", BindingFlags.Public | BindingFlags.Instance));
+        Assert.Null(vmType.GetProperty("RegularParkedCount", BindingFlags.Public | BindingFlags.Instance));
+
+        var vmText = File.ReadAllText(Path.Combine(RepoPaths.ViewModels, "Overview", "OverviewViewModel.cs"));
+        var xaml = File.ReadAllText(Path.Combine(Views, "Overview", "OverviewView.xaml"));
+        Assert.DoesNotContain("RegularParked", vmText, StringComparison.Ordinal);
+        Assert.DoesNotContain("RegularParked", xaml, StringComparison.Ordinal);
+        Assert.Matches(new Regex(@"\{Binding\s+(Path=)?VisitorParkedCount"), xaml);
     }
 }
