@@ -3,6 +3,7 @@ using SmartPS.Data;
 using SmartPS.DTOs.Auth;
 using SmartPS.Models.Auth;
 using SmartPS.Services.Auth;
+using SmartPS.Services.Authorization;
 using SmartPS.Services.Dialog;
 using SmartPS.Services.Localization;
 
@@ -162,6 +163,20 @@ public class EditUserViewModel : ViewModelBase
             {
                 SetError(_localizationService.GetString("Msg_EditUser_Failed"));
             }
+        }
+        catch (PermissionDeniedException ex)
+        {
+            SetError(_localizationService.GetString(
+                ex.Reason == "AdminRoleRequired" ? "Msg_User_AdminRoleRequiresAdmin" : "Msg_Auth_PermissionDenied"));
+        }
+        catch (AdminProtectionException ex)
+        {
+            SetError(_localizationService.GetString(ex.Reason switch
+            {
+                AdminProtectionReason.LastActiveAdmin => "Msg_User_LastAdminProtected",
+                AdminProtectionReason.SelfDeactivate => "Msg_User_CannotLockSelf",
+                _ => "Msg_User_CannotChangeOwnRole"
+            }));
         }
         catch (Exception ex)
         {

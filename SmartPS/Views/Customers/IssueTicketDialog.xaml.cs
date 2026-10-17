@@ -16,6 +16,7 @@ namespace SmartPS.Views.Customers
         public int FinalSelectedVehicleId { get; private set; }
         public int FinalDurationMonths { get; private set; }
         public decimal FinalPrice { get; private set; }
+        public PaymentMethod FinalPaymentMethod { get; private set; } = PaymentMethod.Cash;
 
         public IssueTicketDialog(List<Customer> customers, List<Vehicle> vehicles, List<PricingRule>? pricingRules = null, int? preselectedCustomerId = null)
         {
@@ -133,12 +134,24 @@ namespace SmartPS.Views.Customers
             var vehicle = GetCurrentSelectedVehicle();
             int vehicleId = vehicle?.VehicleId ?? 0;
 
-            if (customerId == 0) { MessageBox.Show("Chưa chọn khách hàng"); return; }
-            if (vehicleId == 0) { MessageBox.Show("Chưa chọn xe"); return; }
+            if (customerId == 0) { MessageBox.Show("Chưa chọn khách hàng", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+            if (vehicle == null || vehicleId == 0) { MessageBox.Show("Chưa chọn xe", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+
+            if (vehicle.OwnerCustomerId != customerId)
+            {
+                MessageBox.Show("Phương tiện đã chọn không thuộc về khách hàng này!", "Lỗi xác thực", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
             FinalSelectedCustomerId = customerId;
             FinalSelectedVehicleId = vehicleId;
             FinalDurationMonths = GetCurrentDurationMonths();
+            FinalPaymentMethod = cboPaymentMethod.SelectedIndex switch
+            {
+                1 => PaymentMethod.VietQR,
+                2 => PaymentMethod.Card,
+                _ => PaymentMethod.Cash
+            };
             UpdatePricePreview();
 
             DialogResult = true;

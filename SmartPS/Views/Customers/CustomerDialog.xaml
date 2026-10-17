@@ -32,11 +32,7 @@
                 <TextBox x:Name="txtPlate" Grid.Row="0" Margin="100,0,0,10" Height="25"/>
                 
                 <TextBlock Text="Loại Xe:" Grid.Row="1" Margin="0,5,0,0"/>
-                <ComboBox x:Name="cboType" Grid.Row="1" Margin="100,0,0,10" Height="25" SelectedIndex="1">
-                    <ComboBoxItem Content="Xe Đạp/Điện"/>
-                    <ComboBoxItem Content="Xe Máy"/>
-                    <ComboBoxItem Content="Xe Ô tô"/>
-                </ComboBox>
+                <ComboBox x:Name="cboType" Grid.Row="1" Margin="100,0,0,10" Height="25"/>
             </Grid>
         </StackPanel>
         

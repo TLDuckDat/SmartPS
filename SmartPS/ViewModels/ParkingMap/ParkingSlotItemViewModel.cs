@@ -19,6 +19,21 @@ public class ParkingSlotItemViewModel : ViewModelBase
             if (SetProperty(ref _status, value))
             {
                 OnPropertyChanged(nameof(IsOccupied));
+                OnPropertyChanged(nameof(IsMaintenance));
+                OnPropertyChanged(nameof(IsAvailable));
+            }
+        }
+    }
+
+    private string _statusText = string.Empty;
+    /// <summary>Nhãn trạng thái đã dịch (Còn trống / Đã đỗ xe / Bảo trì).</summary>
+    public string StatusText
+    {
+        get => _statusText;
+        set
+        {
+            if (SetProperty(ref _statusText, value))
+            {
                 OnPropertyChanged(nameof(StatusBadgeText));
             }
         }
@@ -52,7 +67,12 @@ public class ParkingSlotItemViewModel : ViewModelBase
         set => SetProperty(ref _customerName, value);
     }
 
+    /// <summary>Phiên đỗ hiện tại thuộc cư dân (hiển thị dấu hiệu cư dân trên ô).</summary>
+    public bool IsResidentSession { get; set; }
+
     public bool IsOccupied => Status == SlotStatus.Occupied;
-    public string StatusBadgeText => IsOccupied ? "ĐÃ ĐỖ XE" : "CÒN TRỐNG";
+    public bool IsMaintenance => Status == SlotStatus.Maintenance;
+    public bool IsAvailable => Status == SlotStatus.Available;
+    public string StatusBadgeText => StatusText;
     public string VehicleIcon => VehicleTypeId == 1 ? "🏍" : "🚗";
 }

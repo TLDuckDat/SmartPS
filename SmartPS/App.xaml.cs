@@ -1,4 +1,5 @@
 using System.IO;
+using LiveChartsCore.SkiaSharpView;
 using System.Windows;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -8,6 +9,7 @@ using SmartPS.Services.Auth;
 using SmartPS.Services.Authorization;
 using SmartPS.Services.Dialog;
 using SmartPS.Services.Localization;
+using SmartPS.Services.ParkingZones;
 using SmartPS.Services.Payment;
 using SmartPS.Services.Payment.Mock;
 using SmartPS.Services.Payment.PayOS;
@@ -30,6 +32,16 @@ public partial class App : Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Biểu đồ LiveCharts2: Skia + giao diện sáng; Segoe UI để hiển thị đúng tiếng Việt/Nhật
+        LiveChartsCore.LiveCharts.Configure(config => config
+            .AddSkiaSharp()
+            .AddDefaultMappers()
+            .AddLightTheme()
+            .HasTextSettings(new TextSettings
+            {
+                DefaultTypeface = SkiaSharp.SKTypeface.FromFamilyName("Segoe UI")
+            }));
 
         // 1. Khởi tạo cấu hình ứng dụng từ appsettings.json
         var configuration = new ConfigurationBuilder()
@@ -54,14 +66,21 @@ public partial class App : Application
         });
 
         // Đăng ký Business Services
+        services.AddSingleton<ICurrentUserContext, CurrentUserContext>();
+        services.AddSingleton<SmartPS.Services.Audit.IAuditService, SmartPS.Services.Audit.AuditService>();
+        services.AddSingleton<IAuthorizationGuard, AuthorizationGuard>();
         services.AddSingleton<IAuthService, AuthService>();
         services.AddSingleton<IPermissionService, PermissionService>();
         services.AddSingleton<IDialogService, DialogService>();
+        services.AddSingleton<SmartPS.Services.RolePermissions.IRolePermissionService, SmartPS.Services.RolePermissions.RolePermissionService>();
+        services.AddSingleton<SmartPS.Services.Audit.IAuditQueryService, SmartPS.Services.Audit.AuditQueryService>();
+        services.AddSingleton<SmartPS.Services.Audit.IAuditIntegrityVerifier, SmartPS.Services.Audit.AuditIntegrityVerifier>();
         services.AddSingleton<ILocalizationService, LocalizationService>();
         services.AddSingleton<SmartPS.Services.Audio.IAudioAlertService, SmartPS.Services.Audio.SystemAudioAlertService>();
         services.AddSingleton<SmartPS.Services.Storage.IImageStorageService, SmartPS.Services.Storage.ImageStorageService>();
         services.AddSingleton<SmartPS.Services.GateControl.IParkingFeeCalculator, SmartPS.Services.GateControl.StandardParkingFeeCalculator>();
         services.AddSingleton<SmartPS.Services.OcrLisencePlate.IOcrLicensePlateService, SmartPS.Services.OcrLisencePlate.LicensePlateOcrService>();
+        services.AddSingleton<SmartPS.Services.GateControl.IPlateOwnershipReader, SmartPS.Services.GateControl.PlateOwnershipReader>();
         services.AddSingleton<SmartPS.Services.GateControl.IGateControlService, SmartPS.Services.GateControl.GateControlService>();
         services.AddSingleton<SmartPS.Services.GateControl.ICameraWatcherService, SmartPS.Services.GateControl.CameraWatcherService>();
 
@@ -97,6 +116,10 @@ public partial class App : Application
 
         services.AddSingleton<IPaymentService, PaymentService>();
         services.AddSingleton<IShiftService, ShiftService>();
+        services.AddSingleton<SmartPS.Services.Reports.IReportService, SmartPS.Services.Reports.ReportService>();
+        services.AddSingleton<SmartPS.Services.Reports.IReportExportService, SmartPS.Services.Reports.ReportExportService>();
+        services.AddSingleton<SmartPS.Services.Dialog.IFileDialogService, SmartPS.Services.Dialog.FileDialogService>();
+        services.AddSingleton<IParkingZoneService, ParkingZoneService>();
         services.AddSingleton<PaymentWebhookServer>();
 
         // Đăng ký ViewModels
@@ -113,6 +136,8 @@ public partial class App : Application
         services.AddTransient<SmartPS.ViewModels.UserManagement.UserManagementViewModel>();
         services.AddTransient<SmartPS.ViewModels.Pricing.PricingViewModel>();
         services.AddTransient<SmartPS.ViewModels.Settings.SettingsViewModel>();
+        services.AddTransient<SmartPS.ViewModels.RolePermissions.RolePermissionsViewModel>();
+        services.AddTransient<SmartPS.ViewModels.Audit.AuditLogViewModel>();
 
         // Đăng ký Views
         services.AddTransient<LoginView>();

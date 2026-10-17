@@ -1,0 +1,169 @@
+<UserControl x:Class="SmartPS.Views.RolePermissions.RolePermissionsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="700" d:DesignWidth="1000">
+
+    <Grid Background="{StaticResource AppBackgroundBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ============================================== -->
+        <!-- ROW 0: TIÊU ĐỀ & NÚT LƯU / KHÔI PHỤC            -->
+        <!-- ============================================== -->
+        <Border Grid.Row="0" Margin="16,14,16,12" Padding="16"
+                Background="{StaticResource CardBackgroundBrush}"
+                BorderBrush="{StaticResource AppBorderBrush}"
+                BorderThickness="1" CornerRadius="4">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="{DynamicResource Str_RolePerm_Title}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{DynamicResource Str_RolePerm_Subtitle}" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                    <!-- Chỉ có Role.View: hiển thị chế độ chỉ đọc -->
+                    <Border Margin="0,8,0,0" Padding="10,6" CornerRadius="4"
+                            Background="{StaticResource WarningBackgroundBrush}"
+                            BorderBrush="{StaticResource WarningBorderBrush}" BorderThickness="1"
+                            HorizontalAlignment="Left">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock Text="{DynamicResource Str_RolePerm_ReadOnlyNotice}" FontSize="11.5" Foreground="{StaticResource WarningTextBrush}"/>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Style="{StaticResource SecondaryButtonStyle}"
+                            Content="{DynamicResource Str_RolePerm_Reset}"
+                            Height="32" Padding="14,0" Margin="0,0,8,0" FontSize="11.5"
+                            Command="{Binding ResetCommand}"/>
+                    <Button Style="{StaticResource PrimaryButtonStyle}"
+                            Content="{DynamicResource Str_RolePerm_Save}"
+                            Height="32" Padding="14,0" FontSize="11.5"
+                            Command="{Binding SaveCommand}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ============================================== -->
+        <!-- ROW 1: MA TRẬN VAI TRÒ x QUYỀN, NHÓM THEO MODULE -->
+        <!-- ============================================== -->
+        <Border Grid.Row="1" Margin="16,0,16,16" Padding="16"
+                Background="{StaticResource CardBackgroundBrush}"
+                BorderBrush="{StaticResource AppBorderBrush}"
+                BorderThickness="1" CornerRadius="4">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <!-- Hàng tiêu đề: tên các vai trò (Admin bị khoá) -->
+                    <Grid Margin="0,0,0,6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="300"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{DynamicResource Str_RolePerm_Permission}"
+                                   FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"
+                                   VerticalAlignment="Center"/>
+                        <ItemsControl Grid.Column="1" ItemsSource="{Binding Roles}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Width="120">
+                                        <TextBlock Text="{Binding RoleName, Converter={StaticResource RoleLocalizedConverter}}"
+                                                   FontSize="12" FontWeight="Bold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{DynamicResource Str_RolePerm_AdminLocked}"
+                                                   FontSize="10" Foreground="{StaticResource TextDimBrush}"
+                                                   HorizontalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSystemAdmin}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+
+                    <!-- Các hàng quyền, nhóm theo module -->
+                    <ItemsControl ItemsSource="{Binding RowsView}">
+                        <ItemsControl.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource IceBadgeBackgroundBrush}"
+                                                BorderBrush="{StaticResource IceBadgeBorderBrush}"
+                                                BorderThickness="0,1,0,1" Padding="8,5" Margin="0,8,0,0">
+                                            <TextBlock Text="{Binding Items[0].ModuleTitle}"
+                                                       FontSize="12" FontWeight="Bold"
+                                                       Foreground="{StaticResource TextBrandBrush}"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                            </GroupStyle>
+                        </ItemsControl.GroupStyle>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="{StaticResource DividerBrush}" BorderThickness="0,0,0,1" Padding="0,5">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="300"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="8,0,0,0">
+                                            <TextBlock Text="{Binding Title}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                            <TextBlock Text="{Binding Name}" FontSize="10.5" Foreground="{StaticResource TextDimBrush}"/>
+                                        </StackPanel>
+                                        <ItemsControl Grid.Column="1" ItemsSource="{Binding Cells}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel Orientation="Horizontal"/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid Width="120">
+                                                        <CheckBox IsChecked="{Binding IsGranted, Mode=TwoWay}"
+                                                                  IsEnabled="{Binding IsEditable}"
+                                                                  HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center"/>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

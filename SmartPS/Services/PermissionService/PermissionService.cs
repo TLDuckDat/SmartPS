@@ -1,26 +1,31 @@
-using SmartPS.Constants;
-using SmartPS.Services.Auth;
-
 namespace SmartPS.Services.Authorization;
 
 public class PermissionService : IPermissionService
 {
-    private readonly IAuthService _authService;
+    private readonly ICurrentUserContext _currentUser;
 
-    public PermissionService(IAuthService authService)
+    public PermissionService(ICurrentUserContext currentUser)
     {
-        _authService = authService;
+        _currentUser = currentUser;
     }
+
+    public bool IsAuthenticated => _currentUser.User is not null;
 
     public bool HasPermission(string permission)
     {
-        var user = _authService.CurrentUser;
+        // Không đăng nhập = không có quyền gì
+        if (_currentUser.User is null)
+        {
+            return false;
+        }
 
-        if (user is null) return false;
+        // Admin là vai trò hệ thống: luôn có toàn bộ quyền
+        if (_currentUser.IsSystemAdmin)
+        {
+            return true;
+        }
 
-        // return user.Role.RolePermissions.Any(x => x.Permission.PermissionName == permission);
-        // bổ sung toán tử ? để tránh trường hợp user.Role hoặc user.Role.RolePermissions là null, tránh lỗi NullReferenceException
-        return user?.Role?.RolePermissions?.Any(x => x.Permission?.PermissionName == permission) ?? false;
+        return _currentUser.Permissions.Contains(permission);
     }
 
     public bool HasAnyPermission(params string[] permissions)
@@ -30,12 +35,11 @@ public class PermissionService : IPermissionService
 
     public bool HasAllPermissions(params string[] permissions)
     {
-        return permissions.All(HasPermission);
+        return IsAuthenticated && permissions.All(HasPermission);
     }
 
     public bool IsAdmin()
     {
-        return _authService.CurrentUser?.Role.RoleName.Equals("Admin", 
-               StringComparison.OrdinalIgnoreCase) == true;
+        return _currentUser.User is not null && _currentUser.IsSystemAdmin;
     }
 }

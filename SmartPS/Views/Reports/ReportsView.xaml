@@ -3,203 +3,384 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
              mc:Ignorable="d"
              d:DesignHeight="850" d:DesignWidth="1100">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="{StaticResource AppBackgroundBrush}">
-        <StackPanel Margin="28,24">
+    <UserControl.Resources>
+        <!-- Nhãn nhỏ phía trên các ô lọc -->
+        <Style x:Key="FilterLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
 
-            <!-- 1. Header Phân Hệ -->
-            <Border Background="{StaticResource CardBackgroundBrush}"
-                    CornerRadius="6"
-                    BorderBrush="{StaticResource AppBorderBrush}"
-                    BorderThickness="1"
-                    Padding="24,16"
-                    Margin="0,0,0,20">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="📊" FontSize="20" Margin="0,0,8,0"/>
-                            <TextBlock Text="{DynamicResource Str_Menu_Reports}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        </StackPanel>
-                        <TextBlock Text="Báo cáo lưu lượng phương tiện ra vào bãi, hiệu suất sử dụng ô đỗ và tổng hợp doanh thu theo thời gian" 
-                                   FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
-                    </StackPanel>
-
-                    <!-- Nút bấm Làm mới báo cáo -->
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Command="{Binding RefreshCommand}"
-                                Height="36" Padding="14,0"
-                                Background="{StaticResource PrimaryButtonBrush}"
-                                BorderThickness="0"
-                                Cursor="Hand">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="🔄" FontSize="12" Margin="0,0,6,0"/>
-                                            <TextBlock Text="Cập Nhật Báo Cáo" FontSize="12" FontWeight="SemiBold" Foreground="White"/>
-                                        </StackPanel>
-                                    </Border>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
-                    </StackPanel>
-                </Grid>
-            </Border>
-
-            <!-- 2. Hàng Thẻ KPI Báo Cáo (3 Cột) -->
-            <Grid Margin="0,0,0,20">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1*"/>
-                    <ColumnDefinition Width="14"/>
-                    <ColumnDefinition Width="1*"/>
-                    <ColumnDefinition Width="14"/>
-                    <ColumnDefinition Width="1*"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- KPI 1: Tổng doanh thu lũy kế -->
-                <Border Grid.Column="0" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="18">
-                    <StackPanel>
-                        <Grid>
-                            <TextBlock Text="DOANH THU LŨY KẾ" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                            <TextBlock Text="💰" FontSize="16" HorizontalAlignment="Right"/>
-                        </Grid>
-                        <TextBlock Text="{Binding CumulativeRevenueFormatted}" FontSize="26" FontWeight="Bold" Foreground="#7C3AED" Margin="0,8,0,2"/>
-                        <TextBlock Text="Thực thu từ các phiên hoàn tất" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    </StackPanel>
-                </Border>
-
-                <!-- KPI 2: Tổng lượt xe phục vụ -->
-                <Border Grid.Column="2" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="18">
-                    <StackPanel>
-                        <Grid>
-                            <TextBlock Text="TỔNG LƯỢT PHỤC VỤ" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                            <TextBlock Text="🚗" FontSize="16" HorizontalAlignment="Right"/>
-                        </Grid>
-                        <TextBlock Text="{Binding CumulativeVehicles, StringFormat='{}{0} lượt'}" FontSize="26" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}" Margin="0,8,0,2"/>
-                        <TextBlock Text="Bao gồm xe đang đỗ &amp; đã ra bãi" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    </StackPanel>
-                </Border>
-
-                <!-- KPI 3: Hệ số quay vòng ô đỗ -->
-                <Border Grid.Column="4" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="18">
-                    <StackPanel>
-                        <Grid>
-                            <TextBlock Text="HỆ SỐ QUAY VÒNG Ô ĐỖ" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                            <TextBlock Text="🔄" FontSize="16" HorizontalAlignment="Right"/>
-                        </Grid>
-                        <TextBlock Text="{Binding TurnoverRate, StringFormat='{}{0:0.00} lượt/ô'}" FontSize="26" FontWeight="Bold" Foreground="#15803D" Margin="0,8,0,2"/>
-                        <TextBlock Text="Hiệu suất khai thác mặt bằng 20 ô đỗ" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    </StackPanel>
-                </Border>
-            </Grid>
-
-            <!-- 3. Bảng Báo Cáo Lưu Lượng & Doanh Thu Theo Ngày -->
-            <Border Background="{StaticResource CardBackgroundBrush}"
-                    BorderBrush="{StaticResource AppBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="6"
-                    Padding="20">
+        <!-- Thẻ KPI: tiêu đề, giá trị, so sánh kỳ trước, dòng phụ -->
+        <DataTemplate x:Key="KpiTileTemplate">
+            <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}"
+                    BorderThickness="1" CornerRadius="6" Padding="14,12" Margin="0,0,10,10">
                 <StackPanel>
-                    <Grid Margin="0,0,0,14">
-                        <TextBlock Text="BẢNG TỔNG HỢP HOẠT ĐỘNG THEO NGÀY" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <TextBlock Text="{Binding ReportItems.Count, StringFormat='Thống kê {0} ngày gần nhất'}" FontSize="12" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Right"/>
-                    </Grid>
-
-                    <DataGrid ItemsSource="{Binding ReportItems}"
-                              AutoGenerateColumns="False"
-                              IsReadOnly="True"
-                              CanUserAddRows="False"
-                              RowHeight="38"
-                              MaxHeight="450"
-                              GridLinesVisibility="Horizontal"
-                              HorizontalGridLinesBrush="{StaticResource DividerBrush}"
-                              Background="Transparent"
-                              BorderThickness="1"
-                              BorderBrush="{StaticResource DividerBrush}"
-                              RowHeaderWidth="0"
-                              HeadersVisibility="Column"
-                              SelectionMode="Single">
-
-                        <DataGrid.Columns>
-                            <!-- Ngày -->
-                            <DataGridTextColumn Header="Ngày Hoạt Động" Binding="{Binding DateDisplay}" Width="150">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Margin" Value="10,0"/>
-                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                        <Setter Property="Foreground" Value="{StaticResource PrimaryButtonBrush}"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-
-                            <!-- Lượt xe vào -->
-                            <DataGridTextColumn Header="Lượt Vào" Binding="{Binding TotalCheckIns, StringFormat='{}{0} xe'}" Width="130">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Margin" Value="10,0"/>
-                                        <Setter Property="FontWeight" Value="Bold"/>
-                                        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-
-                            <!-- Lượt xe ra -->
-                            <DataGridTextColumn Header="Lượt Ra" Binding="{Binding TotalCheckOuts, StringFormat='{}{0} xe'}" Width="130">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Margin" Value="10,0"/>
-                                        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-
-                            <!-- Số lượng xe máy -->
-                            <DataGridTextColumn Header="🏍 Xe Máy" Binding="{Binding MotorbikeCount, StringFormat='{}{0} xe'}" Width="120">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Margin" Value="10,0"/>
-                                        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-
-                            <!-- Số lượng ô tô -->
-                            <DataGridTextColumn Header="🚗 Ô Tô" Binding="{Binding CarCount, StringFormat='{}{0} xe'}" Width="120">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Margin" Value="10,0"/>
-                                        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-
-                            <!-- Doanh thu trong ngày -->
-                            <DataGridTextColumn Header="Doanh Thu Ngày" Binding="{Binding RevenueFormatted}" Width="*">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Margin" Value="10,0"/>
-                                        <Setter Property="FontWeight" Value="Bold"/>
-                                        <Setter Property="Foreground" Value="#7C3AED"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
+                    <TextBlock Text="{Binding Title}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding ValueText}" FontSize="21" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,6,0,2"/>
+                    <TextBlock Text="{Binding ChangeText}" FontSize="12" FontWeight="SemiBold">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Trend}" Value="Up">
+                                        <Setter Property="Foreground" Value="{StaticResource SuccessTextBrush}"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Trend}" Value="Down">
+                                        <Setter Property="Foreground" Value="{StaticResource ErrorTextBrush}"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding HasChange}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="{Binding SubText}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,2,0,0"
+                               Visibility="{Binding HasSubText, Converter={StaticResource BoolToVisConverter}}"/>
                 </StackPanel>
             </Border>
+        </DataTemplate>
+    </UserControl.Resources>
 
-        </StackPanel>
-    </ScrollViewer>
+    <Grid Background="{StaticResource AppBackgroundBrush}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="28,24">
+
+                <!-- 1. Header: tiêu đề, Làm mới, Xuất Excel -->
+                <Border Background="{StaticResource CardBackgroundBrush}" CornerRadius="6" BorderBrush="{StaticResource AppBorderBrush}"
+                        BorderThickness="1" Padding="24,16" Margin="0,0,0,14">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="📊" FontSize="20" Margin="0,0,8,0"/>
+                                <TextBlock Text="{DynamicResource Str_Rpt_Title}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            </StackPanel>
+                            <TextBlock Text="{DynamicResource Str_Rpt_Subtitle}" FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding RefreshCommand}" Height="36" Padding="14,0" Margin="0,0,10,0"
+                                    Content="{DynamicResource Str_Rpt_Refresh}"/>
+                            <Button Style="{StaticResource PrimaryButtonStyle}" Command="{Binding ExportCommand}" Height="36" Padding="14,0"
+                                    Content="{DynamicResource Str_Rpt_Export}"
+                                    ToolTip="{Binding ExportToolTip}" ToolTipService.ShowOnDisabled="True"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- 2. Bộ lọc chung -->
+                <Border Background="{StaticResource CardBackgroundBrush}" CornerRadius="6" BorderBrush="{StaticResource AppBorderBrush}"
+                        BorderThickness="1" Padding="18,14,18,6" Margin="0,0,0,14">
+                    <StackPanel>
+                        <WrapPanel Orientation="Horizontal">
+                            <StackPanel Margin="0,0,14,8">
+                                <TextBlock Text="{DynamicResource Str_Rpt_Filter_Period}" Style="{StaticResource FilterLabelStyle}"/>
+                                <ComboBox ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset}" DisplayMemberPath="Label" Width="150" Height="30"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,14,8" Visibility="{Binding IsCustomRange, Converter={StaticResource BoolToVisConverter}}">
+                                <TextBlock Text="{DynamicResource Str_Rpt_Filter_From}" Style="{StaticResource FilterLabelStyle}"/>
+                                <DatePicker SelectedDate="{Binding CustomFrom, Mode=TwoWay}" Width="130" Height="30"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,14,8" Visibility="{Binding IsCustomRange, Converter={StaticResource BoolToVisConverter}}">
+                                <TextBlock Text="{DynamicResource Str_Rpt_Filter_To}" Style="{StaticResource FilterLabelStyle}"/>
+                                <DatePicker SelectedDate="{Binding CustomTo, Mode=TwoWay}" Width="130" Height="30"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,14,8">
+                                <TextBlock Text="{DynamicResource Str_Rpt_Filter_VehicleType}" Style="{StaticResource FilterLabelStyle}"/>
+                                <ComboBox ItemsSource="{Binding VehicleTypeOptions}" SelectedItem="{Binding SelectedVehicleType}" DisplayMemberPath="Label" Width="160" Height="30"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,14,8">
+                                <TextBlock Text="{DynamicResource Str_Rpt_Filter_CustomerGroup}" Style="{StaticResource FilterLabelStyle}"/>
+                                <ComboBox ItemsSource="{Binding CustomerGroupOptions}" SelectedItem="{Binding SelectedCustomerGroup}" DisplayMemberPath="Label" Width="150" Height="30"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,14,8">
+                                <TextBlock Text="{DynamicResource Str_Rpt_Filter_Zone}" Style="{StaticResource FilterLabelStyle}"/>
+                                <ComboBox ItemsSource="{Binding ZoneOptions}" SelectedItem="{Binding SelectedZone}" DisplayMemberPath="Label" Width="170" Height="30"/>
+                            </StackPanel>
+                        </WrapPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="{Binding RangeDisplay}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{Binding PreviousRangeDisplay}" FontSize="12" Foreground="{StaticResource TextDimBrush}" Margin="16,0,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- 3. Thông báo lỗi (địa phương hóa) -->
+                <Border Background="{StaticResource ErrorBackgroundBrush}" BorderBrush="{StaticResource ErrorBorderBrush}" BorderThickness="1"
+                        CornerRadius="6" Padding="14,10" Margin="0,0,0,14"
+                        Visibility="{Binding HasError, Converter={StaticResource BoolToVisConverter}}">
+                    <TextBlock Text="{Binding ErrorMessage}" FontSize="12.5" Foreground="{StaticResource ErrorTextBrush}" TextWrapping="Wrap"/>
+                </Border>
+
+                <!-- 4. Thẻ KPI (14 thẻ, so sánh kỳ trước) -->
+                <ItemsControl ItemsSource="{Binding KpiTiles}" ItemTemplate="{StaticResource KpiTileTemplate}" Margin="0,0,-10,4">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="4"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+
+                <!-- 5. Sáu biểu đồ (lưới 2 x 3) -->
+                <Grid Margin="0,4,0,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Grid.Column="0" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}"
+                            BorderThickness="1" CornerRadius="6" Padding="14,12" Margin="0,0,0,14">
+                        <Grid>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="300"/></Grid.RowDefinitions>
+                            <TextBlock Text="{DynamicResource Str_Rpt_Chart_RevenueByDay}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <lvc:CartesianChart Grid.Row="1" Series="{Binding RevenueSeries}" XAxes="{Binding RevenueXAxes}" YAxes="{Binding RevenueYAxes}" LegendPosition="Bottom"/>
+                            <TextBlock Grid.Row="1" Text="{DynamicResource Str_Rpt_Chart_Empty}" FontSize="12.5" Foreground="{StaticResource TextDimBrush}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                                       Visibility="{Binding RevenueHasData, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                        </Grid>
+                    </Border>
+                    <Border Grid.Row="0" Grid.Column="2" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}"
+                            BorderThickness="1" CornerRadius="6" Padding="14,12" Margin="0,0,0,14">
+                        <Grid>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="300"/></Grid.RowDefinitions>
+                            <TextBlock Text="{DynamicResource Str_Rpt_Chart_HourlyTraffic}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <lvc:CartesianChart Grid.Row="1" Series="{Binding HourlySeries}" XAxes="{Binding HourlyXAxes}" YAxes="{Binding HourlyYAxes}" LegendPosition="Bottom"/>
+                            <TextBlock Grid.Row="1" Text="{DynamicResource Str_Rpt_Chart_Empty}" FontSize="12.5" Foreground="{StaticResource TextDimBrush}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                                       Visibility="{Binding HourlyHasData, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                        </Grid>
+                    </Border>
+                    <Border Grid.Row="1" Grid.Column="0" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}"
+                            BorderThickness="1" CornerRadius="6" Padding="14,12" Margin="0,0,0,14">
+                        <Grid>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="300"/></Grid.RowDefinitions>
+                            <TextBlock Text="{DynamicResource Str_Rpt_Chart_DailyTraffic}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <lvc:CartesianChart Grid.Row="1" Series="{Binding DailyTrafficSeries}" XAxes="{Binding DailyTrafficXAxes}" YAxes="{Binding DailyTrafficYAxes}" LegendPosition="Bottom"/>
+                            <TextBlock Grid.Row="1" Text="{DynamicResource Str_Rpt_Chart_Empty}" FontSize="12.5" Foreground="{StaticResource TextDimBrush}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                                       Visibility="{Binding DailyTrafficHasData, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                        </Grid>
+                    </Border>
+                    <Border Grid.Row="1" Grid.Column="2" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}"
+                            BorderThickness="1" CornerRadius="6" Padding="14,12" Margin="0,0,0,14">
+                        <Grid>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="300"/></Grid.RowDefinitions>
+                            <TextBlock Text="{DynamicResource Str_Rpt_Chart_CustomerGroups}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <lvc:PieChart Grid.Row="1" Series="{Binding CustomerGroupSeries}" LegendPosition="Bottom"/>
+                            <TextBlock Grid.Row="1" Text="{DynamicResource Str_Rpt_Chart_Empty}" FontSize="12.5" Foreground="{StaticResource TextDimBrush}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                                       Visibility="{Binding CustomerGroupHasData, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                        </Grid>
+                    </Border>
+                    <Border Grid.Row="2" Grid.Column="0" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}"
+                            BorderThickness="1" CornerRadius="6" Padding="14,12" Margin="0,0,0,14">
+                        <Grid>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="300"/></Grid.RowDefinitions>
+                            <TextBlock Text="{DynamicResource Str_Rpt_Chart_ZoneOccupancy}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <lvc:CartesianChart Grid.Row="1" Series="{Binding ZoneSeries}" XAxes="{Binding ZoneXAxes}" YAxes="{Binding ZoneYAxes}" LegendPosition="Bottom"/>
+                            <TextBlock Grid.Row="1" Text="{DynamicResource Str_Rpt_Chart_Empty}" FontSize="12.5" Foreground="{StaticResource TextDimBrush}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                                       Visibility="{Binding ZoneHasData, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                        </Grid>
+                    </Border>
+                    <Border Grid.Row="2" Grid.Column="2" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}"
+                            BorderThickness="1" CornerRadius="6" Padding="14,12" Margin="0,0,0,14">
+                        <Grid>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="300"/></Grid.RowDefinitions>
+                            <TextBlock Text="{DynamicResource Str_Rpt_Chart_VehicleTypes}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <lvc:PieChart Grid.Row="1" Series="{Binding VehicleTypeSeries}" LegendPosition="Bottom"/>
+                            <TextBlock Grid.Row="1" Text="{DynamicResource Str_Rpt_Chart_Empty}" FontSize="12.5" Foreground="{StaticResource TextDimBrush}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                                       Visibility="{Binding VehicleTypeHasData, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- 6. Bảng chi tiết (4 tab) -->
+                <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1"
+                        CornerRadius="6" Padding="18,12,18,14">
+                    <TabControl Background="Transparent" BorderThickness="0" Padding="0">
+                        <TabItem Header="{DynamicResource Str_Rpt_Tab_Daily}">
+                            <DataGrid ItemsSource="{Binding DailyRows}"
+                                      AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False"
+                                      RowHeight="32" MaxHeight="420" GridLinesVisibility="Horizontal"
+                                      HorizontalGridLinesBrush="{StaticResource DividerBrush}" Background="Transparent"
+                                      BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0"
+                                      HeadersVisibility="Column" SelectionMode="Single" Margin="0,10,0,0">
+                                <DataGrid.Columns>
+                            <DataGridTextColumn Binding="{Binding DayVn, Converter={StaticResource DateOnlyVnConverter}}" Width="100">
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_Date}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding CheckIns}" Width="80">
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_CheckIns}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding CheckOuts}" Width="80">
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_CheckOuts}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding CashRevenue, Converter={StaticResource VndCurrencyConverter}}" Width="*">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="Margin" Value="0,0,8,0"/></Style></DataGridTextColumn.ElementStyle>
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_Cash}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding VietQrRevenue, Converter={StaticResource VndCurrencyConverter}}" Width="*">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="Margin" Value="0,0,8,0"/></Style></DataGridTextColumn.ElementStyle>
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_VietQr}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding CardRevenue, Converter={StaticResource VndCurrencyConverter}}" Width="*">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="Margin" Value="0,0,8,0"/></Style></DataGridTextColumn.ElementStyle>
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_Card}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding RefundTotal, Converter={StaticResource VndCurrencyConverter}}" Width="*">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="Margin" Value="0,0,8,0"/></Style></DataGridTextColumn.ElementStyle>
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_Refund}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding AdjustmentTotal, Converter={StaticResource VndCurrencyConverter}}" Width="*">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="Margin" Value="0,0,8,0"/></Style></DataGridTextColumn.ElementStyle>
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_Adjustment}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding NetRevenue, Converter={StaticResource VndCurrencyConverter}}" Width="*">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="Margin" Value="0,0,8,0"/></Style></DataGridTextColumn.ElementStyle>
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_NetRevenue}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding FreeCheckOuts}" Width="90">
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_FreeCheckOuts}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding AverageDurationMinutes, StringFormat='{}{0:0.0}'}" Width="110">
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_AvgDuration}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </TabItem>
+                        <TabItem Header="{DynamicResource Str_Rpt_Tab_Shifts}">
+                            <DataGrid ItemsSource="{Binding ShiftRows}"
+                                      AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False"
+                                      RowHeight="32" MaxHeight="420" GridLinesVisibility="Horizontal"
+                                      HorizontalGridLinesBrush="{StaticResource DividerBrush}" Background="Transparent"
+                                      BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0"
+                                      HeadersVisibility="Column" SelectionMode="Single" Margin="0,10,0,0">
+                                <DataGrid.Columns>
+                            <DataGridTextColumn Binding="{Binding OpenedByName}" Width="*">
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_OpenedBy}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding OpenedAtUtc, Converter={StaticResource UtcToVietnamTimeConverter}}" Width="140">
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_OpenedAt}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding ClosedAtUtc, Converter={StaticResource UtcToVietnamTimeConverter}}" Width="140">
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_ClosedAt}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding BeginningCash, Converter={StaticResource VndCurrencyConverter}}" Width="110">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="Margin" Value="0,0,8,0"/></Style></DataGridTextColumn.ElementStyle>
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_BeginningCash}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding ExpectedCash, Converter={StaticResource VndCurrencyConverter}}" Width="110">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="Margin" Value="0,0,8,0"/></Style></DataGridTextColumn.ElementStyle>
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_ExpectedCash}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding ActualCash, Converter={StaticResource VndCurrencyConverter}}" Width="110">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="Margin" Value="0,0,8,0"/></Style></DataGridTextColumn.ElementStyle>
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_ActualCash}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding Difference, Converter={StaticResource VndCurrencyConverter}}" Width="100">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="Margin" Value="0,0,8,0"/></Style></DataGridTextColumn.ElementStyle>
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_Difference}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTemplateColumn Width="110">
+                                <DataGridTemplateColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_Status}"/></DataTemplate></DataGridTemplateColumn.HeaderTemplate>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock VerticalAlignment="Center" Margin="6,0">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="{DynamicResource Str_Rpt_ShiftStatus_Active}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Locked">
+                                                            <Setter Property="Text" Value="{DynamicResource Str_Rpt_ShiftStatus_Locked}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Reviewed">
+                                                            <Setter Property="Text" Value="{DynamicResource Str_Rpt_ShiftStatus_Reviewed}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </TabItem>
+                        <TabItem Header="{DynamicResource Str_Rpt_Tab_VehicleTypes}">
+                            <DataGrid ItemsSource="{Binding VehicleTypeRows}"
+                                      AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False"
+                                      RowHeight="32" MaxHeight="420" GridLinesVisibility="Horizontal"
+                                      HorizontalGridLinesBrush="{StaticResource DividerBrush}" Background="Transparent"
+                                      BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0"
+                                      HeadersVisibility="Column" SelectionMode="Single" Margin="0,10,0,0">
+                                <DataGrid.Columns>
+                            <DataGridTextColumn Binding="{Binding VehicleTypeName}" Width="*">
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_VehicleType}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding CheckIns}" Width="100">
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_CheckIns}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding CheckOuts}" Width="100">
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_CheckOuts}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding NetRevenue, Converter={StaticResource VndCurrencyConverter}}" Width="150">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="Margin" Value="0,0,8,0"/></Style></DataGridTextColumn.ElementStyle>
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_NetRevenue}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding AverageDurationMinutes, StringFormat='{}{0:0.0}'}" Width="130">
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_AvgDuration}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </TabItem>
+                        <TabItem Header="{DynamicResource Str_Rpt_Tab_TopPlates}">
+                            <DataGrid ItemsSource="{Binding TopPlateRows}"
+                                      AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False"
+                                      RowHeight="32" MaxHeight="420" GridLinesVisibility="Horizontal"
+                                      HorizontalGridLinesBrush="{StaticResource DividerBrush}" Background="Transparent"
+                                      BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0"
+                                      HeadersVisibility="Column" SelectionMode="Single" Margin="0,10,0,0">
+                                <DataGrid.Columns>
+                            <DataGridTextColumn Binding="{Binding Rank}" Width="80">
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_Rank}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding LicensePlate}" Width="*">
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_LicensePlate}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding Visits}" Width="100">
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_Visits}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding LastCheckInUtc, Converter={StaticResource UtcToVietnamTimeConverter}}" Width="160">
+                                <DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{DynamicResource Str_Rpt_Col_LastCheckIn}"/></DataTemplate></DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </TabItem>
+                    </TabControl>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- 7. Lớp phủ đang tải -->
+        <Border Background="#99FFFFFF" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisConverter}}">
+            <TextBlock Text="{DynamicResource Str_Rpt_Loading}" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextBrandBrush}"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+    </Grid>
 </UserControl>
