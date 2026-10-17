@@ -108,7 +108,12 @@ namespace SmartPS.Views.Customers
             
             // MessageBox.Show(debugInfo, "Debug Info");
 
-            FinalLicensePlate = txtPlate.Text.Trim().ToUpperInvariant();
+            FinalLicensePlate = System.Text.RegularExpressions.Regex.Replace(txtPlate.Text.Trim(), @"[^a-zA-Z0-9]", "").ToUpperInvariant();
+            if (!string.IsNullOrEmpty(FinalLicensePlate) && FinalLicensePlate.Length > 20)
+            {
+                MessageBox.Show("Biển số xe không được vượt quá 20 ký tự!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
             
             int vtId = 1;
             if (cboType.SelectedValue is int idVal)

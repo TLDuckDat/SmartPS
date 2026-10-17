@@ -144,7 +144,16 @@ public class CustomersViewModel : ViewModelBase
         try 
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
-            
+
+            // Tự động chuẩn hóa dữ liệu biển số cũ sang chuẩn hoa không dấu phân cách nếu còn sót
+            var dirtyVehicles = await db.Vehicles.Where(v => v.LicensePlate.Contains("-") || v.LicensePlate.Contains(".") || v.LicensePlate.Contains(" ")).ToListAsync();
+            foreach (var v in dirtyVehicles) { v.LicensePlate = System.Text.RegularExpressions.Regex.Replace(v.LicensePlate, @"[^a-zA-Z0-9]", "").ToUpperInvariant(); }
+            var dirtyTickets = await db.MonthlyTickets.Where(t => t.RegisteredLicensePlate.Contains("-") || t.RegisteredLicensePlate.Contains(".") || t.RegisteredLicensePlate.Contains(" ")).ToListAsync();
+            foreach (var t in dirtyTickets) { t.RegisteredLicensePlate = System.Text.RegularExpressions.Regex.Replace(t.RegisteredLicensePlate, @"[^a-zA-Z0-9]", "").ToUpperInvariant(); }
+            var dirtyBlacklists = await db.BlacklistedVehicles.Where(b => b.LicensePlate.Contains("-") || b.LicensePlate.Contains(".") || b.LicensePlate.Contains(" ")).ToListAsync();
+            foreach (var b in dirtyBlacklists) { b.LicensePlate = System.Text.RegularExpressions.Regex.Replace(b.LicensePlate, @"[^a-zA-Z0-9]", "").ToUpperInvariant(); }
+            if (dirtyVehicles.Count > 0 || dirtyTickets.Count > 0 || dirtyBlacklists.Count > 0) { await db.SaveChangesAsync(); }
+
             var households = await db.Households.ToListAsync();
             _allHouseholds.Clear();
             _allHouseholds.AddRange(households);
@@ -418,7 +427,8 @@ public class CustomersViewModel : ViewModelBase
                 
                 if (!string.IsNullOrEmpty(dlg.FinalLicensePlate))
                 {
-                    db.Vehicles.Add(new Vehicle { LicensePlate = dlg.FinalLicensePlate, VehicleTypeId = dlg.FinalSelectedVehicleType, OwnerCustomerId = cust.CustomerId, CreatedAt = DateTime.UtcNow, IsActive = true });
+                    var normPlate = System.Text.RegularExpressions.Regex.Replace(dlg.FinalLicensePlate.Trim(), @"[^a-zA-Z0-9]", "").ToUpperInvariant();
+                    db.Vehicles.Add(new Vehicle { LicensePlate = normPlate, VehicleTypeId = dlg.FinalSelectedVehicleType, OwnerCustomerId = cust.CustomerId, CreatedAt = DateTime.UtcNow, IsActive = true });
                     await db.SaveChangesAsync();
                 }
 
@@ -455,7 +465,8 @@ public class CustomersViewModel : ViewModelBase
                     }
                 }
                 
-                db.Vehicles.Add(new Vehicle { LicensePlate = dlg.FinalLicensePlate, VehicleTypeId = dlg.FinalSelectedVehicleType, OwnerCustomerId = cid, CreatedAt = DateTime.UtcNow, IsActive = true });
+                var normPlate = System.Text.RegularExpressions.Regex.Replace(dlg.FinalLicensePlate.Trim(), @"[^a-zA-Z0-9]", "").ToUpperInvariant();
+                db.Vehicles.Add(new Vehicle { LicensePlate = normPlate, VehicleTypeId = dlg.FinalSelectedVehicleType, OwnerCustomerId = cid, CreatedAt = DateTime.UtcNow, IsActive = true });
                 await db.SaveChangesAsync();
                 await LoadDataAsync();
                 _dialogService.ShowSuccess("Thêm xe thành công!");
@@ -484,6 +495,11 @@ public class CustomersViewModel : ViewModelBase
                     return;
                 }
                 var v = await db.Vehicles.FirstOrDefaultAsync(x => x.VehicleId == vid);
+                if (v == null || v.OwnerCustomerId != dlg.FinalSelectedCustomerId)
+                {
+                    _dialogService.ShowError("Phương tiện được chọn không thuộc sở hữu của khách hàng đã chọn! Vui lòng kiểm tra lại.");
+                    return;
+                }
                 var dur = dlg.FinalDurationMonths;
                 var ticketFee = dlg.FinalPrice;
 
@@ -546,11 +562,13 @@ public class CustomersViewModel : ViewModelBase
                     }
                 }
 
+                var normPlate = System.Text.RegularExpressions.Regex.Replace((v?.LicensePlate ?? "").Trim(), @"[^a-zA-Z0-9]", "").ToUpperInvariant();
+
                 var t = new MonthlyTicket
                 {
                     CustomerId = dlg.FinalSelectedCustomerId,
                     VehicleId = vid,
-                    RegisteredLicensePlate = v?.LicensePlate ?? "",
+                    RegisteredLicensePlate = normPlate,
                     VehicleTypeId = v?.VehicleTypeId ?? 2,
                     DurationMonths = dur,
                     MonthlyPrice = ticketFee,
@@ -852,11 +870,20 @@ public class CustomersViewModel : ViewModelBase
             var dlg = new AddBlacklistDialog(customers, prefillPlate);
             if (dlg.ShowDialog() == true)
             {
-                var cleanPlate = dlg.FinalLicensePlate.Trim().ToUpperInvariant();
-                var normPlate = cleanPlate.Replace(" ", "").Replace("-", "").Replace(".", "");
+                var cleanPlate = System.Text.RegularExpressions.Regex.Replace(dlg.FinalLicensePlate.Trim(), @"[^a-zA-Z0-9]", "").ToUpperInvariant();
+                if (string.IsNullOrEmpty(cleanPlate))
+                {
+                    _dialogService.ShowError("Biển số xe không hợp lệ!");
+                    return;
+                }
+                if (cleanPlate.Length > 20)
+                {
+                    _dialogService.ShowError("Biển số xe không được vượt quá 20 ký tự!");
+                    return;
+                }
 
                 // Kiểm tra xem xe này đã có trong Blacklist chưa
-                var existing = await db.BlacklistedVehicles.FirstOrDefaultAsync(b => b.LicensePlate.Replace(" ", "").Replace("-", "").Replace(".", "").ToUpper() == normPlate);
+                var existing = await db.BlacklistedVehicles.FirstOrDefaultAsync(b => b.LicensePlate == cleanPlate);
                 if (existing != null)
                 {
                     if (existing.IsActive)
@@ -866,13 +893,18 @@ public class CustomersViewModel : ViewModelBase
                     }
                     else
                     {
-                        // Đã từng bị cấm nhưng đang gỡ cấm -> Kích hoạt cấm lại
+                        // Đã từng bị cấm nhưng đang gỡ cấm (xóa mềm) -> Kích hoạt cấm lại
                         existing.IsActive = true;
                         existing.Reason = dlg.FinalReason;
                         existing.Notes = dlg.FinalNotes;
                         existing.CustomerId = dlg.FinalCustomerId;
                         existing.CreatedAt = DateTime.UtcNow;
                         await db.SaveChangesAsync();
+
+                        // Ghi nhật ký kiểm toán (Audit Log)
+                        var auditLine = $"{{\"timestamp\":\"{DateTime.UtcNow:O}\",\"action\":\"BlacklistReactivate\",\"details\":\"Plate={cleanPlate}, Reason={dlg.FinalReason}\"}}\n";
+                        await System.IO.File.AppendAllTextAsync("gate_audit_log.jsonl", auditLine);
+
                         await LoadDataAsync();
                         _dialogService.ShowSuccess($"Đã kích hoạt cấm lại phương tiện '{cleanPlate}'!");
                         return;
@@ -891,6 +923,11 @@ public class CustomersViewModel : ViewModelBase
 
                 db.BlacklistedVehicles.Add(item);
                 await db.SaveChangesAsync();
+
+                // Ghi nhật ký kiểm toán (Audit Log)
+                var logLine = $"{{\"timestamp\":\"{DateTime.UtcNow:O}\",\"action\":\"BlacklistAdd\",\"details\":\"Plate={cleanPlate}, Reason={dlg.FinalReason}, Notes={dlg.FinalNotes}\"}}\n";
+                await System.IO.File.AppendAllTextAsync("gate_audit_log.jsonl", logLine);
+
                 await LoadDataAsync();
                 _dialogService.ShowSuccess($"Đã thêm biển số '{cleanPlate}' vào danh sách cấm thành công!");
             }
@@ -917,6 +954,12 @@ public class CustomersViewModel : ViewModelBase
             {
                 b.IsActive = !b.IsActive;
                 await db.SaveChangesAsync();
+
+                // Ghi nhật ký kiểm toán (Audit Log)
+                var logAction = b.IsActive ? "BlacklistEnable" : "BlacklistDisable";
+                var logLine = $"{{\"timestamp\":\"{DateTime.UtcNow:O}\",\"action\":\"{logAction}\",\"details\":\"Plate={b.LicensePlate}, IsActive={b.IsActive}\"}}\n";
+                await System.IO.File.AppendAllTextAsync("gate_audit_log.jsonl", logLine);
+
                 await LoadDataAsync();
                 _dialogService.ShowSuccess($"Thao tác thành công! Trạng thái xe '{item.LicensePlate}': {(b.IsActive ? "Đang cấm" : "Đã gỡ cấm")}.");
             }
@@ -932,7 +975,7 @@ public class CustomersViewModel : ViewModelBase
         var item = parameter as BlacklistedVehicle ?? SelectedBlacklist;
         if (item == null) return;
 
-        if (!_dialogService.ShowYesNo($"Bạn có chắc chắn muốn XÓA HOÀN TOÀN biển số '{item.LicensePlate}' khỏi danh sách đen?\n(Bản ghi lịch sử vi phạm sẽ bị xóa vĩnh viễn)", "Xóa Khỏi Blacklist")) return;
+        if (!_dialogService.ShowYesNo($"Bạn có chắc chắn muốn gỡ cấm (xóa mềm) biển số '{item.LicensePlate}' khỏi danh sách đen?\n(Bản ghi lịch sử vẫn được lưu trữ)", "Gỡ Khỏi Danh Sách Cấm")) return;
 
         try
         {
@@ -940,10 +983,16 @@ public class CustomersViewModel : ViewModelBase
             var b = await db.BlacklistedVehicles.FindAsync(item.BlacklistId);
             if (b != null)
             {
-                db.BlacklistedVehicles.Remove(b);
+                // Xóa mềm: đánh dấu IsActive = false thay vì xóa cứng khỏi cơ sở dữ liệu
+                b.IsActive = false;
                 await db.SaveChangesAsync();
+
+                // Ghi nhật ký kiểm toán (Audit Log)
+                var logLine = $"{{\"timestamp\":\"{DateTime.UtcNow:O}\",\"action\":\"BlacklistSoftDelete\",\"details\":\"Plate={b.LicensePlate}\"}}\n";
+                await System.IO.File.AppendAllTextAsync("gate_audit_log.jsonl", logLine);
+
                 await LoadDataAsync();
-                _dialogService.ShowSuccess($"Đã xóa biển số '{item.LicensePlate}' khỏi danh sách đen!");
+                _dialogService.ShowSuccess($"Đã gỡ cấm (xóa mềm) biển số '{item.LicensePlate}' khỏi danh sách đen!");
             }
         }
         catch (Exception ex)

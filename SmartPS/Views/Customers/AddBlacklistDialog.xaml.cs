@@ -40,10 +40,16 @@ namespace SmartPS.Views.Customers
             }
 
             // Chuẩn hóa biển số: viết hoa, loại bỏ ký tự đặc biệt thừa
-            var cleanPlate = rawPlate.ToUpperInvariant().Replace(" ", "").Replace("-", "").Replace(".", "");
+            var cleanPlate = System.Text.RegularExpressions.Regex.Replace(rawPlate, @"[^a-zA-Z0-9]", "").ToUpperInvariant();
             if (string.IsNullOrWhiteSpace(cleanPlate))
             {
                 MessageBox.Show("Biển số không hợp lệ!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (cleanPlate.Length > 20)
+            {
+                MessageBox.Show("Biển số xe không được vượt quá 20 ký tự!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -54,13 +60,19 @@ namespace SmartPS.Views.Customers
                 return;
             }
 
+            if (reason.Length > 250)
+            {
+                MessageBox.Show("Lý do cấm không được vượt quá 250 ký tự!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             int? customerId = null;
             if (cboCustomer.SelectedItem is Customer c)
             {
                 customerId = c.CustomerId;
             }
 
-            FinalLicensePlate = rawPlate.ToUpperInvariant();
+            FinalLicensePlate = cleanPlate;
             FinalReason = reason;
             FinalNotes = txtNotes.Text.Trim();
             FinalCustomerId = customerId;
