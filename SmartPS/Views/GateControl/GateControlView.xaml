@@ -786,6 +786,9 @@
                                                             <DataTrigger Binding="{Binding IsMonthlyPass}" Value="True">
                                                                 <Setter Property="Background" Value="#DCFCE7"/>
                                                             </DataTrigger>
+                                                            <DataTrigger Binding="{Binding CustomerType}" Value="Resident">
+                                                                <Setter Property="Background" Value="#DBEAFE"/>
+                                                            </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
                                                 </Border.Style>
@@ -798,6 +801,10 @@
                                                                 <DataTrigger Binding="{Binding IsMonthlyPass}" Value="True">
                                                                     <Setter Property="Text" Value="👑 Vé tháng"/>
                                                                     <Setter Property="Foreground" Value="#15803D"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding CustomerType}" Value="Resident">
+                                                                    <Setter Property="Text" Value="🏠 Cư dân"/>
+                                                                    <Setter Property="Foreground" Value="#1D4ED8"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
