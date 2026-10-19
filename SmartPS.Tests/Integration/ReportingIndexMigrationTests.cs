@@ -46,8 +46,8 @@ public class ReportingIndexMigrationTests : IClassFixture<PostgresDatabaseFixtur
         var reporting = Assert.Single(migrations, m => m.EndsWith("_AddReportingIndexes", StringComparison.Ordinal));
         var gate = Assert.Single(migrations, m => m.EndsWith("_AddGateZoneAudience", StringComparison.Ordinal));
 
-        Assert.Equal(reporting, migrations[^1]);
-        Assert.Equal(gate, migrations[^2]);
+        // the reporting migration follows the gate migration directly; migrations of other modules may come after it
+        Assert.Equal(migrations.IndexOf(gate) + 1, migrations.IndexOf(reporting));
         Assert.True(string.CompareOrdinal(reporting, gate) > 0);
         Assert.True(string.CompareOrdinal(reporting, BlacklistMigration) > 0);
         Assert.Equal(migrations.OrderBy(m => m, StringComparer.Ordinal), migrations);
@@ -72,7 +72,7 @@ public class ReportingIndexMigrationTests : IClassFixture<PostgresDatabaseFixtur
         _db.RequireAvailable();
         var cs = _db.ConnectionString;
         var migrations = Migrations();
-        var gate = migrations[^2];
+        var gate = Assert.Single(migrations, m => m.EndsWith("_AddGateZoneAudience", StringComparison.Ordinal));
 
         Assert.Equal(1, await IndexCountAsync(cs));
 

@@ -136,7 +136,7 @@ public class MigrationTests : IClassFixture<PostgresDatabaseFixture>
         // AddGateZoneAudience and the reporting AddReportingIndexes now follow it, so "last applied" is checked on the audit migrations only.
         Assert.Equal(0, await CountAsync(cs, "SELECT count(*) FROM \"__EFMigrationsHistory\" WHERE \"MigrationId\" LIKE '%HardenAuditTriggers%'"));
         var lastAuditMigration = await PostgresDatabaseFixture.ScalarAsync<string>(cs,
-            "SELECT \"MigrationId\" FROM \"__EFMigrationsHistory\" WHERE \"MigrationId\" NOT LIKE '%\\_AddGateZoneAudience' AND \"MigrationId\" NOT LIKE '%\\_AddReportingIndexes' ORDER BY \"MigrationId\" DESC LIMIT 1");
+            "SELECT \"MigrationId\" FROM \"__EFMigrationsHistory\" WHERE \"MigrationId\" NOT LIKE '%\\_AddGateZoneAudience' AND \"MigrationId\" NOT LIKE '%\\_AddReportingIndexes' AND \"MigrationId\" NOT LIKE '%\\_LimitBlacklistLengths' ORDER BY \"MigrationId\" DESC LIMIT 1");
         Assert.EndsWith("_AddRbacAndAuditTrail", lastAuditMigration, StringComparison.Ordinal);
 
         // When Down() runs
