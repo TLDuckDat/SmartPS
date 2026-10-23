@@ -97,6 +97,21 @@ public class GateControlViewModel : ViewModelBase
         set => SetProperty(ref _isSimulationRunning, value);
     }
 
+    private bool _isOcrEngineAvailable;
+    public bool IsOcrEngineAvailable
+    {
+        get => _isOcrEngineAvailable;
+        set
+        {
+            if (SetProperty(ref _isOcrEngineAvailable, value))
+            {
+                OnPropertyChanged(nameof(OcrEngineStatusText));
+            }
+        }
+    }
+
+    public string OcrEngineStatusText => IsOcrEngineAvailable ? "AI OCR Engine: Sẵn sàng" : "AI OCR Engine: Không tìm thấy";
+
     #endregion
 
     #region Làn Vào (In Gate) Properties
@@ -627,15 +642,15 @@ public class GateControlViewModel : ViewModelBase
 
             await LoadActiveSessionsAsync();
 
-            // Khởi động trước Engine OCR ngầm để sẵn sàng nhận diện tức thì
-            _ = Task.Run(async () =>
+            // Kiểm tra Engine OCR để hiển thị trạng thái thật trên giao diện
+            try
             {
-                try
-                {
-                    await _ocrService.EnsureEngineStartedAsync();
-                }
-                catch { }
-            });
+                IsOcrEngineAvailable = await _ocrService.EnsureEngineStartedAsync();
+            }
+            catch
+            {
+                IsOcrEngineAvailable = false;
+            }
         }
         catch (Exception ex)
         {

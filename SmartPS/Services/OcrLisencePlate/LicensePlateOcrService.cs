@@ -1,28 +1,36 @@
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
-using System.Text.Json;
+using System.Text;
 using System.Text.Json.Nodes;
 using SmartPS.Models.Ocr;
 
 namespace SmartPS.Services.OcrLisencePlate;
 
+/// <summary>
+/// Gọi LicensePlateEngine.exe (CLI ONNX ALPR) cho từng ảnh: <c>LicensePlateEngine.exe --input &lt;ảnh&gt;</c>.
+/// Engine ghi kết quả vào thư mục <c>&lt;tên ảnh&gt;_&lt;thời gian&gt;/</c> cạnh exe và in đường dẫn ra stdout
+/// (<c>JSON: ...</c>, <c>Annotated: ...</c>); service chuyển thư mục đó sang thư mục tạm của ứng dụng rồi đọc JSON.
+/// </summary>
 public class LicensePlateOcrService : IOcrLicensePlateService
 {
-    private readonly SemaphoreSlim _startLock = new(1, 1);
-    private readonly ConcurrentDictionary<string, TaskCompletionSource<OcrPlateResponse>> _pendingRequests = new();
-    
+    private const string EngineFileName = "LicensePlateEngine.exe";
+    private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan ResultRetention = TimeSpan.FromDays(1);
+
+    // Engine nạp mô hình ONNX mỗi lần chạy và tốn nhiều CPU/RAM, nên mỗi lúc chỉ chạy một tiến trình
+    private readonly SemaphoreSlim _runLock = new(1, 1);
+    private readonly string _resultsRoot;
+
     private Process? _process;
-    private TaskCompletionSource<bool>? _readyTcs;
-    private long _requestCounter = 0;
     private bool _isDisposed = false;
 
-    public bool IsRunning => _process != null && !_process.HasExited;
+    public bool IsRunning => _process != null;
     public string? EngineExecutablePath { get; private set; }
 
     public LicensePlateOcrService()
     {
         EngineExecutablePath = ResolveEnginePath();
+        _resultsRoot = Path.Combine(Path.GetTempPath(), "SmartPS", "ocr");
     }
 
     public static string? ResolveEnginePath()
@@ -31,19 +39,19 @@ public class LicensePlateOcrService : IOcrLicensePlateService
 
         // 1. Theo AppContext.BaseDirectory
         var baseDir = AppContext.BaseDirectory;
-        candidates.Add(Path.Combine(baseDir, "Services", "OcrLisencePlate", "LicensePlateEngine.exe"));
+        candidates.Add(Path.Combine(baseDir, "Services", "OcrLisencePlate", EngineFileName));
 
         // 2. Tìm ngược lên các thư mục cha từ BaseDirectory (phục vụ lúc chạy Debug/Release trong bin)
         var dirInfo = new DirectoryInfo(baseDir);
         for (int i = 0; i < 5 && dirInfo != null; i++)
         {
-            candidates.Add(Path.Combine(dirInfo.FullName, "Services", "OcrLisencePlate", "LicensePlateEngine.exe"));
+            candidates.Add(Path.Combine(dirInfo.FullName, "Services", "OcrLisencePlate", EngineFileName));
             dirInfo = dirInfo.Parent;
         }
 
         // 3. Theo CurrentDirectory
         var curDir = Directory.GetCurrentDirectory();
-        candidates.Add(Path.Combine(curDir, "Services", "OcrLisencePlate", "LicensePlateEngine.exe"));
+        candidates.Add(Path.Combine(curDir, "Services", "OcrLisencePlate", EngineFileName));
 
         foreach (var path in candidates)
         {
@@ -56,86 +64,25 @@ public class LicensePlateOcrService : IOcrLicensePlateService
         return null;
     }
 
-    public async Task<bool> EnsureEngineStartedAsync(CancellationToken cancellationToken = default)
+    /// <summary>Engine dạng CLI không cần khởi động trước; chỉ kiểm tra exe tồn tại và dọn kết quả cũ.</summary>
+    public Task<bool> EnsureEngineStartedAsync(CancellationToken cancellationToken = default)
     {
-        if (IsRunning && _readyTcs != null && _readyTcs.Task.IsCompletedSuccessfully)
+        if (string.IsNullOrEmpty(EngineExecutablePath) || !File.Exists(EngineExecutablePath))
         {
-            return true;
+            EngineExecutablePath = ResolveEnginePath();
         }
 
-        await _startLock.WaitAsync(cancellationToken);
-        try
+        var available = !string.IsNullOrEmpty(EngineExecutablePath) && File.Exists(EngineExecutablePath);
+        if (!available)
         {
-            if (IsRunning && _readyTcs != null && _readyTcs.Task.IsCompletedSuccessfully)
-            {
-                return true;
-            }
-
-            // Dọn dẹp tiến trình cũ nếu có
-            CleanupProcess();
-
-            if (string.IsNullOrEmpty(EngineExecutablePath) || !File.Exists(EngineExecutablePath))
-            {
-                EngineExecutablePath = ResolveEnginePath();
-                if (string.IsNullOrEmpty(EngineExecutablePath) || !File.Exists(EngineExecutablePath))
-                {
-                    Debug.WriteLine("[LicensePlateOcrService Error]: Không tìm thấy LicensePlateEngine.exe");
-                    return false;
-                }
-            }
-
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = EngineExecutablePath,
-                WorkingDirectory = Path.GetDirectoryName(EngineExecutablePath) ?? string.Empty,
-                UseShellExecute = false,
-                RedirectStandardInput = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true
-            };
-
-            _readyTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-            _process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
-
-            _process.Exited += (sender, args) =>
-            {
-                Debug.WriteLine("[LicensePlateOcrService]: Tiến trình OCR đã kết thúc.");
-                FailAllPendingRequests("Tiến trình OCR đã kết thúc bất ngờ.");
-            };
-
-            if (!_process.Start())
-            {
-                Debug.WriteLine("[LicensePlateOcrService Error]: Không thể khởi động LicensePlateEngine.exe");
-                return false;
-            }
-
-            // Lắng nghe luồng StandardOutput và StandardError
-            _ = Task.Run(() => ReadOutputLoopAsync(_process));
-            _ = Task.Run(() => ReadErrorLoopAsync(_process));
-
-            // Chờ sự kiện 'ready' từ engine với timeout 15 giây
-            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, cancellationToken);
-            var completedTask = await Task.WhenAny(_readyTcs.Task, Task.Delay(Timeout.Infinite, linkedCts.Token));
-
-            if (completedTask == _readyTcs.Task && await _readyTcs.Task)
-            {
-                Debug.WriteLine("[LicensePlateOcrService]: Engine OCR đã sẵn sàng tiếp nhận yêu cầu.");
-                return true;
-            }
-
-            return false;
+            Debug.WriteLine($"[LicensePlateOcrService Error]: Không tìm thấy {EngineFileName}");
         }
-        catch (Exception ex)
+        else
         {
-            Debug.WriteLine($"[LicensePlateOcrService Exception during startup]: {ex.Message}");
-            return false;
+            PruneOldResults();
         }
-        finally
-        {
-            _startLock.Release();
-        }
+
+        return Task.FromResult(available);
     }
 
     public async Task<OcrPlateResponse> RecognizePlateAsync(string imagePath, CancellationToken cancellationToken = default)
@@ -151,158 +98,240 @@ public class LicensePlateOcrService : IOcrLicensePlateService
             return CreateErrorResponse("FILE_NOT_FOUND", $"Không tìm thấy tệp ảnh tại: {fullPath}");
         }
 
-        var started = await EnsureEngineStartedAsync(cancellationToken);
-        if (!started || _process == null || _process.HasExited)
+        if (!await EnsureEngineStartedAsync(cancellationToken))
         {
-            return CreateErrorResponse("ENGINE_NOT_READY", "Không thể khởi động Engine OCR nhận diện biển số.");
+            return CreateErrorResponse("ENGINE_NOT_READY", $"Không tìm thấy Engine OCR nhận diện biển số ({EngineFileName}).");
         }
 
-        var reqId = $"req_{DateTime.UtcNow:yyyyMMddHHmmss}_{Interlocked.Increment(ref _requestCounter)}";
-        var tcs = new TaskCompletionSource<OcrPlateResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-        _pendingRequests[reqId] = tcs;
-
+        await _runLock.WaitAsync(cancellationToken);
         try
         {
-            var requestObj = new
+            return await RunEngineAsync(EngineExecutablePath!, fullPath, cancellationToken);
+        }
+        finally
+        {
+            _runLock.Release();
+        }
+    }
+
+    private async Task<OcrPlateResponse> RunEngineAsync(string enginePath, string imagePath, CancellationToken cancellationToken)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = enginePath,
+            WorkingDirectory = Path.GetDirectoryName(enginePath) ?? string.Empty,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8,
+            CreateNoWindow = true
+        };
+        startInfo.ArgumentList.Add("--input");
+        startInfo.ArgumentList.Add(imagePath);
+
+        using var process = new Process { StartInfo = startInfo };
+        try
+        {
+            if (!process.Start())
             {
-                id = reqId,
-                action = "process",
-                type = "image",
-                path = fullPath
-            };
-
-            var jsonLine = JsonSerializer.Serialize(requestObj);
-            await _process.StandardInput.WriteLineAsync(jsonLine);
-            await _process.StandardInput.FlushAsync();
-
-            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, cancellationToken);
-
-            var completedTask = await Task.WhenAny(tcs.Task, Task.Delay(Timeout.Infinite, linkedCts.Token));
-            if (completedTask == tcs.Task)
-            {
-                return await tcs.Task;
+                return CreateErrorResponse("ENGINE_START_FAILED", $"Không thể khởi động {EngineFileName}.");
             }
-
-            return CreateErrorResponse("TIMEOUT", "Quá thời gian chờ phản hồi từ Engine OCR (Timeout 20s).");
         }
         catch (Exception ex)
         {
+            Debug.WriteLine($"[LicensePlateOcrService Exception during startup]: {ex.Message}");
+            return CreateErrorResponse("ENGINE_START_FAILED", $"Không thể khởi động {EngineFileName}: {ex.Message}");
+        }
+
+        _process = process;
+        try
+        {
+            var stdoutTask = process.StandardOutput.ReadToEndAsync();
+            var stderrTask = process.StandardError.ReadToEndAsync();
+
+            using var timeoutCts = new CancellationTokenSource(RequestTimeout);
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, cancellationToken);
+            try
+            {
+                await process.WaitForExitAsync(linkedCts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                KillQuietly(process);
+                cancellationToken.ThrowIfCancellationRequested();
+                return CreateErrorResponse("TIMEOUT", $"Quá thời gian chờ phản hồi từ Engine OCR (Timeout {RequestTimeout.TotalSeconds:0}s).");
+            }
+
+            var stdout = await stdoutTask;
+            var stderr = await stderrTask;
+            stopwatch.Stop();
+
+            var (jsonPath, annotatedPath) = ParseOutputPaths(stdout);
+            if (process.ExitCode != 0 || jsonPath == null || !File.Exists(jsonPath))
+            {
+                var reason = LastNonEmptyLine(stderr) ?? LastNonEmptyLine(stdout) ?? $"mã thoát {process.ExitCode}";
+                Debug.WriteLine($"[LicensePlateEngine STDERR]: {stderr}");
+                return CreateErrorResponse("ENGINE_FAILED", $"Engine OCR xử lý ảnh thất bại: {reason}");
+            }
+
+            (jsonPath, annotatedPath) = MoveResultFolder(jsonPath, annotatedPath);
+            var json = await File.ReadAllTextAsync(jsonPath, cancellationToken);
+            return ParseEngineResult(json, annotatedPath, stopwatch.Elapsed.TotalMilliseconds);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[LicensePlateOcrService Exception]: {ex.Message}");
             return CreateErrorResponse("REQUEST_EXCEPTION", $"Lỗi khi gửi yêu cầu nhận diện: {ex.Message}");
         }
         finally
         {
-            _pendingRequests.TryRemove(reqId, out _);
+            _process = null;
         }
     }
 
-    private async Task ReadOutputLoopAsync(Process process)
+    /// <summary>Đọc đường dẫn JSON và ảnh annotated mà engine in ra stdout.</summary>
+    internal static (string? JsonPath, string? AnnotatedPath) ParseOutputPaths(string stdout)
+    {
+        string? jsonPath = null;
+        string? annotatedPath = null;
+
+        foreach (var rawLine in stdout.Split('\n'))
+        {
+            var line = rawLine.Trim();
+            if (line.StartsWith("JSON:", StringComparison.OrdinalIgnoreCase))
+            {
+                jsonPath = line["JSON:".Length..].Trim();
+            }
+            else if (line.StartsWith("Annotated:", StringComparison.OrdinalIgnoreCase))
+            {
+                annotatedPath = line["Annotated:".Length..].Trim();
+            }
+        }
+
+        return (string.IsNullOrEmpty(jsonPath) ? null : jsonPath, string.IsNullOrEmpty(annotatedPath) ? null : annotatedPath);
+    }
+
+    /// <summary>
+    /// Chuyển JSON của engine (<c>{"status":"ok","vehicles":[{"license":"30K-555.55","confidence":0.82,"status":"ok"}]}</c>)
+    /// sang <see cref="OcrPlateResponse"/>; biển số tin cậy nhất đứng đầu.
+    /// </summary>
+    internal static OcrPlateResponse ParseEngineResult(string json, string? annotatedPath, double elapsedMs)
+    {
+        var root = JsonNode.Parse(json);
+        var plates = new List<OcrPlateItem>();
+
+        if (root?["vehicles"] is JsonArray vehicles)
+        {
+            foreach (var vehicle in vehicles)
+            {
+                var license = vehicle?["license"]?.GetValue<string>()?.Trim();
+                var status = vehicle?["status"]?.GetValue<string>();
+                if (string.IsNullOrEmpty(license) || !string.Equals(status, "ok", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var confidence = vehicle?["confidence"]?.GetValue<double>() ?? 0;
+                plates.Add(new OcrPlateItem
+                {
+                    PlateText = license,
+                    OcrConfidence = confidence,
+                    DetectionConfidence = confidence
+                });
+            }
+        }
+
+        if (plates.Count == 0)
+        {
+            var response = CreateErrorResponse("NO_PLATE", "Không phát hiện biển số");
+            response.OutputImage = annotatedPath;
+            response.Processing = new OcrProcessingInfo { TotalMs = elapsedMs };
+            return response;
+        }
+
+        plates.Sort((a, b) => b.OcrConfidence.CompareTo(a.OcrConfidence));
+        return new OcrPlateResponse
+        {
+            Status = "success",
+            InputType = "image",
+            OutputImage = annotatedPath,
+            Processing = new OcrProcessingInfo { TotalMs = elapsedMs },
+            Count = plates.Count,
+            Plates = plates
+        };
+    }
+
+    /// <summary>Chuyển thư mục kết quả ra khỏi thư mục engine để không làm bẩn mã nguồn/thư mục cài đặt.</summary>
+    private (string JsonPath, string? AnnotatedPath) MoveResultFolder(string jsonPath, string? annotatedPath)
     {
         try
         {
-            while (!process.HasExited && !_isDisposed)
+            var sourceDir = Path.GetDirectoryName(jsonPath);
+            if (string.IsNullOrEmpty(sourceDir))
             {
-                var line = await process.StandardOutput.ReadLineAsync();
-                if (line == null) break;
+                return (jsonPath, annotatedPath);
+            }
 
-                line = line.Trim();
-                if (string.IsNullOrEmpty(line)) continue;
+            Directory.CreateDirectory(_resultsRoot);
+            var targetDir = Path.Combine(_resultsRoot, $"{Path.GetFileName(sourceDir)}_{Guid.NewGuid():N}");
+            Directory.Move(sourceDir, targetDir);
 
-                ProcessOutputLine(line);
+            var movedJson = Path.Combine(targetDir, Path.GetFileName(jsonPath));
+            var movedAnnotated = annotatedPath == null ? null : Path.Combine(targetDir, Path.GetFileName(annotatedPath));
+            return (movedJson, movedAnnotated);
+        }
+        catch (Exception ex)
+        {
+            // Khác ổ đĩa hoặc bị khóa: vẫn dùng kết quả tại chỗ
+            Debug.WriteLine($"[LicensePlateOcrService Move Result Warning]: {ex.Message}");
+            return (jsonPath, annotatedPath);
+        }
+    }
+
+    private void PruneOldResults()
+    {
+        try
+        {
+            if (!Directory.Exists(_resultsRoot)) return;
+
+            var cutoff = DateTime.UtcNow - ResultRetention;
+            foreach (var dir in Directory.EnumerateDirectories(_resultsRoot))
+            {
+                if (Directory.GetCreationTimeUtc(dir) < cutoff)
+                {
+                    Directory.Delete(dir, recursive: true);
+                }
             }
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[LicensePlateOcrService Output Exception]: {ex.Message}");
+            Debug.WriteLine($"[LicensePlateOcrService Prune Warning]: {ex.Message}");
         }
     }
 
-    private void ProcessOutputLine(string line)
+    private static string? LastNonEmptyLine(string text)
+    {
+        return text.Split('\n').Select(l => l.Trim()).LastOrDefault(l => l.Length > 0);
+    }
+
+    private static void KillQuietly(Process process)
     {
         try
         {
-            var jsonNode = JsonNode.Parse(line);
-            if (jsonNode == null) return;
-
-            // Kiểm tra sự kiện khởi động
-            if (jsonNode["event"] != null)
+            if (!process.HasExited)
             {
-                var eventName = jsonNode["event"]?.GetValue<string>();
-                if (string.Equals(eventName, "ready", StringComparison.OrdinalIgnoreCase))
-                {
-                    _readyTcs?.TrySetResult(true);
-                }
-                return;
-            }
-
-            // Kiểm tra phản hồi ping / shutdown
-            if (jsonNode["action"] != null || jsonNode["state"] != null)
-            {
-                return;
-            }
-
-            // Phản hồi kết quả xử lý ảnh
-            var response = JsonSerializer.Deserialize<OcrPlateResponse>(line);
-            if (response != null)
-            {
-                var reqId = response.RequestId;
-                if (!string.IsNullOrEmpty(reqId) && _pendingRequests.TryGetValue(reqId, out var tcs))
-                {
-                    tcs.TrySetResult(response);
-                    return;
-                }
-
-                // Nếu không có requestId hoặc định dạng trả về dùng "id"
-                if (jsonNode["id"] != null)
-                {
-                    var altId = jsonNode["id"]?.GetValue<string>();
-                    if (!string.IsNullOrEmpty(altId) && _pendingRequests.TryGetValue(altId, out var altTcs))
-                    {
-                        response.RequestId ??= altId;
-                        altTcs.TrySetResult(response);
-                        return;
-                    }
-                }
-
-                // Nếu chỉ có 1 request đang chờ xử lý tuần tự
-                if (_pendingRequests.Count == 1)
-                {
-                    var single = _pendingRequests.Values.FirstOrDefault();
-                    single?.TrySetResult(response);
-                }
+                process.Kill(entireProcessTree: true);
             }
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[LicensePlateOcrService Parse Line Error]: {ex.Message} -> Line: {line}");
-        }
-    }
-
-    private async Task ReadErrorLoopAsync(Process process)
-    {
-        try
-        {
-            while (!process.HasExited && !_isDisposed)
-            {
-                var line = await process.StandardError.ReadLineAsync();
-                if (line == null) break;
-                Debug.WriteLine($"[LicensePlateEngine STDERR]: {line}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[LicensePlateOcrService Error Loop Exception]: {ex.Message}");
-        }
-    }
-
-    private void FailAllPendingRequests(string errorMessage)
-    {
-        foreach (var kvp in _pendingRequests)
-        {
-            if (_pendingRequests.TryRemove(kvp.Key, out var tcs))
-            {
-                tcs.TrySetResult(CreateErrorResponse("PROCESS_TERMINATED", errorMessage));
-            }
+            Debug.WriteLine($"[LicensePlateOcrService Kill Warning]: {ex.Message}");
         }
     }
 
@@ -315,51 +344,15 @@ public class LicensePlateOcrService : IOcrLicensePlateService
         };
     }
 
-    public async Task StopEngineAsync()
+    public Task StopEngineAsync()
     {
-        if (!IsRunning || _process == null) return;
+        var process = _process;
+        if (process != null)
+        {
+            KillQuietly(process);
+        }
 
-        try
-        {
-            var shutdownPayload = JsonSerializer.Serialize(new
-            {
-                id = "shutdown",
-                action = "shutdown"
-            });
-            await _process.StandardInput.WriteLineAsync(shutdownPayload);
-            await _process.StandardInput.FlushAsync();
-
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
-            await _process.WaitForExitAsync(cts.Token);
-        }
-        catch
-        {
-            // Bỏ qua lỗi khi gửi shutdown
-        }
-        finally
-        {
-            CleanupProcess();
-        }
-    }
-
-    private void CleanupProcess()
-    {
-        try
-        {
-            if (_process != null)
-            {
-                if (!_process.HasExited)
-                {
-                    _process.Kill(entireProcessTree: true);
-                }
-                _process.Dispose();
-                _process = null;
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[LicensePlateOcrService Cleanup Exception]: {ex.Message}");
-        }
+        return Task.CompletedTask;
     }
 
     public async ValueTask DisposeAsync()
@@ -368,7 +361,7 @@ public class LicensePlateOcrService : IOcrLicensePlateService
         _isDisposed = true;
 
         await StopEngineAsync();
-        _startLock.Dispose();
+        _runLock.Dispose();
         GC.SuppressFinalize(this);
     }
 }
