@@ -104,12 +104,10 @@ public class ReportingSourceScanTests
     }
 
     [Fact]
-    public void REPORT_EXPORT_is_the_last_audit_action()
+    public void REPORT_EXPORT_directly_follows_the_gate_actions()
     {
         Assert.Equal("REPORT_EXPORT", AuditActions.ReportExport);
-        Assert.Equal(AuditActions.ReportExport, AuditActions.All[^1]);
-        // Task 2's 17 actions + GATE_BLACKLIST_BLOCKED + ZONE_UPDATE (gate flow) + REPORT_EXPORT
-        Assert.Equal(20, AuditActions.All.Count);
-        Assert.Equal(new[] { AuditActions.GateBlacklistBlocked, AuditActions.ZoneUpdate, AuditActions.ReportExport }, AuditActions.All.Skip(17).ToArray());
+        // Task 2's 17 actions + GATE_BLACKLIST_BLOCKED + ZONE_UPDATE (gate flow) + REPORT_EXPORT; actions of later modules may follow it
+        Assert.Equal(new[] { AuditActions.GateBlacklistBlocked, AuditActions.ZoneUpdate, AuditActions.ReportExport }, AuditActions.All.Skip(17).Take(3).ToArray());
     }
 }

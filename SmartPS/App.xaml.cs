@@ -2,6 +2,8 @@ using System.IO;
 using LiveChartsCore.SkiaSharpView;
 using System.Windows;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SmartPS.Data;
@@ -120,6 +122,8 @@ public partial class App : Application
         services.AddSingleton<SmartPS.Services.Reports.IReportExportService, SmartPS.Services.Reports.ReportExportService>();
         services.AddSingleton<SmartPS.Services.Dialog.IFileDialogService, SmartPS.Services.Dialog.FileDialogService>();
         services.AddSingleton<IParkingZoneService, ParkingZoneService>();
+        services.AddSingleton<SmartPS.Services.Incidents.IIncidentService, SmartPS.Services.Incidents.IncidentService>();
+        services.AddSingleton<SmartPS.Services.Settings.ISystemSettingsService, SmartPS.Services.Settings.SystemSettingsService>();
         services.AddSingleton<PaymentWebhookServer>();
 
         // Đăng ký ViewModels
@@ -152,12 +156,18 @@ public partial class App : Application
             var dbContextFactory = ServiceProvider.GetRequiredService<IDbContextFactory<SmartPsDbContext>>();
             using var connectCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             await using var dbContext = await dbContextFactory.CreateDbContextAsync(connectCts.Token);
-            if (await dbContext.Database.CanConnectAsync(connectCts.Token))
+
+            // ExistsAsync ném lỗi khi máy chủ PostgreSQL chưa bật, trả false khi máy chủ chạy nhưng chưa có database;
+            // khi đó MigrateAsync trong DbInitializer sẽ tự tạo database (CanConnectAsync trả false và bỏ qua bước này)
+            var databaseCreator = dbContext.GetService<IRelationalDatabaseCreator>();
+            if (!await databaseCreator.ExistsAsync(connectCts.Token))
             {
-                using var initializeCts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
-                await DbInitializer.InitializeAsync(dbContext, initializeCts.Token);
-                dbConnected = true;
+                System.Diagnostics.Debug.WriteLine("[SmartPS PostgreSQL Auto-DB]: Chưa có database, sẽ tạo mới khi áp dụng migration.");
             }
+
+            using var initializeCts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            await DbInitializer.InitializeAsync(dbContext, initializeCts.Token);
+            dbConnected = true;
         }
         catch (Exception ex)
         {

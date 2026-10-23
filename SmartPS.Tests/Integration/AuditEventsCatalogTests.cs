@@ -1,9 +1,12 @@
 using Microsoft.Extensions.DependencyInjection;
 using SmartPS.DTOs.Auth;
+using SmartPS.Models.Incidents;
 using SmartPS.Models.Payment;
 using SmartPS.Models.Shifts;
 using SmartPS.Models.Parking;
+using SmartPS.Services.Incidents;
 using SmartPS.Services.Payment;
+using SmartPS.Services.Settings;
 using SmartPS.Services.RolePermissions;
 using SmartPS.Services.Shifts;
 
@@ -39,6 +42,9 @@ public class AuditEventsCatalogTests : IClassFixture<PostgresDatabaseFixture>
         [AuditActions.ShiftAdjustment] = new(AuditOutcome.Success, "FinancialTransaction", new[] { "shiftId", "type", "paymentMethod", "amount", "transactionCode" }),
         [AuditActions.AuditVerify] = new(AuditOutcome.Success, null, Array.Empty<string>()),
         [AuditActions.ReportExport] = new(AuditOutcome.Success, "Report", new[] { "from", "to", "customerGroup", "rowCounts", "fileName" }),
+        [AuditActions.IncidentReport] = new(AuditOutcome.Success, "Incident", new[] { "incidentCode", "type", "licensePlate" }),
+        [AuditActions.IncidentResolve] = new(AuditOutcome.Success, "Incident", new[] { "incidentCode", "notes" }),
+        [AuditActions.SettingsUpdate] = new(AuditOutcome.Success, "ParkingSettings", new[] { "before", "after" }),
     };
 
     private readonly PostgresDatabaseFixture _db;
@@ -66,7 +72,7 @@ public class AuditEventsCatalogTests : IClassFixture<PostgresDatabaseFixture>
         Assert.Equal(
             AuditActions.All.Except(ResidentVisitorAuditActions.All).OrderBy(a => a, StringComparer.Ordinal),
             Catalogue.Keys.OrderBy(a => a, StringComparer.Ordinal));
-        Assert.Equal(18, Catalogue.Count);
+        Assert.Equal(21, Catalogue.Count);
     }
 
     [Theory]
@@ -311,6 +317,40 @@ public class AuditEventsCatalogTests : IClassFixture<PostgresDatabaseFixture>
                     new ReportFilter(range, Preset: ReportPeriodPreset.Last7Days), Path.Combine(tempDir, "catalog.xlsx"));
                 Assert.Equal(ReportExportStatus.Success, export.Status);
                 return (id, new[] { tempDir });
+            }
+
+            case AuditActions.IncidentReport:
+            {
+                var user = await TestUsers.CreateAsync(factory, "Operator");
+                await sp.LoginAsync(user.Username);
+                var id = await Mark();
+                var result = await sp.GetRequiredService<IIncidentService>().ReportAsync(IncidentType.LostTicket, "51F-123.45", "catalogue");
+                Assert.True(result.Success, result.Message);
+                return (id, Array.Empty<string>());
+            }
+
+            case AuditActions.IncidentResolve:
+            {
+                await sp.LoginAdminAsync();
+                var incidents = sp.GetRequiredService<IIncidentService>();
+                var report = await incidents.ReportAsync(IncidentType.Equipment, null, "catalogue");
+                Assert.True(report.Success, report.Message);
+                var incident = (await incidents.GetIncidentsAsync()).Single(i => i.IncidentCode == report.Message);
+                var id = await Mark();
+                var result = await incidents.ResolveAsync(incident.IncidentId, "catalogue resolved");
+                Assert.True(result.Success, result.Message);
+                return (id, Array.Empty<string>());
+            }
+
+            case AuditActions.SettingsUpdate:
+            {
+                await sp.LoginAdminAsync();
+                var settings = sp.GetRequiredService<ISystemSettingsService>();
+                var current = await settings.GetOperationalSettingsAsync();
+                var id = await Mark();
+                var result = await settings.UpdateOperationalSettingsAsync(current with { OverstayThresholdHours = current.OverstayThresholdHours % 700 + 1 });
+                Assert.True(result.Success, result.Message);
+                return (id, Array.Empty<string>());
             }
 
             default:

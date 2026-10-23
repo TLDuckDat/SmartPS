@@ -72,7 +72,9 @@ public class PermissionsConstantsTests
             "PAYMENT_REFUND", "PAYMENT_CANCEL", "SHIFT_OPEN", "SHIFT_CLOSE", "SHIFT_REVIEW", "SHIFT_ADJUSTMENT", "AUDIT_VERIFY",
             // Gate flow (Task 1) appends exactly these two after AUDIT_VERIFY.
             "GATE_BLACKLIST_BLOCKED", "ZONE_UPDATE",
-            "REPORT_EXPORT"
+            "REPORT_EXPORT",
+            // Incidents and system settings
+            "INCIDENT_REPORT", "INCIDENT_RESOLVE", "SETTINGS_UPDATE"
         }, AuditActions.All);
     }
 

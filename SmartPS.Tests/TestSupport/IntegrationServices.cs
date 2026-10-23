@@ -49,6 +49,8 @@ public static class IntegrationServices
         // Gate flow (Task 1): read-only plate ownership over the household/vehicle tables, zone audience service
         services.AddSingleton<IPlateOwnershipReader, PlateOwnershipReader>();
         services.AddSingleton<IParkingZoneService, ParkingZoneService>();
+        services.AddSingleton<SmartPS.Services.Incidents.IIncidentService, SmartPS.Services.Incidents.IncidentService>();
+        services.AddSingleton<SmartPS.Services.Settings.ISystemSettingsService, SmartPS.Services.Settings.SystemSettingsService>();
 
         // Reporting & BI
         services.TryAddSingleton<ILocalizationService, FakeLocalizationService>();

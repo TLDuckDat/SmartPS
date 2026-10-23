@@ -217,6 +217,68 @@ namespace SmartPS.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
+            modelBuilder.Entity("SmartPS.Models.Incidents.Incident", b =>
+                {
+                    b.Property<int>("IncidentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IncidentId"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("IncidentCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("LicensePlate")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("ReportedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ReportedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ResolutionNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ResolvedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("IncidentId");
+
+                    b.HasIndex("IncidentCode")
+                        .IsUnique();
+
+                    b.HasIndex("ReportedAt");
+
+                    b.HasIndex("ReportedByUserId");
+
+                    b.HasIndex("ResolvedByUserId");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("Incidents", (string)null);
+                });
+
             modelBuilder.Entity("SmartPS.Models.Parking.BlacklistedVehicle", b =>
                 {
                     b.Property<int>("BlacklistId")
@@ -519,6 +581,11 @@ namespace SmartPS.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasDefaultValue(2);
+
+                    b.Property<int>("OverstayThresholdHours")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(48);
 
                     b.HasKey("SettingsId");
 
@@ -1175,6 +1242,24 @@ namespace SmartPS.Migrations
                         .IsRequired();
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("SmartPS.Models.Incidents.Incident", b =>
+                {
+                    b.HasOne("SmartPS.Models.Auth.User", "ReportedByUser")
+                        .WithMany()
+                        .HasForeignKey("ReportedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SmartPS.Models.Auth.User", "ResolvedByUser")
+                        .WithMany()
+                        .HasForeignKey("ResolvedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ReportedByUser");
+
+                    b.Navigation("ResolvedByUser");
                 });
 
             modelBuilder.Entity("SmartPS.Models.Parking.BlacklistedVehicle", b =>
