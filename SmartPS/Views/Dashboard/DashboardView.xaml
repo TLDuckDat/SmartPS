@@ -348,6 +348,12 @@
                                         <DataTrigger Binding="{Binding SelectedNavItem.Id}" Value="Settings">
                                             <Setter Property="Text" Value="{DynamicResource Str_Menu_Settings}"/>
                                         </DataTrigger>
+                                        <DataTrigger Binding="{Binding SelectedNavItem.Id}" Value="RolePermissions">
+                                            <Setter Property="Text" Value="{DynamicResource Str_Menu_RolePermissions}"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding SelectedNavItem.Id}" Value="AuditLog">
+                                            <Setter Property="Text" Value="{DynamicResource Str_Menu_AuditLog}"/>
+                                        </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </TextBlock.Style>
