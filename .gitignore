@@ -64,3 +64,11 @@ $RECYCLE.BIN/
 
 # OCR output
 **/Services/OcrLisencePlate/output/
+# Engine OCR biển số (~120 MB, vượt giới hạn 100 MB/tệp của GitHub) - phân phối riêng, không commit
+SmartPS/Services/OcrLisencePlate/LicensePlateEngine.exe
+*.exe
+# Thư mục kết quả engine OCR ghi cạnh exe (<tên ảnh>_<thời gian>/)
+SmartPS/Services/OcrLisencePlate/*/
+
+# Tài liệu .md chỉ dùng nội bộ, không đưa lên GitHub
+*.md
