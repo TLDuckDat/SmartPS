@@ -6,6 +6,49 @@
              mc:Ignorable="d"
              d:DesignHeight="850" d:DesignWidth="1100">
 
+    <UserControl.Resources>
+        <!-- Ô nhập nhiều dòng cho mô tả / nội dung xử lý -->
+        <Style x:Key="IncidentMultilineTextBoxStyle" TargetType="TextBox">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="MinHeight" Value="72"/>
+            <Setter Property="AcceptsReturn" Value="True"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="VerticalContentAlignment" Value="Top"/>
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="Background" Value="{StaticResource InputBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource InputBorderBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="MaxLength" Value="1000"/>
+        </Style>
+
+        <Style x:Key="IncidentFieldLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+
+        <!-- Dòng đang chọn: nền xanh nhạt để chữ màu trong ô vẫn đọc rõ -->
+        <Style x:Key="IncidentGridCellStyle" TargetType="DataGridCell">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#EFF6FF"/>
+                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="IncidentCellTextStyle" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="10,0"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+        </Style>
+    </UserControl.Resources>
+
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="{StaticResource AppBackgroundBrush}">
         <StackPanel Margin="28,24">
 
@@ -21,32 +64,28 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0">
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="⚠️" FontSize="20" Margin="0,0,8,0"/>
                             <TextBlock Text="{DynamicResource Str_Menu_Incidents}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         </StackPanel>
-                        <TextBlock Text="Ghi nhận và xử lý sự cố bất thường: Mất thẻ vé, biển số mờ, xe đỗ quá giờ hoặc nghi vấn an ninh" 
-                                   FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
+                        <TextBlock Text="Ghi nhận và xử lý sự cố bất thường: Mất thẻ vé, biển số mờ, xe đỗ quá giờ hoặc nghi vấn an ninh"
+                                   FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
 
-                    <!-- Nút bấm Làm mới dữ liệu -->
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Command="{Binding RefreshCommand}"
-                                Height="36" Padding="14,0"
-                                Background="{StaticResource PrimaryButtonBrush}"
-                                BorderThickness="0"
-                                Cursor="Hand">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="🔄" FontSize="12" Margin="0,0,6,0"/>
-                                            <TextBlock Text="Cập Nhật Sự Cố" FontSize="12" FontWeight="SemiBold" Foreground="White"/>
-                                        </StackPanel>
-                                    </Border>
-                                </ControlTemplate>
-                            </Button.Template>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0"
+                                Command="{Binding ScanOverstayCommand}"
+                                ToolTip="Lập biên bản cho các xe đang gửi quá số giờ quy định trong Cài đặt hệ thống">
+                            <TextBlock Text="⏰ Quét xe quá hạn" FontSize="12" FontWeight="SemiBold"/>
+                        </Button>
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0"
+                                Command="{Binding RefreshCommand}">
+                            <TextBlock Text="🔄 Làm mới" FontSize="12" FontWeight="SemiBold"/>
+                        </Button>
+                        <Button Style="{StaticResource PrimaryButtonStyle}"
+                                Command="{Binding OpenReportFormCommand}">
+                            <TextBlock Text="＋ Lập biên bản" FontSize="12" FontWeight="SemiBold" Foreground="White"/>
                         </Button>
                     </StackPanel>
                 </Grid>
@@ -99,7 +138,78 @@
                 </Border>
             </Grid>
 
-            <!-- 3. Thanh Tìm Kiếm Sự Cố -->
+            <!-- 3a. Form lập biên bản mới -->
+            <Border Background="{StaticResource CardBackgroundBrush}"
+                    BorderBrush="{StaticResource PrimaryButtonBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="20"
+                    Margin="0,0,0,20"
+                    Visibility="{Binding IsReportFormOpen, Converter={StaticResource BoolToVisConverter}}">
+                <StackPanel>
+                    <TextBlock Text="LẬP BIÊN BẢN SỰ CỐ MỚI" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,14"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="14"/>
+                            <ColumnDefinition Width="1*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Loại sự cố" Style="{StaticResource IncidentFieldLabelStyle}"/>
+                            <ComboBox ItemsSource="{Binding TypeOptions}" SelectedItem="{Binding NewType}"
+                                      DisplayMemberPath="Name" Height="36" FontSize="13" VerticalContentAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Biển số xe liên quan (nếu có)" Style="{StaticResource IncidentFieldLabelStyle}"/>
+                            <TextBox Style="{StaticResource ModernTextBoxStyle}" MaxLength="20"
+                                     Text="{Binding NewLicensePlate, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Text="Mô tả sự cố" Style="{StaticResource IncidentFieldLabelStyle}" Margin="0,14,0,6"/>
+                    <TextBox Style="{StaticResource IncidentMultilineTextBoxStyle}"
+                             Text="{Binding NewDescription, UpdateSourceTrigger=PropertyChanged}"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Content="Hủy" Margin="0,0,8,0"
+                                Command="{Binding CancelReportCommand}"/>
+                        <Button Style="{StaticResource PrimaryButtonStyle}" Content="Lưu biên bản"
+                                Command="{Binding SubmitReportCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 3b. Khung xử lý biên bản đang chọn -->
+            <Border Background="{StaticResource CardBackgroundBrush}"
+                    BorderBrush="#0284C7"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="20"
+                    Margin="0,0,0,20"
+                    Visibility="{Binding IsResolvePanelOpen, Converter={StaticResource BoolToVisConverter}}">
+                <StackPanel>
+                    <TextBlock FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,6">
+                        <Run Text="XỬ LÝ BIÊN BẢN"/>
+                        <Run Text="{Binding ResolvingIncident.IncidentCode, Mode=OneWay}" Foreground="#0284C7"/>
+                    </TextBlock>
+                    <TextBlock FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,14">
+                        <Run Text="{Binding ResolvingIncident.IncidentType, Mode=OneWay}" FontWeight="SemiBold"/>
+                        <Run Text="·"/>
+                        <Run Text="{Binding ResolvingIncident.LicensePlate, Mode=OneWay}"/>
+                        <Run Text="·"/>
+                        <Run Text="{Binding ResolvingIncident.Notes, Mode=OneWay}"/>
+                    </TextBlock>
+                    <TextBlock Text="Nội dung xử lý / kết quả xác minh" Style="{StaticResource IncidentFieldLabelStyle}"/>
+                    <TextBox Style="{StaticResource IncidentMultilineTextBoxStyle}"
+                             Text="{Binding ResolutionText, UpdateSourceTrigger=PropertyChanged}"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Content="Hủy" Margin="0,0,8,0"
+                                Command="{Binding CancelResolveCommand}"/>
+                        <Button Style="{StaticResource PrimaryButtonStyle}" Content="Xác nhận đã giải quyết"
+                                Command="{Binding ConfirmResolveCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 3. Thanh Tìm Kiếm & Lọc Sự Cố -->
             <Border Background="{StaticResource CardBackgroundBrush}"
                     BorderBrush="{StaticResource AppBorderBrush}"
                     BorderThickness="1"
@@ -109,6 +219,8 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="380"/>
+                        <ColumnDefinition Width="14"/>
+                        <ColumnDefinition Width="200"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
@@ -121,6 +233,7 @@
                             <TextBlock Grid.Column="0" Text="🔍" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             <TextBox Grid.Column="1"
                                      Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Tìm theo mã biên bản, biển số, loại sự cố hoặc nhân viên"
                                      BorderThickness="0"
                                      Background="Transparent"
                                      VerticalContentAlignment="Center"
@@ -129,6 +242,10 @@
                                      Padding="0,0,8,0"/>
                         </Grid>
                     </Border>
+
+                    <ComboBox Grid.Column="2" Height="36" FontSize="13" VerticalContentAlignment="Center"
+                              ItemsSource="{Binding StatusFilterOptions}"
+                              SelectedIndex="{Binding SelectedStatusFilterIndex}"/>
                 </Grid>
             </Border>
 
@@ -145,6 +262,8 @@
                     </Grid>
 
                     <DataGrid ItemsSource="{Binding FilteredIncidents}"
+                              SelectedItem="{Binding SelectedIncident}"
+                              CellStyle="{StaticResource IncidentGridCellStyle}"
                               AutoGenerateColumns="False"
                               IsReadOnly="True"
                               CanUserAddRows="False"
@@ -161,11 +280,9 @@
 
                         <DataGrid.Columns>
                             <!-- Mã sự cố -->
-                            <DataGridTextColumn Header="Mã Sự Cố" Binding="{Binding IncidentCode}" Width="120">
+                            <DataGridTextColumn Header="Mã Sự Cố" Binding="{Binding IncidentCode}" Width="110">
                                 <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Margin" Value="10,0"/>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource IncidentCellTextStyle}">
                                         <Setter Property="FontWeight" Value="SemiBold"/>
                                         <Setter Property="Foreground" Value="{StaticResource PrimaryButtonBrush}"/>
                                     </Style>
@@ -173,23 +290,20 @@
                             </DataGridTextColumn>
 
                             <!-- Loại sự cố -->
-                            <DataGridTextColumn Header="Loại Sự Cố" Binding="{Binding IncidentType}" Width="180">
+                            <DataGridTextColumn Header="Loại Sự Cố" Binding="{Binding IncidentType}" Width="1.6*">
                                 <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Margin" Value="10,0"/>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource IncidentCellTextStyle}">
                                         <Setter Property="FontWeight" Value="Bold"/>
                                         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                        <Setter Property="ToolTip" Value="{Binding Notes}"/>
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
 
                             <!-- Biển số xe liên quan -->
-                            <DataGridTextColumn Header="Biển Số Xe" Binding="{Binding LicensePlate}" Width="120">
+                            <DataGridTextColumn Header="Biển Số Xe" Binding="{Binding LicensePlate}" Width="110">
                                 <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Margin" Value="10,0"/>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource IncidentCellTextStyle}">
                                         <Setter Property="FontWeight" Value="Bold"/>
                                         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
                                     </Style>
@@ -197,29 +311,15 @@
                             </DataGridTextColumn>
 
                             <!-- Thời gian phát sinh -->
-                            <DataGridTextColumn Header="Thời Gian" Binding="{Binding ReportedTime, StringFormat={}{0:dd/MM/yyyy HH:mm}}" Width="140">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Margin" Value="10,0"/>
-                                        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Thời Gian" Binding="{Binding ReportedTime, StringFormat={}{0:dd/MM/yyyy HH:mm}}" Width="125"
+                                                ElementStyle="{StaticResource IncidentCellTextStyle}"/>
 
                             <!-- Người báo cáo -->
-                            <DataGridTextColumn Header="Nhân Viên Trực" Binding="{Binding ReportedBy}" Width="160">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Margin" Value="10,0"/>
-                                        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Người Lập" Binding="{Binding ReportedBy}" Width="1*"
+                                                ElementStyle="{StaticResource IncidentCellTextStyle}"/>
 
                             <!-- Trạng thái -->
-                            <DataGridTemplateColumn Header="Trạng Thái" Width="130">
+                            <DataGridTemplateColumn Header="Trạng Thái" Width="115">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Border CornerRadius="3" Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0">
@@ -251,12 +351,11 @@
                             </DataGridTemplateColumn>
 
                             <!-- Hành động xử lý -->
-                            <DataGridTemplateColumn Header="Thao Tác" Width="*">
+                            <DataGridTemplateColumn Header="Thao Tác" Width="120">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Button Command="{Binding DataContext.ResolveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                 CommandParameter="{Binding}"
-                                                IsEnabled="{Binding IsResolved, Converter={StaticResource BoolToVisConverter}}"
                                                 Height="28" Padding="10,0" Margin="10,0"
                                                 Background="#0284C7" BorderThickness="0" Cursor="Hand" HorizontalAlignment="Left">
                                             <Button.Style>
@@ -266,6 +365,9 @@
                                                         <DataTrigger Binding="{Binding IsResolved}" Value="True">
                                                             <Setter Property="Visibility" Value="Collapsed"/>
                                                         </DataTrigger>
+                                                        <Trigger Property="IsEnabled" Value="False">
+                                                            <Setter Property="Opacity" Value="0.45"/>
+                                                        </Trigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </Button.Style>
@@ -282,6 +384,54 @@
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
+
+                    <TextBlock Text="Chưa có biên bản sự cố nào. Bấm &quot;＋ Lập biên bản&quot; để ghi nhận sự cố mới."
+                               FontSize="12.5" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Center" Margin="0,16,0,4">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding TotalIncidents}" Value="0">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <!-- Chi tiết biên bản đang chọn -->
+                    <Border Background="#F8FAFC" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="4" Padding="14" Margin="0,14,0,0">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedIncident}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Style="{StaticResource IncidentFieldLabelStyle}">
+                                    <Run Text="Mô tả biên bản"/>
+                                    <Run Text="{Binding SelectedIncident.IncidentCode, Mode=OneWay}" Foreground="{StaticResource PrimaryButtonBrush}"/>
+                                </TextBlock>
+                                <TextBlock Text="{Binding SelectedIncident.Notes}" FontSize="12.5" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Style="{StaticResource IncidentFieldLabelStyle}">
+                                    <Run Text="Kết quả xử lý ·"/>
+                                    <Run Text="{Binding SelectedIncident.ResolutionSummary, Mode=OneWay}"/>
+                                </TextBlock>
+                                <TextBlock Text="{Binding SelectedIncident.ResolutionNotes}" FontSize="12.5" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
                 </StackPanel>
             </Border>
 

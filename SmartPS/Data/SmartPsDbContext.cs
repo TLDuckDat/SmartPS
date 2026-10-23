@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SmartPS.Models.Audit;
 using SmartPS.Models.Auth;
+using SmartPS.Models.Incidents;
 using SmartPS.Models.Parking;
 using SmartPS.Models.Payment;
 using SmartPS.Models.Shifts;
@@ -35,6 +36,9 @@ public class SmartPsDbContext : DbContext
     public DbSet<PaymentWebhook> PaymentWebhooks => Set<PaymentWebhook>();
     public DbSet<Shift> Shifts => Set<Shift>();
     public DbSet<FinancialTransaction> FinancialTransactions => Set<FinancialTransaction>();
+
+    // Incidents
+    public DbSet<Incident> Incidents => Set<Incident>();
 
     // Audit Trail (append-only)
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
