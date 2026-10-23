@@ -177,6 +177,10 @@ public class DashboardViewModel : ViewModelBase
             {
                 await avm.LoadDataAsync();
             }
+            else if (CurrentViewModel is SettingsViewModel setvm)
+            {
+                await setvm.LoadDataAsync();
+            }
         });
 
         InitializeNavigationMenu();

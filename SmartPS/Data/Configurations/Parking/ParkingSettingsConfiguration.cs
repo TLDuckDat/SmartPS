@@ -15,5 +15,9 @@ public class ParkingSettingsConfiguration : IEntityTypeConfiguration<ParkingSett
         builder.Property(x => x.DefaultMaxVehiclesPerHousehold)
                .IsRequired()
                .HasDefaultValue(2);
+
+        builder.Property(x => x.OverstayThresholdHours)
+               .IsRequired()
+               .HasDefaultValue(48);
     }
 }

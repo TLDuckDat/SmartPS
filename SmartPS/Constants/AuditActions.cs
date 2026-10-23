@@ -24,6 +24,9 @@ public static class AuditActions
     public const string GateBlacklistBlocked = "GATE_BLACKLIST_BLOCKED";
     public const string ZoneUpdate = "ZONE_UPDATE";
     public const string ReportExport = "REPORT_EXPORT";
+    public const string IncidentReport = "INCIDENT_REPORT";
+    public const string IncidentResolve = "INCIDENT_RESOLVE";
+    public const string SettingsUpdate = "SETTINGS_UPDATE";
 
     public static IReadOnlyList<string> All { get; } = typeof(AuditActions)
         .GetFields(BindingFlags.Public | BindingFlags.Static)

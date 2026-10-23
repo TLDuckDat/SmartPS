@@ -6,15 +6,54 @@
              mc:Ignorable="d"
              d:DesignHeight="700" d:DesignWidth="1000">
 
+    <UserControl.Resources>
+        <!-- Chấm trạng thái: xanh khi Tag = True, đỏ khi Tag = False -->
+        <Style x:Key="StatusDotStyle" TargetType="Border">
+            <Setter Property="Width" Value="10"/>
+            <Setter Property="Height" Value="10"/>
+            <Setter Property="CornerRadius" Value="5"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="Margin" Value="0,4,12,0"/>
+            <Setter Property="Background" Value="#DC2626"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True">
+                    <Setter Property="Background" Value="#16A34A"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Chấm trạng thái cảnh báo: vàng khi Tag = False (chạy được nhưng chưa cấu hình đầy đủ) -->
+        <Style x:Key="StatusWarnDotStyle" TargetType="Border" BasedOn="{StaticResource StatusDotStyle}">
+            <Setter Property="Background" Value="#F59E0B"/>
+        </Style>
+
+        <Style x:Key="StatusTitleStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        </Style>
+
+        <Style x:Key="StatusDetailStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,3,0,0"/>
+        </Style>
+
+        <Style x:Key="SettingsCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource AppBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="24,20"/>
+            <Setter Property="Margin" Value="0,0,0,20"/>
+        </Style>
+    </UserControl.Resources>
+
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="{StaticResource AppBackgroundBrush}">
         <StackPanel Margin="28,24">
             <!-- Header Phân Hệ -->
-            <Border Background="{StaticResource CardBackgroundBrush}"
-                    CornerRadius="6"
-                    BorderBrush="{StaticResource AppBorderBrush}"
-                    BorderThickness="1"
-                    Padding="24,18"
-                    Margin="0,0,0,20">
+            <Border Style="{StaticResource SettingsCardStyle}" Padding="24,18">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -22,37 +61,127 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
                         <TextBlock Text="{DynamicResource Str_Menu_Settings}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <TextBlock Text="Cấu hình hệ thống, thông số máy chủ cơ sở dữ liệu và tích hợp thiết bị ngoại vi bãi xe" FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
+                        <TextBlock Text="Tham số vận hành bãi xe và tình trạng các thành phần: cơ sở dữ liệu, nhận diện biển số, cổng thanh toán" FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
-                    <Border Grid.Column="1" Background="{StaticResource IceBadgeBackgroundBrush}" BorderBrush="{StaticResource IceBadgeBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,5" VerticalAlignment="Center">
-                        <TextBlock Text="Phân hệ MVVM độc lập" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextBrandBrush}"/>
-                    </Border>
+                    <Button Grid.Column="1" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Center" Margin="16,0,0,0"
+                            Command="{Binding RefreshCommand}">
+                        <TextBlock Text="🔄 Kiểm tra lại" FontSize="12" FontWeight="SemiBold"/>
+                    </Button>
                 </Grid>
             </Border>
 
-            <!-- Khung Thông Tin Module Chuẩn Kiến Trúc -->
-            <Border Background="{StaticResource CardBackgroundBrush}"
-                    CornerRadius="6"
-                    BorderBrush="{StaticResource AppBorderBrush}"
-                    BorderThickness="1"
-                    Padding="28,24">
+            <!-- 1. Tham số vận hành -->
+            <Border Style="{StaticResource SettingsCardStyle}">
                 <StackPanel>
-                    <TextBlock Text="Trung Tâm Cài Đặt Hệ Thống &amp; Thiết Bị SmartPS" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                    <TextBlock Text="Phân hệ Cài đặt hệ thống đã được cấu hình độc lập theo mô hình MVVM, sẵn sàng nạp và lưu các cấu hình phần cứng, tham số CSDL."
-                               FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="20" Margin="0,0,0,16"/>
+                    <TextBlock Text="THAM SỐ VẬN HÀNH" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="Thay đổi được ghi vào Nhật ký hệ thống (SETTINGS_UPDATE)." FontSize="12" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,18"/>
 
-                    <Border Background="#F8FAFC" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="16" Margin="0,0,0,16">
-                        <StackPanel>
-                            <TextBlock Text="CÁC THÀNH PHẦN HỆ THỐNG VÀ THỰC THỂ CSDL LIÊN QUAN:" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,8"/>
-                            <TextBlock Text="• SmartPsDbContext: Quản lý chuỗi kết nối và trạng thái đồng bộ cơ sở dữ liệu PostgreSQL" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2"/>
-                            <TextBlock Text="• Thiết bị Camera ANPR: Cấu hình URL luồng RTSP chụp và nhận diện biển số xe tại các cổng" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2"/>
-                            <TextBlock Text="• Thiết bị Barrier &amp; Cảm biến: Cấu hình cổng giao tiếp COM / Serial Port đóng mở tự động" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2"/>
-                            <TextBlock Text="• Đầu đọc thẻ RFID &amp; Máy in hóa đơn: Tích hợp thiết bị ngoại vi phục vụ vận hành" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="24"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Ngưỡng xe gửi quá hạn (giờ)" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                            <TextBox Style="{StaticResource ModernTextBoxStyle}" MaxLength="3"
+                                     Text="{Binding OverstayThresholdHours, UpdateSourceTrigger=PropertyChanged}"
+                                     IsEnabled="{Binding CanManage}"/>
+                            <TextBlock FontSize="11.5" Foreground="{StaticResource TextDimBrush}" Margin="0,5,0,0" TextWrapping="Wrap">
+                                <Run Text="{Binding OverstayRangeHint, Mode=OneWay}"/>
+                                <Run Text="· Nút &quot;Quét xe quá hạn&quot; ở màn Sự cố lập biên bản cho xe gửi lâu hơn ngưỡng này."/>
+                            </TextBlock>
                         </StackPanel>
-                    </Border>
 
-                    <TextBlock Text="Giao diện sẽ được gắn kết trực tiếp với tầng Service và DbContext khi triển khai nghiệp vụ cụ thể cho phân hệ này."
-                               FontSize="12" Foreground="{StaticResource TextDimBrush}" FontStyle="Italic"/>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Số xe tối đa mỗi hộ gia đình" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                            <TextBox Style="{StaticResource ModernTextBoxStyle}" MaxLength="2"
+                                     Text="{Binding MaxVehiclesPerHousehold, UpdateSourceTrigger=PropertyChanged}"
+                                     IsEnabled="{Binding CanManage}"/>
+                            <TextBlock FontSize="11.5" Foreground="{StaticResource TextDimBrush}" Margin="0,5,0,0" TextWrapping="Wrap">
+                                <Run Text="{Binding VehiclesRangeHint, Mode=OneWay}"/>
+                                <Run Text="· Áp dụng khi đăng ký phương tiện cho hộ cư dân."/>
+                            </TextBlock>
+                        </StackPanel>
+                    </Grid>
+
+                    <Button Style="{StaticResource PrimaryButtonStyle}" Content="Lưu thay đổi" HorizontalAlignment="Right" Margin="0,18,0,0"
+                            Command="{Binding SaveCommand}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 2. Tình trạng hệ thống -->
+            <Border Style="{StaticResource SettingsCardStyle}">
+                <StackPanel>
+                    <TextBlock Text="TÌNH TRẠNG HỆ THỐNG" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
+
+                    <!-- CSDL -->
+                    <DockPanel Margin="0,0,0,16">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource StatusDotStyle}" Tag="{Binding IsDatabaseOnline}"/>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource StatusTitleStyle}">
+                                <Run Text="Cơ sở dữ liệu PostgreSQL ·"/>
+                                <Run Text="{Binding DatabaseSummary, Mode=OneWay}" FontWeight="SemiBold"/>
+                            </TextBlock>
+                            <TextBlock Text="{Binding DatabaseDetail}" Style="{StaticResource StatusDetailStyle}"/>
+                        </StackPanel>
+                    </DockPanel>
+
+                    <!-- OCR -->
+                    <DockPanel Margin="0,0,0,16">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource StatusDotStyle}" Tag="{Binding IsOcrAvailable}"/>
+                        <Button DockPanel.Dock="Right" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Top" Margin="16,0,0,0"
+                                Command="{Binding TestOcrCommand}">
+                            <TextBlock Text="📷 Chạy thử nhận diện" FontSize="12" FontWeight="SemiBold"/>
+                        </Button>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource StatusTitleStyle}">
+                                <Run Text="Engine nhận diện biển số (OCR) ·"/>
+                                <Run Text="{Binding OcrSummary, Mode=OneWay}" FontWeight="SemiBold"/>
+                            </TextBlock>
+                            <TextBlock Text="{Binding OcrDetail}" Style="{StaticResource StatusDetailStyle}"/>
+                            <TextBlock Text="{Binding OcrTestResult}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </DockPanel>
+
+                    <!-- Thanh toán -->
+                    <DockPanel Margin="0,0,0,16">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource StatusWarnDotStyle}" Tag="{Binding IsPaymentLive}"/>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource StatusTitleStyle}">
+                                <Run Text="Cổng thanh toán ·"/>
+                                <Run Text="{Binding PaymentSummary, Mode=OneWay}" FontWeight="SemiBold"/>
+                            </TextBlock>
+                            <TextBlock Text="{Binding PaymentDetail}" Style="{StaticResource StatusDetailStyle}"/>
+                        </StackPanel>
+                    </DockPanel>
+
+                    <!-- Webhook -->
+                    <DockPanel Margin="0,0,0,16">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource StatusDotStyle}" Tag="{Binding IsWebhookRunning}"/>
+                        <StackPanel>
+                            <TextBlock Text="Máy chủ nhận webhook thanh toán" Style="{StaticResource StatusTitleStyle}"/>
+                            <TextBlock Text="{Binding WebhookSummary}" Style="{StaticResource StatusDetailStyle}"/>
+                        </StackPanel>
+                    </DockPanel>
+
+                    <Border Height="1" Background="{StaticResource DividerBrush}" Margin="0,4,0,14"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Thư mục lưu ảnh xe vào/ra:" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,10,6"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CaptureStoragePath}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Phiên bản ứng dụng:" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,10,0"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding AppVersion}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    </Grid>
                 </StackPanel>
             </Border>
         </StackPanel>
