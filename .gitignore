@@ -51,6 +51,9 @@ appsettings.Development.json
 appsettings.Local.json
 *.local.json
 .env
+.env.*
+*.pfx
+*.publishsettings
 
 # Hệ điều hành (Windows / macOS / Linux)
 Thumbs.db
@@ -61,8 +64,33 @@ $RECYCLE.BIN/
 .Spotlight-V100
 .Trashes
 
+# Kết quả chạy test & độ phủ code (dotnet test --logger trx / --collect)
+[Tt]est[Rr]esults/
+*.trx
+*.coverage
+*.coveragexml
+coverage*.xml
+coverage*.json
+*.received.*
 
-# OCR output
+# Bản publish / đóng gói
+[Pp]ublish/
+[Aa]rtifacts/
+*.pubxml.user
+
+# Tệp tạm, sao lưu, log
+*.tmp
+*.bak
+*.swp
+*.log
+~$*
+
+# Dữ liệu ứng dụng ghi ra khi chạy (nếu chạy từ thư mục mã nguồn, không phải từ bin)
+gate_audit_log.jsonl
+SmartPS/Storage/
+SmartPS/Cameras/
+
+# OCR output (riêng output/requests/interactive_check/ đã được commit từ trước làm ảnh mẫu cho nút Demo ở màn Cổng)
 **/Services/OcrLisencePlate/output/
 # Engine OCR biển số (~120 MB, vượt giới hạn 100 MB/tệp của GitHub) - phân phối riêng, không commit
 SmartPS/Services/OcrLisencePlate/LicensePlateEngine.exe
