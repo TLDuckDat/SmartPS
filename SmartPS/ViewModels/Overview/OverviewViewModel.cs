@@ -43,10 +43,14 @@ public class OverviewViewModel : ViewModelBase
             if (SetProperty(ref _occupancyRate, value))
             {
                 OnPropertyChanged(nameof(OccupancyRateFormatted));
+                OnPropertyChanged(nameof(OccupancyRateValue));
             }
         }
     }
     public string OccupancyRateFormatted => ReportFormat.Percent(OccupancyRate);
+
+    // Phần số tách khỏi đơn vị "%" để thẻ KPI đặt số lớn và đơn vị nhỏ trên cùng một đường chân chữ
+    public string OccupancyRateValue => OccupancyRate.ToString("0.#", ReportFormat.VietnameseNumbers);
 
     private int _todayCheckIns;
     public int TodayCheckIns
@@ -71,10 +75,14 @@ public class OverviewViewModel : ViewModelBase
             if (SetProperty(ref _todayRevenue, value))
             {
                 OnPropertyChanged(nameof(TodayRevenueFormatted));
+                OnPropertyChanged(nameof(TodayRevenueAmount));
             }
         }
     }
     public string TodayRevenueFormatted => ReportFormat.Currency(TodayRevenue);
+
+    // Phần số của doanh thu, đơn vị "₫" hiển thị riêng
+    public string TodayRevenueAmount => TodayRevenue.ToString("#,##0", ReportFormat.VietnameseNumbers);
 
     private int _residentParkedCount;
     public int ResidentParkedCount
@@ -124,6 +132,10 @@ public class OverviewViewModel : ViewModelBase
 
     public ObservableCollection<ParkingSession> RecentSessions { get; } = new();
 
+    // Hiện trạng thái trống thay cho khung/bảng rỗng
+    public bool HasParkedByVehicleType => ParkedByVehicleType.Count > 0;
+    public bool HasRecentSessions => RecentSessions.Count > 0;
+
     public AsyncRelayCommand RefreshCommand { get; }
 
     public OverviewViewModel(IReportService reportService, ILocalizationService localization)
@@ -131,6 +143,9 @@ public class OverviewViewModel : ViewModelBase
         _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
         RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
+
+        ParkedByVehicleType.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasParkedByVehicleType));
+        RecentSessions.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasRecentSessions));
     }
 
     public async Task LoadDataAsync()

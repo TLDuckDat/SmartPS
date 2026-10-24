@@ -6,332 +6,481 @@
              mc:Ignorable="d"
              d:DesignHeight="850" d:DesignWidth="1100">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="{StaticResource AppBackgroundBrush}">
-        <StackPanel Margin="28,24">
+    <UserControl.Resources>
+        <!-- Khung thẻ phẳng: nền trắng, viền mảnh, bo góc 8 -->
+        <Style x:Key="OvCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource DividerBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="18,16"/>
+        </Style>
 
-            <!-- 1. Header Phân Hệ & Nút Làm Mới Dữ Liệu Thực Thể -->
-            <Border Background="{StaticResource CardBackgroundBrush}"
-                    CornerRadius="6"
-                    BorderBrush="{StaticResource AppBorderBrush}"
-                    BorderThickness="1"
-                    Padding="24,16"
-                    Margin="0,0,0,20">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="📊" FontSize="20" Margin="0,0,8,0"/>
-                            <TextBlock Text="{DynamicResource Str_Menu_Overview}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        </StackPanel>
-                        <TextBlock Text="Bảng điều khiển tổng hợp tình trạng hoạt động và giám sát lưu lượng bãi xe thông minh theo thời gian thực" 
-                                   FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
-                    </StackPanel>
+        <!-- Tiêu đề thẻ KPI -->
+        <Style x:Key="OvKpiTitleStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
 
-                    <!-- Nút bấm Làm mới dữ liệu -->
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Command="{Binding RefreshCommand}"
-                                Height="36" Padding="14,0"
-                                Background="{StaticResource PrimaryButtonBrush}"
-                                BorderThickness="0"
-                                Cursor="Hand">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="🔄" FontSize="12" Margin="0,0,6,0"/>
-                                            <TextBlock Text="Cập Nhật Số Liệu" FontSize="12" FontWeight="SemiBold" Foreground="White"/>
-                                        </StackPanel>
-                                    </Border>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
-                    </StackPanel>
-                </Grid>
-            </Border>
+        <!-- Khung bo góc nền pastel chứa icon của thẻ KPI -->
+        <Style x:Key="OvKpiIconBoxStyle" TargetType="Border">
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+        </Style>
+
+        <Style x:Key="OvKpiIconStyle" TargetType="Path">
+            <Setter Property="Width" Value="18"/>
+            <Setter Property="Height" Value="18"/>
+            <Setter Property="Stretch" Value="Uniform"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Số liệu lớn + đơn vị nhỏ trong cùng một TextBlock: các Run dùng chung đường chân chữ -->
+        <Style x:Key="OvKpiValueStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="26"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+
+        <Style x:Key="OvKpiSubStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
+            <Setter Property="Margin" Value="0,4,0,0"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+
+        <Style x:Key="OvSectionTitleStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        </Style>
+
+        <!-- Trạng thái trống: icon mờ + thông báo thân thiện -->
+        <Style x:Key="OvEmptyIconStyle" TargetType="Path">
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Stretch" Value="Uniform"/>
+            <Setter Property="Fill" Value="#CBD5E1"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+
+        <Style x:Key="OvEmptyTitleStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="OvEmptyDescStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,4,0,0"/>
+        </Style>
+
+        <Style x:Key="OvCellTextStyle" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="{StaticResource CardBackgroundBrush}">
+        <StackPanel Margin="28,22,28,28">
+
+            <!-- 1. Tiêu đề màn hình & nút cập nhật số liệu -->
+            <Grid Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="{DynamicResource Str_Menu_Overview}" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{DynamicResource Str_Ov_Subtitle}"
+                               FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                </StackPanel>
+
+                <Button Grid.Column="1" Command="{Binding RefreshCommand}" Height="36" Padding="14,0" VerticalAlignment="Center"
+                        Background="{StaticResource PrimaryButtonBrush}" Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Path Width="13" Height="13" Stretch="Uniform" Fill="White" Margin="0,0,7,0" VerticalAlignment="Center"
+                                          Data="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                                    <TextBlock Text="{DynamicResource Str_Ov_Refresh}" FontSize="12.5" FontWeight="SemiBold" Foreground="White"/>
+                                </StackPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{StaticResource PrimaryButtonHoverBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
 
             <!-- Thông báo lỗi tải dữ liệu (địa phương hóa) -->
             <Border Background="{StaticResource ErrorBackgroundBrush}" BorderBrush="{StaticResource ErrorBorderBrush}" BorderThickness="1"
-                    CornerRadius="6" Padding="14,10" Margin="0,0,0,14"
+                    CornerRadius="8" Padding="14,10" Margin="0,0,0,16"
                     Visibility="{Binding HasError, Converter={StaticResource BoolToVisConverter}}">
                 <TextBlock Text="{Binding ErrorMessage}" FontSize="12.5" Foreground="{StaticResource ErrorTextBrush}" TextWrapping="Wrap"/>
             </Border>
 
-            <!-- 2. Hàng Thẻ KPI Số Liệu Thực Tế (5 Cột) -->
-            <Grid Margin="0,0,0,20">
+            <!-- 2. Hàng 5 thẻ KPI -->
+            <Grid Margin="0,0,0,16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="1*"/>
-                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="14"/>
                     <ColumnDefinition Width="1*"/>
-                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="14"/>
                     <ColumnDefinition Width="1*"/>
-                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="14"/>
                     <ColumnDefinition Width="1*"/>
-                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="14"/>
                     <ColumnDefinition Width="1*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- KPI 1: Xe đang trong bãi -->
-                <Border Grid.Column="0" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
-                    <StackPanel>
-                        <Grid>
-                            <TextBlock Text="ĐANG TRONG BÃI" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                            <TextBlock Text="🚗" FontSize="16" HorizontalAlignment="Right"/>
-                        </Grid>
-                        <TextBlock Text="{Binding TotalParkedVehicles}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}" Margin="0,8,0,2"/>
-                        <TextBlock Text="{Binding TotalSlots, StringFormat='Sức chứa: {0} ô đỗ'}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    </StackPanel>
+                <!-- KPI 1: Xe đang trong bãi (xanh dương) -->
+                <Border Grid.Column="0" Style="{StaticResource OvCardStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="{DynamicResource Str_Ov_KpiParked}" Style="{StaticResource OvKpiTitleStyle}" Margin="0,0,0,10"/>
+                            <Viewbox Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Left">
+                                <TextBlock Style="{StaticResource OvKpiValueStyle}">
+                                    <Run Text="{Binding TotalParkedVehicles, Mode=OneWay}" Foreground="#1D4ED8"/>
+                                    <Run Text="{DynamicResource Str_Unit_Vehicle}" FontSize="13" FontWeight="Medium" Foreground="{StaticResource TextDimBrush}"/>
+                                </TextBlock>
+                            </Viewbox>
+                            <TextBlock Style="{StaticResource OvKpiSubStyle}"><Run Text="{DynamicResource Str_Ov_CapacityPrefix}"/><Run Text="{Binding TotalSlots, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_SlotsSuffix}"/></TextBlock>
+                        </StackPanel>
+                        <Border Grid.Column="1" Style="{StaticResource OvKpiIconBoxStyle}" Background="#DBEAFE">
+                            <Path Style="{StaticResource OvKpiIconStyle}" Fill="#1D4ED8"
+                                  Data="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+                        </Border>
+                    </Grid>
                 </Border>
 
-                <!-- KPI 2: Ô đỗ còn trống -->
-                <Border Grid.Column="2" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
-                    <StackPanel>
-                        <Grid>
-                            <TextBlock Text="Ô ĐỖ CÒN TRỐNG" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                            <TextBlock Text="🅿" FontSize="16" HorizontalAlignment="Right"/>
-                        </Grid>
-                        <TextBlock Text="{Binding AvailableSlots}" FontSize="28" FontWeight="Bold" Foreground="#15803D" Margin="0,8,0,2"/>
-                        <TextBlock Text="Sẵn sàng đón lượt mới" FontSize="11.5" Foreground="#16A34A"/>
-                    </StackPanel>
+                <!-- KPI 2: Ô đỗ còn trống (xanh lá) -->
+                <Border Grid.Column="2" Style="{StaticResource OvCardStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="{DynamicResource Str_MapUi_KpiFreeSub}" Style="{StaticResource OvKpiTitleStyle}" Margin="0,0,0,10"/>
+                            <Viewbox Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Left">
+                                <TextBlock Style="{StaticResource OvKpiValueStyle}">
+                                    <Run Text="{Binding AvailableSlots, Mode=OneWay}" Foreground="#15803D"/>
+                                    <Run Text="{DynamicResource Str_Unit_Slot}" FontSize="13" FontWeight="Medium" Foreground="{StaticResource TextDimBrush}"/>
+                                </TextBlock>
+                            </Viewbox>
+                            <TextBlock Text="{DynamicResource Str_Ov_KpiFreeSub}" Style="{StaticResource OvKpiSubStyle}"/>
+                        </StackPanel>
+                        <Border Grid.Column="1" Style="{StaticResource OvKpiIconBoxStyle}" Background="#DCFCE7">
+                            <Path Style="{StaticResource OvKpiIconStyle}" Fill="#15803D"
+                                  Data="M13 3H6v18h4v-6h3c3.31 0 6-2.69 6-6s-2.69-6-6-6zm.2 8H10V7h3.2c1.1 0 2 .9 2 2s-.9 2-2 2z"/>
+                        </Border>
+                    </Grid>
                 </Border>
 
-                <!-- KPI 3: Tỷ lệ lấp đầy -->
-                <Border Grid.Column="4" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
-                    <StackPanel>
-                        <Grid>
-                            <TextBlock Text="TỶ LỆ LẤP ĐẦY" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                            <TextBlock Text="📈" FontSize="16" HorizontalAlignment="Right"/>
-                        </Grid>
-                        <TextBlock Text="{Binding OccupancyRateFormatted}" FontSize="28" FontWeight="Bold" Foreground="#0284C7" Margin="0,8,0,6"/>
-                        <ProgressBar Value="{Binding OccupancyRate}" Maximum="100" Height="6" Background="#E2E8F0" Foreground="#0284C7" BorderThickness="0"/>
-                    </StackPanel>
+                <!-- KPI 3: Tỷ lệ lấp đầy (xanh dương nhạt) -->
+                <Border Grid.Column="4" Style="{StaticResource OvCardStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="{DynamicResource Str_Ov_KpiRate}" Style="{StaticResource OvKpiTitleStyle}" Margin="0,0,0,10"/>
+                            <Viewbox Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Left">
+                                <TextBlock Style="{StaticResource OvKpiValueStyle}">
+                                    <Run Text="{Binding OccupancyRateValue, Mode=OneWay}" Foreground="#0284C7"/>
+                                    <Run Text="%" FontSize="13" FontWeight="Medium" Foreground="{StaticResource TextDimBrush}"/>
+                                </TextBlock>
+                            </Viewbox>
+                            <ProgressBar Value="{Binding OccupancyRate, Mode=OneWay}" Maximum="100" Height="6" Margin="0,8,0,0"
+                                         Background="#E0F2FE" Foreground="#0284C7" BorderThickness="0"/>
+                        </StackPanel>
+                        <Border Grid.Column="1" Style="{StaticResource OvKpiIconBoxStyle}" Background="#E0F2FE">
+                            <Path Style="{StaticResource OvKpiIconStyle}" Fill="#0284C7"
+                                  Data="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+                        </Border>
+                    </Grid>
                 </Border>
 
-                <!-- KPI 4: Lượt xe vào hôm nay -->
-                <Border Grid.Column="6" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
-                    <StackPanel>
-                        <Grid>
-                            <TextBlock Text="LƯỢT VÀO HÔM NAY" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                            <TextBlock Text="📥" FontSize="16" HorizontalAlignment="Right"/>
-                        </Grid>
-                        <TextBlock Text="{Binding TodayCheckIns}" FontSize="28" FontWeight="Bold" Foreground="#D97706" Margin="0,8,0,2"/>
-                        <TextBlock Text="{Binding TodayCheckOuts, StringFormat='Đã xuất bãi: {0} xe'}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    </StackPanel>
+                <!-- KPI 4: Lượt vào hôm nay (cam) -->
+                <Border Grid.Column="6" Style="{StaticResource OvCardStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="{DynamicResource Str_Ov_KpiCheckIns}" Style="{StaticResource OvKpiTitleStyle}" Margin="0,0,0,10"/>
+                            <Viewbox Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Left">
+                                <TextBlock Style="{StaticResource OvKpiValueStyle}">
+                                    <Run Text="{Binding TodayCheckIns, Mode=OneWay}" Foreground="#C2410C"/>
+                                    <Run Text="{DynamicResource Str_Unit_Visit}" FontSize="13" FontWeight="Medium" Foreground="{StaticResource TextDimBrush}"/>
+                                </TextBlock>
+                            </Viewbox>
+                            <TextBlock Style="{StaticResource OvKpiSubStyle}"><Run Text="{DynamicResource Str_Ov_CheckedOutPrefix}"/><Run Text="{Binding TodayCheckOuts, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_VehicleSuffix}"/></TextBlock>
+                        </StackPanel>
+                        <Border Grid.Column="1" Style="{StaticResource OvKpiIconBoxStyle}" Background="#FFEDD5">
+                            <Path Style="{StaticResource OvKpiIconStyle}" Fill="#C2410C"
+                                  Data="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/>
+                        </Border>
+                    </Grid>
                 </Border>
 
-                <!-- KPI 5: Doanh thu hôm nay -->
-                <Border Grid.Column="8" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
-                    <StackPanel>
-                        <Grid>
-                            <TextBlock Text="DOANH THU HÔM NAY" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                            <TextBlock Text="💰" FontSize="16" HorizontalAlignment="Right"/>
-                        </Grid>
-                        <TextBlock Text="{Binding TodayRevenueFormatted}" FontSize="24" FontWeight="Bold" Foreground="#7C3AED" Margin="0,8,0,2"/>
-                        <TextBlock Text="Thực thu trong ngày" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    </StackPanel>
+                <!-- KPI 5: Doanh thu hôm nay (tím) -->
+                <Border Grid.Column="8" Style="{StaticResource OvCardStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="{DynamicResource Str_Ov_KpiRevenue}" Style="{StaticResource OvKpiTitleStyle}" Margin="0,0,0,10"/>
+                            <Viewbox Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Left">
+                                <TextBlock Style="{StaticResource OvKpiValueStyle}">
+                                    <Run Text="{Binding TodayRevenueAmount, Mode=OneWay}" Foreground="#7C3AED"/>
+                                    <Run Text="₫" FontSize="13" FontWeight="Medium" Foreground="{StaticResource TextDimBrush}"/>
+                                </TextBlock>
+                            </Viewbox>
+                            <TextBlock Text="{DynamicResource Str_Ov_KpiRevenueSub}" Style="{StaticResource OvKpiSubStyle}"/>
+                        </StackPanel>
+                        <Border Grid.Column="1" Style="{StaticResource OvKpiIconBoxStyle}" Background="#EDE9FE">
+                            <Path Style="{StaticResource OvKpiIconStyle}" Fill="#7C3AED"
+                                  Data="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                        </Border>
+                    </Grid>
                 </Border>
             </Grid>
 
-            <!-- 3. Hàng Phân Bổ Phương Tiện & Đối Tượng Khách Hàng -->
-            <Grid Margin="0,0,0,20">
+            <!-- 3. Phân bổ xe đang gửi theo loại xe & theo nhóm khách -->
+            <Grid Margin="0,0,0,16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="1*"/>
                     <ColumnDefinition Width="14"/>
                     <ColumnDefinition Width="1*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Thống kê theo Loại xe (lấy từ bảng VehicleTypes) -->
-                <Border Grid.Column="0" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="18">
-                    <StackPanel>
-                        <TextBlock Text="{DynamicResource Str_Ov_ParkedByVehicleType}" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
-                        <ItemsControl ItemsSource="{Binding ParkedByVehicleType}">
+                <!-- Theo loại xe (bảng VehicleTypes) -->
+                <Border Grid.Column="0" Style="{StaticResource OvCardStyle}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="{DynamicResource Str_Ov_ParkedByVehicleType}" Style="{StaticResource OvSectionTitleStyle}" Margin="0,0,0,10"/>
+
+                        <ItemsControl Grid.Row="1" ItemsSource="{Binding ParkedByVehicleType}"
+                                      Visibility="{Binding HasParkedByVehicleType, Converter={StaticResource BoolToVisConverter}}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Margin="0,6">
-                                        <TextBlock Text="{Binding Name}" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                                        <TextBlock Text="{Binding Count, StringFormat='{}{0} xe'}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right"/>
-                                    </Grid>
+                                    <Border BorderBrush="{StaticResource DividerBrush}" BorderThickness="0,0,0,1" Padding="0,9">
+                                        <Grid>
+                                            <TextBlock Text="{Binding Name}" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                            <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right"><Run Text="{Binding Count, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_VehicleSuffix}"/></TextBlock>
+                                        </Grid>
+                                    </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </StackPanel>
+
+                        <!-- Trạng thái trống -->
+                        <StackPanel Grid.Row="1" VerticalAlignment="Center" Margin="0,14,0,10"
+                                    Visibility="{Binding HasParkedByVehicleType, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                            <Path Style="{StaticResource OvEmptyIconStyle}"
+                                  Data="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+                            <TextBlock Text="{DynamicResource Str_Ov_Empty_Parked_Title}" Style="{StaticResource OvEmptyTitleStyle}"/>
+                            <TextBlock Text="{DynamicResource Str_Ov_Empty_Parked_Desc}" Style="{StaticResource OvEmptyDescStyle}"/>
+                        </StackPanel>
+                    </Grid>
                 </Border>
 
-                <!-- Thống kê theo nhóm khách: Cư dân / Vé tháng / Vãng lai -->
-                <Border Grid.Column="2" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="18">
+                <!-- Theo nhóm khách: Cư dân / Vé tháng / Vãng lai -->
+                <Border Grid.Column="2" Style="{StaticResource OvCardStyle}">
                     <StackPanel>
-                        <TextBlock Text="{DynamicResource Str_Ov_ParkedByGroup}" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
-                        <Grid Margin="0,4">
-                            <TextBlock Text="{DynamicResource Str_Rpt_Group_Resident}" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding ResidentParkedCount, StringFormat='{}{0} xe'}" FontSize="13" FontWeight="Bold" Foreground="#0284C7" HorizontalAlignment="Right"/>
-                        </Grid>
-                        <Separator Background="{StaticResource DividerBrush}" Margin="0,8"/>
-                        <Grid Margin="0,4">
-                            <TextBlock Text="{DynamicResource Str_Rpt_Group_MonthlyPass}" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding MonthlyParkedCount, StringFormat='{}{0} xe'}" FontSize="13" FontWeight="Bold" Foreground="#15803D" HorizontalAlignment="Right"/>
-                        </Grid>
-                        <Separator Background="{StaticResource DividerBrush}" Margin="0,8"/>
-                        <Grid Margin="0,4">
-                            <TextBlock Text="{DynamicResource Str_Rpt_Group_Visitor}" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding VisitorParkedCount, StringFormat='{}{0} xe'}" FontSize="13" FontWeight="Bold" Foreground="#D97706" HorizontalAlignment="Right"/>
-                        </Grid>
+                        <TextBlock Text="{DynamicResource Str_Ov_ParkedByGroup}" Style="{StaticResource OvSectionTitleStyle}" Margin="0,0,0,10"/>
+                        <Border BorderBrush="{StaticResource DividerBrush}" BorderThickness="0,0,0,1" Padding="0,9">
+                            <Grid>
+                                <StackPanel Orientation="Horizontal">
+                                    <Ellipse Width="8" Height="8" Fill="#0284C7" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{DynamicResource Str_Rpt_Group_Resident}" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                </StackPanel>
+                                <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right"><Run Text="{Binding ResidentParkedCount, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_VehicleSuffix}"/></TextBlock>
+                            </Grid>
+                        </Border>
+                        <Border BorderBrush="{StaticResource DividerBrush}" BorderThickness="0,0,0,1" Padding="0,9">
+                            <Grid>
+                                <StackPanel Orientation="Horizontal">
+                                    <Ellipse Width="8" Height="8" Fill="#15803D" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{DynamicResource Str_Rpt_Group_MonthlyPass}" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                </StackPanel>
+                                <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right"><Run Text="{Binding MonthlyParkedCount, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_VehicleSuffix}"/></TextBlock>
+                            </Grid>
+                        </Border>
+                        <Border Padding="0,9">
+                            <Grid>
+                                <StackPanel Orientation="Horizontal">
+                                    <Ellipse Width="8" Height="8" Fill="#C2410C" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{DynamicResource Str_Rpt_Group_Visitor}" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                </StackPanel>
+                                <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right"><Run Text="{Binding VisitorParkedCount, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_VehicleSuffix}"/></TextBlock>
+                            </Grid>
+                        </Border>
                     </StackPanel>
                 </Border>
             </Grid>
 
-            <!-- 4. Bảng Các Lượt Hoạt Động Vào / Ra Mới Nhất -->
-            <Border Background="{StaticResource CardBackgroundBrush}"
-                    BorderBrush="{StaticResource AppBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="6"
-                    Padding="20">
+            <!-- 4. Bảng các lượt vào / ra mới nhất -->
+            <Border Style="{StaticResource OvCardStyle}" Padding="0">
                 <StackPanel>
-                    <Grid Margin="0,0,0,12">
-                        <TextBlock Text="LỊCH SỬ HOẠT ĐỘNG CỔNG VÀO / RA GẦN NHẤT" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <TextBlock Text="{Binding RecentSessions.Count, StringFormat='Hiển thị {0} phiên mới nhất'}" FontSize="12" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Right"/>
+                    <Grid Margin="18,14">
+                        <TextBlock Text="{DynamicResource Str_Ov_RecentTitle}" Style="{StaticResource OvSectionTitleStyle}" VerticalAlignment="Center"/>
+                        <TextBlock FontSize="12" Foreground="{StaticResource TextDimBrush}"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center"><Run Text="{DynamicResource Str_Ov_ShowingPrefix}"/><Run Text="{Binding RecentSessions.Count, Mode=OneWay}"/><Run Text="{DynamicResource Str_Ov_ShowingSuffix}"/></TextBlock>
                     </Grid>
 
-                    <DataGrid ItemsSource="{Binding RecentSessions}"
-                              AutoGenerateColumns="False"
-                              IsReadOnly="True"
-                              CanUserAddRows="False"
-                              RowHeight="36"
-                              MaxHeight="320"
-                              GridLinesVisibility="Horizontal"
-                              HorizontalGridLinesBrush="{StaticResource DividerBrush}"
-                              Background="Transparent"
-                              BorderThickness="1"
-                              BorderBrush="{StaticResource DividerBrush}"
-                              RowHeaderWidth="0"
-                              HeadersVisibility="Column"
-                              SelectionMode="Single">
+                    <Grid>
+                        <DataGrid ItemsSource="{Binding RecentSessions}"
+                                  Style="{StaticResource ModernDataGridStyle}"
+                                  IsReadOnly="True"
+                                  SelectionMode="Single"
+                                  MaxHeight="360"
+                                  BorderBrush="{StaticResource DividerBrush}"
+                                  BorderThickness="0,1,0,0">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{DynamicResource Str_Ov_ColTicket}" Binding="{Binding TicketCode}" Width="130">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource OvCellTextStyle}">
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Foreground" Value="{StaticResource PrimaryButtonBrush}"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
 
-                        <DataGrid.Columns>
-                            <!-- Mã vé -->
-                            <DataGridTextColumn Header="Mã Vé" Binding="{Binding TicketCode}" Width="130">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Margin" Value="10,0"/>
-                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                        <Setter Property="Foreground" Value="{StaticResource PrimaryButtonBrush}"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
+                                <DataGridTextColumn Header="{DynamicResource Str_Ov_ColPlate}" Binding="{Binding LicensePlate}" Width="120">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource OvCellTextStyle}">
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
 
-                            <!-- Biển số xe -->
-                            <DataGridTextColumn Header="Biển Số Xe" Binding="{Binding LicensePlate}" Width="120">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Margin" Value="10,0"/>
-                                        <Setter Property="FontWeight" Value="Bold"/>
-                                        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
+                                <DataGridTextColumn Header="{DynamicResource Str_Ov_ColVehicleType}" Binding="{Binding VehicleType.TypeName}" Width="120"
+                                                    ElementStyle="{StaticResource OvCellTextStyle}"/>
 
-                            <!-- Loại phương tiện -->
-                            <DataGridTextColumn Header="Loại Xe" Binding="{Binding VehicleType.TypeName}" Width="120">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Margin" Value="10,0"/>
-                                        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
+                                <DataGridTextColumn Header="{DynamicResource Str_Ov_ColSlot}" Binding="{Binding Slot.SlotCode, FallbackValue='—'}" Width="80">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource OvCellTextStyle}">
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
 
-                            <!-- Vị trí ô đỗ -->
-                            <DataGridTextColumn Header="Ô Đỗ" Binding="{Binding Slot.SlotCode, FallbackValue='Tự do'}" Width="80">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Margin" Value="10,0"/>
-                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                        <Setter Property="Foreground" Value="#0F172A"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
+                                <DataGridTextColumn Header="{DynamicResource Str_Ov_ColCheckIn}" Binding="{Binding CheckInTimeLocal, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}}" Width="150"
+                                                    ElementStyle="{StaticResource OvCellTextStyle}"/>
 
-                            <!-- Thời gian vào -->
-                            <DataGridTextColumn Header="Thời Gian Vào" Binding="{Binding CheckInTimeLocal, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}}" Width="150">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Margin" Value="10,0"/>
-                                        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
+                                <DataGridTextColumn Header="{DynamicResource Str_Ov_ColCheckOut}" Binding="{Binding CheckOutTimeLocal, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}, TargetNullValue='--:--:--'}" Width="150"
+                                                    ElementStyle="{StaticResource OvCellTextStyle}"/>
 
-                            <!-- Thời gian ra -->
-                            <DataGridTextColumn Header="Thời Gian Ra" Binding="{Binding CheckOutTimeLocal, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}, TargetNullValue='--:--:--'}" Width="150">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Margin" Value="10,0"/>
-                                        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
+                                <DataGridTextColumn Header="{DynamicResource Str_Ov_ColFee}" Binding="{Binding TotalFee, Converter={StaticResource VndCurrencyConverter}}" Width="110">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource OvCellTextStyle}">
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Foreground" Value="#7C3AED"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
 
-                            <!-- Cước phí -->
-                            <DataGridTextColumn Header="Cước Phí" Binding="{Binding TotalFee, Converter={StaticResource VndCurrencyConverter}}" Width="100">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Margin" Value="10,0"/>
-                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                        <Setter Property="Foreground" Value="#7C3AED"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-
-                            <!-- Trạng thái -->
-                            <DataGridTemplateColumn Header="Trạng Thái" Width="*">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Border CornerRadius="3" Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0">
-                                            <Border.Style>
-                                                <Style TargetType="Border">
-                                                    <Setter Property="Background" Value="#FEF3C7"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Status}" Value="Active">
-                                                            <Setter Property="Background" Value="#EFF6FF"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Status}" Value="Completed">
-                                                            <Setter Property="Background" Value="#DCFCE7"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                            <TextBlock FontSize="11" FontWeight="SemiBold">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="Text" Value="Đang xử lý"/>
-                                                        <Setter Property="Foreground" Value="#B45309"/>
+                                <!-- Trạng thái: nhãn bo tròn có chấm màu -->
+                                <DataGridTemplateColumn Header="{DynamicResource Str_Ov_ColStatus}" Width="*" MinWidth="165">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border CornerRadius="10" Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="#FEF3C7"/>
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding Status}" Value="Active">
-                                                                <Setter Property="Text" Value="🚗 Đang đỗ trong bãi"/>
-                                                                <Setter Property="Foreground" Value="#1D4ED8"/>
+                                                                <Setter Property="Background" Value="#EFF6FF"/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding Status}" Value="Completed">
-                                                                <Setter Property="Text" Value="✔ Đã xuất bãi"/>
-                                                                <Setter Property="Foreground" Value="#15803D"/>
+                                                                <Setter Property="Background" Value="#DCFCE7"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </Border>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
+                                                </Border.Style>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="6" Height="6" Margin="0,0,6,0" VerticalAlignment="Center">
+                                                        <Ellipse.Style>
+                                                            <Style TargetType="Ellipse">
+                                                                <Setter Property="Fill" Value="#B45309"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Active">
+                                                                        <Setter Property="Fill" Value="#1D4ED8"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Completed">
+                                                                        <Setter Property="Fill" Value="#15803D"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Ellipse.Style>
+                                                    </Ellipse>
+                                                    <TextBlock FontSize="11.5" FontWeight="SemiBold">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Text" Value="{DynamicResource Str_Ov_StatusProcessing}"/>
+                                                                <Setter Property="Foreground" Value="#B45309"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Active">
+                                                                        <Setter Property="Text" Value="{DynamicResource Str_Ov_StatusParked}"/>
+                                                                        <Setter Property="Foreground" Value="#1D4ED8"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Completed">
+                                                                        <Setter Property="Text" Value="{DynamicResource Str_Ov_StatusLeft}"/>
+                                                                        <Setter Property="Foreground" Value="#15803D"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <!-- Trạng thái trống: nằm dưới hàng tiêu đề cột -->
+                        <StackPanel Margin="0,62,0,30" HorizontalAlignment="Center"
+                                    Visibility="{Binding HasRecentSessions, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                            <Path Style="{StaticResource OvEmptyIconStyle}"
+                                  Data="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+                            <TextBlock Text="{DynamicResource Str_Ov_Empty_Recent_Title}" Style="{StaticResource OvEmptyTitleStyle}"/>
+                            <TextBlock Text="{DynamicResource Str_Ov_Empty_Recent_Desc}" Style="{StaticResource OvEmptyDescStyle}"/>
+                        </StackPanel>
+                    </Grid>
                 </StackPanel>
             </Border>
         </StackPanel>

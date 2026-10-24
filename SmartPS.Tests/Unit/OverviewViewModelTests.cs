@@ -58,6 +58,35 @@ public class OverviewViewModelTests
     }
 
     [Fact]
+    public async Task Kpi_values_are_split_from_their_units_for_baseline_alignment()
+    {
+        var vm = new OverviewViewModel(new FakeReportService(), new FakeLocalizationService());
+
+        await vm.LoadDataAsync();
+
+        Assert.Equal("150.000", vm.TodayRevenueAmount);
+        Assert.Equal("26,7", vm.OccupancyRateValue);
+    }
+
+    [Fact]
+    public async Task Empty_state_flags_follow_the_loaded_lists()
+    {
+        var vm = new OverviewViewModel(new FakeReportService(), new FakeLocalizationService());
+        var changed = new List<string?>();
+        vm.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+        Assert.False(vm.HasParkedByVehicleType);
+        Assert.False(vm.HasRecentSessions);
+
+        await vm.LoadDataAsync();
+
+        // The fake snapshot has two vehicle types but no recent sessions
+        Assert.True(vm.HasParkedByVehicleType);
+        Assert.False(vm.HasRecentSessions);
+        Assert.Contains(nameof(OverviewViewModel.HasParkedByVehicleType), changed);
+    }
+
+    [Fact]
     public async Task Database_error_shows_the_localized_banner()
     {
         var vm = new OverviewViewModel(new FailingReportService(), new FakeLocalizationService());
