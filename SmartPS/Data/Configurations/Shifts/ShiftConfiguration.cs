@@ -34,7 +34,7 @@ public class ShiftConfiguration : IEntityTypeConfiguration<Shift>
         builder.HasIndex(x => x.OpenedByUserId)
                .IsUnique()
                .HasDatabaseName("IX_Shifts_OneActivePerUser")
-               .HasFilter("\"Status\" = 0");
+               .HasFilter("[Status] = 0");
         builder.HasIndex(x => x.OpenedAt);
         builder.HasIndex(x => x.Status);
 

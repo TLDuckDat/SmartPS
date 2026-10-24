@@ -7,7 +7,7 @@ public interface IReportService
 {
     Task<ReportFilterOptions> GetFilterOptionsAsync(CancellationToken cancellationToken = default);
 
-    /// <summary>Requires <c>Report.View</c>. All aggregation runs in PostgreSQL; day boundaries are Vietnam days.</summary>
+    /// <summary>Requires <c>Report.View</c>. All aggregation runs in SQL Server; day boundaries are Vietnam days.</summary>
     Task<ReportResult> GetReportAsync(ReportFilter filter, CancellationToken cancellationToken = default);
 
     /// <summary>Requires <c>Report.Export</c>. Returns at most <paramref name="maxRows"/> rows and flags truncation.</summary>

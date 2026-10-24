@@ -8,15 +8,15 @@ using SmartPS.Services.GateControl;
 namespace SmartPS.Tests.Integration;
 
 /// <summary>AC-9, R14 (PARKING_CHECKIN / PARKING_CHECKOUT), R15 (T-R15b), T-ACTOR, R5 for the gate, E2 JSONL flag on the online path.</summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class GateCheckOutAuditTests : IClassFixture<PostgresDatabaseFixture>
+public class GateCheckOutAuditTests : IClassFixture<SqlServerDatabaseFixture>
 {
     private static readonly string JsonlPath = Path.Combine(AppContext.BaseDirectory, "Storage", "gate_audit_log.jsonl");
 
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
 
-    public GateCheckOutAuditTests(PostgresDatabaseFixture db)
+    public GateCheckOutAuditTests(SqlServerDatabaseFixture db)
     {
         _db = db;
     }

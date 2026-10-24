@@ -10,14 +10,14 @@ namespace SmartPS.Tests.Integration;
 /// plates stored raw) — no session, no slot, barrier stays closed (Success=false), one GATE_BLACKLIST_BLOCKED Denied row
 /// without the free-text reason. Inactive rows do not block. Blacklist wins over residency and tickets.
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class GateBlacklistCheckInTests : IClassFixture<PostgresDatabaseFixture>
+public class GateBlacklistCheckInTests : IClassFixture<SqlServerDatabaseFixture>
 {
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
     private readonly GateTestData _data;
 
-    public GateBlacklistCheckInTests(PostgresDatabaseFixture db)
+    public GateBlacklistCheckInTests(SqlServerDatabaseFixture db)
     {
         _db = db;
         _data = new GateTestData(db);

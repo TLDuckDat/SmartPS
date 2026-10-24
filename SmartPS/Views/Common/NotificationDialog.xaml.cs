@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.Views.Common;
 
@@ -56,7 +57,7 @@ public partial class NotificationDialog : Window
 
     public NotificationDialog(
         string message,
-        string title = "Thông báo",
+        string? title = null,
         NotificationType type = NotificationType.Information,
         NotificationButtons buttons = NotificationButtons.Ok,
         string? primaryButtonText = null,
@@ -64,6 +65,7 @@ public partial class NotificationDialog : Window
     {
         InitializeComponent();
 
+        title ??= AppText.Get("Str_Dialog_Title_Info");
         _buttons = buttons;
         Title = title;
         TitleTextBlock.Text = title;
@@ -125,24 +127,22 @@ public partial class NotificationDialog : Window
 
     private void ConfigureButtons(NotificationButtons buttons, string? primaryText, string? secondaryText)
     {
-        string GetRes(string key, string fallback) => Application.Current?.TryFindResource(key) as string ?? fallback;
-
         switch (buttons)
         {
             case NotificationButtons.Ok:
-                PrimaryButton.Content = primaryText ?? GetRes("Str_Btn_Confirm", "Đồng ý");
+                PrimaryButton.Content = primaryText ?? AppText.Get("Str_Btn_Confirm");
                 SecondaryButton.Visibility = Visibility.Collapsed;
                 break;
 
             case NotificationButtons.OkCancel:
-                PrimaryButton.Content = primaryText ?? GetRes("Str_Btn_Confirm", "Đồng ý");
-                SecondaryButton.Content = secondaryText ?? GetRes("Str_Btn_Cancel", "Hủy bỏ");
+                PrimaryButton.Content = primaryText ?? AppText.Get("Str_Btn_Confirm");
+                SecondaryButton.Content = secondaryText ?? AppText.Get("Str_Btn_Cancel");
                 SecondaryButton.Visibility = Visibility.Visible;
                 break;
 
             case NotificationButtons.YesNo:
-                PrimaryButton.Content = primaryText ?? GetRes("Str_Btn_Yes", "Có");
-                SecondaryButton.Content = secondaryText ?? GetRes("Str_Btn_No", "Không");
+                PrimaryButton.Content = primaryText ?? AppText.Get("Str_Btn_Yes");
+                SecondaryButton.Content = secondaryText ?? AppText.Get("Str_Btn_No");
                 SecondaryButton.Visibility = Visibility.Visible;
                 break;
         }
@@ -199,7 +199,7 @@ public partial class NotificationDialog : Window
     /// </summary>
     public static NotificationResult Show(
         string message,
-        string title = "Thông báo",
+        string? title = null,
         NotificationType type = NotificationType.Information,
         NotificationButtons buttons = NotificationButtons.Ok,
         Window? owner = null,
@@ -223,46 +223,50 @@ public partial class NotificationDialog : Window
         return dialog.Result;
     }
 
-    public static void ShowSuccess(string message, string title = "Thành công", Window? owner = null, string buttonText = "Đồng ý")
+    public static void ShowSuccess(string message, string? title = null, Window? owner = null, string? buttonText = null)
     {
-        Show(message, title, NotificationType.Success, NotificationButtons.Ok, owner, buttonText);
+        Show(message, title ?? AppText.Get("Str_Dialog_Title_Success"), NotificationType.Success, NotificationButtons.Ok, owner,
+            buttonText ?? AppText.Get("Str_Btn_Confirm"));
     }
 
-    public static void ShowInfo(string message, string title = "Thông báo", Window? owner = null, string buttonText = "Đồng ý")
+    public static void ShowInfo(string message, string? title = null, Window? owner = null, string? buttonText = null)
     {
-        Show(message, title, NotificationType.Information, NotificationButtons.Ok, owner, buttonText);
+        Show(message, title ?? AppText.Get("Str_Dialog_Title_Info"), NotificationType.Information, NotificationButtons.Ok, owner,
+            buttonText ?? AppText.Get("Str_Btn_Confirm"));
     }
 
-    public static void ShowWarning(string message, string title = "Cảnh báo", Window? owner = null, string buttonText = "Đã hiểu")
+    public static void ShowWarning(string message, string? title = null, Window? owner = null, string? buttonText = null)
     {
-        Show(message, title, NotificationType.Warning, NotificationButtons.Ok, owner, buttonText);
+        Show(message, title ?? AppText.Get("Str_Dialog_Title_Warning"), NotificationType.Warning, NotificationButtons.Ok, owner,
+            buttonText ?? AppText.Get("Str_Btn_Understood"));
     }
 
-    public static void ShowError(string message, string title = "Lỗi", Window? owner = null, string buttonText = "Đóng")
+    public static void ShowError(string message, string? title = null, Window? owner = null, string? buttonText = null)
     {
-        Show(message, title, NotificationType.Error, NotificationButtons.Ok, owner, buttonText);
+        Show(message, title ?? AppText.Get("Str_Dialog_Title_Error"), NotificationType.Error, NotificationButtons.Ok, owner,
+            buttonText ?? AppText.Get("Str_Btn_Close"));
     }
 
     public static bool ShowConfirm(
         string message,
-        string title = "Xác nhận",
-        string confirmText = "Đồng ý",
-        string cancelText = "Hủy bỏ",
+        string? title = null,
+        string? confirmText = null,
+        string? cancelText = null,
         Window? owner = null)
     {
-        var result = Show(message, title, NotificationType.Question, NotificationButtons.OkCancel, owner, confirmText, cancelText);
+        var result = Show(message, title ?? AppText.Get("Str_Dialog_Title_Confirm"), NotificationType.Question, NotificationButtons.OkCancel, owner, confirmText, cancelText);
         return result == NotificationResult.Ok || result == NotificationResult.Yes;
     }
 
     public static bool ShowYesNo(
         string message,
-        string title = "Xác nhận",
+        string? title = null,
         NotificationType type = NotificationType.Warning,
         Window? owner = null,
-        string yesText = "Có",
-        string noText = "Không")
+        string? yesText = null,
+        string? noText = null)
     {
-        var result = Show(message, title, type, NotificationButtons.YesNo, owner, yesText, noText);
+        var result = Show(message, title ?? AppText.Get("Str_Dialog_Title_Confirm"), type, NotificationButtons.YesNo, owner, yesText, noText);
         return result == NotificationResult.Yes;
     }
 }

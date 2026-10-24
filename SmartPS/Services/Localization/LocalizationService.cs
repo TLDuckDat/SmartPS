@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Markup;
+using SmartPS.Services.Preferences;
 
 namespace SmartPS.Services.Localization;
 
@@ -10,36 +11,42 @@ namespace SmartPS.Services.Localization;
 /// </summary>
 public class LocalizationService : ILocalizationService
 {
-    private string _currentLanguage = "vi-VN";
+    private const string DefaultLanguage = "vi-VN";
+
+    private readonly IUserPreferencesStore? _preferences;
+    private string _currentLanguage = DefaultLanguage;
     public string CurrentLanguage => _currentLanguage;
 
     public CultureInfo CurrentCulture => new CultureInfo(_currentLanguage);
 
     public event Action? LanguageChanged;
 
-    public LocalizationService()
+    public LocalizationService(IUserPreferencesStore? preferences = null)
     {
-        // Khởi tạo ngôn ngữ ban đầu
+        _preferences = preferences;
+
+        // Khởi tạo bằng ngôn ngữ đã chọn lần trước (nếu có)
+        _currentLanguage = Normalize(preferences?.Current.Language) ?? DefaultLanguage;
         ApplyLanguage(_currentLanguage);
     }
 
+    /// <summary>Chuẩn hóa mã ngôn ngữ; null nếu không phải ngôn ngữ ứng dụng hỗ trợ.</summary>
+    private static string? Normalize(string? cultureCode) => cultureCode?.Trim().ToLowerInvariant() switch
+    {
+        "vi" or "vi-vn" => "vi-VN",
+        "en" or "en-us" => "en-US",
+        "ja" or "ja-jp" => "ja-JP",
+        _ => null
+    };
+
     public void SetLanguage(string cultureCode)
     {
-        if (string.IsNullOrWhiteSpace(cultureCode)) return;
-
-        // Chuẩn hóa mã ngôn ngữ
-        var normalizedCode = cultureCode.ToLowerInvariant() switch
-        {
-            "vi" or "vi-vn" => "vi-VN",
-            "en" or "en-us" => "en-US",
-            "ja" or "ja-jp" => "ja-JP",
-            _ => cultureCode
-        };
-
-        if (_currentLanguage == normalizedCode) return;
+        var normalizedCode = Normalize(cultureCode);
+        if (normalizedCode == null || _currentLanguage == normalizedCode) return;
 
         _currentLanguage = normalizedCode;
         ApplyLanguage(_currentLanguage);
+        _preferences?.Update(p => p.Language = normalizedCode);
         LanguageChanged?.Invoke();
     }
 
@@ -71,6 +78,9 @@ public class LocalizationService : ILocalizationService
             {
                 mergedDicts.Add(newDict);
             }
+
+            // Bản sao cho service/model đọc chuỗi theo ngôn ngữ mới (AppText)
+            AppText.Load(newDict);
 
             // Đồng bộ XmlLanguage cho các cửa sổ đang mở để hỗ trợ định dạng số, ngày giờ tự động
             var xmlLanguage = XmlLanguage.GetLanguage(culture.IetfLanguageTag);

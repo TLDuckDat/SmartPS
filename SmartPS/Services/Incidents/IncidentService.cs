@@ -9,6 +9,7 @@ using SmartPS.Services.Audit;
 using SmartPS.Services.Authorization;
 using SmartPS.Services.Common;
 using SmartPS.Services.GateControl;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.Services.Incidents;
 
@@ -87,17 +88,17 @@ public sealed class IncidentService : IIncidentService
         var text = description?.Trim() ?? string.Empty;
 
         if (!Enum.IsDefined(type))
-            return OperationResult.Fail(OperationError.Validation, "Loại sự cố không hợp lệ.");
+            return OperationResult.Fail(OperationError.Validation, AppText.Get("Msg_IncSvc_InvalidType"));
         if (text.Length == 0)
-            return OperationResult.Fail(OperationError.Validation, "Vui lòng nhập mô tả sự cố.");
+            return OperationResult.Fail(OperationError.Validation, AppText.Get("Msg_IncSvc_DescriptionRequired"));
         if (text.Length > IncidentConfiguration.TextMaxLength)
-            return OperationResult.Fail(OperationError.Validation, $"Mô tả sự cố tối đa {IncidentConfiguration.TextMaxLength} ký tự.");
+            return OperationResult.Fail(OperationError.Validation, AppText.Get("Msg_IncSvc_DescriptionTooLong", IncidentConfiguration.TextMaxLength));
         if (plate != null && plate.Length > IncidentConfiguration.LicensePlateMaxLength)
-            return OperationResult.Fail(OperationError.Validation, $"Biển số tối đa {IncidentConfiguration.LicensePlateMaxLength} ký tự.");
+            return OperationResult.Fail(OperationError.Validation, AppText.Get("Msg_IncSvc_PlateTooLong", IncidentConfiguration.LicensePlateMaxLength));
 
         var userId = _currentUser.User?.UserId;
         if (userId is null or <= 0)
-            return OperationResult.Fail(OperationError.PermissionDenied, "Phiên đăng nhập không hợp lệ.");
+            return OperationResult.Fail(OperationError.PermissionDenied, AppText.Get("Msg_IncSvc_InvalidSession"));
 
         try
         {
@@ -128,13 +129,13 @@ public sealed class IncidentService : IIncidentService
 
         var notes = resolutionNotes?.Trim() ?? string.Empty;
         if (notes.Length == 0)
-            return OperationResult.Fail(OperationError.Validation, "Vui lòng nhập nội dung xử lý sự cố.");
+            return OperationResult.Fail(OperationError.Validation, AppText.Get("Msg_IncSvc_ResolutionRequired"));
         if (notes.Length > IncidentConfiguration.TextMaxLength)
-            return OperationResult.Fail(OperationError.Validation, $"Nội dung xử lý tối đa {IncidentConfiguration.TextMaxLength} ký tự.");
+            return OperationResult.Fail(OperationError.Validation, AppText.Get("Msg_IncSvc_ResolutionTooLong", IncidentConfiguration.TextMaxLength));
 
         var userId = _currentUser.User?.UserId;
         if (userId is null or <= 0)
-            return OperationResult.Fail(OperationError.PermissionDenied, "Phiên đăng nhập không hợp lệ.");
+            return OperationResult.Fail(OperationError.PermissionDenied, AppText.Get("Msg_IncSvc_InvalidSession"));
 
         try
         {
@@ -143,9 +144,9 @@ public sealed class IncidentService : IIncidentService
             {
                 var incident = await db.Incidents.FirstOrDefaultAsync(x => x.IncidentId == incidentId, cancellationToken);
                 if (incident is null)
-                    return OperationResult.Fail(OperationError.NotFound, "Không tìm thấy biên bản sự cố.");
+                    return OperationResult.Fail(OperationError.NotFound, AppText.Get("Msg_IncSvc_NotFound"));
                 if (incident.Status == IncidentStatus.Resolved)
-                    return OperationResult.Fail(OperationError.Validation, "Biên bản này đã được xử lý.");
+                    return OperationResult.Fail(OperationError.Validation, AppText.Get("Msg_IncSvc_AlreadyResolved"));
 
                 incident.Status = IncidentStatus.Resolved;
                 incident.ResolvedByUserId = userId.Value;
@@ -187,7 +188,7 @@ public sealed class IncidentService : IIncidentService
 
         var userId = _currentUser.User?.UserId;
         if (userId is null or <= 0)
-            return OperationResult.Fail(OperationError.PermissionDenied, "Phiên đăng nhập không hợp lệ.");
+            return OperationResult.Fail(OperationError.PermissionDenied, AppText.Get("Msg_IncSvc_InvalidSession"));
 
         try
         {

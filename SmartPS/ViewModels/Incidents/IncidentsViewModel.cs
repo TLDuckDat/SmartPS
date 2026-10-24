@@ -5,6 +5,7 @@ using SmartPS.Services.Authorization;
 using SmartPS.Services.Common;
 using SmartPS.Services.Dialog;
 using SmartPS.Services.Incidents;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.ViewModels.Incidents;
 
@@ -12,7 +13,10 @@ public sealed record IncidentTypeOption(IncidentType Type, string Name);
 
 public class IncidentsViewModel : ViewModelBase
 {
-    public static readonly string[] StatusFilters = { "Tất cả trạng thái", IncidentItemViewModel.OpenStatusText, IncidentItemViewModel.ResolvedStatusText };
+    public static IReadOnlyList<string> StatusFilters => new[]
+    {
+        AppText.Get("Str_Inc_AllStatuses"), IncidentItemViewModel.OpenStatusText, IncidentItemViewModel.ResolvedStatusText
+    };
 
     private readonly IIncidentService _incidentService;
     private readonly IPermissionService _permissionService;
@@ -92,8 +96,15 @@ public class IncidentsViewModel : ViewModelBase
 
     #region Lập biên bản
 
-    public IReadOnlyList<IncidentTypeOption> TypeOptions { get; } = IncidentItemViewModel.TypeNames
-        .Select(kv => new IncidentTypeOption(kv.Key, kv.Value))
+    private IReadOnlyList<IncidentTypeOption> _typeOptions = BuildTypeOptions();
+    public IReadOnlyList<IncidentTypeOption> TypeOptions
+    {
+        get => _typeOptions;
+        private set => SetProperty(ref _typeOptions, value);
+    }
+
+    private static IReadOnlyList<IncidentTypeOption> BuildTypeOptions() => IncidentItemViewModel.Types
+        .Select(t => new IncidentTypeOption(t, IncidentItemViewModel.GetTypeName(t)))
         .ToList();
 
     private bool _isReportFormOpen;
@@ -181,7 +192,25 @@ public class IncidentsViewModel : ViewModelBase
         ConfirmResolveCommand = new AsyncRelayCommand(ConfirmResolveAsync, () => CanManage && !IsBusy);
         ScanOverstayCommand = new AsyncRelayCommand(ScanOverstayAsync, () => CanReport && !IsBusy);
 
+        AppText.Changed += OnLanguageChanged;
+
         _ = LoadDataAsync();
+    }
+
+    private void OnLanguageChanged()
+    {
+        var statusIndex = SelectedStatusFilterIndex;
+        var newType = NewType?.Type;
+
+        OnPropertyChanged(nameof(StatusFilterOptions));
+        SelectedStatusFilterIndex = statusIndex;
+        OnPropertyChanged(nameof(SelectedStatusFilterIndex));
+
+        TypeOptions = BuildTypeOptions();
+        NewType = newType is { } t ? TypeOptions.FirstOrDefault(o => o.Type == t) : null;
+
+        foreach (var item in _allIncidents)
+            item.RefreshTexts();
     }
 
     public async Task LoadDataAsync()
@@ -237,7 +266,7 @@ public class IncidentsViewModel : ViewModelBase
     {
         if (NewType == null)
         {
-            _dialogService.ShowWarning("Vui lòng chọn loại sự cố.");
+            _dialogService.ShowWarning(AppText.Get("Msg_Inc_ChooseType"));
             return;
         }
 
@@ -245,10 +274,10 @@ public class IncidentsViewModel : ViewModelBase
         try
         {
             var result = await _incidentService.ReportAsync(NewType.Type, NewLicensePlate, NewDescription);
-            if (!ShowFailure(result, "Không thể lập biên bản sự cố"))
+            if (!ShowFailure(result, AppText.Get("Str_Inc_ReportFailedTitle")))
             {
                 IsReportFormOpen = false;
-                _dialogService.ShowSuccess($"Đã lập biên bản {result.Message}.");
+                _dialogService.ShowSuccess(AppText.Get("Msg_Inc_Reported", result.Message));
                 await LoadDataAsync();
             }
         }
@@ -267,10 +296,10 @@ public class IncidentsViewModel : ViewModelBase
         try
         {
             var result = await _incidentService.ResolveAsync(item.IncidentId, ResolutionText);
-            if (!ShowFailure(result, "Không thể xử lý biên bản"))
+            if (!ShowFailure(result, AppText.Get("Str_Inc_ResolveFailedTitle")))
             {
                 ResolvingIncident = null;
-                _dialogService.ShowSuccess($"Đã đóng biên bản {result.Message}.");
+                _dialogService.ShowSuccess(AppText.Get("Msg_Inc_Resolved", result.Message));
                 await LoadDataAsync();
             }
         }
@@ -286,12 +315,12 @@ public class IncidentsViewModel : ViewModelBase
         try
         {
             var result = await _incidentService.ScanOverstayAsync();
-            if (!ShowFailure(result, "Không thể quét xe quá hạn"))
+            if (!ShowFailure(result, AppText.Get("Str_Inc_ScanFailedTitle")))
             {
                 var created = int.TryParse(result.Message, out var n) ? n : 0;
                 _dialogService.ShowInfo(created == 0
-                    ? "Không có xe gửi quá hạn mới cần lập biên bản."
-                    : $"Đã lập {created} biên bản xe gửi quá hạn.");
+                    ? AppText.Get("Msg_Inc_ScanNone")
+                    : AppText.Get("Msg_Inc_ScanCreated", created));
                 await LoadDataAsync();
             }
         }
@@ -307,7 +336,7 @@ public class IncidentsViewModel : ViewModelBase
         if (result.Success) return false;
 
         if (result.IsPermissionDenied)
-            _dialogService.ShowWarning("Bạn không có quyền thực hiện thao tác này.", title);
+            _dialogService.ShowWarning(AppText.Get("Msg_Inc_NoPermission"), title);
         else if (result.Error == OperationError.Validation || result.Error == OperationError.NotFound)
             _dialogService.ShowWarning(result.Message, title);
         else

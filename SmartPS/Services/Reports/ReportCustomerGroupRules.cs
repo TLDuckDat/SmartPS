@@ -15,7 +15,7 @@ public static class ReportCustomerGroupRules
 
     /// <summary>SQL expression yielding the <see cref="ReportCustomerGroup"/> value (needs the <c>@res</c> parameter and alias <c>s</c>).</summary>
     public const string SqlGroupCase =
-        "CASE WHEN s.\"CustomerType\" = @res THEN 1 WHEN s.\"IsMonthlyPass\" THEN 2 ELSE 3 END";
+        "CASE WHEN s.\"CustomerType\" = @res THEN 1 WHEN s.\"IsMonthlyPass\" = 1 THEN 2 ELSE 3 END";
 
     public static ReportCustomerGroup Classify(CustomerType type, bool isMonthlyPass)
     {

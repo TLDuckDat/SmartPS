@@ -6,14 +6,14 @@ using SmartPS.Services.GateControl;
 namespace SmartPS.Tests.Integration;
 
 /// <summary>AC-3, R12, decision 2, A5: automatic slot allocation by zone audience (each test uses its own vehicle type).</summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class GateSlotSelectionTests : IClassFixture<PostgresDatabaseFixture>
+public class GateSlotSelectionTests : IClassFixture<SqlServerDatabaseFixture>
 {
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
     private readonly GateTestData _data;
 
-    public GateSlotSelectionTests(PostgresDatabaseFixture db)
+    public GateSlotSelectionTests(SqlServerDatabaseFixture db)
     {
         _db = db;
         _data = new GateTestData(db);

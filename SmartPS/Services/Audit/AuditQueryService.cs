@@ -34,7 +34,11 @@ public sealed class AuditQueryService : IAuditQueryService
         {
             var pattern = "%" + EscapeLike(filter.SearchText.Trim()) + "%";
             query = db.AuditLogs
-                .FromSqlInterpolated($"SELECT * FROM \"AuditLogs\" WHERE \"EntityId\" ILIKE {pattern} OR \"Details\"::text ILIKE {pattern}")
+                .FromSqlInterpolated($"""
+                    SELECT * FROM "AuditLogs"
+                    WHERE "EntityId" COLLATE Vietnamese_100_CI_AS LIKE {pattern} ESCAPE '\'
+                       OR "Details" COLLATE Vietnamese_100_CI_AS LIKE {pattern} ESCAPE '\'
+                    """)
                 .AsNoTracking();
         }
         else
@@ -88,7 +92,8 @@ public sealed class AuditQueryService : IAuditQueryService
         var builder = new StringBuilder(term.Length + 4);
         foreach (var ch in term)
         {
-            if (ch is '\\' or '%' or '_')
+            // '[' cũng là ký tự đại diện trong LIKE của SQL Server
+            if (ch is '\\' or '%' or '_' or '[')
             {
                 builder.Append('\\');
             }

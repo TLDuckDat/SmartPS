@@ -122,7 +122,7 @@ public class TransactionsViewModel : ViewModelBase
         }
     }
 
-    private string _selectedStatusFilter = "Tất cả";
+    private string _selectedStatusFilter = "All";
     public string SelectedStatusFilter
     {
         get => _selectedStatusFilter;
@@ -135,7 +135,7 @@ public class TransactionsViewModel : ViewModelBase
         }
     }
 
-    private string _selectedPaymentFilter = "Tất cả";
+    private string _selectedPaymentFilter = "All";
     public string SelectedPaymentFilter
     {
         get => _selectedPaymentFilter;
@@ -205,8 +205,8 @@ public class TransactionsViewModel : ViewModelBase
         ClearFilterCommand = new RelayCommand(() =>
         {
             SearchKeyword = string.Empty;
-            SelectedStatusFilter = "Tất cả";
-            SelectedPaymentFilter = "Tất cả";
+            SelectedStatusFilter = "All";
+            SelectedPaymentFilter = "All";
         });
 
         ViewPaymentDetailsCommand = new AsyncRelayCommand(ExecuteViewPaymentDetailsAsync);
@@ -323,8 +323,8 @@ public class TransactionsViewModel : ViewModelBase
         }
 
         var confirm = System.Windows.MessageBox.Show(
-            $"Xác nhận hoàn tiền giao dịch {item.TransactionReference}\n\nSố tiền: {item.Amount:N0} đ\n\nLưu ý: thao tác này ghi nhận giao dịch đã hoàn tiền trong SmartPS. Việc chuyển tiền thực tế cần được thực hiện theo quy trình hoàn tiền của nhà cung cấp thanh toán.",
-            "Xác nhận hoàn tiền",
+            AppText.Get("Msg_Tx_ConfirmRefund", item.TransactionReference, item.Amount),
+            AppText.Get("Str_Tx_ConfirmRefundTitle"),
             System.Windows.MessageBoxButton.YesNo,
             System.Windows.MessageBoxImage.Warning);
 
@@ -344,8 +344,8 @@ public class TransactionsViewModel : ViewModelBase
             if (result.Success)
             {
                 System.Windows.MessageBox.Show(
-                    "Đã ghi nhận giao dịch ở trạng thái Refunded.",
-                    "Hoàn tiền",
+                    AppText.Get("Msg_Tx_RefundRecorded"),
+                    AppText.Get("Str_Tx_RefundTitle"),
                     System.Windows.MessageBoxButton.OK,
                     System.Windows.MessageBoxImage.Information);
 
@@ -360,7 +360,7 @@ public class TransactionsViewModel : ViewModelBase
             {
                 System.Windows.MessageBox.Show(
                     result.IsPermissionDenied ? _localizationService.GetString("Msg_Auth_PermissionDenied") : result.Message,
-                    "Không thể hoàn tiền",
+                    AppText.Get("Str_Tx_RefundFailedTitle"),
                     System.Windows.MessageBoxButton.OK,
                     System.Windows.MessageBoxImage.Warning);
             }
@@ -369,8 +369,8 @@ public class TransactionsViewModel : ViewModelBase
         {
             System.Diagnostics.Debug.WriteLine($"[Refund Error]: {ex.Message}");
             System.Windows.MessageBox.Show(
-                "Có lỗi khi ghi nhận hoàn tiền.",
-                "Hoàn tiền",
+                AppText.Get("Msg_Tx_RefundError"),
+                AppText.Get("Str_Tx_RefundTitle"),
                 System.Windows.MessageBoxButton.OK,
                 System.Windows.MessageBoxImage.Error);
         }
@@ -398,20 +398,20 @@ public class TransactionsViewModel : ViewModelBase
                 }
             }
 
-            if (SelectedStatusFilter == "Đã thanh toán" && s.Status != SessionStatus.Completed)
+            if (SelectedStatusFilter == "Paid" && s.Status != SessionStatus.Completed)
             {
                 continue;
             }
-            if (SelectedStatusFilter == "Đang đỗ" && s.Status != SessionStatus.Active)
+            if (SelectedStatusFilter == "Parked" && s.Status != SessionStatus.Active)
             {
                 continue;
             }
-            if (SelectedStatusFilter == "Chờ thanh toán" && s.Status != SessionStatus.Active)
+            if (SelectedStatusFilter == "Pending" && s.Status != SessionStatus.Active)
             {
                 continue;
             }
 
-            if (SelectedPaymentFilter == "Tiền mặt" && s.PaymentMethod != PaymentMethod.Cash)
+            if (SelectedPaymentFilter == "Cash" && s.PaymentMethod != PaymentMethod.Cash)
             {
                 continue;
             }
@@ -438,21 +438,21 @@ public class TransactionsViewModel : ViewModelBase
                 }
             }
 
-            if (SelectedStatusFilter == "Đã thanh toán" && p.Status != PaymentStatus.Paid)
+            if (SelectedStatusFilter == "Paid" && p.Status != PaymentStatus.Paid)
             {
                 continue;
             }
-            if (SelectedStatusFilter == "Chờ thanh toán" && p.Status != PaymentStatus.Pending && p.Status != PaymentStatus.Created)
+            if (SelectedStatusFilter == "Pending" && p.Status != PaymentStatus.Pending && p.Status != PaymentStatus.Created)
             {
                 continue;
             }
-            if (SelectedStatusFilter == "Đang đỗ")
+            if (SelectedStatusFilter == "Parked")
             {
                 // Payments không có trạng thái Đang đỗ
                 continue;
             }
 
-            if (SelectedPaymentFilter == "Tiền mặt" && p.PaymentMethod != PaymentMethod.Cash)
+            if (SelectedPaymentFilter == "Cash" && p.PaymentMethod != PaymentMethod.Cash)
             {
                 continue;
             }
@@ -471,7 +471,7 @@ public class TransactionsViewModel : ViewModelBase
                 !transaction.TransactionCode.ToUpperInvariant().Contains(kw) &&
                 !(transaction.ParkingSession?.LicensePlate?.ToUpperInvariant().Contains(kw) ?? false) &&
                 !(transaction.ReferenceCode?.ToUpperInvariant().Contains(kw) ?? false)) continue;
-            if (SelectedPaymentFilter == "Tiền mặt" && transaction.PaymentMethod != PaymentMethod.Cash) continue;
+            if (SelectedPaymentFilter == "Cash" && transaction.PaymentMethod != PaymentMethod.Cash) continue;
             if (SelectedPaymentFilter == "VietQR" && transaction.PaymentMethod != PaymentMethod.VietQR) continue;
             FilteredFinancialTransactions.Add(new ShiftTransactionItemViewModel(transaction));
         }

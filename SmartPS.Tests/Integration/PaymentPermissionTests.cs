@@ -8,13 +8,13 @@ namespace SmartPS.Tests.Integration;
 /// <summary>
 /// Spec §6.4 (M4) VietQR cancel rule, R5 Payment.Refund, m8 result contracts (IsPermissionDenied), A2, T-ACTOR, R14 payment events.
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class PaymentPermissionTests : IClassFixture<PostgresDatabaseFixture>
+public class PaymentPermissionTests : IClassFixture<SqlServerDatabaseFixture>
 {
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
 
-    public PaymentPermissionTests(PostgresDatabaseFixture db)
+    public PaymentPermissionTests(SqlServerDatabaseFixture db)
     {
         _db = db;
     }

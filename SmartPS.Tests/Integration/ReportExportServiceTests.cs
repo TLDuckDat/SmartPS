@@ -10,15 +10,15 @@ namespace SmartPS.Tests.Integration;
 /// the exported workbook opens with ClosedXML, has the 6 sheets, its daily net total equals the KPI, and exactly one
 /// REPORT_EXPORT row with a valid hash is written; Operator is denied with ACCESS_DENIED and no file.
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public sealed class ReportExportServiceTests : IClassFixture<PostgresDatabaseFixture>, IDisposable
+public sealed class ReportExportServiceTests : IClassFixture<SqlServerDatabaseFixture>, IDisposable
 {
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
     private readonly ReportSeed _seed;
     private readonly DirectoryInfo _dir = Directory.CreateTempSubdirectory("smartps-export-it-");
 
-    public ReportExportServiceTests(PostgresDatabaseFixture db)
+    public ReportExportServiceTests(SqlServerDatabaseFixture db)
     {
         _db = db;
         _seed = new ReportSeed(db);

@@ -5,13 +5,13 @@ using SmartPS.Services.Settings;
 namespace SmartPS.Tests.Integration;
 
 /// <summary>Operational settings are Admin-only (Settings.Manage), range-checked, and the database status never exposes the password.</summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class SystemSettingsServiceTests : IClassFixture<PostgresDatabaseFixture>
+public class SystemSettingsServiceTests : IClassFixture<SqlServerDatabaseFixture>
 {
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
 
-    public SystemSettingsServiceTests(PostgresDatabaseFixture db)
+    public SystemSettingsServiceTests(SqlServerDatabaseFixture db)
     {
         _db = db;
     }
@@ -71,7 +71,7 @@ public class SystemSettingsServiceTests : IClassFixture<PostgresDatabaseFixture>
         Assert.True(status.IsOnline, status.Error);
         Assert.Equal(0, status.PendingMigrations);
         Assert.True(status.AppliedMigrations > 0);
-        Assert.EndsWith("_AddIncidents", status.LastMigration);
+        Assert.EndsWith("_InitialSqlServer", status.LastMigration);
         Assert.False(string.IsNullOrEmpty(status.ServerVersion));
     }
 }

@@ -7,13 +7,15 @@ namespace SmartPS.Data.Configurations.Audit;
 
 public class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
 {
+    public const string AuditLogTriggerName = "TR_AuditLogs_BlockMutation";
+
     public void Configure(EntityTypeBuilder<AuditLog> builder)
     {
-        builder.ToTable("AuditLogs");
+        // Trigger chặn UPDATE/DELETE (tạo trong migration). Khai báo trigger để EF không dùng mệnh đề OUTPUT khi INSERT,
+        // vì SQL Server không cho dùng OUTPUT (không INTO) trên bảng có trigger.
+        builder.ToTable("AuditLogs", t => t.HasTrigger(AuditLogTriggerName));
 
         builder.HasKey(x => x.AuditLogId);
-
-        builder.Property(x => x.OccurredAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(x => x.Username).HasMaxLength(100).IsRequired();
         builder.Property(x => x.RoleName).HasMaxLength(50).IsRequired();
         builder.Property(x => x.Action).HasMaxLength(64).IsRequired();
@@ -25,7 +27,8 @@ public class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
                .HasConversion(new ValueConverter<AuditOutcome, string>(v => v.ToString(), v => ParseOutcome(v)))
                .HasMaxLength(16)
                .IsRequired();
-        builder.Property(x => x.Details).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb").IsRequired();
+        // JSON chuẩn hoá (AuditDetails) lưu nguyên văn; ISJSON kiểm tra trong migration
+        builder.Property(x => x.Details).HasColumnType("nvarchar(max)").HasDefaultValueSql("N'{}'").IsRequired();
         builder.Property(x => x.MachineName).HasMaxLength(128).IsRequired();
         builder.Property(x => x.PrevHash).HasMaxLength(64).IsRequired();
         builder.Property(x => x.Hash).HasMaxLength(64).IsRequired();

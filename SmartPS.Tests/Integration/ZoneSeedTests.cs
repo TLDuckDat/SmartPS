@@ -7,18 +7,18 @@ namespace SmartPS.Tests.Integration;
 /// seeds no customer/vehicle/ticket/blacklist rows of its own, and re-running it changes nothing (and keeps an audience
 /// changed in the UI).
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class ZoneSeedTests : IClassFixture<PostgresDatabaseFixture>
+public class ZoneSeedTests : IClassFixture<SqlServerDatabaseFixture>
 {
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
 
-    public ZoneSeedTests(PostgresDatabaseFixture db)
+    public ZoneSeedTests(SqlServerDatabaseFixture db)
     {
         _db = db;
     }
 
-    private static Task<long> CountAsync(string cs, string sql) => PostgresDatabaseFixture.ScalarAsync<long>(cs, sql);
+    private static Task<long> CountAsync(string cs, string sql) => SqlServerDatabaseFixture.ScalarAsync<long>(cs, sql);
 
     private Task<long> CountAsync(string sql) => CountAsync(_db.ConnectionString, sql);
 
@@ -35,7 +35,7 @@ public class ZoneSeedTests : IClassFixture<PostgresDatabaseFixture>
 
     private static async Task SeedAsync(string cs)
     {
-        await using var ctx = PostgresDatabaseFixture.CreateContext(cs);
+        await using var ctx = SqlServerDatabaseFixture.CreateContext(cs);
         await DbInitializer.InitializeAsync(ctx);
     }
 
@@ -90,7 +90,7 @@ public class ZoneSeedTests : IClassFixture<PostgresDatabaseFixture>
         _db.RequireAvailable();
         var cs = await _db.CreateSiblingDatabaseAsync("zone_seed_keep");
         await SeedAsync(cs);
-        await using (var ctx = PostgresDatabaseFixture.CreateContext(cs))
+        await using (var ctx = SqlServerDatabaseFixture.CreateContext(cs))
         {
             await Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.ExecuteSqlRawAsync(ctx.Database,
                 "UPDATE \"ParkingZones\" SET \"Audience\" = 0 WHERE \"ZoneCode\" = 'ZONE_R'; UPDATE \"ParkingZones\" SET \"Audience\" = 2 WHERE \"ZoneCode\" = 'ZONE_A';");

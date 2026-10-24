@@ -10,13 +10,13 @@ namespace SmartPS.Tests.Integration;
 /// T-WEBHOOK (A3): VietQR completion by webhook / gateway verify writes PARKING_CHECKOUT with the checkout user as actor.
 /// T-IO (M1 / rule R-IO): no gateway HTTP call happens while the audit lock is held.
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class WebhookCheckoutAuditTests : IClassFixture<PostgresDatabaseFixture>
+public class WebhookCheckoutAuditTests : IClassFixture<SqlServerDatabaseFixture>
 {
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
 
-    public WebhookCheckoutAuditTests(PostgresDatabaseFixture db)
+    public WebhookCheckoutAuditTests(SqlServerDatabaseFixture db)
     {
         _db = db;
     }
@@ -178,9 +178,9 @@ public class WebhookCheckoutAuditTests : IClassFixture<PostgresDatabaseFixture>
                 return;
             }
 
-            using var conn = new Npgsql.NpgsqlConnection(cs);
+            using var conn = new Microsoft.Data.SqlClient.SqlConnection(cs);
             conn.Open();
-            using var cmd = new Npgsql.NpgsqlCommand("UPDATE \"Payments\" SET \"Status\" = 1 WHERE \"PaymentId\" = @p", conn);
+            using var cmd = new Microsoft.Data.SqlClient.SqlCommand("UPDATE \"Payments\" SET \"Status\" = 1 WHERE \"PaymentId\" = @p", conn);
             cmd.Parameters.AddWithValue("p", flipPaymentId.Value);
             cmd.ExecuteNonQuery();
         }

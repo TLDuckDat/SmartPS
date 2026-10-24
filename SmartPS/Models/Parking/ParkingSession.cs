@@ -1,5 +1,6 @@
 using SmartPS.Models.Auth;
 using SmartPS.Models.Payment;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.Models.Parking;
 
@@ -62,12 +63,12 @@ public class ParkingSession
         get
         {
             var d = CurrentDuration;
-            if (d.TotalSeconds < 60) return "Dưới 1 phút";
+            if (d.TotalSeconds < 60) return AppText.Get("Str_Duration_UnderMinute");
             if (d.TotalDays >= 1)
-                return $"{(int)d.TotalDays} ngày {d.Hours} giờ {d.Minutes} phút";
+                return AppText.Get("Str_Duration_DHM", (int)d.TotalDays, d.Hours, d.Minutes);
             if (d.TotalHours >= 1)
-                return $"{(int)d.TotalHours} giờ {d.Minutes} phút";
-            return $"{d.Minutes} phút";
+                return AppText.Get("Str_Duration_HM", (int)d.TotalHours, d.Minutes);
+            return AppText.Get("Str_Duration_M", d.Minutes);
         }
     }
 }

@@ -7,14 +7,14 @@ using SmartPS.Services.GateControl;
 namespace SmartPS.Tests.Integration;
 
 /// <summary>AC-14 / E6: two check-ins racing for the last slot ⇒ exactly one wins; allocator locking and the DB backstop index.</summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class SlotConcurrencyTests : IClassFixture<PostgresDatabaseFixture>
+public class SlotConcurrencyTests : IClassFixture<SqlServerDatabaseFixture>
 {
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
     private readonly GateTestData _data;
 
-    public SlotConcurrencyTests(PostgresDatabaseFixture db)
+    public SlotConcurrencyTests(SqlServerDatabaseFixture db)
     {
         _db = db;
         _data = new GateTestData(db);

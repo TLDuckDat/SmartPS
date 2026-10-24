@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using System.Text.Json.Nodes;
 using SmartPS.Models.Ocr;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.Services.OcrLisencePlate;
 
@@ -89,18 +90,18 @@ public class LicensePlateOcrService : IOcrLicensePlateService
     {
         if (string.IsNullOrWhiteSpace(imagePath))
         {
-            return CreateErrorResponse("EMPTY_PATH", "Đường dẫn ảnh không được để trống.");
+            return CreateErrorResponse("EMPTY_PATH", AppText.Get("Msg_Ocr_EmptyPath"));
         }
 
         var fullPath = Path.GetFullPath(imagePath);
         if (!File.Exists(fullPath))
         {
-            return CreateErrorResponse("FILE_NOT_FOUND", $"Không tìm thấy tệp ảnh tại: {fullPath}");
+            return CreateErrorResponse("FILE_NOT_FOUND", AppText.Get("Msg_Ocr_FileNotFound", fullPath));
         }
 
         if (!await EnsureEngineStartedAsync(cancellationToken))
         {
-            return CreateErrorResponse("ENGINE_NOT_READY", $"Không tìm thấy Engine OCR nhận diện biển số ({EngineFileName}).");
+            return CreateErrorResponse("ENGINE_NOT_READY", AppText.Get("Msg_Ocr_EngineNotReady", EngineFileName));
         }
 
         await _runLock.WaitAsync(cancellationToken);
@@ -136,13 +137,13 @@ public class LicensePlateOcrService : IOcrLicensePlateService
         {
             if (!process.Start())
             {
-                return CreateErrorResponse("ENGINE_START_FAILED", $"Không thể khởi động {EngineFileName}.");
+                return CreateErrorResponse("ENGINE_START_FAILED", AppText.Get("Msg_Ocr_EngineStartFailed", EngineFileName));
             }
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"[LicensePlateOcrService Exception during startup]: {ex.Message}");
-            return CreateErrorResponse("ENGINE_START_FAILED", $"Không thể khởi động {EngineFileName}: {ex.Message}");
+            return CreateErrorResponse("ENGINE_START_FAILED", AppText.Get("Msg_Ocr_EngineStartFailedDetail", EngineFileName, ex.Message));
         }
 
         _process = process;
@@ -161,7 +162,7 @@ public class LicensePlateOcrService : IOcrLicensePlateService
             {
                 KillQuietly(process);
                 cancellationToken.ThrowIfCancellationRequested();
-                return CreateErrorResponse("TIMEOUT", $"Quá thời gian chờ phản hồi từ Engine OCR (Timeout {RequestTimeout.TotalSeconds:0}s).");
+                return CreateErrorResponse("TIMEOUT", AppText.Get("Msg_Ocr_Timeout", RequestTimeout.TotalSeconds));
             }
 
             var stdout = await stdoutTask;
@@ -171,9 +172,9 @@ public class LicensePlateOcrService : IOcrLicensePlateService
             var (jsonPath, annotatedPath) = ParseOutputPaths(stdout);
             if (process.ExitCode != 0 || jsonPath == null || !File.Exists(jsonPath))
             {
-                var reason = LastNonEmptyLine(stderr) ?? LastNonEmptyLine(stdout) ?? $"mã thoát {process.ExitCode}";
+                var reason = LastNonEmptyLine(stderr) ?? LastNonEmptyLine(stdout) ?? AppText.Get("Str_Ocr_ExitCode", process.ExitCode);
                 Debug.WriteLine($"[LicensePlateEngine STDERR]: {stderr}");
-                return CreateErrorResponse("ENGINE_FAILED", $"Engine OCR xử lý ảnh thất bại: {reason}");
+                return CreateErrorResponse("ENGINE_FAILED", AppText.Get("Msg_Ocr_EngineFailed", reason));
             }
 
             (jsonPath, annotatedPath) = MoveResultFolder(jsonPath, annotatedPath);
@@ -187,7 +188,7 @@ public class LicensePlateOcrService : IOcrLicensePlateService
         catch (Exception ex)
         {
             Debug.WriteLine($"[LicensePlateOcrService Exception]: {ex.Message}");
-            return CreateErrorResponse("REQUEST_EXCEPTION", $"Lỗi khi gửi yêu cầu nhận diện: {ex.Message}");
+            return CreateErrorResponse("REQUEST_EXCEPTION", AppText.Get("Msg_Ocr_RequestError", ex.Message));
         }
         finally
         {
@@ -249,7 +250,7 @@ public class LicensePlateOcrService : IOcrLicensePlateService
 
         if (plates.Count == 0)
         {
-            var response = CreateErrorResponse("NO_PLATE", "Không phát hiện biển số");
+            var response = CreateErrorResponse("NO_PLATE", AppText.Get("Str_GateUi_NoPlateDetected"));
             response.OutputImage = annotatedPath;
             response.Processing = new OcrProcessingInfo { TotalMs = elapsedMs };
             return response;

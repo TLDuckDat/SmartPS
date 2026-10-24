@@ -27,7 +27,7 @@ public sealed class PlateOwnershipReader : IPlateOwnershipReader
         // Mọi biến thể biển số (khác dấu gạch/chấm/khoảng trắng) của xe đang hoạt động; mới nhất đứng đầu.
         var vehicles = await db.Vehicles.FromSql($"""
                 SELECT * FROM "Vehicles"
-                WHERE "IsActive" AND upper(regexp_replace("LicensePlate", '[^a-zA-Z0-9]', '', 'g')) = {norm}
+                WHERE "IsActive" = 1 AND dbo.fn_NormalizePlate("LicensePlate") = {norm}
                 """)
             .AsNoTracking()
             .OrderByDescending(v => v.CreatedAt).ThenByDescending(v => v.VehicleId)
@@ -76,11 +76,13 @@ public sealed class PlateOwnershipReader : IPlateOwnershipReader
     private static async Task<List<TicketRow>> ReadTicketsAsync(SmartPsDbContext db, string norm, int[] vehicleIds,
         DateTime nowUtc, CancellationToken cancellationToken)
     {
+        // Danh sách mã xe truyền dưới dạng mảng JSON và đọc bằng OPENJSON (SQL Server không có tham số kiểu mảng)
+        var vehicleIdsJson = System.Text.Json.JsonSerializer.Serialize(vehicleIds);
         var rows = await db.MonthlyTickets.FromSql($"""
                 SELECT * FROM "MonthlyTickets"
                 WHERE "Status" = 0 AND "StartDate" <= {nowUtc} AND {nowUtc} <= "EndDate"
-                  AND ("VehicleId" = ANY({vehicleIds})
-                       OR upper(regexp_replace("RegisteredLicensePlate", '[^a-zA-Z0-9]', '', 'g')) = {norm})
+                  AND ("VehicleId" IN (SELECT CAST([value] AS int) FROM OPENJSON({vehicleIdsJson}))
+                       OR dbo.fn_NormalizePlate("RegisteredLicensePlate") = {norm})
                 """)
             .AsNoTracking()
             .Where(t => t.Customer!.IsActive)

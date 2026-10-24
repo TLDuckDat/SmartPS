@@ -12,14 +12,14 @@ namespace SmartPS.Tests.Integration;
 /// (Attacks.C2, A1, A2, D6, G2; Attacks2.H1). G2/G4 and the partial monthly charge tested the removed
 /// monthly fee split and are gone; the fee formula is the household module's calculator.
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class FixRound1GateRegressionTests : IClassFixture<PostgresDatabaseFixture>
+public class FixRound1GateRegressionTests : IClassFixture<SqlServerDatabaseFixture>
 {
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
     private readonly GateTestData _data;
 
-    public FixRound1GateRegressionTests(PostgresDatabaseFixture db)
+    public FixRound1GateRegressionTests(SqlServerDatabaseFixture db)
     {
         _db = db;
         _data = new GateTestData(db);
@@ -51,7 +51,7 @@ public class FixRound1GateRegressionTests : IClassFixture<PostgresDatabaseFixtur
     private async Task<DateTime> SetCheckInAsync(int sessionId, DateTime checkInUtc)
     {
         await _data.SetSessionCheckInAsync(sessionId, checkInUtc);
-        return await PostgresDatabaseFixture.ScalarAsync<DateTime>(_db.ConnectionString,
+        return await SqlServerDatabaseFixture.ScalarAsync<DateTime>(_db.ConnectionString,
             "SELECT \"CheckInTime\" FROM \"ParkingSessions\" WHERE \"SessionId\" = @id", ("id", sessionId));
     }
 

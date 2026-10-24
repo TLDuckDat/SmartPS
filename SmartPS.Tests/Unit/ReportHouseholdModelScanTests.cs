@@ -157,8 +157,8 @@ public class ReportHouseholdModelScanTests
     {
         // Resident ⇔ CustomerType = @res; MonthlyPass ⇔ IsMonthlyPass AND CustomerType <> @res; Visitor ⇔ NOT IsMonthlyPass AND CustomerType <> @res
         Assert.Contains("(@grp = 1 AND s.\"CustomerType\" = @res)", ReportSql.SessionFilter, StringComparison.Ordinal);
-        Assert.Contains("(@grp = 2 AND s.\"IsMonthlyPass\" AND s.\"CustomerType\" <> @res)", ReportSql.SessionFilter, StringComparison.Ordinal);
-        Assert.Contains("(@grp = 3 AND NOT s.\"IsMonthlyPass\" AND s.\"CustomerType\" <> @res)", ReportSql.SessionFilter, StringComparison.Ordinal);
+        Assert.Contains("(@grp = 2 AND s.\"IsMonthlyPass\" = 1 AND s.\"CustomerType\" <> @res)", ReportSql.SessionFilter, StringComparison.Ordinal);
+        Assert.Contains("(@grp = 3 AND s.\"IsMonthlyPass\" = 0 AND s.\"CustomerType\" <> @res)", ReportSql.SessionFilter, StringComparison.Ordinal);
         Assert.Equal((int)SmartPS.Models.Parking.CustomerType.Resident, ReportCustomerGroupRules.ResidentCustomerTypeValue);
     }
 

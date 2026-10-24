@@ -23,7 +23,7 @@ public class GateFixRoundB2SourceTests
     private const string PricingParkingSessionConfigurationSha256 = "d36b960c67301e5e43e47ffda554b37dd450910689900cea111b503f7c686fbc";
     private const string PricingParkingZoneConfigurationSha256 = "3b1a4503b474ad8a4241f58bec5d57046136631e0fc8e390213dcfedd76d0cee";
 
-    private const string GateMigrationId = "20261013091509_AddGateZoneAudience";
+    private const string InitialMigrationSuffix = "_InitialSqlServer";
 
     private static string ConfigurationsFolder => Path.Combine(RepoPaths.AppProject, "Data", "Configurations");
 
@@ -91,12 +91,12 @@ public class GateFixRoundB2SourceTests
     [Fact]
     public void H3_model_still_has_the_unique_active_slot_index_and_the_audience_default()
     {
-        using var ctx = PostgresDatabaseFixture.CreateContext(PostgresDatabaseFixture.DefaultConnectionString);
+        using var ctx = SqlServerDatabaseFixture.CreateContext(SqlServerDatabaseFixture.DefaultConnectionString);
 
         var session = ctx.Model.FindEntityType(typeof(ParkingSession))!;
         var index = Assert.Single(session.GetIndexes(), i => i.GetDatabaseName() == "IX_ParkingSessions_SlotId_Active");
         Assert.True(index.IsUnique);
-        Assert.Equal("\"Status\" = 0 AND \"SlotId\" IS NOT NULL", index.GetFilter());
+        Assert.Equal("[Status] = 0 AND [SlotId] IS NOT NULL", index.GetFilter());
         Assert.Single(session.GetIndexes(), i => i.GetDatabaseName() == "IX_ParkingSessions_SlotId" && !i.IsUnique);
 
         var audience = ctx.Model.FindEntityType(typeof(ParkingZone))!.FindProperty(nameof(ParkingZone.Audience))!;
@@ -108,15 +108,13 @@ public class GateFixRoundB2SourceTests
     [Fact]
     public void H3_no_pending_model_changes_and_no_new_migration()
     {
-        using var ctx = PostgresDatabaseFixture.CreateContext(PostgresDatabaseFixture.DefaultConnectionString);
+        using var ctx = SqlServerDatabaseFixture.CreateContext(SqlServerDatabaseFixture.DefaultConnectionString);
 
         Assert.False(ctx.Database.HasPendingModelChanges(), "moving the configuration must not change the model");
-        // the reporting index migration follows the gate migration directly; migrations of other modules may come after it
+        // SQL Server baseline: the gate index and audience column are part of InitialSqlServer
         var migrations = ctx.Database.GetMigrations().ToList();
-        var afterGate = migrations.SkipWhile(m => m != GateMigrationId).ToList();
-        Assert.True(afterGate.Count >= 2, "the gate migration must be followed by the reporting index migration");
-        Assert.Equal(GateMigrationId, afterGate[0]);
-        Assert.EndsWith("_AddReportingIndexes", afterGate[1], StringComparison.Ordinal);
-        Assert.Single(Directory.EnumerateFiles(Path.Combine(RepoPaths.AppProject, "Migrations"), "*_AddGateZoneAudience.cs"));
+        Assert.Contains(migrations, m => m.EndsWith(InitialMigrationSuffix, StringComparison.Ordinal));
+        var initial = Directory.EnumerateFiles(Path.Combine(RepoPaths.AppProject, "Migrations"), "*" + InitialMigrationSuffix + ".cs").Single();
+        Assert.Contains("IX_ParkingSessions_SlotId_Active", File.ReadAllText(initial), StringComparison.Ordinal);
     }
 }

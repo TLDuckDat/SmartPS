@@ -43,19 +43,19 @@ public class ShiftTransactionItemViewModel : ViewModelBase
 
     public string TypeText => Transaction.Type switch
     {
-        FinancialTransactionType.ParkingFee => "Phí gửi xe",
-        FinancialTransactionType.Refund => "Hoàn tiền",
-        FinancialTransactionType.Adjustment => "Điều chỉnh",
-        FinancialTransactionType.Incident => "Liên quan sự cố",
+        FinancialTransactionType.ParkingFee => AppText.Get("Str_Shift_TxParkingFee"),
+        FinancialTransactionType.Refund => AppText.Get("Str_Shift_TxRefund"),
+        FinancialTransactionType.Adjustment => AppText.Get("Str_Shift_TxAdjustment"),
+        FinancialTransactionType.Incident => AppText.Get("Str_Shift_TxIncident"),
         _ => Transaction.Type.ToString()
     };
 
     public string PaymentMethodText => Transaction.PaymentMethod switch
     {
-        PaymentMethod.Cash => "Tiền mặt",
+        PaymentMethod.Cash => AppText.Get("Str_Shift_PayCash"),
         PaymentMethod.VietQR => "VietQR",
-        PaymentMethod.Card => "Thẻ / Ví",
-        PaymentMethod.Free => "Miễn phí",
+        PaymentMethod.Card => AppText.Get("Str_Shift_PayCard"),
+        PaymentMethod.Free => AppText.Get("Str_Shift_PayFree"),
         _ => Transaction.PaymentMethod.ToString()
     };
 

@@ -8,9 +8,9 @@ namespace SmartPS.Tests.Performance;
 /// AC-10 / N1: with 50,000 sessions and 50,000 FinancialTransactions over 30 VN days, the report loads in ≤ 3 s and
 /// the Excel export (6 sheets, 50,000 detail rows) finishes in ≤ 15 s. Run with <c>--filter "Category=Performance"</c>.
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Performance")]
-public sealed class ReportPerformanceTests : IClassFixture<PostgresDatabaseFixture>, IDisposable
+public sealed class ReportPerformanceTests : IClassFixture<SqlServerDatabaseFixture>, IDisposable
 {
     private const int Sessions = 50_000;
     private const int Financials = 50_000;
@@ -18,11 +18,11 @@ public sealed class ReportPerformanceTests : IClassFixture<PostgresDatabaseFixtu
     private static readonly TimeSpan ExportBudget = TimeSpan.FromSeconds(15);
     private static readonly DateOnly StartVn = new(2025, 1, 1);
 
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
     private readonly ITestOutputHelper _output;
     private readonly DirectoryInfo _dir = Directory.CreateTempSubdirectory("smartps-report-perf-");
 
-    public ReportPerformanceTests(PostgresDatabaseFixture db, ITestOutputHelper output)
+    public ReportPerformanceTests(SqlServerDatabaseFixture db, ITestOutputHelper output)
     {
         _db = db;
         _output = output;

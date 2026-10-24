@@ -3,6 +3,7 @@ using SmartPS.Data;
 using SmartPS.Services.Dialog;
 using System.Collections.ObjectModel;
 using SmartPS.Models.Parking;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.ViewModels.Pricing;
 
@@ -55,7 +56,7 @@ public class PricingViewModel : ViewModelBase
                 PricingRules.Add(new PricingRuleItemViewModel
                 {
                     RuleId = rule.RuleId,
-                    VehicleTypeName = rule.VehicleType?.TypeName ?? "Không xác định",
+                    VehicleTypeName = rule.VehicleType?.TypeName ?? AppText.Get("Str_Price_UnknownType"),
                     VehicleIcon = GetIcon(rule.VehicleType?.TypeName),
                     Block4hPrice = rule.Block4hPrice,
                     DailyPrice = rule.DailyPrice,
@@ -75,7 +76,7 @@ public class PricingViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            _dialogService.ShowError($"Lỗi tải cấu hình biểu phí: {ex.Message}");
+            _dialogService.ShowError(AppText.Get("Msg_Price_LoadError", ex.Message));
         }
     }
 
@@ -86,7 +87,7 @@ public class PricingViewModel : ViewModelBase
             // 1. Validate số xe tối đa mỗi hộ
             if (DefaultMaxVehicles < 1)
             {
-                _dialogService.ShowError("Số xe tối đa mặc định cho mỗi hộ gia đình phải từ 1 xe trở lên!");
+                _dialogService.ShowError(AppText.Get("Msg_Price_MaxVehiclesMin"));
                 return;
             }
 
@@ -95,7 +96,7 @@ public class PricingViewModel : ViewModelBase
             {
                 if (vm.Block4hPrice < 0 || vm.DailyPrice < 0 || vm.Monthly1Price < 0 || vm.Monthly3Price < 0 || vm.Monthly6Price < 0)
                 {
-                    _dialogService.ShowError($"Biểu phí của '{vm.VehicleTypeName}' không được có giá trị âm!");
+                    _dialogService.ShowError(AppText.Get("Msg_Price_NegativeValue", vm.VehicleTypeName));
                     return;
                 }
 
@@ -103,7 +104,7 @@ public class PricingViewModel : ViewModelBase
                 if ((vm.VehicleTypeName.Contains("máy", StringComparison.OrdinalIgnoreCase) || vm.VehicleTypeName.Contains("ô tô", StringComparison.OrdinalIgnoreCase))
                     && (vm.Block4hPrice <= 0 || vm.DailyPrice <= 0 || vm.Monthly1Price <= 0))
                 {
-                    _dialogService.ShowError($"Giá vé lượt và vé tháng của '{vm.VehicleTypeName}' phải lớn hơn 0đ!");
+                    _dialogService.ShowError(AppText.Get("Msg_Price_MustBePositive", vm.VehicleTypeName));
                     return;
                 }
             }
@@ -137,11 +138,11 @@ public class PricingViewModel : ViewModelBase
             }
 
             await db.SaveChangesAsync();
-            _dialogService.ShowWarning("Lưu thay đổi thành công!");
+            _dialogService.ShowWarning(AppText.Get("Msg_Price_Saved"));
         }
         catch (Exception ex)
         {
-            _dialogService.ShowError($"Lỗi lưu cấu hình biểu phí: {ex.Message}");
+            _dialogService.ShowError(AppText.Get("Msg_Price_SaveError", ex.Message));
         }
     }
 

@@ -9,13 +9,13 @@ using SmartPS.Services.Settings;
 namespace SmartPS.Tests.Integration;
 
 /// <summary>Incidents are stored in the database: gate staff report them, Incident.Manage resolves them, overstays are scanned from active sessions.</summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class IncidentServiceTests : IClassFixture<PostgresDatabaseFixture>
+public class IncidentServiceTests : IClassFixture<SqlServerDatabaseFixture>
 {
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
 
-    public IncidentServiceTests(PostgresDatabaseFixture db)
+    public IncidentServiceTests(SqlServerDatabaseFixture db)
     {
         _db = db;
     }

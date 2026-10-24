@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
+using Microsoft.Data.SqlClient;
 using SmartPS.DTOs.Auth;
 using SmartPS.Models.Auth;
 using SmartPS.Services.Auth;
@@ -12,13 +12,13 @@ namespace SmartPS.Tests.Integration;
 /// FX3 (CH4): the admin-target check is re-evaluated inside the audited transaction (TOCTOU).
 /// Denial = PermissionDeniedException(Reason "AdminRoleRequired", RequiredPermissions ["Role:Admin"]) + one ACCESS_DENIED row.
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class AdminAccountProtectionTests : IClassFixture<PostgresDatabaseFixture>
+public class AdminAccountProtectionTests : IClassFixture<SqlServerDatabaseFixture>
 {
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
 
-    public AdminAccountProtectionTests(PostgresDatabaseFixture db)
+    public AdminAccountProtectionTests(SqlServerDatabaseFixture db)
     {
         _db = db;
     }
@@ -197,9 +197,9 @@ public class AdminAccountProtectionTests : IClassFixture<PostgresDatabaseFixture
 
         void FlipTargetToAdmin()
         {
-            using var conn = new NpgsqlConnection(cs);
+            using var conn = new SqlConnection(cs);
             conn.Open();
-            using var cmd = new NpgsqlCommand("UPDATE \"Users\" SET \"RoleId\" = @r WHERE \"UserId\" = @u", conn);
+            using var cmd = new SqlCommand("UPDATE \"Users\" SET \"RoleId\" = @r WHERE \"UserId\" = @u", conn);
             cmd.Parameters.AddWithValue("r", adminRoleId);
             cmd.Parameters.AddWithValue("u", target.UserId);
             cmd.ExecuteNonQuery();
@@ -230,9 +230,9 @@ public class AdminAccountProtectionTests : IClassFixture<PostgresDatabaseFixture
 
         void FlipTargetToAdmin()
         {
-            using var conn = new NpgsqlConnection(cs);
+            using var conn = new SqlConnection(cs);
             conn.Open();
-            using var cmd = new NpgsqlCommand("UPDATE \"Users\" SET \"RoleId\" = @r WHERE \"UserId\" = @u", conn);
+            using var cmd = new SqlCommand("UPDATE \"Users\" SET \"RoleId\" = @r WHERE \"UserId\" = @u", conn);
             cmd.Parameters.AddWithValue("r", adminRoleId);
             cmd.Parameters.AddWithValue("u", target.UserId);
             cmd.ExecuteNonQuery();

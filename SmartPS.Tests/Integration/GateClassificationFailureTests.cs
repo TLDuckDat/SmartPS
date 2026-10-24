@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
-using Npgsql;
+using Microsoft.Data.SqlClient;
 using SmartPS.Models.GateControl;
 using SmartPS.Models.Parking;
 using SmartPS.Services.GateControl;
@@ -17,9 +17,9 @@ namespace SmartPS.Tests.Integration;
 /// Hooks match SQL text: blacklist queries contain <c>"BlacklistedVehicles"</c>, owner queries <c>"Vehicles"</c>
 /// (with the leading quote, so the blacklist table does not match), ticket queries <c>"MonthlyTickets"</c>.
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class GateClassificationFailureTests : IClassFixture<PostgresDatabaseFixture>
+public class GateClassificationFailureTests : IClassFixture<SqlServerDatabaseFixture>
 {
     private const string BlacklistSql = "\"BlacklistedVehicles\"";
     private const string VehiclesSql = "\"Vehicles\"";
@@ -28,10 +28,10 @@ public class GateClassificationFailureTests : IClassFixture<PostgresDatabaseFixt
     private static readonly string JsonlPath = Path.Combine(AppContext.BaseDirectory, "Storage", "gate_audit_log.jsonl");
     private static readonly string OfflinePath = Path.Combine(AppContext.BaseDirectory, "Storage", "offline_active_sessions.json");
 
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
     private readonly GateTestData _data;
 
-    public GateClassificationFailureTests(PostgresDatabaseFixture db)
+    public GateClassificationFailureTests(SqlServerDatabaseFixture db)
     {
         _db = db;
         _data = new GateTestData(db);
@@ -154,14 +154,14 @@ public class GateClassificationFailureTests : IClassFixture<PostgresDatabaseFixt
     }
 
     [Fact]
-    public async Task Blacklist_lookup_postgres_error_that_is_not_a_connection_error_fails_closed()
+    public async Task Blacklist_lookup_sql_error_that_is_not_a_connection_error_fails_closed()
     {
         _db.RequireAvailable();
         var vt = await _data.CreateIsolatedVehicleTypeAsync();
         var zone = await _data.CreateZoneAsync(ZoneAudience.Mixed, vt, 2);
-        // 42P01 undefined_table: the blacklist table is unreadable while the server is reachable.
+        // 208 invalid object name: the blacklist table is unreadable while the server is reachable.
         var hook = new CommandHookInterceptor(BlacklistSql, occurrence: 1, throwInstead: true,
-            exceptionFactory: () => new PostgresException("relation does not exist", "ERROR", "ERROR", "42P01"));
+            exceptionFactory: () => SqlExceptionFactory.Create(208, "Invalid object name 'BlacklistedVehicles'."));
         using var sp = await HookedOperatorAsync(hook);
         var plate = GateTestData.UniqueNormalizedPlate();
         var idBefore = await AuditDb.MaxIdAsync(_db.Factory);

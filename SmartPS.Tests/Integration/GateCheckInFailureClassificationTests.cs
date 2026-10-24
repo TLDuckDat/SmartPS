@@ -9,13 +9,13 @@ namespace SmartPS.Tests.Integration;
 /// FY1 (CH33) a foreign-key violation is not a connection loss; FY2 (CH32) a cancellation is not a connection loss.
 /// In both cases: no DB session, no PARKING_CHECKIN Success row, no JSONL line, no offline/memory session.
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class GateCheckInFailureClassificationTests : IClassFixture<PostgresDatabaseFixture>
+public class GateCheckInFailureClassificationTests : IClassFixture<SqlServerDatabaseFixture>
 {
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
 
-    public GateCheckInFailureClassificationTests(PostgresDatabaseFixture db)
+    public GateCheckInFailureClassificationTests(SqlServerDatabaseFixture db)
     {
         _db = db;
     }

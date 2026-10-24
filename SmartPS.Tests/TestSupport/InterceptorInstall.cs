@@ -12,7 +12,7 @@ namespace SmartPS.Tests.TestSupport;
 /// </summary>
 public static class InterceptorInstall
 {
-    public static Action<IServiceCollection> With(PostgresDatabaseFixture fixture, params IInterceptor[] interceptors) => services =>
+    public static Action<IServiceCollection> With(SqlServerDatabaseFixture fixture, params IInterceptor[] interceptors) => services =>
     {
         services.RemoveAll<IDbContextFactory<SmartPsDbContext>>();
         services.AddSingleton<IDbContextFactory<SmartPsDbContext>>(new Factory(fixture.ConnectionString, interceptors));
@@ -25,7 +25,7 @@ public static class InterceptorInstall
         public Factory(string connectionString, IInterceptor[] interceptors)
         {
             _options = new DbContextOptionsBuilder<SmartPsDbContext>()
-                .UseNpgsql(connectionString)
+                .UseSqlServer(connectionString)
                 .AddInterceptors(interceptors)
                 .Options;
         }

@@ -12,12 +12,12 @@ namespace SmartPS.Tests.Unit;
 /// </summary>
 public class AuditServicePreconditionTests
 {
-    private const string OfflineConnection = "Host=127.0.0.1;Port=1;Database=x;Username=x;Password=x;Timeout=1;Pooling=false";
+    private const string OfflineConnection = "Server=tcp:127.0.0.1,1;Database=x;User Id=x;Password=x;Connect Timeout=1;ConnectRetryCount=0;Pooling=false;TrustServerCertificate=True";
 
     private sealed class OfflineFactory : IDbContextFactory<SmartPsDbContext>
     {
         public SmartPsDbContext CreateDbContext()
-            => new(new DbContextOptionsBuilder<SmartPsDbContext>().UseNpgsql(OfflineConnection).Options);
+            => new(new DbContextOptionsBuilder<SmartPsDbContext>().UseSqlServer(OfflineConnection).Options);
     }
 
     private static AuditService CreateService(CurrentUserContext? context = null)
@@ -26,7 +26,7 @@ public class AuditServicePreconditionTests
     [Fact]
     public void Lock_constants_match_plan()
     {
-        Assert.Equal(0x534D_5053_4155_4454L, AuditService.AuditChainLockKey);
+        Assert.Equal("SmartPS.AuditChain", AuditService.AuditChainLockResource);
         Assert.Equal(TimeSpan.FromSeconds(15), AuditService.LockTimeout);
     }
 

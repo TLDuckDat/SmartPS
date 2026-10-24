@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Npgsql;
+using Microsoft.Data.SqlClient;
 using SmartPS.Data;
 
 namespace SmartPS.Tests.Integration;
@@ -10,15 +10,15 @@ namespace SmartPS.Tests.Integration;
 /// Audited transaction mechanics: T-M2a (fail fast while the lock is held), AC-13 / E1 (concurrent writers keep one chain),
 /// commit/rollback atomicity of AppendAsync, addendum N3 (lock timeout → LogAsync returns false).
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class AuditLockTests : IClassFixture<PostgresDatabaseFixture>
+public class AuditLockTests : IClassFixture<SqlServerDatabaseFixture>
 {
     private static readonly TimeSpan FailFast = TimeSpan.FromSeconds(1);
 
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
 
-    public AuditLockTests(PostgresDatabaseFixture db)
+    public AuditLockTests(SqlServerDatabaseFixture db)
     {
         _db = db;
     }
@@ -218,11 +218,11 @@ public class AuditLockTests : IClassFixture<PostgresDatabaseFixture>
         var audit = sp.GetRequiredService<IAuditService>();
         var marker = Guid.NewGuid().ToString("N");
 
-        await using var holder = new NpgsqlConnection(_db.ConnectionString);
+        await using var holder = new SqlConnection(_db.ConnectionString);
         await holder.OpenAsync();
-        await using (var take = new NpgsqlCommand("SELECT pg_advisory_lock(@k)", holder))
+        await using (var take = new SqlCommand("EXEC sp_getapplock @Resource = @k, @LockMode = 'Exclusive', @LockOwner = 'Session'", holder))
         {
-            take.Parameters.AddWithValue("k", AuditService.AuditChainLockKey);
+            take.Parameters.AddWithValue("k", AuditService.AuditChainLockResource);
             await take.ExecuteNonQueryAsync();
         }
 
@@ -234,8 +234,8 @@ public class AuditLockTests : IClassFixture<PostgresDatabaseFixture>
         }
         finally
         {
-            await using var release = new NpgsqlCommand("SELECT pg_advisory_unlock(@k)", holder);
-            release.Parameters.AddWithValue("k", AuditService.AuditChainLockKey);
+            await using var release = new SqlCommand("EXEC sp_releaseapplock @Resource = @k, @LockOwner = 'Session'", holder);
+            release.Parameters.AddWithValue("k", AuditService.AuditChainLockResource);
             await release.ExecuteNonQueryAsync();
         }
 

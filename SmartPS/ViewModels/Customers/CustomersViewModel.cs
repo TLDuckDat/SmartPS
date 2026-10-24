@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using SmartPS.Services.Dialog;
 using SmartPS.Views.Customers;
 using System.Windows;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.ViewModels.Customers;
 
@@ -41,7 +42,7 @@ public class CustomersViewModel : ViewModelBase
     private string _searchKeyword = string.Empty;
     public string SearchKeyword { get => _searchKeyword; set { if (SetProperty(ref _searchKeyword, value)) ApplyCustomerFilter(); } }
 
-    public string[] CustomerSortOptions { get; } = { "Mặc định (Thứ tự tạo)", "Tên khách hàng (A - Z)" };
+    public string[] CustomerSortOptions => new[] { AppText.Get("Str_Customers_SortDefault"), AppText.Get("Str_Customers_SortByName") };
     private int _selectedCustomerSortIndex = 0;
     public int SelectedCustomerSortIndex
     {
@@ -53,7 +54,7 @@ public class CustomersViewModel : ViewModelBase
     private string _householdSearchKeyword = string.Empty;
     public string HouseholdSearchKeyword { get => _householdSearchKeyword; set { if (SetProperty(ref _householdSearchKeyword, value)) ApplyHouseholdFilter(); } }
 
-    public string[] HouseholdSortOptions { get; } = { "Mặc định (Thứ tự tạo)", "Mã căn hộ" };
+    public string[] HouseholdSortOptions => new[] { AppText.Get("Str_Customers_SortDefault"), AppText.Get("Str_Customers_SortByApartment") };
     private int _selectedHouseholdSortIndex = 0;
     public int SelectedHouseholdSortIndex
     {
@@ -65,7 +66,7 @@ public class CustomersViewModel : ViewModelBase
     private string _ticketSearchKeyword = string.Empty;
     public string TicketSearchKeyword { get => _ticketSearchKeyword; set { if (SetProperty(ref _ticketSearchKeyword, value)) ApplyTicketFilter(); } }
 
-    public string[] TicketSortOptions { get; } = { "Mặc định (Thứ tự tạo)", "Tên khách hàng (A - Z)", "Hạn dùng (Sắp hết hạn)" };
+    public string[] TicketSortOptions => new[] { AppText.Get("Str_Customers_SortDefault"), AppText.Get("Str_Customers_SortByName"), AppText.Get("Str_Customers_SortByExpiry") };
     private int _selectedTicketSortIndex = 0;
     public int SelectedTicketSortIndex
     {
@@ -92,7 +93,7 @@ public class CustomersViewModel : ViewModelBase
         get => _monthlyRevenueTotal;
         set { if (SetProperty(ref _monthlyRevenueTotal, value)) OnPropertyChanged(nameof(MonthlyRevenueTotalFormatted)); }
     }
-    public string MonthlyRevenueTotalFormatted => $"{MonthlyRevenueTotal:N0} đ/tháng";
+    public string MonthlyRevenueTotalFormatted => AppText.Get("Str_Customers_RevenuePerMonth", MonthlyRevenueTotal);
 
     public AsyncRelayCommand RefreshCommand { get; }
     
@@ -118,6 +119,7 @@ public class CustomersViewModel : ViewModelBase
     {
         _dbFactory = dbFactory;
         _dialogService = dialogService;
+        AppText.Changed += OnLanguageChanged;
         RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
         
         AddHouseholdCommand = new AsyncRelayCommand(AddHouseholdAsync);
@@ -137,6 +139,19 @@ public class CustomersViewModel : ViewModelBase
         DeleteBlacklistCommand = new AsyncRelayCommand(DeleteBlacklistAsync);
         
         _ = LoadDataAsync();
+    }
+
+    /// <summary>Đổi ngôn ngữ: dựng lại danh sách sắp xếp nhưng giữ lựa chọn đang dùng.</summary>
+    private void OnLanguageChanged()
+    {
+        var (customerSort, householdSort, ticketSort) = (SelectedCustomerSortIndex, SelectedHouseholdSortIndex, SelectedTicketSortIndex);
+        OnPropertyChanged(nameof(CustomerSortOptions));
+        OnPropertyChanged(nameof(HouseholdSortOptions));
+        OnPropertyChanged(nameof(TicketSortOptions));
+        OnPropertyChanged(nameof(MonthlyRevenueTotalFormatted));
+        SelectedCustomerSortIndex = customerSort;
+        SelectedHouseholdSortIndex = householdSort;
+        SelectedTicketSortIndex = ticketSort;
     }
 
     public async Task LoadDataAsync()
@@ -218,7 +233,7 @@ public class CustomersViewModel : ViewModelBase
                         PhoneNumber = c.PhoneNumber,
                         Email = c.Email,
                         IdentityCard = c.IdentityCard,
-                        DefaultLicensePlate = mt?.RegisteredLicensePlate ?? "Chưa ĐK",
+                        DefaultLicensePlate = mt?.RegisteredLicensePlate ?? AppText.Get("Str_Customers_NoPlate"),
                         Type = c.Type,
                         VehicleTypeName = "", 
                         MonthlyTicketCode = mt?.TicketCode ?? "",
@@ -256,7 +271,7 @@ public class CustomersViewModel : ViewModelBase
         }
         catch(Exception ex)
         {
-            _dialogService.ShowError($"Lỗi tải dữ liệu: {ex.Message}");
+            _dialogService.ShowError(AppText.Get("Msg_Common_LoadError", ex.Message));
         }
     }
 
@@ -386,15 +401,15 @@ public class CustomersViewModel : ViewModelBase
                 await using var db = await _dbFactory.CreateDbContextAsync();
                 if (await db.Households.AnyAsync(h => h.ApartmentCode == dlg.ApartmentCode))
                 {
-                    _dialogService.ShowError("Mã căn hộ này đã tồn tại!");
+                    _dialogService.ShowError(AppText.Get("Msg_Customers_ApartmentExists"));
                     return;
                 }
                 db.Households.Add(new Household { ApartmentCode = dlg.ApartmentCode, MaxVehicles = dlg.MaxVehicles, Notes = dlg.Notes, CreatedAt = DateTime.UtcNow });
                 await db.SaveChangesAsync();
                 await LoadDataAsync();
-                _dialogService.ShowSuccess("Thêm hộ gia đình thành công!");
+                _dialogService.ShowSuccess(AppText.Get("Msg_Customers_HouseholdAdded"));
             } catch (Exception ex) {
-                _dialogService.ShowError($"Lỗi khi lưu: {ex.Message}");
+                _dialogService.ShowError(AppText.Get("Msg_Common_SaveError", ex.Message));
             }
         }
     }
@@ -416,7 +431,7 @@ public class CustomersViewModel : ViewModelBase
                     int current = await db.Vehicles.CountAsync(v => v.OwnerCustomer != null && v.OwnerCustomer.HouseholdId == dlg.FinalSelectedHouseholdId.Value && v.IsActive);
                     if (current >= max)
                     {
-                        _dialogService.ShowError($"Hộ gia đình này đã đạt giới hạn xe ({max} xe). Không thể thêm phương tiện.");
+                        _dialogService.ShowError(AppText.Get("Msg_Customers_HouseholdLimitAdd", max));
                         return;
                     }
                 }
@@ -433,10 +448,10 @@ public class CustomersViewModel : ViewModelBase
                 }
 
                 await LoadDataAsync();
-                _dialogService.ShowSuccess("Thêm khách hàng thành công!");
+                _dialogService.ShowSuccess(AppText.Get("Msg_Customers_CustomerAdded"));
             }
         } catch (Exception ex) {
-            _dialogService.ShowError($"Lỗi: {ex.Message}");
+            _dialogService.ShowError(AppText.Get("Msg_Common_ErrorDetail", ex.Message));
         }
     }
 
@@ -460,7 +475,7 @@ public class CustomersViewModel : ViewModelBase
                     int current = await db.Vehicles.CountAsync(v => v.OwnerCustomer != null && v.OwnerCustomer.HouseholdId == customer.HouseholdId.Value && v.IsActive);
                     if (current >= max)
                     {
-                        _dialogService.ShowError($"Hộ gia đình này đã đạt giới hạn xe ({max} xe).");
+                        _dialogService.ShowError(AppText.Get("Msg_Customers_HouseholdLimit", max));
                         return;
                     }
                 }
@@ -469,10 +484,10 @@ public class CustomersViewModel : ViewModelBase
                 db.Vehicles.Add(new Vehicle { LicensePlate = normPlate, VehicleTypeId = dlg.FinalSelectedVehicleType, OwnerCustomerId = cid, CreatedAt = DateTime.UtcNow, IsActive = true });
                 await db.SaveChangesAsync();
                 await LoadDataAsync();
-                _dialogService.ShowSuccess("Thêm xe thành công!");
+                _dialogService.ShowSuccess(AppText.Get("Msg_Customers_VehicleAdded"));
             }
         } catch (Exception ex) {
-            _dialogService.ShowError($"Lỗi: {ex.Message}");
+            _dialogService.ShowError(AppText.Get("Msg_Common_ErrorDetail", ex.Message));
         }
     }
 
@@ -491,13 +506,13 @@ public class CustomersViewModel : ViewModelBase
                 var active = await db.MonthlyTickets.AnyAsync(t => t.VehicleId == vid && t.Status == MonthlyTicketStatus.Active && t.EndDate > DateTime.UtcNow);
                 if (active)
                 {
-                    _dialogService.ShowError("Phương tiện này đã có vé tháng đang hoạt động!");
+                    _dialogService.ShowError(AppText.Get("Msg_Customers_VehicleHasPass"));
                     return;
                 }
                 var v = await db.Vehicles.FirstOrDefaultAsync(x => x.VehicleId == vid);
                 if (v == null || v.OwnerCustomerId != dlg.FinalSelectedCustomerId)
                 {
-                    _dialogService.ShowError("Phương tiện được chọn không thuộc sở hữu của khách hàng đã chọn! Vui lòng kiểm tra lại.");
+                    _dialogService.ShowError(AppText.Get("Msg_Customers_VehicleNotOwned"));
                     return;
                 }
                 var dur = dlg.FinalDurationMonths;
@@ -525,39 +540,30 @@ public class CustomersViewModel : ViewModelBase
                 if (payMethod == PaymentMethod.Cash)
                 {
                     // Tiền mặt: Nhân viên xác nhận đã thu đủ tiền
-                    var confirmMsg = $"XÁC NHẬN THU TIỀN MẶT:\n\n" +
-                                     $"- Khách hàng: {v?.OwnerCustomer?.FullName ?? "N/A"}\n" +
-                                     $"- Biển số xe: {v?.LicensePlate}\n" +
-                                     $"- Số tiền cần thu: {ticketFee:N0} VNĐ\n\n" +
-                                     $"Nhân viên đã nhận đủ số tiền mặt này từ khách hàng chưa?";
-                    if (!_dialogService.ShowYesNo(confirmMsg, "Xác Nhận Thu Tiền Mặt"))
+                    var confirmMsg = AppText.Get("Msg_Customers_ConfirmCashNew", v?.OwnerCustomer?.FullName ?? "N/A", v?.LicensePlate, ticketFee);
+                    if (!_dialogService.ShowYesNo(confirmMsg, AppText.Get("Str_Customers_ConfirmCashTitle")))
                     {
-                        _dialogService.ShowWarning("Giao dịch bị hủy do chưa thu tiền mặt từ khách hàng!");
+                        _dialogService.ShowWarning(AppText.Get("Msg_Customers_CashNotCollected"));
                         return;
                     }
                 }
                 else if (payMethod == PaymentMethod.VietQR)
                 {
                     // VietQR: Hiển thị thông tin chuyển khoản và chờ nhân viên/cổng xác nhận đã thanh toán thành công
-                    var qrMsg = $"CHUYỂN KHOẢN VIETQR:\n\n" +
-                                $"- Số tiền: {ticketFee:N0} VNĐ\n" +
-                                $"- Nội dung CK: DANGKYVE {v?.LicensePlate}\n\n" +
-                                $"Khách hàng đã quét mã và tài khoản đã nhận tiền thành công chưa?";
-                    if (!_dialogService.ShowYesNo(qrMsg, "Xác Nhận Nhận Tiền VietQR"))
+                    var qrMsg = AppText.Get("Msg_Customers_ConfirmQrNew", ticketFee, v?.LicensePlate);
+                    if (!_dialogService.ShowYesNo(qrMsg, AppText.Get("Str_Customers_ConfirmQrTitle")))
                     {
-                        _dialogService.ShowWarning("Thanh toán VietQR chưa hoàn tất. Chưa tạo vé tháng!");
+                        _dialogService.ShowWarning(AppText.Get("Msg_Customers_QrNotDoneNew"));
                         return;
                     }
                 }
                 else if (payMethod == PaymentMethod.Card)
                 {
                     // Thẻ / POS: Xác nhận quẹt thẻ thành công
-                    var cardMsg = $"THANH TOÁN THẺ / POS:\n\n" +
-                                  $"- Số tiền: {ticketFee:N0} VNĐ\n" +
-                                  $"Giao dịch quẹt thẻ qua máy POS đã in hóa đơn thành công chưa?";
-                    if (!_dialogService.ShowYesNo(cardMsg, "Xác Nhận POS"))
+                    var cardMsg = AppText.Get("Msg_Customers_ConfirmCardNew", ticketFee);
+                    if (!_dialogService.ShowYesNo(cardMsg, AppText.Get("Str_Customers_ConfirmCardTitle")))
                     {
-                        _dialogService.ShowWarning("Giao dịch quẹt thẻ chưa thành công. Chưa tạo vé tháng!");
+                        _dialogService.ShowWarning(AppText.Get("Msg_Customers_CardNotDoneNew"));
                         return;
                     }
                 }
@@ -585,17 +591,17 @@ public class CustomersViewModel : ViewModelBase
                 await System.IO.File.AppendAllTextAsync("gate_audit_log.jsonl", logLine);
 
                 await LoadDataAsync();
-                _dialogService.ShowSuccess($"Đăng ký vé tháng thành công! Mức phí: {ticketFee:N0} VNĐ ({payMethod})");
+                _dialogService.ShowSuccess(AppText.Get("Msg_Customers_PassRegistered", ticketFee, payMethod));
             }
         } catch (Exception ex) {
-            _dialogService.ShowError($"Lỗi: {ex.Message}");
+            _dialogService.ShowError(AppText.Get("Msg_Common_ErrorDetail", ex.Message));
         }
     }
 
     private async Task DeleteHouseholdAsync()
     {
         if (SelectedHousehold == null) return;
-        if (!_dialogService.ShowYesNo($"Bạn có chắc chắn muốn xóa Hộ gia đình {SelectedHousehold.ApartmentCode}?", "Xóa Hộ Gia Đình")) return;
+        if (!_dialogService.ShowYesNo(AppText.Get("Msg_Customers_ConfirmDeleteHousehold", SelectedHousehold.ApartmentCode), AppText.Get("Str_Customers_DeleteHouseholdTitle"))) return;
         try {
             await using var db = await _dbFactory.CreateDbContextAsync();
             var h = await db.Households.FindAsync(SelectedHousehold.HouseholdId);
@@ -610,17 +616,17 @@ public class CustomersViewModel : ViewModelBase
                 db.Households.Remove(h);
                 await db.SaveChangesAsync();
                 await LoadDataAsync();
-                _dialogService.ShowSuccess("Xóa hộ gia đình thành công!");
+                _dialogService.ShowSuccess(AppText.Get("Msg_Customers_HouseholdDeleted"));
             }
         } catch (Exception ex) {
-            _dialogService.ShowError($"Không thể xóa vì lỗi cơ sở dữ liệu. Chi tiết: {ex.Message}");
+            _dialogService.ShowError(AppText.Get("Msg_Common_DeleteDbError", ex.Message));
         }
     }
 
     private async Task DeleteCustomerAsync()
     {
         if (SelectedCustomer == null) return;
-        if (!_dialogService.ShowYesNo($"Bạn có chắc chắn muốn xóa khách hàng {SelectedCustomer.FullName}?", "Xóa Khách Hàng")) return;
+        if (!_dialogService.ShowYesNo(AppText.Get("Msg_Customers_ConfirmDeleteCustomer", SelectedCustomer.FullName), AppText.Get("Str_Customers_DeleteCustomerTitle"))) return;
         try {
             await using var db = await _dbFactory.CreateDbContextAsync();
             var c = await db.Customers.FindAsync(SelectedCustomer.CustomerId);
@@ -640,10 +646,10 @@ public class CustomersViewModel : ViewModelBase
                 db.Customers.Remove(c);
                 await db.SaveChangesAsync();
                 await LoadDataAsync();
-                _dialogService.ShowSuccess("Xóa khách hàng thành công!");
+                _dialogService.ShowSuccess(AppText.Get("Msg_Customers_CustomerDeleted"));
             }
         } catch (Exception ex) {
-            _dialogService.ShowError($"Không thể xóa vì lỗi cơ sở dữ liệu. Chi tiết: {ex.Message}");
+            _dialogService.ShowError(AppText.Get("Msg_Common_DeleteDbError", ex.Message));
         }
     }
 
@@ -655,8 +661,8 @@ public class CustomersViewModel : ViewModelBase
         // Nếu dòng này có phương tiện
         if (item.VehicleId.HasValue && item.VehicleId.Value > 0)
         {
-            var msg = $"Bạn có chắc chắn muốn xóa phương tiện '{item.DefaultLicensePlate}' của khách hàng {item.FullName}?\n(Các vé tháng liên quan đến xe này sẽ bị hủy bỏ)";
-            if (!_dialogService.ShowYesNo(msg, "Xóa Phương Tiện")) return;
+            var msg = AppText.Get("Msg_Customers_ConfirmDeleteVehicle", item.DefaultLicensePlate, item.FullName);
+            if (!_dialogService.ShowYesNo(msg, AppText.Get("Str_Customers_DeleteVehicleTitle"))) return;
 
             try
             {
@@ -674,19 +680,19 @@ public class CustomersViewModel : ViewModelBase
                     db.Vehicles.Remove(vehicle);
                     await db.SaveChangesAsync();
                     await LoadDataAsync();
-                    _dialogService.ShowSuccess($"Đã xóa phương tiện '{item.DefaultLicensePlate}' thành công!");
+                    _dialogService.ShowSuccess(AppText.Get("Msg_Customers_VehicleDeleted", item.DefaultLicensePlate));
                 }
             }
             catch (Exception ex)
             {
-                _dialogService.ShowError($"Lỗi khi xóa xe: {ex.Message}");
+                _dialogService.ShowError(AppText.Get("Msg_Customers_DeleteVehicleError", ex.Message));
             }
         }
         else
         {
             // Dòng này không có xe (chỉ có khách hàng chưa thêm xe)
-            var msg = $"Khách hàng {item.FullName} chưa có phương tiện. Bạn có muốn xóa hồ sơ khách hàng này không?";
-            if (!_dialogService.ShowYesNo(msg, "Xóa Khách Hàng")) return;
+            var msg = AppText.Get("Msg_Customers_ConfirmDeleteCustomerNoVehicle", item.FullName);
+            if (!_dialogService.ShowYesNo(msg, AppText.Get("Str_Customers_DeleteCustomerTitle"))) return;
 
             try
             {
@@ -697,12 +703,12 @@ public class CustomersViewModel : ViewModelBase
                     db.Customers.Remove(c);
                     await db.SaveChangesAsync();
                     await LoadDataAsync();
-                    _dialogService.ShowSuccess($"Đã xóa khách hàng {item.FullName} thành công!");
+                    _dialogService.ShowSuccess(AppText.Get("Msg_Customers_CustomerDeletedNamed", item.FullName));
                 }
             }
             catch (Exception ex)
             {
-                _dialogService.ShowError($"Lỗi khi xóa khách hàng: {ex.Message}");
+                _dialogService.ShowError(AppText.Get("Msg_Customers_DeleteCustomerError", ex.Message));
             }
         }
     }
@@ -713,11 +719,9 @@ public class CustomersViewModel : ViewModelBase
         if (item == null) return;
         
         // Hỏi người dùng muốn HỦY VÉ (giữ lại lịch sử tài chính) hay XÓA CỨNG (chỉ khi nhập sai)
-        var msg = $"Bạn muốn xử lý vé '{item.TicketCode}' (Xe: {item.RegisteredLicensePlate}) như thế nào?\n\n" +
-                  "- Chọn 'Có (Yes)': HỦY VÉ (Đổi trạng thái Đã hủy, giữ lại lịch sử doanh thu đối soát).\n" +
-                  "- Chọn 'Không (No)': XÓA VĨNH VIỄN (Chỉ dùng khi nhập nhầm, mất toàn bộ lịch sử).";
+        var msg = AppText.Get("Msg_Customers_CancelOrDeletePass", item.TicketCode, item.RegisteredLicensePlate);
         
-        bool cancelSoft = _dialogService.ShowYesNo(msg, "Hủy Hoặc Xóa Vé Tháng");
+        bool cancelSoft = _dialogService.ShowYesNo(msg, AppText.Get("Str_Customers_CancelOrDeleteTitle"));
         
         try {
             await using var db = await _dbFactory.CreateDbContextAsync();
@@ -729,7 +733,7 @@ public class CustomersViewModel : ViewModelBase
                     t.Status = MonthlyTicketStatus.Cancelled;
                     await db.SaveChangesAsync();
                     await LoadDataAsync();
-                    _dialogService.ShowSuccess($"Đã HỦY vé tháng '{t.TicketCode}'! Vé không còn hiệu lực tại cổng nhưng lịch sử doanh thu vẫn được bảo toàn.");
+                    _dialogService.ShowSuccess(AppText.Get("Msg_Customers_PassCancelledKeepHistory", t.TicketCode));
                 }
                 else
                 {
@@ -737,11 +741,11 @@ public class CustomersViewModel : ViewModelBase
                     db.MonthlyTickets.Remove(t);
                     await db.SaveChangesAsync();
                     await LoadDataAsync();
-                    _dialogService.ShowSuccess($"Đã XÓA VĨNH VIỄN vé tháng '{t.TicketCode}' khỏi hệ thống!");
+                    _dialogService.ShowSuccess(AppText.Get("Msg_Customers_PassDeletedPermanently", t.TicketCode));
                 }
             }
         } catch (Exception ex) {
-            _dialogService.ShowError($"Lỗi: {ex.Message}");
+            _dialogService.ShowError(AppText.Get("Msg_Common_ErrorDetail", ex.Message));
         }
     }
 
@@ -750,7 +754,7 @@ public class CustomersViewModel : ViewModelBase
         var item = parameter as MonthlyTicket ?? SelectedTicket;
         if (item == null) return;
 
-        if (!_dialogService.ShowYesNo($"Bạn có chắc chắn muốn HỦY vé tháng '{item.TicketCode}'?\n(Vé sẽ bị ngừng hiệu lực tại cổng, nhưng lịch sử tiền thu vẫn được lưu để đối soát)", "Hủy Vé Tháng")) return;
+        if (!_dialogService.ShowYesNo(AppText.Get("Msg_Customers_ConfirmCancelPass", item.TicketCode), AppText.Get("Str_Customers_CancelPassTitle"))) return;
 
         try {
             await using var db = await _dbFactory.CreateDbContextAsync();
@@ -759,10 +763,10 @@ public class CustomersViewModel : ViewModelBase
                 t.Status = MonthlyTicketStatus.Cancelled;
                 await db.SaveChangesAsync();
                 await LoadDataAsync();
-                _dialogService.ShowSuccess($"Đã hủy vé tháng '{t.TicketCode}' thành công!");
+                _dialogService.ShowSuccess(AppText.Get("Msg_Customers_PassCancelled", t.TicketCode));
             }
         } catch (Exception ex) {
-            _dialogService.ShowError($"Lỗi: {ex.Message}");
+            _dialogService.ShowError(AppText.Get("Msg_Common_ErrorDetail", ex.Message));
         }
     }
 
@@ -771,8 +775,10 @@ public class CustomersViewModel : ViewModelBase
         var item = parameter as MonthlyTicket ?? SelectedTicket;
         if (item == null) return;
         var isLocked = item.Status == MonthlyTicketStatus.Suspended || item.Status == MonthlyTicketStatus.Cancelled;
-        var action = isLocked ? "Mở khóa" : "Tạm khóa";
-        if (!_dialogService.ShowYesNo($"Bạn có chắc muốn {action} thẻ cho vé {item.TicketCode}?", $"{action} Thẻ Vé Tháng")) return;
+        var (confirmKey, titleKey, doneKey) = isLocked
+            ? ("Msg_Customers_ConfirmUnlockPass", "Str_Customers_UnlockPassTitle", "Msg_Customers_PassUnlocked")
+            : ("Msg_Customers_ConfirmLockPass", "Str_Customers_LockPassTitle", "Msg_Customers_PassLocked");
+        if (!_dialogService.ShowYesNo(AppText.Get(confirmKey, item.TicketCode), AppText.Get(titleKey))) return;
         try {
             await using var db = await _dbFactory.CreateDbContextAsync();
             var t = await db.MonthlyTickets.FindAsync(item.TicketId);
@@ -780,10 +786,10 @@ public class CustomersViewModel : ViewModelBase
                 t.Status = isLocked ? MonthlyTicketStatus.Active : MonthlyTicketStatus.Suspended;
                 await db.SaveChangesAsync();
                 await LoadDataAsync();
-                _dialogService.ShowSuccess($"Đã {action.ToLower()} thẻ vé tháng thành công!");
+                _dialogService.ShowSuccess(AppText.Get(doneKey));
             }
         } catch (Exception ex) {
-            _dialogService.ShowError($"Lỗi: {ex.Message}");
+            _dialogService.ShowError(AppText.Get("Msg_Common_ErrorDetail", ex.Message));
         }
     }
 
@@ -806,37 +812,28 @@ public class CustomersViewModel : ViewModelBase
                 // Xử lý xác nhận thanh toán khi gia hạn:
                 if (payMethod == PaymentMethod.Cash)
                 {
-                    var confirmMsg = $"XÁC NHẬN THU TIỀN GIA HẠN (TIỀN MẶT):\n\n" +
-                                     $"- Khách hàng: {t.Customer?.FullName ?? "N/A"}\n" +
-                                     $"- Biển số: {t.RegisteredLicensePlate}\n" +
-                                     $"- Số tiền gia hạn: {fee:N0} VNĐ\n\n" +
-                                     $"Nhân viên đã nhận đủ số tiền mặt này từ khách hàng chưa?";
-                    if (!_dialogService.ShowYesNo(confirmMsg, "Xác Nhận Tiền Mặt"))
+                    var confirmMsg = AppText.Get("Msg_Customers_ConfirmCashRenew", t.Customer?.FullName ?? "N/A", t.RegisteredLicensePlate, fee);
+                    if (!_dialogService.ShowYesNo(confirmMsg, AppText.Get("Str_Customers_ConfirmCashRenewTitle")))
                     {
-                        _dialogService.ShowWarning("Hủy gia hạn do chưa thu tiền từ khách hàng!");
+                        _dialogService.ShowWarning(AppText.Get("Msg_Customers_RenewCashNotCollected"));
                         return;
                     }
                 }
                 else if (payMethod == PaymentMethod.VietQR)
                 {
-                    var qrMsg = $"CHUYỂN KHOẢN VIETQR (GIA HẠN):\n\n" +
-                                $"- Số tiền: {fee:N0} VNĐ\n" +
-                                $"- Nội dung CK: GIAHAN {t.TicketCode}\n\n" +
-                                $"Khách hàng đã quét mã và tài khoản đã nhận tiền thành công chưa?";
-                    if (!_dialogService.ShowYesNo(qrMsg, "Xác Nhận Nhận Tiền VietQR"))
+                    var qrMsg = AppText.Get("Msg_Customers_ConfirmQrRenew", fee, t.TicketCode);
+                    if (!_dialogService.ShowYesNo(qrMsg, AppText.Get("Str_Customers_ConfirmQrTitle")))
                     {
-                        _dialogService.ShowWarning("Thanh toán VietQR chưa hoàn tất. Chưa gia hạn vé!");
+                        _dialogService.ShowWarning(AppText.Get("Msg_Customers_QrNotDoneRenew"));
                         return;
                     }
                 }
                 else if (payMethod == PaymentMethod.Card)
                 {
-                    var cardMsg = $"THANH TOÁN THẺ / POS (GIA HẠN):\n\n" +
-                                  $"- Số tiền: {fee:N0} VNĐ\n" +
-                                  $"Giao dịch quẹt thẻ qua máy POS đã thành công chưa?";
-                    if (!_dialogService.ShowYesNo(cardMsg, "Xác Nhận POS"))
+                    var cardMsg = AppText.Get("Msg_Customers_ConfirmCardRenew", fee);
+                    if (!_dialogService.ShowYesNo(cardMsg, AppText.Get("Str_Customers_ConfirmCardTitle")))
                     {
-                        _dialogService.ShowWarning("Giao dịch quẹt thẻ chưa thành công. Chưa gia hạn vé!");
+                        _dialogService.ShowWarning(AppText.Get("Msg_Customers_CardNotDoneRenew"));
                         return;
                     }
                 }
@@ -851,10 +848,10 @@ public class CustomersViewModel : ViewModelBase
                 await System.IO.File.AppendAllTextAsync("gate_audit_log.jsonl", logLine);
 
                 await LoadDataAsync();
-                _dialogService.ShowSuccess($"Gia hạn vé tháng thành công thêm {dlg.FinalDurationMonths} tháng! (+{dlg.FinalFee:N0} VNĐ - {payMethod})");
+                _dialogService.ShowSuccess(AppText.Get("Msg_Customers_PassRenewed", dlg.FinalDurationMonths, dlg.FinalFee, payMethod));
             }
         } catch (Exception ex) {
-            _dialogService.ShowError($"Lỗi: {ex.Message}");
+            _dialogService.ShowError(AppText.Get("Msg_Common_ErrorDetail", ex.Message));
         }
     }
 
@@ -865,7 +862,8 @@ public class CustomersViewModel : ViewModelBase
             await using var db = await _dbFactory.CreateDbContextAsync();
             var customers = await db.Customers.OrderBy(c => c.FullName).ToListAsync();
             string? prefillPlate = SelectedCustomer?.DefaultLicensePlate;
-            if (prefillPlate == "Chưa ĐK") prefillPlate = null;
+            // "Chưa đăng ký" (theo ngôn ngữ lúc nạp) hoặc mọi chuỗi không phải biển số: không điền sẵn
+            if (!SmartPS.Services.GateControl.LicensePlateNormalizer.IsValid(prefillPlate)) prefillPlate = null;
 
             var dlg = new AddBlacklistDialog(customers, prefillPlate);
             if (dlg.ShowDialog() == true)
@@ -873,12 +871,12 @@ public class CustomersViewModel : ViewModelBase
                 var cleanPlate = System.Text.RegularExpressions.Regex.Replace(dlg.FinalLicensePlate.Trim(), @"[^a-zA-Z0-9]", "").ToUpperInvariant();
                 if (string.IsNullOrEmpty(cleanPlate))
                 {
-                    _dialogService.ShowError("Biển số xe không hợp lệ!");
+                    _dialogService.ShowError(AppText.Get("Msg_Common_InvalidPlate"));
                     return;
                 }
                 if (cleanPlate.Length > 20)
                 {
-                    _dialogService.ShowError("Biển số xe không được vượt quá 20 ký tự!");
+                    _dialogService.ShowError(AppText.Get("Msg_Common_PlateTooLong"));
                     return;
                 }
 
@@ -888,7 +886,7 @@ public class CustomersViewModel : ViewModelBase
                 {
                     if (existing.IsActive)
                     {
-                        _dialogService.ShowWarning($"Biển số '{cleanPlate}' hiện ĐANG NẰM trong danh sách cấm rồi!");
+                        _dialogService.ShowWarning(AppText.Get("Msg_Customers_AlreadyBanned", cleanPlate));
                         return;
                     }
                     else
@@ -906,7 +904,7 @@ public class CustomersViewModel : ViewModelBase
                         await System.IO.File.AppendAllTextAsync("gate_audit_log.jsonl", auditLine);
 
                         await LoadDataAsync();
-                        _dialogService.ShowSuccess($"Đã kích hoạt cấm lại phương tiện '{cleanPlate}'!");
+                        _dialogService.ShowSuccess(AppText.Get("Msg_Customers_RebanActivated", cleanPlate));
                         return;
                     }
                 }
@@ -929,12 +927,12 @@ public class CustomersViewModel : ViewModelBase
                 await System.IO.File.AppendAllTextAsync("gate_audit_log.jsonl", logLine);
 
                 await LoadDataAsync();
-                _dialogService.ShowSuccess($"Đã thêm biển số '{cleanPlate}' vào danh sách cấm thành công!");
+                _dialogService.ShowSuccess(AppText.Get("Msg_Customers_BlacklistAdded", cleanPlate));
             }
         }
         catch (Exception ex)
         {
-            _dialogService.ShowError($"Lỗi: {ex.Message}");
+            _dialogService.ShowError(AppText.Get("Msg_Common_ErrorDetail", ex.Message));
         }
     }
 
@@ -943,8 +941,8 @@ public class CustomersViewModel : ViewModelBase
         var item = parameter as BlacklistedVehicle ?? SelectedBlacklist;
         if (item == null) return;
 
-        var actionText = item.IsActive ? "GỠ CẤM (Cho phép vào bãi trở lại)" : "KÍCH HOẠT CẤM LẠI";
-        if (!_dialogService.ShowYesNo($"Bạn có chắc chắn muốn {actionText} cho phương tiện '{item.LicensePlate}'?", "Xác nhận thay đổi")) return;
+        var confirmKey = item.IsActive ? "Msg_Customers_ConfirmUnban" : "Msg_Customers_ConfirmReban";
+        if (!_dialogService.ShowYesNo(AppText.Get(confirmKey, item.LicensePlate), AppText.Get("Str_Dialog_Title_Confirm"))) return;
 
         try
         {
@@ -961,12 +959,12 @@ public class CustomersViewModel : ViewModelBase
                 await System.IO.File.AppendAllTextAsync("gate_audit_log.jsonl", logLine);
 
                 await LoadDataAsync();
-                _dialogService.ShowSuccess($"Thao tác thành công! Trạng thái xe '{item.LicensePlate}': {(b.IsActive ? "Đang cấm" : "Đã gỡ cấm")}.");
+                _dialogService.ShowSuccess(AppText.Get(b.IsActive ? "Msg_Customers_VehicleBanned" : "Msg_Customers_VehicleUnbanned", item.LicensePlate));
             }
         }
         catch (Exception ex)
         {
-            _dialogService.ShowError($"Lỗi: {ex.Message}");
+            _dialogService.ShowError(AppText.Get("Msg_Common_ErrorDetail", ex.Message));
         }
     }
 
@@ -975,7 +973,7 @@ public class CustomersViewModel : ViewModelBase
         var item = parameter as BlacklistedVehicle ?? SelectedBlacklist;
         if (item == null) return;
 
-        if (!_dialogService.ShowYesNo($"Bạn có chắc chắn muốn gỡ cấm (xóa mềm) biển số '{item.LicensePlate}' khỏi danh sách đen?\n(Bản ghi lịch sử vẫn được lưu trữ)", "Gỡ Khỏi Danh Sách Cấm")) return;
+        if (!_dialogService.ShowYesNo(AppText.Get("Msg_Customers_ConfirmRemoveBlacklist", item.LicensePlate), AppText.Get("Str_Customers_RemoveBlacklistTitle"))) return;
 
         try
         {
@@ -992,12 +990,12 @@ public class CustomersViewModel : ViewModelBase
                 await System.IO.File.AppendAllTextAsync("gate_audit_log.jsonl", logLine);
 
                 await LoadDataAsync();
-                _dialogService.ShowSuccess($"Đã gỡ cấm (xóa mềm) biển số '{item.LicensePlate}' khỏi danh sách đen!");
+                _dialogService.ShowSuccess(AppText.Get("Msg_Customers_BlacklistRemoved", item.LicensePlate));
             }
         }
         catch (Exception ex)
         {
-            _dialogService.ShowError($"Lỗi: {ex.Message}");
+            _dialogService.ShowError(AppText.Get("Msg_Common_ErrorDetail", ex.Message));
         }
     }
 }

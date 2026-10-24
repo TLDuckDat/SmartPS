@@ -12,14 +12,14 @@ namespace SmartPS.Tests.Integration;
 /// Customer.Type); IsMonthlyPass = a valid ticket of the requested vehicle type; zone audience preference by category.
 /// Every test isolates slot allocation with its own vehicle type, except the ZONE_R test.
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class GateResidentVisitorFlowTests : IClassFixture<PostgresDatabaseFixture>
+public class GateResidentVisitorFlowTests : IClassFixture<SqlServerDatabaseFixture>
 {
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
     private readonly GateTestData _data;
 
-    public GateResidentVisitorFlowTests(PostgresDatabaseFixture db)
+    public GateResidentVisitorFlowTests(SqlServerDatabaseFixture db)
     {
         _db = db;
         _data = new GateTestData(db);

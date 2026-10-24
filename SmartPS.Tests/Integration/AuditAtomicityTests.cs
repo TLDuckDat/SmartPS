@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Npgsql;
+using Microsoft.Data.SqlClient;
 using SmartPS.DTOs.Auth;
 using SmartPS.Models.Parking;
 using SmartPS.Services.RolePermissions;
@@ -15,13 +15,13 @@ namespace SmartPS.Tests.Integration;
 /// Two fault injections: a temporary CHECK constraint on AuditLogs (DB-level failure at SaveChanges) and
 /// <see cref="ThrowingAuditServiceDecorator"/> (failure inside AppendAsync).
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class AuditAtomicityTests : IClassFixture<PostgresDatabaseFixture>
+public class AuditAtomicityTests : IClassFixture<SqlServerDatabaseFixture>
 {
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
 
-    public AuditAtomicityTests(PostgresDatabaseFixture db)
+    public AuditAtomicityTests(SqlServerDatabaseFixture db)
     {
         _db = db;
     }
@@ -53,7 +53,7 @@ public class AuditAtomicityTests : IClassFixture<PostgresDatabaseFixture>
         var idBefore = await AuditDb.MaxIdAsync(_db.Factory);
         var operatorRoleId = await TestUsers.RoleIdAsync(_db.Factory, "Operator");
 
-        await _db.ExecuteAsync("ALTER TABLE \"AuditLogs\" ADD CONSTRAINT tmp_block CHECK (\"Action\" <> 'USER_CREATE') NOT VALID");
+        await _db.ExecuteAsync("ALTER TABLE \"AuditLogs\" WITH NOCHECK ADD CONSTRAINT tmp_block CHECK (\"Action\" <> 'USER_CREATE')");
         try
         {
             var ex = await Record.ExceptionAsync(() => sp.Auth().RegisterAsync(new RegisterRequest
@@ -62,7 +62,7 @@ public class AuditAtomicityTests : IClassFixture<PostgresDatabaseFixture>
             }));
 
             Assert.NotNull(ex);
-            Assert.True(ChainContains(ex, e => e is PostgresException { SqlState: PostgresErrorCodes.CheckViolation }),
+            Assert.True(ChainContains(ex, e => e is SqlException { Number: 547 }),
                 $"expected the check-violation to surface, got {ex}");
         }
         finally
@@ -183,11 +183,11 @@ public class AuditAtomicityTests : IClassFixture<PostgresDatabaseFixture>
         var plate = ParkingFlows.UniquePlate();
         var vehicleTypeId = await ParkingFlows.MotorbikeTypeIdAsync(_db.Factory);
 
-        await using var holder = new NpgsqlConnection(_db.ConnectionString);
+        await using var holder = new SqlConnection(_db.ConnectionString);
         await holder.OpenAsync();
-        await using (var take = new NpgsqlCommand("SELECT pg_advisory_lock(@k)", holder))
+        await using (var take = new SqlCommand("EXEC sp_getapplock @Resource = @k, @LockMode = 'Exclusive', @LockOwner = 'Session'", holder))
         {
-            take.Parameters.AddWithValue("k", AuditService.AuditChainLockKey);
+            take.Parameters.AddWithValue("k", AuditService.AuditChainLockResource);
             await take.ExecuteNonQueryAsync();
         }
 
@@ -199,8 +199,8 @@ public class AuditAtomicityTests : IClassFixture<PostgresDatabaseFixture>
         }
         finally
         {
-            await using var release = new NpgsqlCommand("SELECT pg_advisory_unlock(@k)", holder);
-            release.Parameters.AddWithValue("k", AuditService.AuditChainLockKey);
+            await using var release = new SqlCommand("EXEC sp_releaseapplock @Resource = @k, @LockOwner = 'Session'", holder);
+            release.Parameters.AddWithValue("k", AuditService.AuditChainLockResource);
             await release.ExecuteNonQueryAsync();
         }
 

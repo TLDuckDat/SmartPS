@@ -147,7 +147,7 @@
                 <!-- Nút Phụ (Hủy bỏ / Không) -->
                 <Button x:Name="SecondaryButton"
                         Style="{StaticResource DialogSecondaryButtonStyle}"
-                        Content="Hủy bỏ"
+                        Content="{DynamicResource Str_Btn_Cancel}"
                         Margin="4,0"
                         Visibility="Collapsed"
                         Click="SecondaryButton_Click"/>
@@ -155,7 +155,7 @@
                 <!-- Nút Chính (Đồng ý / OK) -->
                 <Button x:Name="PrimaryButton"
                         Style="{StaticResource DialogPrimaryButtonStyle}"
-                        Content="Đồng ý"
+                        Content="{DynamicResource Str_Btn_Confirm}"
                         Margin="4,0"
                         Click="PrimaryButton_Click"/>
             </StackPanel>

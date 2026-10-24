@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
+using Microsoft.Data.SqlClient;
 using SmartPS.Models.Parking;
 using SmartPS.Models.Shifts;
 
@@ -16,12 +16,12 @@ public sealed class ReportSeed
 
     private static int s_counter;
 
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
     private int? _adminId;
     private int? _shiftId;
     private int? _motorbikeId;
 
-    public ReportSeed(PostgresDatabaseFixture db)
+    public ReportSeed(SqlServerDatabaseFixture db)
     {
         _db = db;
     }
@@ -203,7 +203,7 @@ public sealed class ReportSeed
     /// <paramref name="financials"/> are session-less Refunds / Adjustments. Mixed CustomerType (Resident / External, the only household-model values) / IsMonthlyPass, motorbike and car.
     /// One Locked shift opened by the seed admin owns every transaction (ADDENDUM N3). Codes are 'PERF-' || g.
     /// </summary>
-    public static async Task<PerformanceSeed> SeedPerformanceAsync(PostgresDatabaseFixture fixture, DateOnly startVn, int days = 30,
+    public static async Task<PerformanceSeed> SeedPerformanceAsync(SqlServerDatabaseFixture fixture, DateOnly startVn, int days = 30,
         int sessions = 50_000, int financials = 50_000)
     {
         var seed = new ReportSeed(fixture);
@@ -216,63 +216,82 @@ public sealed class ReportSeed
         var car = await seed.CarTypeIdAsync();
         var shift = await seed.CreateShiftAsync(fromUtc.AddMinutes(-30), toUtc.AddHours(1));
 
+        // Số giả ngẫu nhiên xác định (thay setseed/random của PostgreSQL): 4 byte đầu của SHA-256("g:k") chia về [0, 1)
         const string sql = """
-            SELECT setseed(0.42);
+            SET NOCOUNT ON;
 
+            WITH nums AS (
+                SELECT TOP (@sessions) CAST(ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS int) AS g
+                FROM sys.all_columns a CROSS JOIN sys.all_columns b
+            ),
+            rnd AS (
+                SELECT g,
+                       (CAST(CAST(HASHBYTES('SHA2_256', CONCAT(g, ':1')) AS binary(4)) AS bigint) % 1000000) / 1000000.0 AS r1,
+                       (CAST(CAST(HASHBYTES('SHA2_256', CONCAT(g, ':2')) AS binary(4)) AS bigint) % 1000000) / 1000000.0 AS r2
+                FROM nums
+            ),
+            x AS (
+                SELECT g,
+                       DATEADD(second, CAST(r1 * @span AS int), @from) AS ci,
+                       CAST(300 + r2 * 14400 AS int) AS dur,
+                       CASE WHEN g % 20 <> 0 THEN 1 ELSE 0 END AS completed
+                FROM rnd
+            )
             INSERT INTO "ParkingSessions"
                 ("TicketCode","LicensePlate","VehicleTypeId","SlotId","CheckInTime","CheckOutTime","TotalFee","Status","PaymentMethod",
                  "CustomerId","IsMonthlyPass","CustomerType","CreatedByUserId")
-            SELECT 'PERF-' || x.g,
-                   'PF' || lpad((x.g % 7919)::text, 6, '0'),
+            SELECT N'PERF-' + CAST(x.g AS nvarchar(10)),
+                   N'PF' + RIGHT(N'000000' + CAST(x.g % 7919 AS nvarchar(10)), 6),
                    CASE WHEN x.g % 3 = 0 THEN @car ELSE @moto END,
                    NULL,
                    x.ci,
-                   CASE WHEN x.completed THEN LEAST(x.ci + x.dur, @to - interval '1 second') END,
-                   CASE WHEN NOT x.completed OR x.g % 10 = 9 OR x.g % 7 IN (0, 1) THEN 0 ELSE 5000 END,
-                   CASE WHEN x.completed THEN 1 ELSE 0 END,
+                   CASE WHEN x.completed = 1 THEN
+                       CASE WHEN DATEADD(second, x.dur, x.ci) < DATEADD(second, -1, @to) THEN DATEADD(second, x.dur, x.ci) ELSE DATEADD(second, -1, @to) END
+                   END,
+                   CASE WHEN x.completed = 0 OR x.g % 10 = 9 OR x.g % 7 IN (0, 1) THEN 0 ELSE 5000 END,
+                   CASE WHEN x.completed = 1 THEN 1 ELSE 0 END,
                    CASE WHEN x.g % 10 = 9 OR x.g % 7 IN (0, 1) THEN 3 WHEN x.g % 10 IN (6, 7) THEN 1 WHEN x.g % 10 = 8 THEN 2 ELSE 0 END,
                    NULL,
-                   x.g % 7 IN (0, 1),
+                   CASE WHEN x.g % 7 IN (0, 1) THEN 1 ELSE 0 END,
                    CASE WHEN x.g % 7 = 0 THEN @resident ELSE @external END,
                    @admin
-            FROM (
-                SELECT g,
-                       @from + (random() * @span) * interval '1 second' AS ci,
-                       (300 + random() * 14400) * interval '1 second' AS dur,
-                       g % 20 <> 0 AS completed
-                FROM generate_series(1, @sessions) g
-            ) x;
+            FROM x;
 
             WITH done AS (
                 SELECT s."SessionId", s."PaymentMethod", s."TotalFee", s."CheckOutTime",
-                       row_number() OVER (ORDER BY s."SessionId") AS rn
+                       ROW_NUMBER() OVER (ORDER BY s."SessionId") AS rn
                 FROM "ParkingSessions" s
-                WHERE s."TicketCode" LIKE 'PERF-%' AND s."Status" = 1
+                WHERE s."TicketCode" LIKE N'PERF-%' AND s."Status" = 1
+            ),
+            nums AS (
+                SELECT TOP (@financials) CAST(ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS int) AS g
+                FROM sys.all_columns a CROSS JOIN sys.all_columns b
             )
             INSERT INTO "FinancialTransactions"
                 ("TransactionCode","ShiftId","ParkingSessionId","CreatedByUserId","Type","PaymentMethod","Amount","CreatedAt","Note")
-            SELECT 'PERF-' || g,
+            SELECT N'PERF-' + CAST(n.g AS nvarchar(10)),
                    @shift,
                    d."SessionId",
                    @admin,
-                   CASE WHEN d."SessionId" IS NOT NULL THEN 0 WHEN g % 2 = 0 THEN 1 ELSE 2 END,
+                   CASE WHEN d."SessionId" IS NOT NULL THEN 0 WHEN n.g % 2 = 0 THEN 1 ELSE 2 END,
                    CASE WHEN d."SessionId" IS NOT NULL THEN d."PaymentMethod" ELSE 0 END,
-                   CASE WHEN d."SessionId" IS NOT NULL THEN d."TotalFee" WHEN g % 2 = 0 THEN -5000 ELSE 2000 END,
-                   COALESCE(d."CheckOutTime", @from + (random() * @span) * interval '1 second'),
-                   'perf seed'
-            FROM generate_series(1, @financials) g
-            LEFT JOIN done d ON d.rn = g;
+                   CASE WHEN d."SessionId" IS NOT NULL THEN d."TotalFee" WHEN n.g % 2 = 0 THEN -5000 ELSE 2000 END,
+                   COALESCE(d."CheckOutTime",
+                       DATEADD(second, CAST((CAST(CAST(HASHBYTES('SHA2_256', CONCAT(n.g, ':3')) AS binary(4)) AS bigint) % 1000000) / 1000000.0 * @span AS int), @from)),
+                   N'perf seed'
+            FROM nums n
+            LEFT JOIN done d ON d.rn = n.g;
 
-            ANALYZE "ParkingSessions";
-            ANALYZE "FinancialTransactions";
+            UPDATE STATISTICS "ParkingSessions";
+            UPDATE STATISTICS "FinancialTransactions";
             """;
 
-        await using (var conn = new NpgsqlConnection(fixture.ConnectionString))
+        await using (var conn = new SqlConnection(fixture.ConnectionString))
         {
             await conn.OpenAsync();
-            await using var cmd = new NpgsqlCommand(sql, conn) { CommandTimeout = 600 };
-            cmd.Parameters.AddWithValue("from", fromUtc);
-            cmd.Parameters.AddWithValue("to", toUtc);
+            await using var cmd = new SqlCommand(sql, conn) { CommandTimeout = 600 };
+            cmd.Parameters.Add(new SqlParameter("from", System.Data.SqlDbType.DateTime2) { Value = fromUtc });
+            cmd.Parameters.Add(new SqlParameter("to", System.Data.SqlDbType.DateTime2) { Value = toUtc });
             cmd.Parameters.AddWithValue("span", spanSeconds);
             cmd.Parameters.AddWithValue("sessions", sessions);
             cmd.Parameters.AddWithValue("financials", financials);

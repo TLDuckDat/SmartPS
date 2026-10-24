@@ -3,6 +3,7 @@ using SmartPS.Models.Parking;
 using System.Collections.Generic;
 using System.Linq;
 using System;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.Views.Customers
 {
@@ -22,7 +23,7 @@ namespace SmartPS.Views.Customers
             InitializeComponent();
             
             _households = new List<Household>();
-            _households.Add(new Household { HouseholdId = -1, ApartmentCode = "-- Khách bên ngoài --" });
+            _households.Add(new Household { HouseholdId = -1, ApartmentCode = AppText.Get("Str_Customers_DlgExternalOption") });
             _households.AddRange(households);
             _vehicleTypes = vehicleTypes ?? new List<VehicleType>();
             
@@ -52,7 +53,7 @@ namespace SmartPS.Views.Customers
             
             if (existing != null)
             {
-                Title = "Sửa Khách Hàng";
+                Title = AppText.Get("Str_Customers_DlgEditTitle");
                 txtFullName.Text = existing.FullName;
                 txtPhoneNumber.Text = existing.PhoneNumber;
                 var match = _households.FirstOrDefault(h => h.HouseholdId == (existing.HouseholdId ?? -1));
@@ -66,7 +67,7 @@ namespace SmartPS.Views.Customers
         {
             if (string.IsNullOrWhiteSpace(txtFullName.Text)) 
             { 
-                MessageBox.Show("Tên khách hàng không được để trống"); 
+                MessageBox.Show(AppText.Get("Msg_Customers_DlgNameRequired")); 
                 return; 
             }
 
@@ -85,7 +86,7 @@ namespace SmartPS.Views.Customers
             {
                 var text = cboHousehold.Text?.Trim();
                 debugInfo += $"Text typed: '{text}'\n";
-                if (!string.IsNullOrEmpty(text) && text != "-- Khách bên ngoài --")
+                if (!string.IsNullOrEmpty(text) && text != AppText.Get("Str_Customers_DlgExternalOption"))
                 {
                     var match = _households.FirstOrDefault(x => string.Equals(x.ApartmentCode?.Trim(), text, StringComparison.OrdinalIgnoreCase));
                     if (match != null && match.HouseholdId != -1) 
@@ -111,7 +112,7 @@ namespace SmartPS.Views.Customers
             FinalLicensePlate = System.Text.RegularExpressions.Regex.Replace(txtPlate.Text.Trim(), @"[^a-zA-Z0-9]", "").ToUpperInvariant();
             if (!string.IsNullOrEmpty(FinalLicensePlate) && FinalLicensePlate.Length > 20)
             {
-                MessageBox.Show("Biển số xe không được vượt quá 20 ký tự!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(AppText.Get("Msg_Customers_DlgPlateTooLong"), AppText.Get("Str_Dialog_Title_Info"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             

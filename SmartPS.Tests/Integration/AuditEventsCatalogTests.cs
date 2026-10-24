@@ -16,9 +16,9 @@ namespace SmartPS.Tests.Integration;
 /// T-R14: table-driven proof that every action of R14 is produced by its real operation with the expected
 /// outcome, entity type and detail keys (plan §2.6/§2.7), and that no secret leaks into the row (R18).
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class AuditEventsCatalogTests : IClassFixture<PostgresDatabaseFixture>
+public class AuditEventsCatalogTests : IClassFixture<SqlServerDatabaseFixture>
 {
     private sealed record Expectation(AuditOutcome Outcome, string? EntityType, string[] Keys);
 
@@ -47,9 +47,9 @@ public class AuditEventsCatalogTests : IClassFixture<PostgresDatabaseFixture>
         [AuditActions.SettingsUpdate] = new(AuditOutcome.Success, "ParkingSettings", new[] { "before", "after" }),
     };
 
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
 
-    public AuditEventsCatalogTests(PostgresDatabaseFixture db)
+    public AuditEventsCatalogTests(SqlServerDatabaseFixture db)
     {
         _db = db;
     }

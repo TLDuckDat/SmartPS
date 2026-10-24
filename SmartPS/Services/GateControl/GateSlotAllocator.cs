@@ -1,8 +1,8 @@
 using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Npgsql;
-using NpgsqlTypes;
+using System.Data;
+using Microsoft.Data.SqlClient;
 using SmartPS.Data;
 using SmartPS.Models.GateControl;
 using SmartPS.Models.Parking;
@@ -10,7 +10,8 @@ using SmartPS.Models.Parking;
 namespace SmartPS.Services.GateControl;
 
 /// <summary>
-/// Cấp ô đỗ trong giao dịch check-in: khoá hàng ô (FOR UPDATE SKIP LOCKED) rồi chiếm ô bằng cập nhật có điều kiện.
+/// Cấp ô đỗ trong giao dịch check-in: khoá hàng ô (UPDLOCK + READPAST: bỏ qua ô đang bị giao dịch khác khoá)
+/// rồi chiếm ô bằng cập nhật có điều kiện.
 /// Chỉ mục duy nhất IX_ParkingSessions_SlotId_Active là chốt chặn cuối cùng ở tầng cơ sở dữ liệu.
 /// </summary>
 public static class GateSlotAllocator
@@ -18,10 +19,13 @@ public static class GateSlotAllocator
     public const string ActiveSlotIndexName = "IX_ParkingSessions_SlotId_Active";
     public const int MaxAutoAttempts = 3;
 
+    // 2601: trùng khoá ở chỉ mục duy nhất; 2627: trùng khoá ở ràng buộc UNIQUE/PRIMARY KEY
+    private static readonly int[] UniqueViolationNumbers = { 2601, 2627 };
+
     private const string SelectColumns = """
-        SELECT s."SlotId", s."SlotCode", s."VehicleTypeId", s."Status", COALESCE(z."Audience", 0) AS "Audience", s."ZoneId", z."ZoneCode",
-               EXISTS (SELECT 1 FROM "ParkingSessions" p WHERE p."SlotId" = s."SlotId" AND p."Status" = 0) AS "HasActiveSession"
-        FROM "ParkingSlots" s LEFT JOIN "ParkingZones" z ON z."ZoneId" = s."ZoneId"
+        SELECT TOP (1) s."SlotId", s."SlotCode", s."VehicleTypeId", s."Status", COALESCE(z."Audience", 0) AS "Audience", s."ZoneId", z."ZoneCode",
+               CAST(CASE WHEN EXISTS (SELECT 1 FROM "ParkingSessions" p WHERE p."SlotId" = s."SlotId" AND p."Status" = 0)
+                         THEN 1 ELSE 0 END AS bit) AS "HasActiveSession"
         """;
 
     public static async Task<SlotCandidate?> LockNextAsync(
@@ -39,20 +43,24 @@ public static class GateSlotAllocator
             return null;
         }
 
-        var sql = SelectColumns + """
+        await using var command = CreateCommand(db, transaction, string.Empty);
+        command.Parameters.Add(new SqlParameter("vt", SqlDbType.Int) { Value = vehicleTypeId });
 
+        // Thứ tự ưu tiên nhóm khu: vị trí trong danh sách allowed (thay array_position của PostgreSQL)
+        var allowedNames = AddIntParameters(command, "a", allowed);
+        var preference = string.Join(" ", allowedNames.Select((name, index) => $"WHEN {name} THEN {index}"));
+        var excludedFilter = excludedSlotIds.Count == 0
+            ? string.Empty
+            : $"""AND s."SlotId" NOT IN ({string.Join(", ", AddIntParameters(command, "x", excludedSlotIds))})""";
+
+        command.CommandText = SelectColumns + $"""
+
+            FROM "ParkingSlots" s WITH (UPDLOCK, ROWLOCK, READPAST) LEFT JOIN "ParkingZones" z ON z."ZoneId" = s."ZoneId"
             WHERE s."VehicleTypeId" = @vt AND s."Status" = 0
-              AND COALESCE(z."Audience", 0) = ANY(@allowed) AND NOT (s."SlotId" = ANY(@excluded))
+              AND COALESCE(z."Audience", 0) IN ({string.Join(", ", allowedNames)}) {excludedFilter}
               AND NOT EXISTS (SELECT 1 FROM "ParkingSessions" p WHERE p."SlotId" = s."SlotId" AND p."Status" = 0)
-            ORDER BY array_position(@allowed, COALESCE(z."Audience", 0)), s."SlotCode" COLLATE "C", s."SlotId"
-            LIMIT 1
-            FOR UPDATE OF s SKIP LOCKED
+            ORDER BY CASE COALESCE(z."Audience", 0) {preference} END, s."SlotCode" COLLATE Latin1_General_BIN2, s."SlotId"
             """;
-
-        await using var command = CreateCommand(db, transaction, sql);
-        command.Parameters.Add(new NpgsqlParameter("vt", vehicleTypeId));
-        command.Parameters.Add(new NpgsqlParameter("allowed", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = allowed });
-        command.Parameters.Add(new NpgsqlParameter("excluded", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = excludedSlotIds.ToArray() });
         return await ReadSingleAsync(command, cancellationToken);
     }
 
@@ -60,14 +68,15 @@ public static class GateSlotAllocator
     {
         var transaction = RequireTransaction(db);
 
+        // Ô được yêu cầu cụ thể: chờ khoá (không READPAST) để kiểm tra đúng trạng thái sau khi giao dịch kia kết thúc
         var sql = SelectColumns + """
 
+            FROM "ParkingSlots" s WITH (UPDLOCK, ROWLOCK) LEFT JOIN "ParkingZones" z ON z."ZoneId" = s."ZoneId"
             WHERE s."SlotId" = @id
-            FOR UPDATE OF s
             """;
 
         await using var command = CreateCommand(db, transaction, sql);
-        command.Parameters.Add(new NpgsqlParameter("id", slotId));
+        command.Parameters.Add(new SqlParameter("id", SqlDbType.Int) { Value = slotId });
         return await ReadSingleAsync(command, cancellationToken);
     }
 
@@ -77,9 +86,22 @@ public static class GateSlotAllocator
 
         await using var command = CreateCommand(db, transaction,
             """UPDATE "ParkingSlots" SET "Status" = 1, "CurrentLicensePlate" = @plate WHERE "SlotId" = @id AND "Status" = 0""");
-        command.Parameters.Add(new NpgsqlParameter("plate", licensePlate));
-        command.Parameters.Add(new NpgsqlParameter("id", slotId));
+        command.Parameters.Add(new SqlParameter("plate", SqlDbType.NVarChar, 20) { Value = licensePlate });
+        command.Parameters.Add(new SqlParameter("id", SqlDbType.Int) { Value = slotId });
         return await command.ExecuteNonQueryAsync(cancellationToken) == 1;
+    }
+
+    private static List<string> AddIntParameters(DbCommand command, string prefix, IEnumerable<int> values)
+    {
+        var names = new List<string>();
+        foreach (var value in values)
+        {
+            var name = $"@{prefix}{names.Count}";
+            command.Parameters.Add(new SqlParameter(name, SqlDbType.Int) { Value = value });
+            names.Add(name);
+        }
+
+        return names;
     }
 
     public static Task<bool> VehicleTypeHasSlotsAsync(SmartPsDbContext db, int vehicleTypeId, CancellationToken cancellationToken = default)
@@ -138,13 +160,15 @@ public static class GateSlotAllocator
         return (null, CheckInRejectReason.NoSlotAvailable);
     }
 
-    /// <summary>True when the exception is a duplicate active session on one slot (23505 on <see cref="ActiveSlotIndexName"/>).</summary>
+    /// <summary>True when the exception is a duplicate active session on one slot (2601/2627 on <see cref="ActiveSlotIndexName"/>).</summary>
     public static bool IsActiveSlotUniqueViolation(Exception ex)
     {
         for (var current = ex; current is not null; current = current.InnerException)
         {
-            if (current is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } pg
-                && string.Equals(pg.ConstraintName, ActiveSlotIndexName, StringComparison.Ordinal))
+            // SQL Server chỉ ghi tên chỉ mục trong nội dung thông báo lỗi
+            if (current is SqlException sql
+                && sql.Errors.Cast<SqlError>().Any(e => UniqueViolationNumbers.Contains(e.Number)
+                    && e.Message.Contains(ActiveSlotIndexName, StringComparison.Ordinal)))
             {
                 return true;
             }

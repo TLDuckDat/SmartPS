@@ -81,17 +81,16 @@ public class NoOverlapSourceScanTests
 
         Assert.DoesNotContain(names, n => n!.Contains("ResidentVisitor", StringComparison.Ordinal));
         Assert.DoesNotContain(names, n => n!.Contains("HardenAuditTriggers", StringComparison.Ordinal));
-        Assert.Single(names, n => n!.EndsWith("_AddGateZoneAudience.cs", StringComparison.Ordinal));
+        Assert.Single(names, n => n!.EndsWith("_InitialSqlServer.cs", StringComparison.Ordinal));
     }
 
     [Fact]
-    public void Gate_migration_creates_no_table_and_touches_no_household_module_table()
+    public void Baseline_migration_creates_no_overlap_table_and_has_the_gate_structures()
     {
-        var file = Directory.EnumerateFiles(MigrationsFolder, "*_AddGateZoneAudience.cs").Single();
+        var file = Directory.EnumerateFiles(MigrationsFolder, "*_InitialSqlServer.cs").Single();
         var text = File.ReadAllText(file);
 
-        Assert.DoesNotContain("CreateTable", text, StringComparison.Ordinal);
-        foreach (var table in new[] { "\"Customers\"", "\"Households\"", "\"Vehicles\"", "\"MonthlyTickets\"", "\"BlacklistedVehicles\"", "\"PricingRules\"", "\"Permissions\"" })
+        foreach (var table in new[] { "\"CustomerVehicles\"", "\"MonthlyTicketPurchases\"", "\"BlacklistEntries\"", "\"CustomerTiers\"", "\"MonthlyTicketPlans\"" })
         {
             Assert.DoesNotContain(table, text, StringComparison.Ordinal);
         }
@@ -128,7 +127,7 @@ public class NoOverlapSourceScanTests
     [Fact]
     public void EF_model_has_no_overlap_entity_and_parking_zone_has_audience()
     {
-        using var ctx = PostgresDatabaseFixture.CreateContext(PostgresDatabaseFixture.DefaultConnectionString);
+        using var ctx = SqlServerDatabaseFixture.CreateContext(SqlServerDatabaseFixture.DefaultConnectionString);
         var names = ctx.Model.GetEntityTypes().Select(e => e.ClrType.Name).ToHashSet(StringComparer.Ordinal);
 
         Assert.DoesNotContain("CustomerVehicle", names);
@@ -146,8 +145,8 @@ public class NoOverlapSourceScanTests
         var index = Assert.Single(session.GetIndexes(), i => i.GetDatabaseName() == "IX_ParkingSessions_SlotId_Active");
         Assert.True(index.IsUnique);
         Assert.Equal(new[] { nameof(ParkingSession.SlotId) }, index.Properties.Select(p => p.Name).ToArray());
-        Assert.Contains("\"Status\" = 0", index.GetFilter(), StringComparison.Ordinal);
-        Assert.Contains("\"SlotId\" IS NOT NULL", index.GetFilter(), StringComparison.Ordinal);
+        Assert.Contains("[Status] = 0", index.GetFilter(), StringComparison.Ordinal);
+        Assert.Contains("[SlotId] IS NOT NULL", index.GetFilter(), StringComparison.Ordinal);
     }
 
     [Fact]

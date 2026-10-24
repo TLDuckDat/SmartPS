@@ -1,43 +1,39 @@
 using System.Net.Sockets;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
+using Microsoft.Data.SqlClient;
 using SmartPS.Data;
 
 namespace SmartPS.Tests.Unit;
 
 /// <summary>
 /// Fix round 2 — FY1 (CH33): only real connectivity failures may switch the gate to offline mode.
-/// Connection: SocketException, transient NpgsqlException (I/O, socket or timeout on the connection layer),
-/// PostgresException with SqlState class 08 — also when wrapped (DbUpdateException / InvalidOperationException).
-/// Not connection: constraint violations, serialization failures, deadlocks, trigger errors, audit-lock timeouts,
+/// Connection: SocketException, SqlException whose errors are all connection errors (-2 timeout, 2/53 server not found,
+/// 10054 connection reset, 4060 database unavailable...) — also when wrapped (DbUpdateException / InvalidOperationException).
+/// Not connection: constraint violations, deadlocks, trigger errors, audit-lock timeouts,
 /// cancellations and plain exceptions, whatever their message says.
 /// </summary>
 public class DbConnectionHelperTests
 {
-    private static PostgresException Pg(string sqlState, string message = "server error")
-        => new(message, "ERROR", "ERROR", sqlState);
+    private static SqlException Sql(int number, string message = "server error") => SqlExceptionFactory.Create(number, message);
 
     private static readonly IReadOnlyDictionary<string, Func<Exception>> Cases = new Dictionary<string, Func<Exception>>
     {
         // ---- connection failures (true)
         ["SocketException refused"] = () => new SocketException((int)SocketError.ConnectionRefused),
-        ["NpgsqlException over SocketException"] = () => new NpgsqlException("Failed to connect to 127.0.0.1:1", new SocketException((int)SocketError.ConnectionRefused)),
-        ["NpgsqlException over TimeoutException"] = () => new NpgsqlException("Exception while connecting", new TimeoutException("connect timed out")),
-        ["NpgsqlException over IOException"] = () => new NpgsqlException("Exception while reading from stream", new IOException("connection reset")),
-        ["PostgresException 08006"] = () => new PostgresException("connection failure", "FATAL", "FATAL", "08006"),
-        ["PostgresException 08001"] = () => new PostgresException("unable to connect", "FATAL", "FATAL", "08001"),
-        ["DbUpdateException over transient NpgsqlException"] = () => new DbUpdateException("save failed",
-            new NpgsqlException("Exception while writing to stream", new IOException("broken pipe"))),
-        ["InvalidOperationException over transient NpgsqlException"] = () => new InvalidOperationException("transient failure",
-            new NpgsqlException("Failed to connect", new SocketException((int)SocketError.HostUnreachable))),
+        ["SqlException -2 timeout"] = () => Sql(-2, "Execution Timeout Expired."),
+        ["SqlException 53 server not found"] = () => Sql(53, "A network-related or instance-specific error occurred while establishing a connection to SQL Server."),
+        ["SqlException 10054 connection reset"] = () => Sql(10054, "An existing connection was forcibly closed by the remote host."),
+        ["SqlException 4060 database unavailable"] = () => Sql(4060, "Cannot open database requested by the login."),
+        ["DbUpdateException over SqlException 10054"] = () => new DbUpdateException("save failed", Sql(10054, "connection reset")),
+        ["InvalidOperationException over SqlException 53"] = () => new InvalidOperationException("transient failure", Sql(53, "server not found")),
 
         // ---- not connection failures (false)
-        ["PostgresException 23503 FK"] = () => Pg(PostgresErrorCodes.ForeignKeyViolation, "insert or update violates foreign key constraint"),
-        ["PostgresException 23505 unique"] = () => Pg(PostgresErrorCodes.UniqueViolation, "duplicate key value"),
-        ["PostgresException 40001 serialization"] = () => Pg(PostgresErrorCodes.SerializationFailure, "could not serialize access"),
-        ["PostgresException 40P01 deadlock"] = () => Pg(PostgresErrorCodes.DeadlockDetected, "deadlock detected"),
-        ["PostgresException P0001 trigger"] = () => Pg(PostgresErrorCodes.RaiseException, "AuditLogs is append-only: UPDATE is not allowed."),
-        ["DbUpdateException over 23503"] = () => new DbUpdateException("save failed", Pg(PostgresErrorCodes.ForeignKeyViolation)),
+        ["SqlException 547 FK"] = () => Sql(547, "The INSERT statement conflicted with the FOREIGN KEY constraint."),
+        ["SqlException 2627 unique"] = () => Sql(2627, "Violation of UNIQUE KEY constraint."),
+        ["SqlException 1205 deadlock"] = () => Sql(1205, "Transaction was deadlocked on lock resources with another process and has been chosen as the deadlock victim."),
+        ["SqlException 50001 trigger"] = () => Sql(50001, "AuditLogs is append-only: UPDATE/DELETE is not allowed."),
+        ["SqlException mixed timeout and FK"] = () => SqlExceptionFactory.Create(new[] { (-2, "timeout"), (547, "foreign key") }),
+        ["DbUpdateException over 547"] = () => new DbUpdateException("save failed", Sql(547)),
         ["AuditLockTimeoutException"] = () => new AuditLockTimeoutException("Timed out waiting for the audit chain lock (timeout)."),
         ["AuditLockHeldException"] = () => new AuditLockHeldException("lock held in current flow"),
         ["Plain InvalidOperationException"] = () => new InvalidOperationException("Sequence contains no elements"),
@@ -49,19 +45,18 @@ public class DbConnectionHelperTests
     private static readonly (string Name, bool Expected)[] Rows =
     {
         ("SocketException refused", true),
-        ("NpgsqlException over SocketException", true),
-        ("NpgsqlException over TimeoutException", true),
-        ("NpgsqlException over IOException", true),
-        ("PostgresException 08006", true),
-        ("PostgresException 08001", true),
-        ("DbUpdateException over transient NpgsqlException", true),
-        ("InvalidOperationException over transient NpgsqlException", true),
-        ("PostgresException 23503 FK", false),
-        ("PostgresException 23505 unique", false),
-        ("PostgresException 40001 serialization", false),
-        ("PostgresException 40P01 deadlock", false),
-        ("PostgresException P0001 trigger", false),
-        ("DbUpdateException over 23503", false),
+        ("SqlException -2 timeout", true),
+        ("SqlException 53 server not found", true),
+        ("SqlException 10054 connection reset", true),
+        ("SqlException 4060 database unavailable", true),
+        ("DbUpdateException over SqlException 10054", true),
+        ("InvalidOperationException over SqlException 53", true),
+        ("SqlException 547 FK", false),
+        ("SqlException 2627 unique", false),
+        ("SqlException 1205 deadlock", false),
+        ("SqlException 50001 trigger", false),
+        ("SqlException mixed timeout and FK", false),
+        ("DbUpdateException over 547", false),
         ("AuditLockTimeoutException", false),
         ("AuditLockHeldException", false),
         ("Plain InvalidOperationException", false),

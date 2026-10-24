@@ -14,8 +14,7 @@ public sealed record OperationalSettings(int OverstayThresholdHours, int MaxVehi
 /// <summary>Tình trạng kết nối CSDL; không chứa mật khẩu.</summary>
 public sealed record DatabaseStatus(
     bool IsOnline,
-    string Host,
-    int Port,
+    string Server,
     string Database,
     string? ServerVersion,
     int AppliedMigrations,

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 namespace SmartPS.Data;
 
 /// <summary>
-/// Cung cấp DbContext lúc Design-time cho Npgsql PostgreSQL để dotnet-ef migrations hoạt động chính xác
+/// Cung cấp DbContext lúc Design-time cho SQL Server để dotnet-ef migrations hoạt động chính xác
 /// </summary>
 public class SmartPsDbContextFactory : IDesignTimeDbContextFactory<SmartPsDbContext>
 {
@@ -19,10 +19,10 @@ public class SmartPsDbContextFactory : IDesignTimeDbContextFactory<SmartPsDbCont
             .Build();
 
         var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? "Host=localhost;Port=5432;Database=SmartPS;Username=smartps;Password=smartps;";
+            ?? DbConnectionHelper.DefaultConnectionString;
 
         var optionsBuilder = new DbContextOptionsBuilder<SmartPsDbContext>();
-        optionsBuilder.UseNpgsql(connectionString);
+        optionsBuilder.UseSqlServer(connectionString);
 
         return new SmartPsDbContext(optionsBuilder.Options);
     }

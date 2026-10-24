@@ -15,6 +15,7 @@ using SmartPS.Services.GateControl;
 using SmartPS.Services.Localization;
 using SmartPS.Services.OcrLisencePlate;
 using SmartPS.Services.Payment;
+using SmartPS.Services.Preferences;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -31,6 +32,7 @@ public class GateControlViewModel : ViewModelBase
     private readonly IPermissionService _permissionService;
     private readonly IAudioAlertService _audioAlertService;
     private readonly IPaymentService? _paymentService;
+    private readonly IUserPreferencesStore? _preferences;
 
     private readonly DispatcherTimer _barrierInTimer;
     private readonly DispatcherTimer _barrierOutTimer;
@@ -58,7 +60,7 @@ public class GateControlViewModel : ViewModelBase
         }
     }
 
-    public string AutoModeStatusText => IsAutoModeEnabled ? "TỰ ĐỘNG HÓA: BẬT" : "TỰ ĐỘNG HÓA: TẮT";
+    public string AutoModeStatusText => _localizationService.GetString(IsAutoModeEnabled ? "Str_GateUi_AutoOn" : "Str_GateUi_AutoOff");
     public string AutoModeBadgeBackground => IsAutoModeEnabled ? "#DCFCE7" : "#F1F5F9";
     public string AutoModeBadgeBorder => IsAutoModeEnabled ? "#86EFAC" : "#CBD5E1";
     public string AutoModeBadgeForeground => IsAutoModeEnabled ? "#15803D" : "#64748B";
@@ -88,7 +90,7 @@ public class GateControlViewModel : ViewModelBase
         }
     }
 
-    public string CameraWatcherStatusText => IsCameraWatcherActive ? "📡 Giám sát Camera: Đang chạy" : "📡 Giám sát Camera: Đã dừng";
+    public string CameraWatcherStatusText => _localizationService.GetString(IsCameraWatcherActive ? "Str_GateUi_CameraWatchOn" : "Str_GateUi_CameraWatchOff");
 
     private bool _isSimulationRunning;
     public bool IsSimulationRunning
@@ -110,7 +112,7 @@ public class GateControlViewModel : ViewModelBase
         }
     }
 
-    public string OcrEngineStatusText => IsOcrEngineAvailable ? "AI OCR Engine: Sẵn sàng" : "AI OCR Engine: Không tìm thấy";
+    public string OcrEngineStatusText => _localizationService.GetString(IsOcrEngineAvailable ? "Str_GateUi_OcrReady" : "Str_GateUi_OcrMissing");
 
     #endregion
 
@@ -191,7 +193,7 @@ public class GateControlViewModel : ViewModelBase
         set => SetProperty(ref _inSuggestedSlotCode, value);
     }
 
-    private string? _inCustomerBadge = "Khách vãng lai";
+    private string? _inCustomerBadge;
     public string? InCustomerBadge
     {
         get => _inCustomerBadge;
@@ -219,7 +221,7 @@ public class GateControlViewModel : ViewModelBase
         set => SetProperty(ref _isInOcrBusy, value);
     }
 
-    private string _inStatusMessage = "Sẵn sàng đón xe vào";
+    private string _inStatusMessage = string.Empty;
     public string InStatusMessage
     {
         get => _inStatusMessage;
@@ -335,9 +337,9 @@ public class GateControlViewModel : ViewModelBase
 
     public string PlateMatchStatusText => IsPlateMatched switch
     {
-        true => "TRÙNG KHỚP BIỂN SỐ VÀO/RA",
-        false => "CẢNH BÁO: BIỂN SỐ KHÔNG KHỚP!",
-        _ => "Chưa đối soát"
+        true => _localizationService.GetString("Str_GateUi_PlateMatched"),
+        false => _localizationService.GetString("Str_GateUi_PlateMismatch"),
+        _ => _localizationService.GetString("Str_GateUi_PlateNotChecked")
     };
 
     public string PlateMatchBadgeColor => IsPlateMatched switch
@@ -410,7 +412,7 @@ public class GateControlViewModel : ViewModelBase
         set => SetProperty(ref _isOutOcrBusy, value);
     }
 
-    private string _outStatusMessage = "Sẵn sàng đối soát xe ra";
+    private string _outStatusMessage = string.Empty;
     public string OutStatusMessage
     {
         get => _outStatusMessage;
@@ -470,7 +472,7 @@ public class GateControlViewModel : ViewModelBase
     }
     public string VietQrAmountFormatted => $"{VietQrAmount:N0} đ";
 
-    private string _vietQrStatusText = "Đang tạo mã VietQR...";
+    private string _vietQrStatusText = string.Empty;
     public string VietQrStatusText
     {
         get => _vietQrStatusText;
@@ -540,8 +542,10 @@ public class GateControlViewModel : ViewModelBase
         IAuthService authService,
         IPermissionService permissionService,
         IAudioAlertService? audioAlertService = null,
-        IPaymentService? paymentService = null)
+        IPaymentService? paymentService = null,
+        IUserPreferencesStore? preferences = null)
     {
+        _preferences = preferences;
         _ocrService = ocrService ?? throw new ArgumentNullException(nameof(ocrService));
         _gateControlService = gateControlService ?? throw new ArgumentNullException(nameof(gateControlService));
         _cameraWatcherService = cameraWatcherService ?? throw new ArgumentNullException(nameof(cameraWatcherService));
@@ -551,6 +555,13 @@ public class GateControlViewModel : ViewModelBase
         _permissionService = permissionService ?? throw new ArgumentNullException(nameof(permissionService));
         _audioAlertService = audioAlertService ?? new SystemAudioAlertService();
         _paymentService = paymentService;
+
+        // Chuỗi mặc định theo ngôn ngữ hiện tại; đổi ngôn ngữ thì làm mới các chuỗi tự ghép
+        _inCustomerBadge = _visitorBadgeDefault = _localizationService.GetString("Str_Gate_Badge_Visitor");
+        _inStatusMessage = _inReadyDefault = _localizationService.GetString("Str_GateUi_InReady");
+        _outStatusMessage = _outReadyDefault = _localizationService.GetString("Str_GateUi_OutReady");
+        _vietQrStatusText = _localizationService.GetString("Str_GateUi_QrCreatingStatus");
+        _localizationService.LanguageChanged += OnLanguageChanged;
 
         // Lắng nghe sự kiện kết thúc phiên gửi xe (qua Webhook hoặc thanh toán)
         _gateControlService.SessionCompleted += OnSessionCompleted;
@@ -603,7 +614,36 @@ public class GateControlViewModel : ViewModelBase
 
         RefreshActiveSessionsCommand = new AsyncRelayCommand(LoadActiveSessionsAsync);
 
+        RestorePreferences();
+
         _ = InitializeDataAsync();
+    }
+
+    /// <summary>Khôi phục các công tắc tự động / giám sát camera đã chọn lần trước, rồi bắt đầu lưu khi người dùng đổi.</summary>
+    private void RestorePreferences()
+    {
+        if (_preferences == null) return;
+
+        var saved = _preferences.Current;
+        if (saved.GateAutoMode is { } autoMode) IsAutoModeEnabled = autoMode;
+        if (saved.GateAutoCheckoutAllVehicles is { } autoCheckoutAll) IsAutoCheckoutAllVehicles = autoCheckoutAll;
+        if (saved.GateCameraWatcher is { } cameraWatcher) IsCameraWatcherActive = cameraWatcher;
+
+        PropertyChanged += (_, e) =>
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(IsAutoModeEnabled):
+                    _preferences.Update(p => p.GateAutoMode = IsAutoModeEnabled);
+                    break;
+                case nameof(IsAutoCheckoutAllVehicles):
+                    _preferences.Update(p => p.GateAutoCheckoutAllVehicles = IsAutoCheckoutAllVehicles);
+                    break;
+                case nameof(IsCameraWatcherActive):
+                    _preferences.Update(p => p.GateCameraWatcher = IsCameraWatcherActive);
+                    break;
+            }
+        };
     }
 
     private void OnCameraImageIn(string filePath)
@@ -680,8 +720,8 @@ public class GateControlViewModel : ViewModelBase
     private void ExecuteSelectInImage()
     {
         var filePath = _dialogService.ShowOpenFileDialog(
-            filter: "Tệp hình ảnh (*.jpg;*.jpeg;*.png;*.bmp)|*.jpg;*.jpeg;*.png;*.bmp|Tất cả tệp (*.*)|*.*",
-            title: "Chọn ảnh phương tiện vào bãi");
+            filter: _localizationService.GetString("Msg_GateUi_ImageFilter"),
+            title: _localizationService.GetString("Str_GateUi_PickInTitle"));
 
         if (!string.IsNullOrEmpty(filePath))
         {
@@ -697,7 +737,7 @@ public class GateControlViewModel : ViewModelBase
         var sampleImage = FindSampleImage();
         if (string.IsNullOrEmpty(sampleImage) || !File.Exists(sampleImage))
         {
-            _dialogService.ShowWarning("Chưa tìm thấy ảnh mẫu kiểm thử trong thư mục dịch vụ.");
+            _dialogService.ShowWarning(_localizationService.GetString("Msg_GateUi_NoSampleImage"));
             return;
         }
 
@@ -719,14 +759,14 @@ public class GateControlViewModel : ViewModelBase
     {
         if (string.IsNullOrEmpty(InImagePath) || !File.Exists(InImagePath))
         {
-            if (!isAutoTrigger) _dialogService.ShowWarning("Vui lòng chọn ảnh xe vào trước khi nhận diện OCR.");
+            if (!isAutoTrigger) _dialogService.ShowWarning(_localizationService.GetString("Msg_GateUi_PickInImageFirst"));
             return false;
         }
 
         try
         {
             IsInOcrBusy = true;
-            InStatusMessage = "⚡ Đang chạy AI OCR nhận diện biển số xe vào...";
+            InStatusMessage = _localizationService.GetString("Msg_GateUi_InOcrRunning");
 
             var response = await _ocrService.RecognizePlateAsync(InImagePath);
             if (response.IsSuccess && response.Plates.Any())
@@ -744,12 +784,12 @@ public class GateControlViewModel : ViewModelBase
                     ? plate.CropPath
                     : null;
 
-                InStatusMessage = $"Đã nhận diện: {InPlateText} ({InConfidenceFormatted} - {InProcessingTimeMs:0.0}ms)";
+                InStatusMessage = _localizationService.GetString("Msg_GateUi_InRecognized", InPlateText, InConfidenceFormatted, InProcessingTimeMs);
 
                 // NẾU BẬT CHẾ ĐỘ TỰ ĐỘNG -> TỰ ĐỘNG XÁC NHẬN XE VÀO & MỞ BARRIER!
                 if (isAutoTrigger || IsAutoModeEnabled)
                 {
-                    InStatusMessage = $"⚡ [TỰ ĐỘNG] Biển số: {InPlateText} -> Đang tự động lưu phiên & Mở Barrier...";
+                    InStatusMessage = _localizationService.GetString("Msg_GateUi_InAutoSaving", InPlateText);
                     await Task.Delay(200); // Đệm mượt hiệu ứng
                     var checkInSuccess = await PerformCheckInAsync(silent: true);
                     return checkInSuccess;
@@ -758,14 +798,14 @@ public class GateControlViewModel : ViewModelBase
             }
             else
             {
-                InStatusMessage = $"Không nhận diện được biển số: {response.Error?.Message ?? "Không phát hiện biển số"}";
+                InStatusMessage = _localizationService.GetString("Msg_GateUi_InNotRecognized", response.Error?.Message ?? _localizationService.GetString("Str_GateUi_NoPlateDetected"));
                 if (!isAutoTrigger) _dialogService.ShowWarning(InStatusMessage);
                 return false;
             }
         }
         catch (Exception ex)
         {
-            InStatusMessage = $"Lỗi OCR Làn vào: {ex.Message}";
+            InStatusMessage = _localizationService.GetString("Msg_GateUi_InOcrError", ex.Message);
             if (!isAutoTrigger) _dialogService.ShowError(InStatusMessage);
             return false;
         }
@@ -840,7 +880,7 @@ public class GateControlViewModel : ViewModelBase
     {
         if (InSelectedVehicleType == null) return;
         var slot = await _gateControlService.SuggestAvailableSlotAsync(InSelectedVehicleType.VehicleTypeId, _inCategory);
-        InSuggestedSlotCode = slot?.SlotCode ?? "Tự do";
+        InSuggestedSlotCode = slot?.SlotCode ?? _localizationService.GetString("Str_GateUi_FreeSlot");
     }
 
     private string LocalizeCheckInFailure(GateCheckInResult result)
@@ -902,7 +942,7 @@ public class GateControlViewModel : ViewModelBase
     {
         if (string.IsNullOrWhiteSpace(InPlateText))
         {
-            if (!silent) _dialogService.ShowWarning("Vui lòng nhập hoặc chụp ảnh nhận diện biển số xe vào.");
+            if (!silent) _dialogService.ShowWarning(_localizationService.GetString("Msg_GateUi_EnterPlateIn"));
             return false;
         }
 
@@ -921,9 +961,9 @@ public class GateControlViewModel : ViewModelBase
             var checkInLocalTime = result.Session?.CheckInTimeLocal ?? DateTime.Now;
             LastInTimeFormatted = checkInLocalTime.ToString("dd/MM/yyyy HH:mm:ss");
             LastInTicketCode = result.Session?.TicketCode ?? string.Empty;
-            LastInSlotCode = result.AssignedSlotCode ?? "Tự do";
+            LastInSlotCode = result.AssignedSlotCode ?? _localizationService.GetString("Str_GateUi_FreeSlot");
 
-            InStatusMessage = $"🟢 [VÀO THÀNH CÔNG] Biển số: {InPlateText} | Thời gian vào: {LastInTimeFormatted} | Mã vé: {LastInTicketCode} | Ô đỗ: {LastInSlotCode}";
+            InStatusMessage = _localizationService.GetString("Msg_GateUi_InSuccess", InPlateText, LastInTimeFormatted, LastInTicketCode, LastInSlotCode);
 
             var warning = BuildCheckInWarning(result);
             if (warning.Length > 0)
@@ -957,7 +997,7 @@ public class GateControlViewModel : ViewModelBase
         else
         {
             var denyMessage = LocalizeCheckInFailure(result);
-            InStatusMessage = $"🔴 [TỪ CHỐI VÀO] {denyMessage}";
+            InStatusMessage = $"🔴 [{_localizationService.GetString("Str_GateUi_TagInDenied")}] {denyMessage}";
             if (!silent) _dialogService.ShowError(denyMessage);
             return false;
         }
@@ -970,8 +1010,8 @@ public class GateControlViewModel : ViewModelBase
     private void ExecuteSelectOutImage()
     {
         var filePath = _dialogService.ShowOpenFileDialog(
-            filter: "Tệp hình ảnh (*.jpg;*.jpeg;*.png;*.bmp)|*.jpg;*.jpeg;*.png;*.bmp|Tất cả tệp (*.*)|*.*",
-            title: "Chọn ảnh phương tiện xuất bãi");
+            filter: _localizationService.GetString("Msg_GateUi_ImageFilter"),
+            title: _localizationService.GetString("Str_GateUi_PickOutTitle"));
 
         if (!string.IsNullOrEmpty(filePath))
         {
@@ -987,7 +1027,7 @@ public class GateControlViewModel : ViewModelBase
         var sampleImage = FindSampleImage();
         if (string.IsNullOrEmpty(sampleImage) || !File.Exists(sampleImage))
         {
-            _dialogService.ShowWarning("Chưa tìm thấy ảnh mẫu kiểm thử trong thư mục dịch vụ.");
+            _dialogService.ShowWarning(_localizationService.GetString("Msg_GateUi_NoSampleImage"));
             return;
         }
 
@@ -1009,14 +1049,14 @@ public class GateControlViewModel : ViewModelBase
     {
         if (string.IsNullOrEmpty(OutImagePath) || !File.Exists(OutImagePath))
         {
-            if (!isAutoTrigger) _dialogService.ShowWarning("Vui lòng chọn ảnh xe ra trước khi nhận diện OCR.");
+            if (!isAutoTrigger) _dialogService.ShowWarning(_localizationService.GetString("Msg_GateUi_PickOutImageFirst"));
             return false;
         }
 
         try
         {
             IsOutOcrBusy = true;
-            OutStatusMessage = "⚡ Đang nhận diện biển số xe xuất bãi...";
+            OutStatusMessage = _localizationService.GetString("Msg_GateUi_OutOcrRunning");
 
             var response = await _ocrService.RecognizePlateAsync(OutImagePath);
             if (response.IsSuccess && response.Plates.Any())
@@ -1034,7 +1074,7 @@ public class GateControlViewModel : ViewModelBase
                     ? plate.CropPath
                     : null;
 
-                OutStatusMessage = $"Đã nhận diện ra: {OutPlateText} ({OutConfidenceFormatted} - {OutProcessingTimeMs:0.0}ms)";
+                OutStatusMessage = _localizationService.GetString("Msg_GateUi_OutRecognized", OutPlateText, OutConfidenceFormatted, OutProcessingTimeMs);
 
                 // Đối soát phiên gửi
                 await MatchSessionOutAsync(OutPlateText);
@@ -1050,7 +1090,7 @@ public class GateControlViewModel : ViewModelBase
 
                     if ((IsMonthlyTicketOut || IsAutoCheckoutAllVehicles) && !requiresPayment)
                     {
-                        OutStatusMessage = $"⚡ [TỰ ĐỘNG] Khớp biển số {OutPlateText} -> Tự động hoàn tất xuất bãi & Mở Barrier...";
+                        OutStatusMessage = _localizationService.GetString("Msg_GateUi_OutAutoCompleting", OutPlateText);
                         await Task.Delay(200); // Đệm mượt
                         var checkOutSuccess = await PerformCheckOutAsync(silent: true);
                         return checkOutSuccess;
@@ -1058,21 +1098,21 @@ public class GateControlViewModel : ViewModelBase
 
                     if (requiresPayment)
                     {
-                        OutStatusMessage = $"🟡 [CHỜ THANH TOÁN] Khớp biển số {OutPlateText} | Cước {CalculatedFee:N0} đ. Vui lòng xác nhận VietQR.";
+                        OutStatusMessage = _localizationService.GetString("Msg_GateUi_OutAwaitingPayment", OutPlateText, CalculatedFee);
                     }
                 }
                 return true;
             }
             else
             {
-                OutStatusMessage = $"Không nhận diện được biển số ra: {response.Error?.Message ?? "Không phát hiện biển số"}";
+                OutStatusMessage = _localizationService.GetString("Msg_GateUi_OutNotRecognized", response.Error?.Message ?? _localizationService.GetString("Str_GateUi_NoPlateDetected"));
                 if (!isAutoTrigger) _dialogService.ShowWarning(OutStatusMessage);
                 return false;
             }
         }
         catch (Exception ex)
         {
-            OutStatusMessage = $"Lỗi OCR Làn ra: {ex.Message}";
+            OutStatusMessage = _localizationService.GetString("Msg_GateUi_OutOcrError", ex.Message);
             if (!isAutoTrigger) _dialogService.ShowError(OutStatusMessage);
             return false;
         }
@@ -1102,8 +1142,8 @@ public class GateControlViewModel : ViewModelBase
         {
             EvaluatePlateMatch();
             OutStatusMessage = IsPlateMatched == true
-                ? $"Khớp biển số: {MatchedSession.LicensePlate}"
-                : $"CẢNH BÁO: Biển số vào '{MatchedSession.LicensePlate}' khác biển số ra '{plate}'!";
+                ? _localizationService.GetString("Msg_GateUi_PlateMatchedNamed", MatchedSession.LicensePlate)
+                : _localizationService.GetString("Msg_GateUi_PlateMismatchNamed", MatchedSession.LicensePlate, plate);
             return;
         }
 
@@ -1170,15 +1210,15 @@ public class GateControlViewModel : ViewModelBase
 
         if (string.IsNullOrWhiteSpace(OutPlateText))
         {
-            OutStatusMessage = $"Đã chọn xe {session.LicensePlate}. Vui lòng nhận diện biển số xe đang ra để đối soát.";
+            OutStatusMessage = _localizationService.GetString("Msg_GateUi_SessionSelected", session.LicensePlate);
         }
         else if (IsPlateMatched == true)
         {
-            OutStatusMessage = $"Khớp biển số: {session.LicensePlate}";
+            OutStatusMessage = _localizationService.GetString("Msg_GateUi_PlateMatchedSession", session.LicensePlate);
         }
         else
         {
-            OutStatusMessage = $"CẢNH BÁO: Biển số vào '{session.LicensePlate}' khác biển số ra '{OutPlateText}'!";
+            OutStatusMessage = _localizationService.GetString("Msg_GateUi_PlateMismatchSession", session.LicensePlate, OutPlateText);
         }
     }
 
@@ -1191,15 +1231,15 @@ public class GateControlViewModel : ViewModelBase
     {
         if (MatchedSession == null)
         {
-            if (!silent) _dialogService.ShowWarning("Chưa có phiên gửi xe hợp lệ để xuất bãi.");
+            if (!silent) _dialogService.ShowWarning(_localizationService.GetString("Msg_GateUi_NoSessionToCheckOut"));
             return false;
         }
 
         // Nếu đã có biển số OCR thì bắt buộc phải khớp với biển số lúc vào.
         if (!string.IsNullOrWhiteSpace(OutPlateText) && IsPlateMatched != true)
         {
-            var message = $"Không thể xuất bãi: biển số vào '{MatchedSession.LicensePlate}' không khớp biển số ra '{OutPlateText}'.";
-            OutStatusMessage = $"🔴 [TỪ CHỐI RA] {message}";
+            var message = _localizationService.GetString("Msg_GateUi_PlateMismatchBlock", MatchedSession.LicensePlate, OutPlateText);
+            OutStatusMessage = $"🔴 [{_localizationService.GetString("Str_GateUi_TagOutDenied")}] {message}";
             if (!silent) _dialogService.ShowWarning(message);
             return false;
         }
@@ -1228,7 +1268,7 @@ public class GateControlViewModel : ViewModelBase
         var result = await _gateControlService.CompleteCheckOutAsync(request);
         if (result.Success)
         {
-            OutStatusMessage = $"🟢 [RA THÀNH CÔNG] Biển số: {targetPlate} | Vào: {inTimeStr} | Ra: {outTimeStr} | Gửi: {durationStr} | Cước: {feeStr} ({paymentStr})";
+            OutStatusMessage = _localizationService.GetString("Msg_GateUi_OutSuccess", targetPlate, inTimeStr, outTimeStr, durationStr, feeStr, paymentStr);
 
             // Mở barrier làn ra 3 giây
             IsBarrierOutOpen = true;
@@ -1242,7 +1282,7 @@ public class GateControlViewModel : ViewModelBase
 
             if (!silent)
             {
-                _dialogService.ShowSuccess($"Xuất bãi thành công cho xe {targetPlate}!\nCước phí: {CalculatedFeeFormatted}");
+                _dialogService.ShowSuccess(_localizationService.GetString("Msg_GateUi_OutSuccessDialog", targetPlate, CalculatedFeeFormatted));
             }
 
             // Reset Làn Ra
@@ -1260,7 +1300,7 @@ public class GateControlViewModel : ViewModelBase
         else
         {
             var denyMessage = result.IsPermissionDenied ? _localizationService.GetString("Msg_Auth_PermissionDenied") : result.Message;
-            OutStatusMessage = $"🔴 [TỪ CHỐI RA] {denyMessage}";
+            OutStatusMessage = $"🔴 [{_localizationService.GetString("Str_GateUi_TagOutDenied")}] {denyMessage}";
             if (!silent) _dialogService.ShowError(denyMessage);
             return false;
         }
@@ -1271,7 +1311,7 @@ public class GateControlViewModel : ViewModelBase
         if (MatchedSession == null) return false;
         if (_paymentService == null)
         {
-            if (!silent) _dialogService.ShowError("Dịch vụ thanh toán VietQR chưa được cấu hình.");
+            if (!silent) _dialogService.ShowError(_localizationService.GetString("Msg_GateUi_QrNotConfigured"));
             return false;
         }
 
@@ -1279,7 +1319,7 @@ public class GateControlViewModel : ViewModelBase
         IsVietQrLoading = true;
         IsVietQrPaidSuccess = false;
         VietQrImageSource = null;
-        VietQrStatusText = "Đang kết nối cổng thanh toán để tạo mã QR...";
+        VietQrStatusText = _localizationService.GetString("Msg_GateUi_QrConnecting");
         VietQrAmount = CalculatedFee;
 
         try
@@ -1297,7 +1337,7 @@ public class GateControlViewModel : ViewModelBase
                 IsVietQrModalOpen = false;
                 IsVietQrLoading = false;
                 var denyMessage = result.IsPermissionDenied ? _localizationService.GetString("Msg_Auth_PermissionDenied") : result.Message;
-                OutStatusMessage = $"🔴 [LỖI TẠO VIETQR] {denyMessage}";
+                OutStatusMessage = $"🔴 [{_localizationService.GetString("Str_GateUi_TagQrCreateError")}] {denyMessage}";
                 if (!silent) _dialogService.ShowError(denyMessage);
                 return false;
             }
@@ -1306,7 +1346,7 @@ public class GateControlViewModel : ViewModelBase
             VietQrTransactionReference = result.TransactionReference;
             VietQrAmount = result.Amount;
             VietQrDescription = result.Description;
-            VietQrStatusText = "Đang chờ thanh toán... Khách vui lòng quét mã VietQR.";
+            VietQrStatusText = _localizationService.GetString("Msg_GateUi_QrWaiting");
 
             if (result.QrImagePng != null && result.QrImagePng.Length > 0)
             {
@@ -1322,11 +1362,39 @@ public class GateControlViewModel : ViewModelBase
         {
             IsVietQrModalOpen = false;
             IsVietQrLoading = false;
-            OutStatusMessage = $"🔴 [LỖI THANH TOÁN] {ex.Message}";
+            OutStatusMessage = $"🔴 [{_localizationService.GetString("Str_GateUi_TagPaymentError")}] {ex.Message}";
             if (!silent) _dialogService.ShowError(ex.Message);
             return false;
         }
     }
+
+    /// <summary>
+    /// Đổi ngôn ngữ: làm mới các chuỗi tự ghép; dòng trạng thái còn là câu mặc định của ngôn ngữ cũ thì đổi sang ngôn ngữ mới
+    /// (thông báo của các thao tác đã xảy ra giữ nguyên như lúc ghi).
+    /// </summary>
+    private void OnLanguageChanged()
+    {
+        string Swap(string current, string key, ref string previousDefault)
+        {
+            var next = _localizationService.GetString(key);
+            var result = current == previousDefault ? next : current;
+            previousDefault = next;
+            return result;
+        }
+
+        InStatusMessage = Swap(InStatusMessage, "Str_GateUi_InReady", ref _inReadyDefault);
+        OutStatusMessage = Swap(OutStatusMessage, "Str_GateUi_OutReady", ref _outReadyDefault);
+        InCustomerBadge = Swap(InCustomerBadge ?? string.Empty, "Str_Gate_Badge_Visitor", ref _visitorBadgeDefault);
+
+        OnPropertyChanged(nameof(AutoModeStatusText));
+        OnPropertyChanged(nameof(CameraWatcherStatusText));
+        OnPropertyChanged(nameof(OcrEngineStatusText));
+        OnPropertyChanged(nameof(PlateMatchStatusText));
+    }
+
+    private string _inReadyDefault = string.Empty;
+    private string _outReadyDefault = string.Empty;
+    private string _visitorBadgeDefault = string.Empty;
 
     private void OnSessionCompleted(object? sender, ParkingSession session)
     {
@@ -1340,14 +1408,14 @@ public class GateControlViewModel : ViewModelBase
                 {
                     _vietQrPollTimer.Stop();
                     IsVietQrPaidSuccess = true;
-                    VietQrStatusText = "Thanh toán VietQR thành công! Đang mở barrier xuất bãi...";
+                    VietQrStatusText = _localizationService.GetString("Msg_GateUi_QrPaidOpening");
 
                     IsBarrierOutOpen = true;
                     _barrierOutTimer.Stop();
                     _barrierOutTimer.Start();
                     PlayNotificationSound();
 
-                    OutStatusMessage = $"🟢 [RA THÀNH CÔNG] Biển số: {session.LicensePlate} | Đã thanh toán VietQR: {session.TotalFee:N0} đ";
+                    OutStatusMessage = _localizationService.GetString("Msg_GateUi_OutPaidQr", session.LicensePlate, session.TotalFee);
 
                     await Task.Delay(1500);
                     IsVietQrModalOpen = false;
@@ -1382,7 +1450,7 @@ public class GateControlViewModel : ViewModelBase
             {
                 _vietQrPollTimer.Stop();
                 IsVietQrPaidSuccess = true;
-                VietQrStatusText = "Xác nhận thanh toán thành công qua VietQR!";
+                VietQrStatusText = _localizationService.GetString("Msg_GateUi_QrConfirmed");
 
                 IsBarrierOutOpen = true;
                 _barrierOutTimer.Stop();
@@ -1391,7 +1459,7 @@ public class GateControlViewModel : ViewModelBase
 
                 if (MatchedSession != null)
                 {
-                    OutStatusMessage = $"🟢 [RA THÀNH CÔNG] Biển số: {MatchedSession.LicensePlate} | Đã thanh toán: {status.Amount:N0} đ";
+                    OutStatusMessage = _localizationService.GetString("Msg_GateUi_OutPaid", MatchedSession.LicensePlate, status.Amount);
                 }
 
                 await LoadActiveSessionsAsync();
@@ -1418,14 +1486,14 @@ public class GateControlViewModel : ViewModelBase
     private async Task ExecuteRefreshVietQrStatusAsync()
     {
         if (VietQrPaymentId <= 0 || _paymentService == null) return;
-        VietQrStatusText = "Đang kiểm tra đối soát với cổng...";
+        VietQrStatusText = _localizationService.GetString("Msg_GateUi_QrChecking");
 
         var status = await _paymentService.RefreshFromGatewayAsync(VietQrPaymentId);
         if (status.Success && status.Status == PaymentStatus.Paid && !IsVietQrPaidSuccess)
         {
             _vietQrPollTimer.Stop();
             IsVietQrPaidSuccess = true;
-            VietQrStatusText = "Cổng xác nhận đã thanh toán thành công!";
+            VietQrStatusText = _localizationService.GetString("Msg_GateUi_QrGatewayPaid");
             IsBarrierOutOpen = true;
             _barrierOutTimer.Stop();
             _barrierOutTimer.Start();
@@ -1446,7 +1514,7 @@ public class GateControlViewModel : ViewModelBase
         }
         else
         {
-            VietQrStatusText = "Chưa nhận được giao dịch từ khách. Vui lòng thử lại sau khi chuyển tiền.";
+            VietQrStatusText = _localizationService.GetString("Msg_GateUi_QrNotReceived");
         }
     }
 
@@ -1467,7 +1535,7 @@ public class GateControlViewModel : ViewModelBase
 
         IsVietQrModalOpen = false;
         IsVietQrLoading = false;
-        OutStatusMessage = "Đã hủy giao dịch thanh toán VietQR.";
+        OutStatusMessage = _localizationService.GetString("Msg_GateUi_QrCancelled");
     }
 
     private static BitmapImage? LoadBitmapFromBytes(byte[]? bytes)
@@ -1501,7 +1569,7 @@ public class GateControlViewModel : ViewModelBase
         try
         {
             IsSimulationRunning = true;
-            _dialogService.ShowInfo("Bắt đầu kịch bản mô phỏng tự động:\n1. Xe vào bãi (Auto Check-In)\n2. Xe đỗ trong bãi\n3. Xe xuất bãi (Auto Check-Out).");
+            _dialogService.ShowInfo(_localizationService.GetString("Msg_GateUi_DemoStart"));
 
             // BẬT CHẾ ĐỘ TỰ ĐỘNG
             IsAutoModeEnabled = true;
@@ -1509,12 +1577,12 @@ public class GateControlViewModel : ViewModelBase
             var sampleImage = FindSampleImage();
             if (string.IsNullOrEmpty(sampleImage) || !File.Exists(sampleImage))
             {
-                _dialogService.ShowWarning("Không tìm thấy ảnh mẫu để chạy mô phỏng.");
+                _dialogService.ShowWarning(_localizationService.GetString("Msg_GateUi_DemoNoImage"));
                 return;
             }
 
             // --- BƯỚC 1: XE TIẾN VÀO LÀN VÀO ---
-            InStatusMessage = "🎬 [MÔ PHỎNG] Xe ô tô 30K-555.55 tiến vào Làn Vào...";
+            InStatusMessage = _localizationService.GetString("Msg_GateUi_DemoInLane");
             InImagePath = sampleImage;
             InAnnotatedImagePath = null;
             InCropImagePath = null;
@@ -1523,7 +1591,7 @@ public class GateControlViewModel : ViewModelBase
             var inSuccess = await ProcessInLanePipelineAsync(isAutoTrigger: true);
             if (!inSuccess)
             {
-                InStatusMessage = "Mô phỏng dừng do bước xe vào chưa thành công.";
+                InStatusMessage = _localizationService.GetString("Msg_GateUi_DemoStopped");
                 return;
             }
 
@@ -1531,7 +1599,7 @@ public class GateControlViewModel : ViewModelBase
             await Task.Delay(2500);
 
             // --- BƯỚC 3: XE TIẾN ĐẾN LÀN RA ---
-            OutStatusMessage = "🎬 [MÔ PHỎNG] Xe ô tô 30K-555.55 tiến đến Làn Ra đối soát...";
+            OutStatusMessage = _localizationService.GetString("Msg_GateUi_DemoOutLane");
             OutImagePath = sampleImage;
             OutAnnotatedImagePath = null;
             OutCropImagePath = null;
@@ -1541,12 +1609,12 @@ public class GateControlViewModel : ViewModelBase
 
             if (outSuccess)
             {
-                _dialogService.ShowSuccess("🎉 Chu trình Mô Phỏng Tự Động Ra/Vào đã hoàn tất thành công 100%!");
+                _dialogService.ShowSuccess(_localizationService.GetString("Msg_GateUi_DemoDone"));
             }
         }
         catch (Exception ex)
         {
-            _dialogService.ShowError($"Lỗi mô phỏng: {ex.Message}");
+            _dialogService.ShowError(_localizationService.GetString("Msg_GateUi_DemoError", ex.Message));
         }
         finally
         {

@@ -2,8 +2,8 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SmartPS.Data;
 
 #nullable disable
@@ -17,10 +17,11 @@ namespace SmartPS.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .UseCollation("Vietnamese_100_CS_AS")
                 .HasAnnotation("ProductVersion", "10.0.11")
-                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+                .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
-            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("SmartPS.Models.Audit.AuditLog", b =>
                 {
@@ -28,62 +29,62 @@ namespace SmartPS.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("AuditLogId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("AuditLogId"));
 
                     b.Property<string>("Action")
                         .IsRequired()
                         .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<string>("Details")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("jsonb")
-                        .HasDefaultValueSql("'{}'::jsonb");
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValueSql("N'{}'");
 
                     b.Property<string>("EntityId")
                         .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("EntityType")
                         .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<string>("Hash")
                         .IsRequired()
                         .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<string>("MachineName")
                         .IsRequired()
                         .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<DateTime>("OccurredAtUtc")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Outcome")
                         .IsRequired()
                         .HasMaxLength(16)
-                        .HasColumnType("character varying(16)");
+                        .HasColumnType("nvarchar(16)");
 
                     b.Property<string>("PrevHash")
                         .IsRequired()
                         .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<string>("RoleName")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int?>("UserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("AuditLogId");
 
@@ -106,26 +107,31 @@ namespace SmartPS.Migrations
                     b.HasIndex("EntityType", "EntityId")
                         .HasDatabaseName("IX_AuditLogs_EntityType_EntityId");
 
-                    b.ToTable("AuditLogs", (string)null);
+                    b.ToTable("AuditLogs", null, t =>
+                        {
+                            t.HasTrigger("TR_AuditLogs_BlockMutation");
+                        });
+
+                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
                 });
 
             modelBuilder.Entity("SmartPS.Models.Auth.Permission", b =>
                 {
                     b.Property<int>("PermissionId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PermissionId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PermissionId"));
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("PermissionName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("PermissionId");
 
@@ -139,19 +145,19 @@ namespace SmartPS.Migrations
                 {
                     b.Property<int>("RoleId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("RoleId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RoleId"));
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("RoleName")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("RoleId");
 
@@ -164,10 +170,10 @@ namespace SmartPS.Migrations
             modelBuilder.Entity("SmartPS.Models.Auth.RolePermission", b =>
                 {
                     b.Property<int>("RoleId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("PermissionId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("RoleId", "PermissionId");
 
@@ -180,32 +186,32 @@ namespace SmartPS.Migrations
                 {
                     b.Property<int>("UserId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("UserId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
 
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
+                        .HasColumnType("bit")
                         .HasDefaultValue(true);
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<int>("RoleId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("UserId");
 
@@ -221,47 +227,47 @@ namespace SmartPS.Migrations
                 {
                     b.Property<int>("IncidentId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IncidentId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IncidentId"));
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<string>("IncidentCode")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("LicensePlate")
                         .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<DateTime>("ReportedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("ReportedByUserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("ResolutionNotes")
                         .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<DateTime?>("ResolvedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("ResolvedByUserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("Status")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasDefaultValue(0);
 
                     b.Property<int>("Type")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("IncidentId");
 
@@ -283,32 +289,32 @@ namespace SmartPS.Migrations
                 {
                     b.Property<int>("BlacklistId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BlacklistId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BlacklistId"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("CustomerId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<string>("LicensePlate")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Reason")
                         .IsRequired()
                         .HasMaxLength(250)
-                        .HasColumnType("character varying(250)");
+                        .HasColumnType("nvarchar(250)");
 
                     b.HasKey("BlacklistId");
 
@@ -321,45 +327,45 @@ namespace SmartPS.Migrations
                 {
                     b.Property<int>("CustomerId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CustomerId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CustomerId"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Email")
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int?>("HouseholdId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("IdentityCard")
                         .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
+                        .HasColumnType("nvarchar(30)");
 
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
+                        .HasColumnType("bit")
                         .HasDefaultValue(true);
 
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<int>("Type")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("CustomerId");
 
@@ -374,27 +380,27 @@ namespace SmartPS.Migrations
                 {
                     b.Property<int>("HouseholdId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("HouseholdId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("HouseholdId"));
 
                     b.Property<string>("ApartmentCode")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<int?>("MaxVehicles")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.HasKey("HouseholdId");
 
@@ -408,53 +414,53 @@ namespace SmartPS.Migrations
                 {
                     b.Property<int>("TicketId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TicketId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TicketId"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("CustomerId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("DurationMonths")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<decimal>("MonthlyPrice")
                         .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("RegisteredLicensePlate")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("Status")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasDefaultValue(0);
 
                     b.Property<string>("TicketCode")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int>("VehicleId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("VehicleTypeId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("TicketId");
 
@@ -476,71 +482,71 @@ namespace SmartPS.Migrations
                 {
                     b.Property<int>("SessionId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SessionId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SessionId"));
 
                     b.Property<string>("CheckInImagePath")
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<DateTime>("CheckInTime")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("CheckOutImagePath")
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<DateTime?>("CheckOutTime")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("CreatedByUserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int?>("CustomerId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("CustomerType")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasDefaultValue(1);
 
                     b.Property<bool>("IsMonthlyPass")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
+                        .HasColumnType("bit")
                         .HasDefaultValue(false);
 
                     b.Property<string>("LicensePlate")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<int>("PaymentMethod")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasDefaultValue(0);
 
                     b.Property<int?>("SlotId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("Status")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasDefaultValue(0);
 
                     b.Property<string>("TicketCode")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<decimal>("TotalFee")
                         .ValueGeneratedOnAdd()
                         .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)")
+                        .HasColumnType("decimal(18,2)")
                         .HasDefaultValue(0.0m);
 
                     b.Property<int>("VehicleTypeId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("SessionId");
 
@@ -564,7 +570,7 @@ namespace SmartPS.Migrations
 
                     b.HasIndex(new[] { "SlotId" }, "IX_ParkingSessions_SlotId_Active")
                         .IsUnique()
-                        .HasFilter("\"Status\" = 0 AND \"SlotId\" IS NOT NULL");
+                        .HasFilter("[Status] = 0 AND [SlotId] IS NOT NULL");
 
                     b.ToTable("ParkingSessions", (string)null);
                 });
@@ -573,18 +579,18 @@ namespace SmartPS.Migrations
                 {
                     b.Property<int>("SettingsId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SettingsId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SettingsId"));
 
                     b.Property<int>("DefaultMaxVehiclesPerHousehold")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasDefaultValue(2);
 
                     b.Property<int>("OverstayThresholdHours")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasDefaultValue(48);
 
                     b.HasKey("SettingsId");
@@ -596,54 +602,54 @@ namespace SmartPS.Migrations
                 {
                     b.Property<int>("SlotId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SlotId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SlotId"));
 
                     b.Property<double>("CoordX")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("double precision")
+                        .HasColumnType("float")
                         .HasDefaultValue(0.0);
 
                     b.Property<double>("CoordY")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("double precision")
+                        .HasColumnType("float")
                         .HasDefaultValue(0.0);
 
                     b.Property<string>("CurrentLicensePlate")
                         .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
+                        .HasColumnType("nvarchar(30)");
 
                     b.Property<double>("Height")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("double precision")
+                        .HasColumnType("float")
                         .HasDefaultValue(120.0);
 
                     b.Property<string>("SlotCode")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<int>("Status")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasDefaultValue(0);
 
                     b.Property<int>("VehicleTypeId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<double>("Width")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("double precision")
+                        .HasColumnType("float")
                         .HasDefaultValue(80.0);
 
                     b.Property<int?>("ZoneId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("ZoneName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("SlotId");
 
@@ -661,36 +667,36 @@ namespace SmartPS.Migrations
                 {
                     b.Property<int>("ZoneId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ZoneId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ZoneId"));
 
                     b.Property<int>("Audience")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasDefaultValue(0);
 
                     b.Property<string>("Description")
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<int>("TotalCapacity")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasDefaultValue(0);
 
                     b.Property<int?>("VehicleTypeId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("ZoneCode")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("ZoneName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("ZoneId");
 
@@ -706,36 +712,36 @@ namespace SmartPS.Migrations
                 {
                     b.Property<int>("RuleId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("RuleId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RuleId"));
 
                     b.Property<decimal>("Block4hPrice")
                         .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("DailyPrice")
                         .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Description")
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<decimal>("Monthly1Price")
                         .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("Monthly3Price")
                         .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("Monthly6Price")
                         .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("VehicleTypeId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("RuleId");
 
@@ -749,40 +755,40 @@ namespace SmartPS.Migrations
                 {
                     b.Property<int>("VehicleId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("VehicleId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("VehicleId"));
 
                     b.Property<string>("Brand")
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Color")
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<string>("LicensePlate")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<int>("OwnerCustomerId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("VehicleTypeId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("VehicleId");
 
                     b.HasIndex("LicensePlate")
                         .IsUnique()
-                        .HasFilter("\"IsActive\" = true");
+                        .HasFilter("[IsActive] = 1");
 
                     b.HasIndex("OwnerCustomerId");
 
@@ -795,19 +801,19 @@ namespace SmartPS.Migrations
                 {
                     b.Property<int>("VehicleTypeId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("VehicleTypeId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("VehicleTypeId"));
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("TypeName")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("VehicleTypeId");
 
@@ -821,54 +827,54 @@ namespace SmartPS.Migrations
                 {
                     b.Property<int>("PaymentId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PaymentId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PaymentId"));
 
                     b.Property<decimal>("Amount")
                         .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("CheckoutImagePath")
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int?>("CheckoutUserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Currency")
                         .IsRequired()
                         .HasMaxLength(8)
-                        .HasColumnType("character varying(8)");
+                        .HasColumnType("nvarchar(8)");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<DateTime?>("ExpiredAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("PaidAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("PaymentMethod")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("SessionId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int?>("ShiftId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.HasKey("PaymentId");
 
@@ -879,7 +885,7 @@ namespace SmartPS.Migrations
                     b.HasIndex("SessionId")
                         .IsUnique()
                         .HasDatabaseName("IX_Payments_SessionId_Active")
-                        .HasFilter("\"Status\" IN (0, 1)");
+                        .HasFilter("[Status] IN (0, 1)");
 
                     b.HasIndex("ShiftId");
 
@@ -892,43 +898,43 @@ namespace SmartPS.Migrations
                 {
                     b.Property<int>("PaymentAttemptId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PaymentAttemptId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PaymentAttemptId"));
 
                     b.Property<int>("AttemptNumber")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("ErrorCode")
                         .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<string>("ErrorMessage")
                         .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<string>("Gateway")
                         .IsRequired()
                         .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<int>("PaymentTransactionId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("RequestPayload")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ResponsePayload")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("PaymentAttemptId");
 
@@ -941,66 +947,66 @@ namespace SmartPS.Migrations
                 {
                     b.Property<int>("PaymentTransactionId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PaymentTransactionId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PaymentTransactionId"));
 
                     b.Property<string>("AccountName")
                         .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("AccountNumber")
                         .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<decimal>("Amount")
                         .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("BankCode")
                         .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
+                        .HasColumnType("nvarchar(32)");
 
                     b.Property<string>("CheckoutUrl")
                         .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Currency")
                         .IsRequired()
                         .HasMaxLength(8)
-                        .HasColumnType("character varying(8)");
+                        .HasColumnType("nvarchar(8)");
 
                     b.Property<string>("GatewayOrderCode")
                         .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<string>("GatewayTransactionId")
                         .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<int>("PaymentId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("QrCodePayload")
                         .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
+                        .HasColumnType("nvarchar(4000)");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("TransactionReference")
                         .IsRequired()
                         .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.HasKey("PaymentTransactionId");
 
@@ -1018,53 +1024,53 @@ namespace SmartPS.Migrations
                 {
                     b.Property<int>("PaymentWebhookId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PaymentWebhookId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PaymentWebhookId"));
 
                     b.Property<string>("ErrorMessage")
                         .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<string>("EventId")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<bool>("IsDuplicate")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsProcessed")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsValid")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<string>("Payload")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("PaymentTransactionId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("ProcessedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Provider")
                         .IsRequired()
                         .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<DateTime>("ReceivedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Signature")
                         .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("TransactionReference")
                         .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
+                        .HasColumnType("nvarchar(64)");
 
                     b.HasKey("PaymentWebhookId");
 
@@ -1084,44 +1090,44 @@ namespace SmartPS.Migrations
                 {
                     b.Property<int>("TransactionId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TransactionId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TransactionId"));
 
                     b.Property<decimal>("Amount")
                         .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("CreatedByUserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("Note")
                         .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<int?>("ParkingSessionId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("PaymentMethod")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("ReferenceCode")
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("ShiftId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("TransactionCode")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int>("Type")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("TransactionId");
 
@@ -1143,7 +1149,7 @@ namespace SmartPS.Migrations
                     b.HasIndex("ParkingSessionId", "Type")
                         .IsUnique()
                         .HasDatabaseName("IX_FinancialTransactions_OneParkingFeePerSession")
-                        .HasFilter("\"ParkingSessionId\" IS NOT NULL AND \"Type\" = 0");
+                        .HasFilter("[ParkingSessionId] IS NOT NULL AND [Type] = 0");
 
                     b.ToTable("FinancialTransactions", (string)null);
                 });
@@ -1152,48 +1158,48 @@ namespace SmartPS.Migrations
                 {
                     b.Property<int>("ShiftId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ShiftId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ShiftId"));
 
                     b.Property<decimal?>("ActualCash")
                         .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("BeginningCash")
                         .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime?>("ClosedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<decimal?>("Difference")
                         .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal?>("ExpectedCash")
                         .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("ManagerNote")
                         .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<DateTime>("OpenedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("OpenedByUserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("ReviewedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("ReviewedByUserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("Status")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
+                        .HasColumnType("int")
                         .HasDefaultValue(0);
 
                     b.HasKey("ShiftId");
@@ -1203,7 +1209,7 @@ namespace SmartPS.Migrations
                     b.HasIndex("OpenedByUserId")
                         .IsUnique()
                         .HasDatabaseName("IX_Shifts_OneActivePerUser")
-                        .HasFilter("\"Status\" = 0");
+                        .HasFilter("[Status] = 0");
 
                     b.HasIndex("ReviewedByUserId");
 

@@ -1,45 +1,36 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Npgsql;
+using Microsoft.Data.SqlClient;
 using SmartPS.DTOs.Auth;
 
 namespace SmartPS.Tests.Integration;
 
 /// <summary>
 /// Fix round 1 — hardening of the audit trail against a privileged attacker and hostile input:
-/// FX4 (CH10) unparseable Outcome must not crash Verify / the audit page; FX5 (CH13) triggers ENABLE ALWAYS
-/// (migration HardenAuditTriggers) so session_replication_role = replica cannot bypass them;
-/// FX6 (CH16) attemptedUsername is truncated; FX11 numbers that do not fit a decimal still hash-round-trip through jsonb.
+/// FX4 (CH10) unparseable Outcome must not crash Verify / the audit page; FX5 (CH13) the append-only trigger is enabled
+/// and blocks raw UPDATE/DELETE, and the empty guard table with a foreign key blocks TRUNCATE (which does not fire triggers);
+/// FX6 (CH16) attemptedUsername is truncated; FX11 numbers that do not fit a decimal still hash-round-trip through the JSON column.
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class AuditTamperResilienceTests : IClassFixture<PostgresDatabaseFixture>
+public class AuditTamperResilienceTests : IClassFixture<SqlServerDatabaseFixture>
 {
-    private static readonly string[] TriggerNames = { "TR_AuditLogs_NoUpdate", "TR_AuditLogs_NoDelete", "TR_AuditLogs_NoTruncate" };
+    private const string TriggerName = SmartPS.Data.Configurations.Audit.AuditLogConfiguration.AuditLogTriggerName;
 
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
 
-    public AuditTamperResilienceTests(PostgresDatabaseFixture db)
+    public AuditTamperResilienceTests(SqlServerDatabaseFixture db)
     {
         _db = db;
     }
 
-    /// <summary>DBA-style tamper: triggers disabled for one statement and restored to their previous enable mode.</summary>
+    /// <summary>DBA-style tamper: the append-only trigger is disabled for one statement and enabled again.</summary>
     private async Task TamperAsync(string sql)
     {
-        await using var conn = new NpgsqlConnection(_db.ConnectionString);
+        await using var conn = new SqlConnection(_db.ConnectionString);
         await conn.OpenAsync();
-        var modes = new Dictionary<string, string>();
-        foreach (var name in TriggerNames)
-        {
-            await using var q = new NpgsqlCommand("SELECT tgenabled::text FROM pg_trigger WHERE tgname = @n", conn);
-            q.Parameters.AddWithValue("n", name);
-            modes[name] = (string)(await q.ExecuteScalarAsync())!;
-        }
-
-        var restore = string.Join(" ", TriggerNames.Select(n =>
-            $"ALTER TABLE \"AuditLogs\" ENABLE {(modes[n] == "A" ? "ALWAYS " : string.Empty)}TRIGGER \"{n}\";"));
-        await using var cmd = new NpgsqlCommand($"ALTER TABLE \"AuditLogs\" DISABLE TRIGGER ALL; {sql}; {restore}", conn);
+        await using var cmd = new SqlCommand(
+            $"ALTER TABLE \"AuditLogs\" DISABLE TRIGGER \"{TriggerName}\"; {sql}; ALTER TABLE \"AuditLogs\" ENABLE TRIGGER \"{TriggerName}\";", conn);
         await cmd.ExecuteNonQueryAsync();
     }
 
@@ -75,7 +66,7 @@ public class AuditTamperResilienceTests : IClassFixture<PostgresDatabaseFixture>
             result = await sp.GetRequiredService<IAuditIntegrityVerifier>().VerifyAsync();
             verifyRowsAfter = await _db.ScalarAsync<long>("SELECT count(*) FROM \"AuditLogs\" WHERE \"Action\" = 'AUDIT_VERIFY'");
             lastVerifyOutcome = await _db.ScalarAsync<string>(
-                "SELECT \"Outcome\" FROM \"AuditLogs\" WHERE \"Action\" = 'AUDIT_VERIFY' ORDER BY \"AuditLogId\" DESC LIMIT 1");
+                "SELECT TOP (1) \"Outcome\" FROM \"AuditLogs\" WHERE \"Action\" = 'AUDIT_VERIFY' ORDER BY \"AuditLogId\" DESC");
         }
         finally
         {
@@ -112,56 +103,46 @@ public class AuditTamperResilienceTests : IClassFixture<PostgresDatabaseFixture>
     }
 
     [Fact]
-    public async Task FX5_audit_triggers_are_enabled_ALWAYS()
+    public async Task FX5_audit_trigger_is_enabled_and_truncate_is_guarded()
     {
         _db.RequireAvailable();
 
-        foreach (var name in TriggerNames)
-        {
-            var mode = await _db.ScalarAsync<string>("SELECT tgenabled::text FROM pg_trigger WHERE tgname = @n", ("n", name));
-            Assert.True(mode == "A", $"{name}: tgenabled = '{mode}', expected 'A' (ENABLE ALWAYS)");
-        }
+        var enabled = await _db.ScalarAsync<int>(
+            "SELECT COUNT(*) FROM sys.triggers WHERE name = @n AND parent_id = OBJECT_ID('dbo.AuditLogs') AND is_disabled = 0 AND is_instead_of_trigger = 1",
+            ("n", TriggerName));
+        Assert.Equal(1, enabled);
 
-        var applied = await _db.ScalarAsync<long>("SELECT count(*) FROM \"__EFMigrationsHistory\" WHERE \"MigrationId\" LIKE '%\\_AddRbacAndAuditTrail'");
+        var guardTable = await _db.ScalarAsync<int>(
+            "SELECT COUNT(*) FROM sys.foreign_keys WHERE parent_object_id = OBJECT_ID('dbo.AuditLogsTruncateGuard') AND referenced_object_id = OBJECT_ID('dbo.AuditLogs')");
+        Assert.Equal(1, guardTable);
+
+        var applied = await _db.ScalarAsync<int>("SELECT COUNT(*) FROM \"__EFMigrationsHistory\" WHERE \"MigrationId\" LIKE '%[_]InitialSqlServer'");
         Assert.Equal(1, applied);
     }
 
     [Fact]
-    public async Task FX5_CH13_replica_session_role_cannot_bypass_the_triggers()
+    public async Task FX5_CH13_raw_update_and_truncate_cannot_bypass_the_protection()
     {
         _db.RequireAvailable();
         _ = await AdminWithRowsAsync(2);
         var before = await AuditDb.AllAsync(_db.Factory);
         var victim = before[^1];
 
-        await using var conn = new NpgsqlConnection(_db.ConnectionString);
-        await conn.OpenAsync();
-        PostgresException? blocked = null;
-        try
-        {
-            await using var cmd = new NpgsqlCommand(
-                $"SET session_replication_role = replica; UPDATE \"AuditLogs\" SET \"Action\" = 'TAMPERED' WHERE \"AuditLogId\" = {victim.AuditLogId};", conn);
-            await cmd.ExecuteNonQueryAsync();
-        }
-        catch (PostgresException ex)
-        {
-            blocked = ex;
-        }
-        finally
-        {
-            await using var reset = new NpgsqlCommand("RESET session_replication_role;", conn);
-            await reset.ExecuteNonQueryAsync();
-        }
+        var update = await Assert.ThrowsAsync<SqlException>(() => _db.ExecuteAsync(
+            $"UPDATE \"AuditLogs\" SET \"Action\" = 'TAMPERED' WHERE \"AuditLogId\" = {victim.AuditLogId}"));
+        // 4712: Cannot truncate table ... because it is being referenced by a FOREIGN KEY constraint
+        var truncate = await Assert.ThrowsAsync<SqlException>(() => _db.ExecuteAsync("TRUNCATE TABLE \"AuditLogs\""));
 
         var after = await AuditDb.AllAsync(_db.Factory);
-        if (after[^1].Action != victim.Action)
+        if (after.Count == before.Count && after[^1].Action != victim.Action)
         {
             // Restore for the other tests in this class before failing.
             await TamperAsync($"UPDATE \"AuditLogs\" SET \"Action\" = '{victim.Action}' WHERE \"AuditLogId\" = {victim.AuditLogId}");
         }
 
-        Assert.NotNull(blocked);
-        Assert.Contains("append-only", blocked!.MessageText, StringComparison.Ordinal);
+        Assert.Contains("append-only", update.Message, StringComparison.Ordinal);
+        Assert.Contains("FOREIGN KEY", truncate.Message, StringComparison.Ordinal);
+        Assert.Equal(before.Count, after.Count);
         Assert.Equal(victim.Action, after[^1].Action);
     }
 

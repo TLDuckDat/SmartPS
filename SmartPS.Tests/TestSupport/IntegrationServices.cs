@@ -23,11 +23,11 @@ namespace SmartPS.Tests.TestSupport;
 /// </summary>
 public static class IntegrationServices
 {
-    public static ServiceProvider Create(PostgresDatabaseFixture fixture, Action<IServiceCollection>? overrides = null)
+    public static ServiceProvider Create(SqlServerDatabaseFixture fixture, Action<IServiceCollection>? overrides = null)
     {
         var services = new ServiceCollection();
 
-        services.AddDbContextFactory<SmartPsDbContext>(options => options.UseNpgsql(fixture.ConnectionString));
+        services.AddDbContextFactory<SmartPsDbContext>(options => options.UseSqlServer(fixture.ConnectionString));
 
         services.AddSingleton<ICurrentUserContext, CurrentUserContext>();
         services.AddSingleton<IAuditService, AuditService>();

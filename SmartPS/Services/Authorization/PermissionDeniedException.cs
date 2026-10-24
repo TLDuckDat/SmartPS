@@ -1,9 +1,11 @@
+using SmartPS.Services.Localization;
+
 namespace SmartPS.Services.Authorization;
 
 public sealed class PermissionDeniedException : UnauthorizedAccessException
 {
     public PermissionDeniedException(IReadOnlyList<string> requiredPermissions, string? username, string reason = "MissingPermission")
-        : base("Bạn không có quyền thực hiện thao tác này.")
+        : base(AppText.Get("Msg_Inc_NoPermission"))
     {
         RequiredPermissions = requiredPermissions;
         Username = username;

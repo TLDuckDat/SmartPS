@@ -12,17 +12,17 @@ namespace SmartPS.Tests.Integration;
 /// trusted. Ticket holders (IsMonthlyPass at check-in) pay 0 even if the ticket expires during the stay.
 /// Each test uses an isolated vehicle type with its own PricingRule (Block4h 7,000 / Daily 31,000).
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class GateCheckoutFeeTests : IClassFixture<PostgresDatabaseFixture>
+public class GateCheckoutFeeTests : IClassFixture<SqlServerDatabaseFixture>
 {
     private const decimal Block4h = 7_000m;
     private const decimal Daily = 31_000m;
 
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
     private readonly GateTestData _data;
 
-    public GateCheckoutFeeTests(PostgresDatabaseFixture db)
+    public GateCheckoutFeeTests(SqlServerDatabaseFixture db)
     {
         _db = db;
         _data = new GateTestData(db);

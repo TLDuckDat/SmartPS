@@ -8,6 +8,7 @@ using SmartPS.Models.Shifts;
 using SmartPS.Models.Payment;
 using SmartPS.Services.Audit;
 using SmartPS.Services.Authorization;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.Services.Shifts;
 
@@ -38,9 +39,9 @@ public class ShiftService : IShiftService
     public async Task<Shift> OpenShiftAsync(int userId, decimal beginningCash, CancellationToken cancellationToken = default)
     {
         if (userId <= 0)
-            throw new ArgumentException("Tài khoản mở ca không hợp lệ.", nameof(userId));
+            throw new ArgumentException(AppText.Get("Msg_Shift_InvalidOpener"), nameof(userId));
         if (beginningCash < 0)
-            throw new ArgumentOutOfRangeException(nameof(beginningCash), "Beginning Cash không được âm.");
+            throw new ArgumentOutOfRangeException(nameof(beginningCash), AppText.Get("Msg_Shift_NegativeBeginningCash"));
 
         await _guard.DemandActorAsync(userId, Permissions.ShiftOpen, "Shift", null, cancellationToken);
 
@@ -49,16 +50,16 @@ public class ShiftService : IShiftService
         var user = await db.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken)
-            ?? throw new KeyNotFoundException("Không tìm thấy tài khoản mở ca.");
+            ?? throw new KeyNotFoundException(AppText.Get("Msg_Shift_OpenerNotFound"));
 
         if (!user.IsActive)
-            throw new InvalidOperationException("Tài khoản đã bị khóa nên không thể mở ca.");
+            throw new InvalidOperationException(AppText.Get("Msg_Shift_AccountLocked"));
 
         var hasActiveShift = await db.Shifts
             .AnyAsync(x => x.OpenedByUserId == userId && x.Status == ShiftStatus.Active, cancellationToken);
 
         if (hasActiveShift)
-            throw new InvalidOperationException("Tài khoản hiện đã có một ca đang hoạt động.");
+            throw new InvalidOperationException(AppText.Get("Msg_Shift_AlreadyOpen"));
 
         var shift = new Shift
         {
@@ -87,7 +88,7 @@ public class ShiftService : IShiftService
         }
         catch (DbUpdateException ex)
         {
-            throw new InvalidOperationException("Không thể mở ca. Tài khoản có thể đã có một ca Active khác.", ex);
+            throw new InvalidOperationException(AppText.Get("Msg_Shift_OpenFailed"), ex);
         }
 
         return shift;
@@ -102,7 +103,7 @@ public class ShiftService : IShiftService
             .Include(x => x.OpenedByUser)
             .Include(x => x.ReviewedByUser)
             .FirstOrDefaultAsync(x => x.ShiftId == shiftId, cancellationToken)
-            ?? throw new KeyNotFoundException("Không tìm thấy ca trực.");
+            ?? throw new KeyNotFoundException(AppText.Get("Msg_Shift_NotFound"));
 
         var transactions = await db.FinancialTransactions
             .AsNoTracking()
@@ -118,7 +119,7 @@ public class ShiftService : IShiftService
     public async Task<Shift> CloseShiftAsync(int shiftId, int actorUserId, decimal actualCash, CancellationToken cancellationToken = default)
     {
         if (actualCash < 0)
-            throw new ArgumentOutOfRangeException(nameof(actualCash), "Actual Cash không được âm.");
+            throw new ArgumentOutOfRangeException(nameof(actualCash), AppText.Get("Msg_Shift_NegativeActualCash"));
 
         await _guard.DemandActorAsync(actorUserId, Permissions.ShiftClose, "Shift", shiftId.ToString(), cancellationToken);
 
@@ -127,15 +128,15 @@ public class ShiftService : IShiftService
         {
             var shift = await db.Shifts
                 .FirstOrDefaultAsync(x => x.ShiftId == shiftId, cancellationToken)
-                ?? throw new KeyNotFoundException("Không tìm thấy ca trực.");
+                ?? throw new KeyNotFoundException(AppText.Get("Msg_Shift_NotFound"));
 
             if (shift.Status != ShiftStatus.Active)
-                throw new InvalidOperationException("Chỉ ca Active mới có thể đóng.");
+                throw new InvalidOperationException(AppText.Get("Msg_Shift_OnlyActiveCanClose"));
             if (shift.OpenedByUserId != actorUserId)
-                throw new UnauthorizedAccessException("Chỉ người mở ca mới được đóng ca này.");
+                throw new UnauthorizedAccessException(AppText.Get("Msg_Shift_OnlyOpenerCanClose"));
             if (await db.Payments.AnyAsync(p => p.ShiftId == shiftId &&
                 (p.Status == PaymentStatus.Created || p.Status == PaymentStatus.Pending), cancellationToken))
-                throw new InvalidOperationException("Ca còn thanh toán VietQR đang chờ. Hãy hoàn tất hoặc hủy thanh toán trước khi đóng ca.");
+                throw new InvalidOperationException(AppText.Get("Msg_Shift_PendingQrBlocksClose"));
 
             var transactions = await db.FinancialTransactions
                 .AsNoTracking()
@@ -250,9 +251,9 @@ public class ShiftService : IShiftService
         CancellationToken cancellationToken = default)
     {
         if (type == FinancialTransactionType.ParkingFee)
-            throw new InvalidOperationException("ParkingFee phải được tạo tự động từ luồng checkout.");
+            throw new InvalidOperationException(AppText.Get("Msg_Shift_ParkingFeeAuto"));
         if (createdByUserId <= 0)
-            throw new ArgumentException("Người tạo giao dịch không hợp lệ.", nameof(createdByUserId));
+            throw new ArgumentException(AppText.Get("Msg_Shift_InvalidCreator"), nameof(createdByUserId));
 
         await _guard.DemandActorAsync(createdByUserId, Permissions.ShiftAdjust, "FinancialTransaction", null, cancellationToken);
 
@@ -260,20 +261,20 @@ public class ShiftService : IShiftService
         await using (var dbTransaction = await _audit.BeginAuditedTransactionAsync(db, System.Data.IsolationLevel.ReadCommitted, cancellationToken))
         {
             var shift = await db.Shifts.FirstOrDefaultAsync(x => x.ShiftId == shiftId, cancellationToken)
-                ?? throw new KeyNotFoundException("Không tìm thấy ca trực.");
+                ?? throw new KeyNotFoundException(AppText.Get("Msg_Shift_NotFound"));
 
             if (shift.Status == ShiftStatus.Reviewed)
-                throw new InvalidOperationException("Ca đã được xác nhận nên không thể phát sinh giao dịch mới.");
+                throw new InvalidOperationException(AppText.Get("Msg_Shift_Reviewed"));
 
             if (shift.Status == ShiftStatus.Locked && type != FinancialTransactionType.Adjustment)
-                throw new InvalidOperationException("Ca đã khóa chỉ cho phép tạo Adjustment, không sửa giao dịch cũ.");
+                throw new InvalidOperationException(AppText.Get("Msg_Shift_LockedAdjustOnly"));
 
             if (type == FinancialTransactionType.Refund)
                 amount = -Math.Abs(amount);
             else if (type == FinancialTransactionType.Adjustment && amount == 0)
-                throw new ArgumentException("Adjustment phải có số tiền khác 0.", nameof(amount));
+                throw new ArgumentException(AppText.Get("Msg_Shift_AdjustmentNonZero"), nameof(amount));
             else if (type == FinancialTransactionType.Incident && amount == 0)
-                throw new ArgumentException("Incident transaction phải có số tiền khác 0.", nameof(amount));
+                throw new ArgumentException(AppText.Get("Msg_Shift_IncidentNonZero"), nameof(amount));
 
             if (paymentMethod == PaymentMethod.Free)
                 amount = 0;
@@ -337,10 +338,10 @@ public class ShiftService : IShiftService
         await using (var transaction = await _audit.BeginAuditedTransactionAsync(db, System.Data.IsolationLevel.ReadCommitted, cancellationToken))
         {
             var shift = await db.Shifts.FirstOrDefaultAsync(x => x.ShiftId == shiftId, cancellationToken)
-                ?? throw new KeyNotFoundException("Không tìm thấy ca trực.");
+                ?? throw new KeyNotFoundException(AppText.Get("Msg_Shift_NotFound"));
 
             if (shift.Status != ShiftStatus.Locked)
-                throw new InvalidOperationException("Chỉ ca Locked mới có thể được Manager Review.");
+                throw new InvalidOperationException(AppText.Get("Msg_Shift_OnlyLockedReview"));
 
             shift.ReviewedByUserId = managerUserId;
             shift.ReviewedAt = DateTime.UtcNow;

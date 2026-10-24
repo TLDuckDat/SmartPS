@@ -3,6 +3,7 @@ using SmartPS.Models.Parking;
 using System.Collections.Generic;
 using System.Linq;
 using System;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.Views.Customers
 {
@@ -111,7 +112,7 @@ namespace SmartPS.Views.Customers
             }
 
             FinalPrice = 0;
-            txtPricePreview.Text = "Chưa chọn phương tiện";
+            txtPricePreview.Text = AppText.Get("Str_Customers_DlgNoVehicle");
         }
 
         private void BtnSave_Click(object sender, RoutedEventArgs e)
@@ -134,12 +135,12 @@ namespace SmartPS.Views.Customers
             var vehicle = GetCurrentSelectedVehicle();
             int vehicleId = vehicle?.VehicleId ?? 0;
 
-            if (customerId == 0) { MessageBox.Show("Chưa chọn khách hàng", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
-            if (vehicle == null || vehicleId == 0) { MessageBox.Show("Chưa chọn xe", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+            if (customerId == 0) { MessageBox.Show(AppText.Get("Msg_Customers_DlgNoCustomer"), AppText.Get("Str_Dialog_Title_Info"), MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+            if (vehicle == null || vehicleId == 0) { MessageBox.Show(AppText.Get("Msg_Customers_DlgNoVehicleSelected"), AppText.Get("Str_Dialog_Title_Info"), MessageBoxButton.OK, MessageBoxImage.Warning); return; }
 
             if (vehicle.OwnerCustomerId != customerId)
             {
-                MessageBox.Show("Phương tiện đã chọn không thuộc về khách hàng này!", "Lỗi xác thực", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(AppText.Get("Msg_Customers_DlgVehicleNotOwned"), AppText.Get("Str_Customers_DlgValidationTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 

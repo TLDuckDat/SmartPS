@@ -12,17 +12,17 @@ namespace SmartPS.Tests.Unit;
 /// flagged <c>"DbAudit":false</c>, and does not throw. Also R5/A13 denial paths that return results (m8).
 /// </summary>
 // Writes the shared gate storage files (Storage/*.json[l]) like the integration gate tests: never run in parallel with them.
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 public class GateOfflineJsonlTests
 {
-    private const string OfflineConnection = "Host=127.0.0.1;Port=1;Database=x;Username=x;Password=x;Timeout=1;Pooling=false";
+    private const string OfflineConnection = "Server=tcp:127.0.0.1,1;Database=x;User Id=x;Password=x;Connect Timeout=1;ConnectRetryCount=0;Pooling=false;TrustServerCertificate=True";
 
     private static readonly string JsonlPath = Path.Combine(AppContext.BaseDirectory, "Storage", "gate_audit_log.jsonl");
 
     private sealed class OfflineFactory : IDbContextFactory<SmartPsDbContext>
     {
         public SmartPsDbContext CreateDbContext()
-            => new(new DbContextOptionsBuilder<SmartPsDbContext>().UseNpgsql(OfflineConnection).Options);
+            => new(new DbContextOptionsBuilder<SmartPsDbContext>().UseSqlServer(OfflineConnection).Options);
     }
 
     private static GateControlService CreateGate(User user, IAuditService? audit = null)
@@ -188,7 +188,7 @@ public class GateOfflineJsonlTests
         public int ConnectionAttempts => _counter.Attempts;
 
         public SmartPsDbContext CreateDbContext()
-            => new(new DbContextOptionsBuilder<SmartPsDbContext>().UseNpgsql(OfflineConnection).AddInterceptors(_counter).Options);
+            => new(new DbContextOptionsBuilder<SmartPsDbContext>().UseSqlServer(OfflineConnection).AddInterceptors(_counter).Options);
 
         private sealed class ConnectionAttemptCounter : Microsoft.EntityFrameworkCore.Diagnostics.DbConnectionInterceptor
         {

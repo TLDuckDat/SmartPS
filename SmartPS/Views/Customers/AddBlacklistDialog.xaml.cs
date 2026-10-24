@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
 using SmartPS.Models.Parking;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.Views.Customers
 {
@@ -35,7 +36,7 @@ namespace SmartPS.Views.Customers
             var rawPlate = txtPlate.Text.Trim();
             if (string.IsNullOrWhiteSpace(rawPlate))
             {
-                MessageBox.Show("Vui lòng nhập biển số xe bị cấm!", "Thiếu thông tin", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(AppText.Get("Msg_Customers_DlgBanPlateRequired"), AppText.Get("Str_Customers_DlgMissingInfo"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -43,26 +44,26 @@ namespace SmartPS.Views.Customers
             var cleanPlate = System.Text.RegularExpressions.Regex.Replace(rawPlate, @"[^a-zA-Z0-9]", "").ToUpperInvariant();
             if (string.IsNullOrWhiteSpace(cleanPlate))
             {
-                MessageBox.Show("Biển số không hợp lệ!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(AppText.Get("Msg_Customers_DlgPlateInvalidShort"), AppText.Get("Str_Dialog_Title_Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             if (cleanPlate.Length > 20)
             {
-                MessageBox.Show("Biển số xe không được vượt quá 20 ký tự!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(AppText.Get("Msg_Customers_DlgPlateTooLong"), AppText.Get("Str_Dialog_Title_Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             var reason = cboReason.Text.Trim();
             if (string.IsNullOrWhiteSpace(reason))
             {
-                MessageBox.Show("Vui lòng nhập hoặc chọn lý do cấm!", "Thiếu thông tin", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(AppText.Get("Msg_Customers_DlgBanReasonRequired"), AppText.Get("Str_Customers_DlgMissingInfo"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             if (reason.Length > 250)
             {
-                MessageBox.Show("Lý do cấm không được vượt quá 250 ký tự!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(AppText.Get("Msg_Customers_DlgBanReasonTooLong"), AppText.Get("Str_Dialog_Title_Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 

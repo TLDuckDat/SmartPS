@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
+using Microsoft.Data.SqlClient;
 using SmartPS.Constants;
 using SmartPS.Data;
 using SmartPS.DTOs.Auth;
@@ -7,6 +7,7 @@ using SmartPS.Models.Audit;
 using SmartPS.Models.Auth;
 using SmartPS.Services.Audit;
 using SmartPS.Services.Authorization;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.Services.Auth
 {
@@ -36,12 +37,12 @@ namespace SmartPS.Services.Auth
         {
             if (string.IsNullOrWhiteSpace(request.Username))
             {
-                throw new ArgumentException("Tên đăng nhập không được để trống.", nameof(request.Username));
+                throw new ArgumentException(AppText.Get("Msg_Auth_UsernameRequired"), nameof(request.Username));
             }
 
             if (string.IsNullOrWhiteSpace(request.Password))
             {
-                throw new ArgumentException("Mật khẩu không được để trống.", nameof(request.Password));
+                throw new ArgumentException(AppText.Get("Msg_Auth_PasswordRequired"), nameof(request.Password));
             }
 
             var userName = request.Username.Trim().ToLowerInvariant();
@@ -58,13 +59,13 @@ namespace SmartPS.Services.Auth
             if (user is null)
             {
                 await LogLoginFailedAsync(null, userName, "UnknownUser");
-                throw new UnauthorizedAccessException("Tên đăng nhập hoặc mật khẩu không chính xác.");
+                throw new UnauthorizedAccessException(AppText.Get("Msg_Auth_InvalidCredentials"));
             }
 
             if (!user.IsActive)
             {
                 await LogLoginFailedAsync(user, userName, "Inactive");
-                throw new InvalidOperationException("Tài khoản của bạn đã bị khóa hoặc chưa được kích hoạt. Vui lòng liên hệ quản trị viên.");
+                throw new InvalidOperationException(AppText.Get("Msg_Auth_AccountLocked"));
             }
 
             var passwordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
@@ -72,7 +73,7 @@ namespace SmartPS.Services.Auth
             if (!passwordValid)
             {
                 await LogLoginFailedAsync(user, userName, "InvalidPassword");
-                throw new UnauthorizedAccessException("Tên đăng nhập hoặc mật khẩu không chính xác.");
+                throw new UnauthorizedAccessException(AppText.Get("Msg_Auth_InvalidCredentials"));
             }
 
             _currentUser.SetUser(user);
@@ -93,22 +94,22 @@ namespace SmartPS.Services.Auth
 
             if (string.IsNullOrWhiteSpace(request.Username))
             {
-                throw new ArgumentException("Tên đăng nhập không được để trống.");
+                throw new ArgumentException(AppText.Get("Msg_Auth_UsernameRequired"));
             }
 
             if (string.IsNullOrWhiteSpace(request.FullName))
             {
-                throw new ArgumentException("Họ và tên không được để trống.");
+                throw new ArgumentException(AppText.Get("Msg_Auth_FullNameRequired"));
             }
 
             if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 6)
             {
-                throw new ArgumentException("Mật khẩu phải có ít nhất 6 ký tự.");
+                throw new ArgumentException(AppText.Get("Msg_Auth_PasswordTooShort"));
             }
 
             if (request.RoleId <= 0)
             {
-                throw new ArgumentException("Vui lòng chọn vai trò hợp lệ.");
+                throw new ArgumentException(AppText.Get("Msg_Auth_RoleRequired"));
             }
 
             var userName = request.Username.Trim().ToLowerInvariant();
@@ -119,13 +120,13 @@ namespace SmartPS.Services.Auth
             var exists = await db.Users.AnyAsync(x => x.Username.ToLower() == userName);
             if (exists)
             {
-                throw new InvalidOperationException($"Tên đăng nhập '{userName}' đã tồn tại trong hệ thống. Vui lòng chọn tên khác.");
+                throw new InvalidOperationException(AppText.Get("Msg_Auth_UsernameTaken", userName));
             }
 
             var role = await db.Roles.AsNoTracking().FirstOrDefaultAsync(x => x.RoleId == request.RoleId);
             if (role is null)
             {
-                throw new ArgumentException("Vai trò được chọn không tồn tại trong hệ thống.");
+                throw new ArgumentException(AppText.Get("Msg_Auth_RoleNotFound"));
             }
 
             // Chỉ Admin mới được tạo tài khoản mang vai trò Admin
@@ -191,22 +192,22 @@ namespace SmartPS.Services.Auth
 
             if (request.UserId <= 0)
             {
-                throw new ArgumentException("Mã tài khoản không hợp lệ.");
+                throw new ArgumentException(AppText.Get("Msg_Auth_InvalidUserId"));
             }
 
             if (string.IsNullOrWhiteSpace(request.FullName))
             {
-                throw new ArgumentException("Họ và tên không được để trống.");
+                throw new ArgumentException(AppText.Get("Msg_Auth_FullNameRequired"));
             }
 
             if (request.RoleId <= 0)
             {
-                throw new ArgumentException("Vui lòng chọn vai trò hợp lệ.");
+                throw new ArgumentException(AppText.Get("Msg_Auth_RoleRequired"));
             }
 
             if (!string.IsNullOrEmpty(request.NewPassword) && request.NewPassword.Length < 6)
             {
-                throw new ArgumentException("Mật khẩu mới phải có ít nhất 6 ký tự.");
+                throw new ArgumentException(AppText.Get("Msg_Auth_NewPasswordTooShort"));
             }
 
             var entityId = request.UserId.ToString();
@@ -218,13 +219,13 @@ namespace SmartPS.Services.Auth
             var existing = await db.Users.AsNoTracking().Include(u => u.Role).FirstOrDefaultAsync(u => u.UserId == request.UserId);
             if (existing is null)
             {
-                throw new KeyNotFoundException("Không tìm thấy tài khoản người dùng cần cập nhật.");
+                throw new KeyNotFoundException(AppText.Get("Msg_Auth_UserToUpdateNotFound"));
             }
 
             var newRole = await db.Roles.AsNoTracking().FirstOrDefaultAsync(r => r.RoleId == request.RoleId);
             if (newRole is null)
             {
-                throw new ArgumentException("Vai trò được chọn không tồn tại trong hệ thống.");
+                throw new ArgumentException(AppText.Get("Msg_Auth_RoleNotFound"));
             }
 
             var roleChanged = existing.RoleId != request.RoleId;
@@ -241,14 +242,14 @@ namespace SmartPS.Services.Auth
                 {
                     await FailAdminProtectionAsync(
                         AuditActions.UserUpdate, entityId, AdminProtectionReason.SelfDeactivate,
-                        "Bạn không thể tự khóa tài khoản đang đăng nhập.");
+                        AppText.Get("Msg_Auth_CannotLockSelf"));
                 }
 
                 if (roleChanged)
                 {
                     await FailAdminProtectionAsync(
                         AuditActions.UserUpdate, entityId, AdminProtectionReason.SelfRoleChange,
-                        "Bạn không thể tự thay đổi vai trò của tài khoản đang đăng nhập.");
+                        AppText.Get("Msg_Auth_CannotChangeOwnRole"));
                 }
             }
 
@@ -316,7 +317,7 @@ namespace SmartPS.Services.Auth
 
             if (notFound)
             {
-                throw new KeyNotFoundException("Không tìm thấy tài khoản người dùng cần cập nhật.");
+                throw new KeyNotFoundException(AppText.Get("Msg_Auth_UserToUpdateNotFound"));
             }
 
             if (adminRequired)
@@ -328,7 +329,7 @@ namespace SmartPS.Services.Auth
             {
                 await FailAdminProtectionAsync(
                     AuditActions.UserUpdate, entityId, AdminProtectionReason.LastActiveAdmin,
-                    "Không thể hạ quyền hoặc khóa tài khoản Quản trị viên (Admin) đang hoạt động duy nhất còn lại trong hệ thống.");
+                    AppText.Get("Msg_Auth_LastAdminDemote"));
             }
 
             // Nạp lại người dùng hiện tại cùng vai trò và quyền để không mất quyền sau khi tự sửa tài khoản
@@ -346,7 +347,7 @@ namespace SmartPS.Services.Auth
 
             if (userId <= 0)
             {
-                throw new ArgumentException("Mã tài khoản không hợp lệ.");
+                throw new ArgumentException(AppText.Get("Msg_Auth_InvalidUserId"));
             }
 
             var entityId = userId.ToString();
@@ -355,7 +356,7 @@ namespace SmartPS.Services.Auth
             {
                 await FailAdminProtectionAsync(
                     AuditActions.UserDelete, entityId, AdminProtectionReason.SelfDelete,
-                    "Bạn không thể tự xóa tài khoản đang đăng nhập.");
+                    AppText.Get("Msg_Auth_CannotDeleteSelf"));
             }
 
             await using var db = await _contextFactory.CreateDbContextAsync();
@@ -363,7 +364,7 @@ namespace SmartPS.Services.Auth
             var existing = await db.Users.AsNoTracking().Include(u => u.Role).FirstOrDefaultAsync(u => u.UserId == userId);
             if (existing is null)
             {
-                throw new KeyNotFoundException("Không tìm thấy tài khoản người dùng cần xóa.");
+                throw new KeyNotFoundException(AppText.Get("Msg_Auth_UserToDeleteNotFound"));
             }
 
             // Xóa tài khoản mang vai trò Admin chỉ do Admin thực hiện
@@ -408,14 +409,15 @@ namespace SmartPS.Services.Auth
                     }
                 }
             }
-            catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.ForeignKeyViolation })
+            // 547: vi phạm khoá ngoại (tài khoản đã có lịch sử nghiệp vụ)
+            catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 547 })
             {
                 hasHistory = true;
             }
 
             if (notFound)
             {
-                throw new KeyNotFoundException("Không tìm thấy tài khoản người dùng cần xóa.");
+                throw new KeyNotFoundException(AppText.Get("Msg_Auth_UserToDeleteNotFound"));
             }
 
             if (adminRequired)
@@ -427,7 +429,7 @@ namespace SmartPS.Services.Auth
             {
                 await FailAdminProtectionAsync(
                     AuditActions.UserDelete, entityId, AdminProtectionReason.LastActiveAdmin,
-                    "Không thể xóa tài khoản Quản trị viên (Admin) đang hoạt động duy nhất còn lại trong hệ thống.");
+                    AppText.Get("Msg_Auth_LastAdminDelete"));
             }
 
             if (hasHistory)
@@ -437,7 +439,7 @@ namespace SmartPS.Services.Auth
                     new { Reason = "HasHistory", Username = existing.Username }));
                 throw new UserHasHistoryException(
                     userId,
-                    "Không thể xóa tài khoản đã có lịch sử hoạt động (ca trực, giao dịch...). Hãy khóa tài khoản thay vì xóa.");
+                    AppText.Get("Msg_Auth_HasHistory"));
             }
 
             return true;
@@ -548,7 +550,8 @@ namespace SmartPS.Services.Auth
 
         private static Task<bool> HasOtherActiveAdminAsync(SmartPsDbContext db, int excludedUserId)
         {
-            return db.Users.AnyAsync(u => u.UserId != excludedUserId && u.IsActive && EF.Functions.ILike(u.Role.RoleName, SystemRoles.Admin));
+            return db.Users.AnyAsync(u => u.UserId != excludedUserId && u.IsActive
+                && EF.Functions.Collate(u.Role.RoleName, SmartPsDbContext.CaseInsensitiveCollation) == SystemRoles.Admin);
         }
     }
 }

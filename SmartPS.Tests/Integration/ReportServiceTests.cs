@@ -11,18 +11,18 @@ namespace SmartPS.Tests.Integration;
 /// MonthlyPass = External + IsMonthlyPass; Visitor = External without pass). Monthly-ticket revenue is hidden (D5).
 /// Every test uses its own 2031 date window so tests in this class never see each other's sessions or transactions.
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class ReportServiceTests : IClassFixture<PostgresDatabaseFixture>
+public class ReportServiceTests : IClassFixture<SqlServerDatabaseFixture>
 {
     /// <summary>"Now" for the service under test: after every 2031 window, so occupancy sweeps whole periods.</summary>
     private static readonly DateTime ServiceNowUtc = new(2032, 1, 15, 0, 0, 0, DateTimeKind.Utc);
 
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
     private readonly ReportSeed _seed;
     private readonly GateTestData _data;
 
-    public ReportServiceTests(PostgresDatabaseFixture db)
+    public ReportServiceTests(SqlServerDatabaseFixture db)
     {
         _db = db;
         _seed = new ReportSeed(db);

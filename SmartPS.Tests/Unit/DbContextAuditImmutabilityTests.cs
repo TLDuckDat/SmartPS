@@ -12,7 +12,7 @@ namespace SmartPS.Tests.Unit;
 /// </summary>
 public class DbContextAuditImmutabilityTests
 {
-    private const string OfflineConnection = "Host=127.0.0.1;Port=1;Database=x;Username=x;Password=x;Timeout=1";
+    private const string OfflineConnection = "Server=tcp:127.0.0.1,1;Database=x;User Id=x;Password=x;Connect Timeout=1;ConnectRetryCount=0;TrustServerCertificate=True";
 
     private sealed class CountingInterceptor : DbCommandInterceptor, IDbConnectionInterceptor
     {
@@ -60,7 +60,7 @@ public class DbContextAuditImmutabilityTests
     {
         var interceptor = new CountingInterceptor();
         var options = new DbContextOptionsBuilder<SmartPsDbContext>()
-            .UseNpgsql(OfflineConnection)
+            .UseSqlServer(OfflineConnection)
             .AddInterceptors(interceptor)
             .Options;
         return (new SmartPsDbContext(options), interceptor);
@@ -89,7 +89,7 @@ public class DbContextAuditImmutabilityTests
             var entity = db.Model.FindEntityType(typeof(AuditLog));
             Assert.NotNull(entity);
             Assert.Equal("AuditLogs", entity!.GetTableName());
-            Assert.Equal("jsonb", entity.FindProperty(nameof(AuditLog.Details))!.GetColumnType());
+            Assert.Equal("nvarchar(max)", entity.FindProperty(nameof(AuditLog.Details))!.GetColumnType());
             Assert.True(entity.GetIndexes().Any(i => i.IsUnique && i.Properties.Count == 1 && i.Properties[0].Name == nameof(AuditLog.PrevHash)),
                 "unique index on PrevHash (E1 fork protection) is missing");
             Assert.Empty(entity.GetForeignKeys()); // no FK from UserId to Users (plan §0.5)

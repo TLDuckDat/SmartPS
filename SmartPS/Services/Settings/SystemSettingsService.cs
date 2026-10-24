@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
+using Microsoft.Data.SqlClient;
 using SmartPS.Constants;
 using SmartPS.Data;
 using SmartPS.Models.Audit;
@@ -7,6 +7,7 @@ using SmartPS.Models.Parking;
 using SmartPS.Services.Audit;
 using SmartPS.Services.Authorization;
 using SmartPS.Services.Common;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.Services.Settings;
 
@@ -59,10 +60,10 @@ public sealed class SystemSettingsService : ISystemSettingsService
 
         if (settings.OverstayThresholdHours is < OperationalSettings.MinOverstayHours or > OperationalSettings.MaxOverstayHours)
             return OperationResult.Fail(OperationError.Validation,
-                $"Số giờ quá hạn phải từ {OperationalSettings.MinOverstayHours} đến {OperationalSettings.MaxOverstayHours}.");
+                AppText.Get("Msg_SetSvc_OverstayRange", OperationalSettings.MinOverstayHours, OperationalSettings.MaxOverstayHours));
         if (settings.MaxVehiclesPerHousehold is < OperationalSettings.MinVehiclesPerHousehold or > OperationalSettings.MaxVehiclesPerHouseholdLimit)
             return OperationResult.Fail(OperationError.Validation,
-                $"Số xe tối đa mỗi hộ phải từ {OperationalSettings.MinVehiclesPerHousehold} đến {OperationalSettings.MaxVehiclesPerHouseholdLimit}.");
+                AppText.Get("Msg_SetSvc_VehiclesRange", OperationalSettings.MinVehiclesPerHousehold, OperationalSettings.MaxVehiclesPerHouseholdLimit));
 
         try
         {
@@ -113,15 +114,18 @@ public sealed class SystemSettingsService : ISystemSettingsService
 
     public async Task<DatabaseStatus> GetDatabaseStatusAsync(CancellationToken cancellationToken = default)
     {
-        await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken);
-        var builder = new NpgsqlConnectionStringBuilder(db.Database.GetConnectionString());
-        var host = builder.Host ?? string.Empty;
-        var port = builder.Port;
-        var database = builder.Database ?? string.Empty;
+        var server = string.Empty;
+        var database = string.Empty;
 
+        // Mọi lỗi (kể cả chuỗi kết nối sai) đều trả trạng thái mất kết nối để màn Cài đặt không kẹt ở "Đang kiểm tra..."
         try
         {
-            var connection = (NpgsqlConnection)db.Database.GetDbConnection();
+            await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            var builder = new SqlConnectionStringBuilder(db.Database.GetConnectionString());
+            server = builder.DataSource ?? string.Empty;
+            database = builder.InitialCatalog ?? string.Empty;
+
+            var connection = (SqlConnection)db.Database.GetDbConnection();
             await connection.OpenAsync(cancellationToken);
             var serverVersion = connection.ServerVersion;
             await connection.CloseAsync();
@@ -129,7 +133,7 @@ public sealed class SystemSettingsService : ISystemSettingsService
             var applied = (await db.Database.GetAppliedMigrationsAsync(cancellationToken)).ToList();
             var pending = (await db.Database.GetPendingMigrationsAsync(cancellationToken)).Count();
 
-            return new DatabaseStatus(true, host, port, database, serverVersion, applied.Count, pending, applied.LastOrDefault(), null);
+            return new DatabaseStatus(true, server, database, serverVersion, applied.Count, pending, applied.LastOrDefault(), null);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -137,7 +141,7 @@ public sealed class SystemSettingsService : ISystemSettingsService
         }
         catch (Exception ex)
         {
-            return new DatabaseStatus(false, host, port, database, null, 0, 0, null, ex.Message);
+            return new DatabaseStatus(false, server, database, null, 0, 0, null, ex.Message);
         }
     }
 }

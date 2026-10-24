@@ -3,14 +3,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Npgsql;
+
 using SmartPS.Data;
 
 namespace SmartPS.Tests.TestSupport;
 
 /// <summary>
 /// EF command interceptor that fires once, on the <c>occurrence</c>-th command whose SQL text contains <c>match</c>:
-/// it first awaits <c>before</c> (if any), then either throws a connection-style <see cref="NpgsqlException"/>
+/// it first awaits <c>before</c> (if any), then either throws a connection-style <see cref="SimulatedConnectionException"/>
 /// (<c>throwInstead</c>) or lets the command run. Only EF-issued commands are seen (raw ADO commands are not intercepted).
 /// </summary>
 public sealed class CommandHookInterceptor : DbCommandInterceptor
@@ -24,7 +24,7 @@ public sealed class CommandHookInterceptor : DbCommandInterceptor
     private int _fired;
 
     /// <param name="exceptionFactory">With <paramref name="throwInstead"/>: the exception to throw instead of the default
-    /// connection-style <see cref="NpgsqlException"/> (e.g. a non-connection failure for fail-closed tests).</param>
+    /// connection-style <see cref="SimulatedConnectionException"/> (e.g. a non-connection failure for fail-closed tests).</param>
     public CommandHookInterceptor(string match, int occurrence = 1, Func<Task>? before = null, bool throwInstead = false, Func<Exception>? exceptionFactory = null)
     {
         _match = match;
@@ -66,9 +66,7 @@ public sealed class CommandHookInterceptor : DbCommandInterceptor
 
         if (_throwInstead)
         {
-            throw new NpgsqlException(
-                "Simulated connection failure (test hook)",
-                new System.Net.Sockets.SocketException((int)System.Net.Sockets.SocketError.ConnectionRefused));
+            throw new SimulatedConnectionException();
         }
     }
 
@@ -115,7 +113,7 @@ public sealed class CommandHookInterceptor : DbCommandInterceptor
     /// Override for <see cref="IntegrationServices.Create"/>: replaces the container's context factory with one whose
     /// contexts carry <paramref name="hook"/>. Test helpers (GateTestData, ReportSeed, AuditDb, fixture.Factory) stay unhooked.
     /// </summary>
-    public static Action<IServiceCollection> Install(PostgresDatabaseFixture fixture, CommandHookInterceptor hook) => services =>
+    public static Action<IServiceCollection> Install(SqlServerDatabaseFixture fixture, CommandHookInterceptor hook) => services =>
     {
         services.RemoveAll<IDbContextFactory<SmartPsDbContext>>();
         services.AddSingleton<IDbContextFactory<SmartPsDbContext>>(new HookedFactory(fixture.ConnectionString, hook));
@@ -128,11 +126,24 @@ public sealed class CommandHookInterceptor : DbCommandInterceptor
         public HookedFactory(string connectionString, CommandHookInterceptor hook)
         {
             _options = new DbContextOptionsBuilder<SmartPsDbContext>()
-                .UseNpgsql(connectionString)
+                .UseSqlServer(connectionString)
                 .AddInterceptors(hook)
                 .Options;
         }
 
         public SmartPsDbContext CreateDbContext() => new(_options);
+    }
+}
+
+/// <summary>
+/// Connection-style database failure for tests: SqlException has no public constructor, so this DbException wraps a
+/// refused socket, which DbConnectionHelper classifies as connection loss.
+/// </summary>
+public sealed class SimulatedConnectionException : System.Data.Common.DbException
+{
+    public SimulatedConnectionException()
+        : base("Simulated connection failure (test hook)",
+            new System.Net.Sockets.SocketException((int)System.Net.Sockets.SocketError.ConnectionRefused))
+    {
     }
 }

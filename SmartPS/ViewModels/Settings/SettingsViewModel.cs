@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Reflection;
 using SmartPS.Constants;
 using SmartPS.Services.Authorization;
@@ -9,6 +9,7 @@ using SmartPS.Services.Payment;
 using SmartPS.Services.Payment.Mock;
 using SmartPS.Services.Payment.Webhook;
 using SmartPS.Services.Settings;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.ViewModels.Settings;
 
@@ -37,8 +38,8 @@ public class SettingsViewModel : ViewModelBase
         set => SetProperty(ref _maxVehiclesPerHousehold, value);
     }
 
-    public string OverstayRangeHint => $"Từ {OperationalSettings.MinOverstayHours} đến {OperationalSettings.MaxOverstayHours} giờ";
-    public string VehiclesRangeHint => $"Từ {OperationalSettings.MinVehiclesPerHousehold} đến {OperationalSettings.MaxVehiclesPerHouseholdLimit} xe";
+    public string OverstayRangeHint => AppText.Get("Str_SetUi_OverstayRange", OperationalSettings.MinOverstayHours, OperationalSettings.MaxOverstayHours);
+    public string VehiclesRangeHint => AppText.Get("Str_SetUi_VehiclesRange", OperationalSettings.MinVehiclesPerHousehold, OperationalSettings.MaxVehiclesPerHouseholdLimit);
 
     public bool CanManage => _permissionService.HasPermission(Permissions.SettingsManage);
 
@@ -53,7 +54,7 @@ public class SettingsViewModel : ViewModelBase
         set => SetProperty(ref _isDatabaseOnline, value);
     }
 
-    private string _databaseSummary = "Đang kiểm tra...";
+    private string _databaseSummary = AppText.Get("Str_SetUi_Checking");
     public string DatabaseSummary
     {
         get => _databaseSummary;
@@ -74,7 +75,7 @@ public class SettingsViewModel : ViewModelBase
         set => SetProperty(ref _isOcrAvailable, value);
     }
 
-    private string _ocrSummary = "Đang kiểm tra...";
+    private string _ocrSummary = AppText.Get("Str_SetUi_Checking");
     public string OcrSummary
     {
         get => _ocrSummary;
@@ -105,12 +106,12 @@ public class SettingsViewModel : ViewModelBase
     public bool IsPaymentLive => _paymentGateway is not MockPaymentGateway;
 
     public string PaymentSummary => IsPaymentLive
-        ? "PayOS (VietQR thật)"
-        : "Chế độ DEMO (chưa cấu hình khóa PayOS)";
+        ? AppText.Get("Str_SetUi_PayOsLive")
+        : AppText.Get("Str_SetUi_PayOsDemo");
 
     public string PaymentDetail => IsPaymentLive
-        ? "Thanh toán VietQR được tạo qua cổng PayOS."
-        : "Thêm ClientId, ApiKey, ChecksumKey vào mục PayOS trong appsettings.local.json để bật thanh toán thật (xem PAYMENT_SETUP.md).";
+        ? AppText.Get("Str_SetUi_PayOsLiveDetail")
+        : AppText.Get("Str_SetUi_PayOsDemoDetail");
 
     private bool _isWebhookRunning;
     public bool IsWebhookRunning
@@ -155,7 +156,20 @@ public class SettingsViewModel : ViewModelBase
         SaveCommand = new AsyncRelayCommand(SaveAsync, () => CanManage);
         TestOcrCommand = new AsyncRelayCommand(TestOcrAsync, () => IsOcrAvailable && !IsOcrTesting);
 
+        AppText.Changed += OnLanguageChanged;
+
         _ = LoadDataAsync();
+    }
+
+    private DatabaseStatus? _lastDatabaseStatus;
+
+    private void OnLanguageChanged()
+    {
+        OnPropertyChanged(nameof(OverstayRangeHint));
+        OnPropertyChanged(nameof(VehiclesRangeHint));
+        OnPropertyChanged(nameof(PaymentSummary));
+        OnPropertyChanged(nameof(PaymentDetail));
+        ApplyStatusTexts();
     }
 
     public async Task LoadDataAsync()
@@ -164,31 +178,40 @@ public class SettingsViewModel : ViewModelBase
         OverstayThresholdHours = settings.OverstayThresholdHours;
         MaxVehiclesPerHousehold = settings.MaxVehiclesPerHousehold;
 
-        var db = await _settingsService.GetDatabaseStatusAsync();
-        IsDatabaseOnline = db.IsOnline;
+        _lastDatabaseStatus = await _settingsService.GetDatabaseStatusAsync();
+        IsDatabaseOnline = _lastDatabaseStatus.IsOnline;
+        IsOcrAvailable = await _ocrService.EnsureEngineStartedAsync();
+        IsWebhookRunning = _webhookServer.IsRunning;
+        ApplyStatusTexts();
+    }
+
+    private void ApplyStatusTexts()
+    {
+        var db = _lastDatabaseStatus;
+        if (db is null)
+            return;
+
         if (db.IsOnline)
         {
             DatabaseSummary = db.PendingMigrations == 0
-                ? $"Đang kết nối · {db.AppliedMigrations} migration đã áp dụng"
-                : $"Đang kết nối · còn {db.PendingMigrations} migration chưa áp dụng";
-            DatabaseDetail = $"{db.Host}:{db.Port} / {db.Database} · PostgreSQL {db.ServerVersion} · Migration mới nhất: {db.LastMigration}";
+                ? AppText.Get("Str_SetUi_DbOnlineApplied", db.AppliedMigrations)
+                : AppText.Get("Str_SetUi_DbOnlinePending", db.PendingMigrations);
+            DatabaseDetail = AppText.Get("Str_SetUi_DbDetail", db.Server, db.Database, db.ServerVersion, db.LastMigration);
         }
         else
         {
-            DatabaseSummary = "Không kết nối được máy chủ PostgreSQL";
-            DatabaseDetail = $"{db.Host}:{db.Port} / {db.Database} · {db.Error}";
+            DatabaseSummary = AppText.Get("Str_SetUi_DbOffline");
+            DatabaseDetail = $"{db.Server} / {db.Database} · {db.Error}";
         }
 
-        IsOcrAvailable = await _ocrService.EnsureEngineStartedAsync();
-        OcrSummary = IsOcrAvailable ? "Sẵn sàng" : "Không tìm thấy LicensePlateEngine.exe";
+        OcrSummary = IsOcrAvailable ? AppText.Get("Str_SetUi_OcrReady") : AppText.Get("Str_SetUi_OcrMissing");
         OcrDetail = IsOcrAvailable
             ? _ocrService.EngineExecutablePath ?? string.Empty
-            : "Đặt LicensePlateEngine.exe vào thư mục Services\\OcrLisencePlate cạnh ứng dụng.";
+            : AppText.Get("Str_SetUi_OcrMissingHint");
 
-        IsWebhookRunning = _webhookServer.IsRunning;
         WebhookSummary = IsWebhookRunning
-            ? $"Đang lắng nghe tại {_webhookServer.ListeningUrl}"
-            : $"Chưa chạy ({_webhookServer.ListeningUrl})";
+            ? AppText.Get("Str_SetUi_WebhookListening", _webhookServer.ListeningUrl)
+            : AppText.Get("Str_SetUi_WebhookStopped", _webhookServer.ListeningUrl);
     }
 
     private async Task SaveAsync()
@@ -198,12 +221,12 @@ public class SettingsViewModel : ViewModelBase
 
         if (result.Success)
         {
-            _dialogService.ShowSuccess("Đã lưu tham số vận hành.");
+            _dialogService.ShowSuccess(AppText.Get("Msg_SetUi_Saved"));
             await LoadDataAsync();
         }
         else if (result.IsPermissionDenied)
         {
-            _dialogService.ShowWarning("Bạn không có quyền thay đổi cài đặt hệ thống.");
+            _dialogService.ShowWarning(AppText.Get("Msg_SetUi_NoPermission"));
         }
         else if (result.Error == OperationError.Validation)
         {
@@ -211,23 +234,23 @@ public class SettingsViewModel : ViewModelBase
         }
         else
         {
-            _dialogService.ShowError($"Không thể lưu cài đặt: {result.Message}");
+            _dialogService.ShowError(AppText.Get("Msg_SetUi_SaveFailed", result.Message));
         }
     }
 
     private async Task TestOcrAsync()
     {
-        var imagePath = _dialogService.ShowOpenFileDialog(title: "Chọn ảnh xe để chạy thử nhận diện biển số");
+        var imagePath = _dialogService.ShowOpenFileDialog(title: AppText.Get("Str_SetUi_PickTestImage"));
         if (string.IsNullOrEmpty(imagePath)) return;
 
         IsOcrTesting = true;
-        OcrTestResult = "⚡ Đang nhận diện...";
+        OcrTestResult = AppText.Get("Str_SetUi_Recognizing");
         try
         {
             var response = await _ocrService.RecognizePlateAsync(imagePath);
             OcrTestResult = response.IsSuccess
-                ? $"✅ {response.PrimaryPlateText} · độ tin cậy {response.PrimaryOcrConfidence:P0} · {response.TotalMilliseconds / 1000:0.0}s"
-                : $"⚠️ {response.Error?.Message ?? "Không phát hiện biển số"}";
+                ? AppText.Get("Str_SetUi_OcrResult", response.PrimaryPlateText, response.PrimaryOcrConfidence, response.TotalMilliseconds / 1000)
+                : AppText.Get("Str_SetUi_OcrFailed", response.Error?.Message ?? AppText.Get("Str_GateUi_NoPlateDetected"));
         }
         finally
         {

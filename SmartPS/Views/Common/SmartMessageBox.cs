@@ -1,4 +1,5 @@
-using System.Windows;
+﻿using System.Windows;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.Views.Common;
 
@@ -9,7 +10,7 @@ public static class SmartMessageBox
 {
     public static MessageBoxResult Show(string messageBoxText)
     {
-        return Show(messageBoxText, "Thông báo", MessageBoxButton.OK, MessageBoxImage.None);
+        return Show(messageBoxText, AppText.Get("Str_Dialog_Title_Info"), MessageBoxButton.OK, MessageBoxImage.None);
     }
 
     public static MessageBoxResult Show(string messageBoxText, string caption)
@@ -27,7 +28,7 @@ public static class SmartMessageBox
         return Show(null, messageBoxText, caption, button, icon);
     }
 
-    public static MessageBoxResult Show(Window? owner, string messageBoxText, string caption = "Thông báo", MessageBoxButton button = MessageBoxButton.OK, MessageBoxImage icon = MessageBoxImage.None)
+    public static MessageBoxResult Show(Window? owner, string messageBoxText, string? caption = null, MessageBoxButton button = MessageBoxButton.OK, MessageBoxImage icon = MessageBoxImage.None)
     {
         var notificationType = icon switch
         {
@@ -49,7 +50,7 @@ public static class SmartMessageBox
 
         var result = NotificationDialog.Show(
             messageBoxText,
-            caption,
+            caption ?? AppText.Get("Str_Dialog_Title_Info"),
             notificationType,
             notificationButtons,
             owner);
@@ -65,18 +66,18 @@ public static class SmartMessageBox
     }
 
     // Các hàm tiện ích nhanh:
-    public static void ShowSuccess(string message, string title = "Thành công", Window? owner = null)
+    public static void ShowSuccess(string message, string? title = null, Window? owner = null)
         => NotificationDialog.ShowSuccess(message, title, owner);
 
-    public static void ShowInfo(string message, string title = "Thông báo", Window? owner = null)
+    public static void ShowInfo(string message, string? title = null, Window? owner = null)
         => NotificationDialog.ShowInfo(message, title, owner);
 
-    public static void ShowWarning(string message, string title = "Cảnh báo", Window? owner = null)
+    public static void ShowWarning(string message, string? title = null, Window? owner = null)
         => NotificationDialog.ShowWarning(message, title, owner);
 
-    public static void ShowError(string message, string title = "Lỗi", Window? owner = null)
+    public static void ShowError(string message, string? title = null, Window? owner = null)
         => NotificationDialog.ShowError(message, title, owner);
 
-    public static bool ShowConfirm(string message, string title = "Xác nhận", Window? owner = null)
+    public static bool ShowConfirm(string message, string? title = null, Window? owner = null)
         => NotificationDialog.ShowConfirm(message, title, owner: owner);
 }

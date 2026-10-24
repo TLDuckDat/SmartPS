@@ -18,7 +18,7 @@ public class VehicleConfiguration : IEntityTypeConfiguration<Vehicle>
 
         builder.HasIndex(x => x.LicensePlate)
                .IsUnique()
-               .HasFilter("\"IsActive\" = true");
+               .HasFilter("[IsActive] = 1");
 
         builder.Property(x => x.Color)
                .HasMaxLength(50);

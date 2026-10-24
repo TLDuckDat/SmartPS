@@ -8,17 +8,17 @@ namespace SmartPS.Tests.Integration;
 /// the permission guard runs. K6 (challenge D2): the zone occupancy rows honour the vehicle-type filter (slot totals) and,
 /// with a zone filter, list only that zone.
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class ReportServiceRegressionTests : IClassFixture<PostgresDatabaseFixture>
+public class ReportServiceRegressionTests : IClassFixture<SqlServerDatabaseFixture>
 {
     private static readonly DateTime ServiceNowUtc = new(2032, 1, 15, 0, 0, 0, DateTimeKind.Utc);
 
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
     private readonly ReportSeed _seed;
     private readonly GateTestData _data;
 
-    public ReportServiceRegressionTests(PostgresDatabaseFixture db)
+    public ReportServiceRegressionTests(SqlServerDatabaseFixture db)
     {
         _db = db;
         _seed = new ReportSeed(db);

@@ -10,16 +10,16 @@ namespace SmartPS.Tests.Integration;
 /// N2 / plan risk R3: owner + ticket lookup on the household model (raw plates normalized in SQL, no functional index on
 /// the household module's tables) plus the slot preview stay ≤ 200 ms (median) with 5,000 households/vehicles/tickets.
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class ClassificationPerformanceTests : IClassFixture<PostgresDatabaseFixture>
+public class ClassificationPerformanceTests : IClassFixture<SqlServerDatabaseFixture>
 {
     private const int OwnerCount = 5_000;
 
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
     private readonly GateTestData _data;
 
-    public ClassificationPerformanceTests(PostgresDatabaseFixture db)
+    public ClassificationPerformanceTests(SqlServerDatabaseFixture db)
     {
         _db = db;
         _data = new GateTestData(db);
@@ -32,19 +32,27 @@ public class ClassificationPerformanceTests : IClassFixture<PostgresDatabaseFixt
     private async Task SeedBulkAsync(int vehicleTypeId)
     {
         await _db.ExecuteAsync($"""
+            WITH nums AS (
+                SELECT TOP ({OwnerCount}) ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS i
+                FROM sys.all_columns a CROSS JOIN sys.all_columns b
+            )
             INSERT INTO "Households" ("ApartmentCode","IsActive","CreatedAt")
-            SELECT 'PF-' || i, true, now() FROM generate_series(1, {OwnerCount}) i;
+            SELECT N'PF-' + CAST(i AS nvarchar(10)), 1, SYSUTCDATETIME() FROM nums;
             INSERT INTO "Customers" ("FullName","PhoneNumber","Type","HouseholdId","CreatedAt","IsActive")
-            SELECT 'Perf ' || h."ApartmentCode", '07' || lpad(substr(h."ApartmentCode", 4), 8, '0'), 1, h."HouseholdId", now(), true
-            FROM "Households" h WHERE h."ApartmentCode" LIKE 'PF-%';
+            SELECT N'Perf ' + h."ApartmentCode", N'07' + RIGHT(N'00000000' + SUBSTRING(h."ApartmentCode", 4, 20), 8), 1, h."HouseholdId", SYSUTCDATETIME(), 1
+            FROM "Households" h WHERE h."ApartmentCode" LIKE N'PF-%';
             INSERT INTO "Vehicles" ("LicensePlate","VehicleTypeId","OwnerCustomerId","IsActive","CreatedAt")
-            SELECT 'PF-' || substr(lpad(substr(c."FullName", 9), 7, '0'), 1, 3) || '.' || substr(lpad(substr(c."FullName", 9), 7, '0'), 4),
-                   @vt, c."CustomerId", true, now() - interval '30 day'
-            FROM "Customers" c WHERE c."FullName" LIKE 'Perf PF-%';
+            SELECT N'PF-' + SUBSTRING(p.digits, 1, 3) + N'.' + SUBSTRING(p.digits, 4, 20),
+                   @vt, c."CustomerId", 1, DATEADD(day, -30, SYSUTCDATETIME())
+            FROM "Customers" c
+            CROSS APPLY (SELECT RIGHT(N'0000000' + SUBSTRING(c."FullName", 9, 20), 7) AS digits) p
+            WHERE c."FullName" LIKE N'Perf PF-%';
             INSERT INTO "MonthlyTickets" ("TicketCode","CustomerId","VehicleId","RegisteredLicensePlate","DurationMonths","VehicleTypeId","StartDate","EndDate","MonthlyPrice","Status","CreatedAt")
-            SELECT 'MT-PERF-' || v."VehicleId", v."OwnerCustomerId", v."VehicleId", v."LicensePlate", 1, @vt, now() - interval '5 day', now() + interval '25 day', 100000, 0, now()
-            FROM "Vehicles" v WHERE v."LicensePlate" LIKE 'PF-%';
-            ANALYZE "Households"; ANALYZE "Customers"; ANALYZE "Vehicles"; ANALYZE "MonthlyTickets"; ANALYZE "BlacklistedVehicles";
+            SELECT N'MT-PERF-' + CAST(v."VehicleId" AS nvarchar(10)), v."OwnerCustomerId", v."VehicleId", v."LicensePlate", 1, @vt,
+                   DATEADD(day, -5, SYSUTCDATETIME()), DATEADD(day, 25, SYSUTCDATETIME()), 100000, 0, SYSUTCDATETIME()
+            FROM "Vehicles" v WHERE v."LicensePlate" LIKE N'PF-%';
+            UPDATE STATISTICS "Households"; UPDATE STATISTICS "Customers"; UPDATE STATISTICS "Vehicles";
+            UPDATE STATISTICS "MonthlyTickets"; UPDATE STATISTICS "BlacklistedVehicles";
             """, ("vt", vehicleTypeId));
     }
 

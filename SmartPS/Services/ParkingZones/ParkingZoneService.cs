@@ -6,6 +6,7 @@ using SmartPS.Models.Parking;
 using SmartPS.Services.Audit;
 using SmartPS.Services.Authorization;
 using SmartPS.Services.Common;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.Services.ParkingZones;
 
@@ -57,7 +58,7 @@ public sealed class ParkingZoneService : IParkingZoneService
 
         if (!Enum.IsDefined(audience))
         {
-            return OperationResult.Fail(OperationError.Validation, "Đối tượng của khu không hợp lệ.");
+            return OperationResult.Fail(OperationError.Validation, AppText.Get("Msg_Zone_InvalidAudience"));
         }
 
         try
@@ -68,7 +69,7 @@ public sealed class ParkingZoneService : IParkingZoneService
                 var zone = await db.ParkingZones.FirstOrDefaultAsync(z => z.ZoneId == zoneId, cancellationToken);
                 if (zone is null)
                 {
-                    return OperationResult.Fail(OperationError.NotFound, "Không tìm thấy khu đỗ xe.");
+                    return OperationResult.Fail(OperationError.NotFound, AppText.Get("Msg_Zone_NotFound"));
                 }
 
                 if (zone.Audience == audience)

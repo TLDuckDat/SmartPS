@@ -8,7 +8,7 @@ namespace SmartPS.Tests.TestSupport;
 /// <c>File.WriteAllText/AppendAllLines</c> of a gate service fails, and the service swallows the error, so a JSONL line or
 /// an offline snapshot is silently lost; and a read that starts while a writer holds the file throws
 /// "being used by another process". These helpers open with <c>FileShare.ReadWrite | FileShare.Delete</c> and retry briefly on
-/// IOException. All test classes that drive a real GateControlService also run in <see cref="PostgresCollection"/> (no
+/// IOException. All test classes that drive a real GateControlService also run in <see cref="DatabaseCollection"/> (no
 /// parallelism), so only threads of a single test can race here.
 /// </para>
 /// </summary>

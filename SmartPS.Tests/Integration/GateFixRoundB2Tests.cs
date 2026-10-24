@@ -17,16 +17,16 @@ namespace SmartPS.Tests.Integration;
 /// PlateInvalid before any lookup; nothing is stored or audited; exactly 20 is accepted.</item>
 /// </list>
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class GateFixRoundB2Tests : IClassFixture<PostgresDatabaseFixture>
+public class GateFixRoundB2Tests : IClassFixture<SqlServerDatabaseFixture>
 {
     private static readonly string JsonlPath = Path.Combine(AppContext.BaseDirectory, "Storage", "gate_audit_log.jsonl");
 
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
     private readonly GateTestData _data;
 
-    public GateFixRoundB2Tests(PostgresDatabaseFixture db)
+    public GateFixRoundB2Tests(SqlServerDatabaseFixture db)
     {
         _db = db;
         _data = new GateTestData(db);
@@ -121,7 +121,7 @@ public class GateFixRoundB2Tests : IClassFixture<PostgresDatabaseFixture>
 
         Assert.True(result.Success, result.Message);
         Assert.Equal((int)CustomerType.Resident, await StoredCustomerTypeAsync(result.Session!.SessionId));
-        Assert.Equal(1, await _db.ScalarAsync<int>("SELECT CASE WHEN \"IsMonthlyPass\" THEN 1 ELSE 0 END FROM \"ParkingSessions\" WHERE \"SessionId\" = @id", ("id", result.Session.SessionId)));
+        Assert.Equal(1, await _db.ScalarAsync<int>("SELECT CASE WHEN \"IsMonthlyPass\" = 1 THEN 1 ELSE 0 END FROM \"ParkingSessions\" WHERE \"SessionId\" = @id", ("id", result.Session.SessionId)));
     }
 
     [Fact]

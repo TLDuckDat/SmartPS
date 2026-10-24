@@ -10,6 +10,7 @@ using SmartPS.Services.GateControl;
 using SmartPS.Services.Payment.PayOS;
 using SmartPS.Services.Shifts;
 using SmartPS.Models.Shifts;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.Services.Payment;
 
@@ -61,19 +62,19 @@ public class PaymentService : IPaymentService
         await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         await using var shiftReservation = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken);
         var shift = await ShiftAccounting.FindActiveShiftAsync(db, request.ActorUserId, cancellationToken);
-        if (shift == null) return FailCreate("Bạn cần mở ca trực trước khi tạo thanh toán VietQR.");
+        if (shift == null) return FailCreate(AppText.Get("Msg_Payment_OpenShiftFirst"));
         var session = await db.ParkingSessions
             .Include(s => s.Customer)
             .FirstOrDefaultAsync(s => s.SessionId == request.SessionId, cancellationToken);
 
         if (session == null)
         {
-            return FailCreate("Không tìm thấy phiên gửi xe.");
+            return FailCreate(AppText.Get("Msg_Payment_SessionNotFound"));
         }
 
         if (session.Status != SessionStatus.Active)
         {
-            return FailCreate("Phiên gửi xe không còn hoạt động.");
+            return FailCreate(AppText.Get("Msg_Payment_SessionNotActive"));
         }
 
         var now = DateTime.UtcNow;
@@ -83,13 +84,13 @@ public class PaymentService : IPaymentService
 
         if (fee.IsMonthlyTicket || fee.TotalFee <= 0)
         {
-            return FailCreate("Vé tháng hoặc cước phí 0đ không tạo thanh toán VietQR.");
+            return FailCreate(AppText.Get("Msg_Payment_NoQrForZeroFee"));
         }
 
         session.TotalFee = fee.TotalFee;
         if (session.TotalFee <= 0 || session.TotalFee != fee.TotalFee)
         {
-            return FailCreate("Số tiền thanh toán không hợp lệ.");
+            return FailCreate(AppText.Get("Msg_Payment_InvalidAmount"));
         }
 
         var active = await db.Payments
@@ -102,7 +103,7 @@ public class PaymentService : IPaymentService
         if (active != null)
         {
             if (active.ShiftId != shift.ShiftId || active.CheckoutUserId != request.ActorUserId)
-                return FailCreate("Thanh toán VietQR đang chờ được tạo bởi ca trực khác.");
+                return FailCreate(AppText.Get("Msg_Payment_PendingOtherShift"));
             var activeExpired = active.ExpiredAt.HasValue && active.ExpiredAt.Value <= now;
             if (activeExpired)
             {
@@ -120,7 +121,7 @@ public class PaymentService : IPaymentService
                     return new PaymentCreationResult
                     {
                         Success = true,
-                        Message = "Đang chờ thanh toán VietQR.",
+                        Message = AppText.Get("Msg_Payment_WaitingQr"),
                         PaymentId = active.PaymentId,
                         PaymentTransactionId = existingTx.PaymentTransactionId,
                         TransactionReference = existingTx.TransactionReference,
@@ -241,7 +242,7 @@ public class PaymentService : IPaymentService
             transaction.UpdatedAt = DateTime.UtcNow;
             await db.SaveChangesAsync(cancellationToken);
             PaymentLog.Event("PaymentFailed", $"Payment #{payment.PaymentId} {gatewayResult.ErrorMessage}");
-            return FailCreate(gatewayResult.ErrorMessage ?? "Không tạo được yêu cầu thanh toán.");
+            return FailCreate(gatewayResult.ErrorMessage ?? AppText.Get("Msg_Payment_CreateFailed"));
         }
 
         attempt.Status = PaymentAttemptStatus.Succeeded;
@@ -264,7 +265,7 @@ public class PaymentService : IPaymentService
         return new PaymentCreationResult
         {
             Success = true,
-            Message = "Đã tạo mã VietQR. Chờ xác nhận thanh toán từ cổng.",
+            Message = AppText.Get("Msg_Payment_QrCreated"),
             PaymentId = payment.PaymentId,
             PaymentTransactionId = transaction.PaymentTransactionId,
             TransactionReference = reference,
@@ -288,7 +289,7 @@ public class PaymentService : IPaymentService
 
         if (payment == null)
         {
-            return new PaymentStatusResult { Success = false, Message = "Không tìm thấy thanh toán." };
+            return new PaymentStatusResult { Success = false, Message = AppText.Get("Msg_Payment_NotFound") };
         }
 
         if ((payment.Status == PaymentStatus.Created || payment.Status == PaymentStatus.Pending) &&
@@ -330,7 +331,7 @@ public class PaymentService : IPaymentService
 
         if (payment == null)
         {
-            return new PaymentStatusResult { Success = false, Message = "Không tìm thấy thanh toán." };
+            return new PaymentStatusResult { Success = false, Message = AppText.Get("Msg_Payment_NotFound") };
         }
 
         if ((payment.Status == PaymentStatus.Created || payment.Status == PaymentStatus.Pending) &&
@@ -409,7 +410,7 @@ public class PaymentService : IPaymentService
 
         if (snapshot == null)
         {
-            return new PaymentStatusResult { Success = false, Message = "Không tìm thấy thanh toán." };
+            return new PaymentStatusResult { Success = false, Message = AppText.Get("Msg_Payment_NotFound") };
         }
 
         // Huỷ thanh toán cần Payment.Refund; riêng QR VietQR đang chờ do chính mình tạo chỉ cần Parking.CheckOut
@@ -444,7 +445,7 @@ public class PaymentService : IPaymentService
 
             if (payment == null)
             {
-                failure = new PaymentStatusResult { Success = false, Message = "Không tìm thấy thanh toán." };
+                failure = new PaymentStatusResult { Success = false, Message = AppText.Get("Msg_Payment_NotFound") };
             }
             else
             {
@@ -516,7 +517,7 @@ public class PaymentService : IPaymentService
         {
             var activeShift = await ShiftAccounting.FindActiveShiftAsync(db, actorUserId, cancellationToken);
             if (activeShift == null)
-                return new PaymentStatusResult { Success = false, PaymentId = paymentId, Message = "Bạn cần mở ca trực trước khi hoàn tiền." };
+                return new PaymentStatusResult { Success = false, PaymentId = paymentId, Message = AppText.Get("Msg_Payment_OpenShiftForRefund") };
             var payment = await db.Payments
                 .Include(p => p.Transactions)
                 .FirstOrDefaultAsync(p => p.PaymentId == paymentId, cancellationToken);
@@ -527,7 +528,7 @@ public class PaymentService : IPaymentService
                 {
                     Success = false,
                     PaymentId = paymentId,
-                    Message = "Không tìm thấy giao dịch thanh toán."
+                    Message = AppText.Get("Msg_Payment_TransactionNotFound")
                 };
             }
 
@@ -538,7 +539,7 @@ public class PaymentService : IPaymentService
                     Success = false,
                     PaymentId = payment.PaymentId,
                     Status = payment.Status,
-                    Message = $"Chỉ giao dịch Paid mới được hoàn tiền. Trạng thái hiện tại: {payment.Status}."
+                    Message = AppText.Get("Msg_Payment_OnlyPaidRefundable", payment.Status)
                 };
             }
 
@@ -578,7 +579,7 @@ public class PaymentService : IPaymentService
                         Success = false,
                         PaymentId = payment.PaymentId,
                         Status = PaymentStatus.Paid,
-                        Message = "Giao dịch này đã được ghi nhận hoàn tiền."
+                        Message = AppText.Get("Msg_Payment_AlreadyRefunded")
                     };
 
                 db.FinancialTransactions.Add(new FinancialTransaction
@@ -620,7 +621,7 @@ public class PaymentService : IPaymentService
                     Amount = payment.Amount,
                     PaidAt = payment.PaidAt,
                     TransactionReference = txRef,
-                    Message = "Đã ghi nhận hoàn tiền thủ công."
+                    Message = AppText.Get("Msg_Payment_RefundRecorded")
                 };
             }
         }

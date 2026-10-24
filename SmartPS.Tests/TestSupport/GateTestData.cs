@@ -31,9 +31,9 @@ public sealed class GateTestData
 {
     private static int s_counter;
 
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
 
-    public GateTestData(PostgresDatabaseFixture db)
+    public GateTestData(SqlServerDatabaseFixture db)
     {
         _db = db;
     }
@@ -86,7 +86,7 @@ public sealed class GateTestData
     public async Task<int> CreateIsolatedVehicleTypeAsync(bool withPricingRule = true, decimal block4hPrice = 5_000m, decimal dailyPrice = 25_000m)
     {
         var id = await ScalarIntAsync(
-            "INSERT INTO \"VehicleTypes\" (\"TypeName\",\"Description\") VALUES (@n,'isolated test type') RETURNING \"VehicleTypeId\"",
+            "INSERT INTO \"VehicleTypes\" (\"TypeName\",\"Description\") OUTPUT inserted.\"VehicleTypeId\" VALUES (@n,'isolated test type')",
             ("n", NextCode("VT_")));
         if (withPricingRule)
         {
@@ -105,7 +105,7 @@ public sealed class GateTestData
         var zoneCode = code ?? NextCode("Z");
         var zoneId = await ScalarIntAsync(
             "INSERT INTO \"ParkingZones\" (\"ZoneCode\",\"ZoneName\",\"TotalCapacity\",\"Description\",\"VehicleTypeId\",\"Audience\") " +
-            "VALUES (@c,@n,@cap,'test zone',@vt,@a) RETURNING \"ZoneId\"",
+            "OUTPUT inserted.\"ZoneId\" VALUES (@c,@n,@cap,'test zone',@vt,@a)",
             ("c", zoneCode), ("n", "Test " + zoneCode), ("cap", slotCount), ("vt", vehicleTypeId), ("a", (int)audience));
 
         var ids = new List<int>();
@@ -115,7 +115,7 @@ public sealed class GateTestData
             var slotCode = $"{zoneCode}-{i:D2}";
             ids.Add(await ScalarIntAsync(
                 "INSERT INTO \"ParkingSlots\" (\"SlotCode\",\"ZoneName\",\"ZoneId\",\"VehicleTypeId\",\"Status\") " +
-                "VALUES (@sc,@zn,@z,@vt,@st) RETURNING \"SlotId\"",
+                "OUTPUT inserted.\"SlotId\" VALUES (@sc,@zn,@z,@vt,@st)",
                 ("sc", slotCode), ("zn", "Test " + zoneCode), ("z", zoneId), ("vt", vehicleTypeId), ("st", (int)status)));
             codes.Add(slotCode);
         }
@@ -130,7 +130,7 @@ public sealed class GateTestData
 
     public Task<int> CreateHouseholdAsync(string? apartment = null, bool isActive = true, int? maxVehicles = null)
         => ScalarIntAsync(
-            "INSERT INTO \"Households\" (\"ApartmentCode\",\"MaxVehicles\",\"IsActive\",\"CreatedAt\") VALUES (@a,@m,@act,now()) RETURNING \"HouseholdId\"",
+            "INSERT INTO \"Households\" (\"ApartmentCode\",\"MaxVehicles\",\"IsActive\",\"CreatedAt\") OUTPUT inserted.\"HouseholdId\" VALUES (@a,@m,@act,SYSUTCDATETIME())",
             ("a", apartment ?? UniqueApartment()), ("m", maxVehicles), ("act", isActive));
 
     public Task<int> SetHouseholdActiveAsync(int householdId, bool isActive)
@@ -143,7 +143,7 @@ public sealed class GateTestData
     public Task<int> CreateCustomerAsync(int? householdId, CustomerType type = CustomerType.External, bool isActive = true, string? fullName = null)
         => ScalarIntAsync(
             "INSERT INTO \"Customers\" (\"FullName\",\"PhoneNumber\",\"Type\",\"HouseholdId\",\"CreatedAt\",\"IsActive\") " +
-            "VALUES (@n,@p,@t,@h,now(),@a) RETURNING \"CustomerId\"",
+            "OUTPUT inserted.\"CustomerId\" VALUES (@n,@p,@t,@h,SYSUTCDATETIME(),@a)",
             ("n", fullName ?? NextCode("Customer ")), ("p", UniquePhone()), ("t", (int)type), ("h", householdId), ("a", isActive));
 
     public Task<int> SetCustomerActiveAsync(int customerId, bool isActive)
@@ -153,7 +153,7 @@ public sealed class GateTestData
     public Task<int> AddVehicleAsync(int ownerCustomerId, string rawPlate, int vehicleTypeId, bool isActive = true, DateTime? createdAtUtc = null)
         => ScalarIntAsync(
             "INSERT INTO \"Vehicles\" (\"LicensePlate\",\"VehicleTypeId\",\"OwnerCustomerId\",\"IsActive\",\"CreatedAt\") " +
-            "VALUES (@p,@vt,@o,@a,@c) RETURNING \"VehicleId\"",
+            "OUTPUT inserted.\"VehicleId\" VALUES (@p,@vt,@o,@a,@c)",
             ("p", rawPlate), ("vt", vehicleTypeId), ("o", ownerCustomerId), ("a", isActive), ("c", Utc(createdAtUtc ?? DateTime.UtcNow.AddDays(-30))));
 
     public Task<int> SetVehicleActiveAsync(int vehicleId, bool isActive)
@@ -173,7 +173,7 @@ public sealed class GateTestData
         string? ticketCode = null)
         => ScalarIntAsync(
             "INSERT INTO \"MonthlyTickets\" (\"TicketCode\",\"CustomerId\",\"VehicleId\",\"RegisteredLicensePlate\",\"DurationMonths\",\"VehicleTypeId\",\"StartDate\",\"EndDate\",\"MonthlyPrice\",\"Status\",\"CreatedAt\") " +
-            "VALUES (@code,@c,@v,@p,@m,@vt,@s,@e,@price,@st,now()) RETURNING \"TicketId\"",
+            "OUTPUT inserted.\"TicketId\" VALUES (@code,@c,@v,@p,@m,@vt,@s,@e,@price,@st,SYSUTCDATETIME())",
             ("code", ticketCode ?? NextCode("MT-T-")), ("c", customerId), ("v", vehicleId), ("p", registeredRawPlate), ("m", durationMonths),
             ("vt", vehicleTypeId), ("s", Utc(startUtc)), ("e", Utc(endUtc)), ("price", monthlyPrice), ("st", (int)status));
 
@@ -185,7 +185,7 @@ public sealed class GateTestData
     }
 
     public Task<string?> TicketCodeAsync(int ticketId)
-        => PostgresDatabaseFixture.ScalarAsync<string>(_db.ConnectionString, "SELECT \"TicketCode\" FROM \"MonthlyTickets\" WHERE \"TicketId\" = @id", ("id", ticketId));
+        => SqlServerDatabaseFixture.ScalarAsync<string>(_db.ConnectionString, "SELECT \"TicketCode\" FROM \"MonthlyTickets\" WHERE \"TicketId\" = @id", ("id", ticketId));
 
     public Task<int> SetTicketEndAsync(int ticketId, DateTime endUtc)
         => _db.ExecuteAsync("UPDATE \"MonthlyTickets\" SET \"EndDate\" = @e WHERE \"TicketId\" = @id", ("e", Utc(endUtc)), ("id", ticketId));
@@ -197,7 +197,7 @@ public sealed class GateTestData
     public Task<int> AddBlacklistAsync(string rawPlate, string reason = "Test blacklist reason", bool isActive = true, int? customerId = null, string? notes = null)
         => ScalarIntAsync(
             "INSERT INTO \"BlacklistedVehicles\" (\"LicensePlate\",\"Reason\",\"Notes\",\"CustomerId\",\"CreatedAt\",\"IsActive\") " +
-            "VALUES (@p,@r,@n,@c,now(),@a) RETURNING \"BlacklistId\"",
+            "OUTPUT inserted.\"BlacklistId\" VALUES (@p,@r,@n,@c,SYSUTCDATETIME(),@a)",
             ("p", rawPlate), ("r", reason), ("n", notes), ("c", customerId), ("a", isActive));
 
     public Task<int> SetBlacklistActiveAsync(int blacklistId, bool isActive)
@@ -260,17 +260,17 @@ public sealed class GateTestData
         => _db.ExecuteAsync("UPDATE \"ParkingSessions\" SET \"CheckInTime\" = @t WHERE \"SessionId\" = @id", ("t", Utc(checkInUtc)), ("id", sessionId));
 
     public Task<DateTime> SessionCheckInAsync(int sessionId)
-        => PostgresDatabaseFixture.ScalarAsync<DateTime>(_db.ConnectionString, "SELECT \"CheckInTime\" FROM \"ParkingSessions\" WHERE \"SessionId\" = @id", ("id", sessionId));
+        => SqlServerDatabaseFixture.ScalarAsync<DateTime>(_db.ConnectionString, "SELECT \"CheckInTime\" FROM \"ParkingSessions\" WHERE \"SessionId\" = @id", ("id", sessionId));
 
     // ---- read helpers ---------------------------------------------------------------------------------------------
 
     public Task<long> CountAsync(string sql, params (string Name, object? Value)[] parameters)
-        => PostgresDatabaseFixture.ScalarAsync<long>(_db.ConnectionString, sql, parameters);
+        => SqlServerDatabaseFixture.ScalarAsync<long>(_db.ConnectionString, sql, parameters);
 
     /// <summary>Number of ParkingSessions rows (any status) whose normalized plate equals <paramref name="normalizedPlate"/>.</summary>
     public Task<long> SessionCountForPlateAsync(string normalizedPlate, bool activeOnly = false)
         => CountAsync(
-            "SELECT count(*) FROM \"ParkingSessions\" WHERE upper(regexp_replace(\"LicensePlate\", '[^a-zA-Z0-9]', '', 'g')) = @p" +
+            "SELECT count(*) FROM \"ParkingSessions\" WHERE dbo.fn_NormalizePlate(\"LicensePlate\") = @p" +
             (activeOnly ? " AND \"Status\" = 0" : string.Empty),
             ("p", normalizedPlate));
 
@@ -287,7 +287,7 @@ public sealed class GateTestData
         => (SlotStatus)await ScalarIntAsync("SELECT \"Status\" FROM \"ParkingSlots\" WHERE \"SlotId\" = @id", ("id", slotId));
 
     public Task<string?> SlotPlateAsync(int slotId)
-        => PostgresDatabaseFixture.ScalarAsync<string>(_db.ConnectionString, "SELECT \"CurrentLicensePlate\" FROM \"ParkingSlots\" WHERE \"SlotId\" = @id", ("id", slotId));
+        => SqlServerDatabaseFixture.ScalarAsync<string>(_db.ConnectionString, "SELECT \"CurrentLicensePlate\" FROM \"ParkingSlots\" WHERE \"SlotId\" = @id", ("id", slotId));
 
     /// <summary>Audience of the zone that holds the slot (Mixed when the slot has no zone).</summary>
     public async Task<ZoneAudience> SlotAudienceAsync(int slotId)
@@ -296,12 +296,12 @@ public sealed class GateTestData
             ("id", slotId));
 
     public Task<string?> SlotZoneCodeAsync(int slotId)
-        => PostgresDatabaseFixture.ScalarAsync<string>(_db.ConnectionString,
+        => SqlServerDatabaseFixture.ScalarAsync<string>(_db.ConnectionString,
             "SELECT z.\"ZoneCode\" FROM \"ParkingSlots\" s LEFT JOIN \"ParkingZones\" z ON z.\"ZoneId\" = s.\"ZoneId\" WHERE s.\"SlotId\" = @id",
             ("id", slotId));
 
     private async Task<int> ScalarIntAsync(string sql, params (string Name, object? Value)[] parameters)
-        => await PostgresDatabaseFixture.ScalarAsync<int>(_db.ConnectionString, sql, parameters);
+        => await SqlServerDatabaseFixture.ScalarAsync<int>(_db.ConnectionString, sql, parameters);
 
     public static DateTime Utc(DateTime value)
         => value.Kind switch

@@ -13,15 +13,15 @@ namespace SmartPS.Tests.Integration;
 /// total slots is the real ParkingSlots count (no 20 fallback), vehicle types come from the DB (no hard-coded 1/2),
 /// net revenue comes from FinancialTransaction, and the recent list holds at most 15 sessions.
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class OverviewSnapshotTests : IClassFixture<PostgresDatabaseFixture>
+public class OverviewSnapshotTests : IClassFixture<SqlServerDatabaseFixture>
 {
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
     private readonly ReportSeed _seed;
     private readonly GateTestData _data;
 
-    public OverviewSnapshotTests(PostgresDatabaseFixture db)
+    public OverviewSnapshotTests(SqlServerDatabaseFixture db)
     {
         _db = db;
         _seed = new ReportSeed(db);
@@ -183,9 +183,9 @@ public class OverviewSnapshotTests : IClassFixture<PostgresDatabaseFixture>
         var recent = await service.GetRecentSessionsAsync(5);
 
         Assert.NotEmpty(recent);
-        var sessionQueries = capture.Texts.Where(t => t.Contains("\"ParkingSessions\"", StringComparison.Ordinal)).ToList();
+        var sessionQueries = capture.Texts.Where(t => t.Contains("[ParkingSessions]", StringComparison.Ordinal)).ToList();
         Assert.NotEmpty(sessionQueries);
-        Assert.All(sessionQueries, t => Assert.DoesNotContain("\"Customers\"", t, StringComparison.Ordinal));
+        Assert.All(sessionQueries, t => Assert.DoesNotContain("[Customers]", t, StringComparison.Ordinal));
         Assert.All(recent, s => Assert.Null(s.Customer));
         Assert.All(recent, s => Assert.NotNull(s.VehicleType)); // the vehicle type is still loaded for the list
     }

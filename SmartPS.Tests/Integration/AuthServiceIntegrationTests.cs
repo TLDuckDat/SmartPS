@@ -10,16 +10,16 @@ namespace SmartPS.Tests.Integration;
 /// <summary>
 /// AuthService against PostgreSQL: AC-3, AC-6 (+6b / m5), AC-7 (R7), AC-8, E3, E5, E6, R14 user events, R18.
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class AuthServiceIntegrationTests : IClassFixture<PostgresDatabaseFixture>
+public class AuthServiceIntegrationTests : IClassFixture<SqlServerDatabaseFixture>
 {
     /// <summary>Well below the 15 s lock timeout that a self-deadlock (M2) would cost.</summary>
     private static readonly TimeSpan NoLockWait = TimeSpan.FromSeconds(5);
 
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
 
-    public AuthServiceIntegrationTests(PostgresDatabaseFixture db)
+    public AuthServiceIntegrationTests(SqlServerDatabaseFixture db)
     {
         _db = db;
     }
@@ -92,7 +92,7 @@ public class AuthServiceIntegrationTests : IClassFixture<PostgresDatabaseFixture
 
         try
         {
-            await _db.ExecuteAsync("UPDATE \"Users\" SET \"IsActive\" = false WHERE \"RoleId\" = @r AND \"Username\" <> 'admin'", ("r", adminRoleId));
+            await _db.ExecuteAsync("UPDATE \"Users\" SET \"IsActive\" = 0 WHERE \"RoleId\" = @r AND \"Username\" <> 'admin'", ("r", adminRoleId));
             var seed = await TestUsers.LoadByUsernameAsync(_db.Factory, "admin");
             Assert.True(seed.IsActive);
             var idBefore = await AuditDb.MaxIdAsync(_db.Factory);

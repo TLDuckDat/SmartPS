@@ -1,29 +1,42 @@
 using SmartPS.Models.Incidents;
 using SmartPS.Services.Audit;
 using SmartPS.Services.Incidents;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.ViewModels.Incidents;
 
 public class IncidentItemViewModel : ViewModelBase
 {
-    public const string OpenStatusText = "Đang xử lý";
-    public const string ResolvedStatusText = "Đã giải quyết";
+    public static string OpenStatusText => AppText.Get("Str_Inc_StatusOpen");
+    public static string ResolvedStatusText => AppText.Get("Str_Inc_StatusResolved");
 
-    public static IReadOnlyDictionary<IncidentType, string> TypeNames { get; } = new Dictionary<IncidentType, string>
+    private static readonly IReadOnlyDictionary<IncidentType, string> TypeNameKeys = new Dictionary<IncidentType, string>
     {
-        [Models.Incidents.IncidentType.LostTicket] = "Mất thẻ xe / Vé lượt",
-        [Models.Incidents.IncidentType.UnreadablePlate] = "Biển số bị che khuất / Không đọc được",
-        [Models.Incidents.IncidentType.Overstay] = "Xe gửi quá hạn",
-        [Models.Incidents.IncidentType.VehicleDamage] = "Va chạm / Hư hỏng phương tiện",
-        [Models.Incidents.IncidentType.Security] = "Nghi vấn an ninh",
-        [Models.Incidents.IncidentType.Equipment] = "Sự cố thiết bị (camera, barrier)",
-        [Models.Incidents.IncidentType.Other] = "Khác"
+        [Models.Incidents.IncidentType.LostTicket] = "Str_Inc_TypeLostTicket",
+        [Models.Incidents.IncidentType.UnreadablePlate] = "Str_Inc_TypeUnreadablePlate",
+        [Models.Incidents.IncidentType.Overstay] = "Str_Inc_TypeOverstay",
+        [Models.Incidents.IncidentType.VehicleDamage] = "Str_Inc_TypeVehicleDamage",
+        [Models.Incidents.IncidentType.Security] = "Str_Inc_TypeSecurity",
+        [Models.Incidents.IncidentType.Equipment] = "Str_Inc_TypeEquipment",
+        [Models.Incidents.IncidentType.Other] = "Str_Inc_TypeOther"
     };
+
+    public static IEnumerable<IncidentType> Types => TypeNameKeys.Keys;
+
+    public static string GetTypeName(IncidentType type) =>
+        TypeNameKeys.TryGetValue(type, out var key) ? AppText.Get(key) : type.ToString();
+
+    public void RefreshTexts()
+    {
+        OnPropertyChanged(nameof(IncidentType));
+        OnPropertyChanged(nameof(Status));
+        OnPropertyChanged(nameof(ResolutionSummary));
+    }
 
     public int IncidentId { get; set; }
     public string IncidentCode { get; set; } = string.Empty;
     public IncidentType Type { get; set; }
-    public string IncidentType => TypeNames.TryGetValue(Type, out var name) ? name : Type.ToString();
+    public string IncidentType => GetTypeName(Type);
     public string LicensePlate { get; set; } = string.Empty;
     public DateTime ReportedTime { get; set; }
     public string ReportedBy { get; set; } = string.Empty;
@@ -36,7 +49,7 @@ public class IncidentItemViewModel : ViewModelBase
 
     public string ResolutionSummary => IsResolved
         ? $"{ResolvedBy} · {ResolvedTime:dd/MM/yyyy HH:mm}"
-        : "Chưa xử lý";
+        : AppText.Get("Str_Inc_NotHandled");
 
     public static IncidentItemViewModel FromInfo(IncidentInfo info)
     {

@@ -37,7 +37,7 @@ public class ReportCustomerGroupRulesTests
     [Fact]
     public void Sql_group_case_values_match_the_report_group_enum()
     {
-        Assert.Equal("CASE WHEN s.\"CustomerType\" = @res THEN 1 WHEN s.\"IsMonthlyPass\" THEN 2 ELSE 3 END", ReportCustomerGroupRules.SqlGroupCase);
+        Assert.Equal("CASE WHEN s.\"CustomerType\" = @res THEN 1 WHEN s.\"IsMonthlyPass\" = 1 THEN 2 ELSE 3 END", ReportCustomerGroupRules.SqlGroupCase);
         Assert.Equal(1, (int)ReportCustomerGroup.Resident);
         Assert.Equal(2, (int)ReportCustomerGroup.MonthlyPass);
         Assert.Equal(3, (int)ReportCustomerGroup.Visitor);

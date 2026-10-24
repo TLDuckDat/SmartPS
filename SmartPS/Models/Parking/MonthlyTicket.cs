@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.Models.Parking;
 
@@ -39,11 +40,11 @@ public class MonthlyTicket
     {
         get
         {
-            if (Status == MonthlyTicketStatus.Cancelled) return "Đã khóa thẻ";
-            if (Status == MonthlyTicketStatus.Suspended) return "Tạm khóa";
-            if (DateTime.UtcNow > EndDate) return "Đã hết hạn";
-            if (Status == MonthlyTicketStatus.Active) return "Đang hiệu lực";
-            return "Không xác định";
+            if (Status == MonthlyTicketStatus.Cancelled) return AppText.Get("Str_Ticket_Locked");
+            if (Status == MonthlyTicketStatus.Suspended) return AppText.Get("Str_Ticket_Suspended");
+            if (DateTime.UtcNow > EndDate) return AppText.Get("Str_Ticket_Expired");
+            if (Status == MonthlyTicketStatus.Active) return AppText.Get("Str_Ticket_Active");
+            return AppText.Get("Str_Ticket_Unknown");
         }
     }
 }

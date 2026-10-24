@@ -13,6 +13,6 @@ public class ParkingSessionGateConfiguration : IEntityTypeConfiguration<ParkingS
         builder.HasIndex(x => x.SlotId, "IX_ParkingSessions_SlotId");
         builder.HasIndex(x => x.SlotId, "IX_ParkingSessions_SlotId_Active")
                .IsUnique()
-               .HasFilter("\"Status\" = 0 AND \"SlotId\" IS NOT NULL");
+               .HasFilter("[Status] = 0 AND [SlotId] IS NOT NULL");
     }
 }

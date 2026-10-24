@@ -59,12 +59,12 @@ public partial class App : Application
         services.AddSingleton<IConfiguration>(configuration);
 
         var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? "Host=localhost;Port=5432;Database=SmartPS;Username=smartps;Password=smartps;";
+            ?? DbConnectionHelper.DefaultConnectionString;
 
-        // Cấu hình Npgsql PostgreSQL
+        // Cấu hình SQL Server (LocalDB mặc định)
         services.AddDbContextFactory<SmartPsDbContext>(options =>
         {
-            options.UseNpgsql(connectionString);
+            options.UseSqlServer(connectionString);
         });
 
         // Đăng ký Business Services
@@ -72,11 +72,13 @@ public partial class App : Application
         services.AddSingleton<SmartPS.Services.Audit.IAuditService, SmartPS.Services.Audit.AuditService>();
         services.AddSingleton<IAuthorizationGuard, AuthorizationGuard>();
         services.AddSingleton<IAuthService, AuthService>();
+        services.AddSingleton<ICredentialStore, CredentialStore>();
         services.AddSingleton<IPermissionService, PermissionService>();
         services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<SmartPS.Services.RolePermissions.IRolePermissionService, SmartPS.Services.RolePermissions.RolePermissionService>();
         services.AddSingleton<SmartPS.Services.Audit.IAuditQueryService, SmartPS.Services.Audit.AuditQueryService>();
         services.AddSingleton<SmartPS.Services.Audit.IAuditIntegrityVerifier, SmartPS.Services.Audit.AuditIntegrityVerifier>();
+        services.AddSingleton<SmartPS.Services.Preferences.IUserPreferencesStore, SmartPS.Services.Preferences.UserPreferencesStore>();
         services.AddSingleton<ILocalizationService, LocalizationService>();
         services.AddSingleton<SmartPS.Services.Audio.IAudioAlertService, SmartPS.Services.Audio.SystemAudioAlertService>();
         services.AddSingleton<SmartPS.Services.Storage.IImageStorageService, SmartPS.Services.Storage.ImageStorageService>();
@@ -149,30 +151,31 @@ public partial class App : Application
 
         ServiceProvider = services.BuildServiceProvider();
 
-        // 3. Tự động kiểm tra, tạo Database PostgreSQL (Code First) và nạp dữ liệu mặc định (Seed Data)
+        // 3. Tự động kiểm tra, tạo Database SQL Server (Code First) và nạp dữ liệu mặc định (Seed Data)
         var dbConnected = false;
         try
         {
             var dbContextFactory = ServiceProvider.GetRequiredService<IDbContextFactory<SmartPsDbContext>>();
-            using var connectCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            // LocalDB khởi động instance ở lần kết nối đầu tiên nên cần chờ lâu hơn máy chủ thường trực
+            using var connectCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
             await using var dbContext = await dbContextFactory.CreateDbContextAsync(connectCts.Token);
 
-            // ExistsAsync ném lỗi khi máy chủ PostgreSQL chưa bật, trả false khi máy chủ chạy nhưng chưa có database;
-            // khi đó MigrateAsync trong DbInitializer sẽ tự tạo database (CanConnectAsync trả false và bỏ qua bước này)
+            // ExistsAsync ném lỗi khi không kết nối được máy chủ, trả false khi máy chủ chạy nhưng chưa có database;
+            // khi đó MigrateAsync trong DbInitializer sẽ tự tạo database
             var databaseCreator = dbContext.GetService<IRelationalDatabaseCreator>();
             if (!await databaseCreator.ExistsAsync(connectCts.Token))
             {
-                System.Diagnostics.Debug.WriteLine("[SmartPS PostgreSQL Auto-DB]: Chưa có database, sẽ tạo mới khi áp dụng migration.");
+                System.Diagnostics.Debug.WriteLine("[SmartPS SQL Server Auto-DB]: Chưa có database, sẽ tạo mới khi áp dụng migration.");
             }
 
-            using var initializeCts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            using var initializeCts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
             await DbInitializer.InitializeAsync(dbContext, initializeCts.Token);
             dbConnected = true;
         }
         catch (Exception ex)
         {
-            // Bắt lỗi kết nối PostgreSQL nếu máy chủ CSDL chưa bật
-            System.Diagnostics.Debug.WriteLine($"[SmartPS PostgreSQL Auto-DB Warning]: {ex.Message}");
+            // Bắt lỗi kết nối nếu máy chủ SQL Server chưa cài hoặc chưa bật
+            System.Diagnostics.Debug.WriteLine($"[SmartPS SQL Server Auto-DB Warning]: {ex.Message}");
         }
 
         // 4. Khởi động Webhook HTTP Server nền cho cổng thanh toán

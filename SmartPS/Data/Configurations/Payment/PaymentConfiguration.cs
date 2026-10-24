@@ -29,7 +29,7 @@ public static class PaymentConfiguration
         b.HasIndex(x => x.Status);
         b.HasIndex(x => x.CreatedAt);
         b.HasIndex(x => x.SessionId)
-            .HasFilter("\"Status\" IN (0, 1)")
+            .HasFilter("[Status] IN (0, 1)")
             .IsUnique()
             .HasDatabaseName("IX_Payments_SessionId_Active");
         b.HasOne(x => x.Session).WithMany(s => s.Payments)
@@ -66,8 +66,8 @@ public static class PaymentConfiguration
         b.ToTable("PaymentAttempts");
         b.HasKey(x => x.PaymentAttemptId);
         b.Property(x => x.Gateway).HasMaxLength(64).IsRequired();
-        b.Property(x => x.RequestPayload).HasColumnType("text");
-        b.Property(x => x.ResponsePayload).HasColumnType("text");
+        b.Property(x => x.RequestPayload).HasColumnType("nvarchar(max)");
+        b.Property(x => x.ResponsePayload).HasColumnType("nvarchar(max)");
         b.Property(x => x.ErrorCode).HasMaxLength(64);
         b.Property(x => x.ErrorMessage).HasMaxLength(1000);
         b.HasIndex(x => x.PaymentTransactionId);
@@ -82,7 +82,7 @@ public static class PaymentConfiguration
         b.Property(x => x.Provider).HasMaxLength(64).IsRequired();
         b.Property(x => x.EventId).HasMaxLength(256).IsRequired();
         b.Property(x => x.TransactionReference).HasMaxLength(64);
-        b.Property(x => x.Payload).HasColumnType("text").IsRequired();
+        b.Property(x => x.Payload).HasColumnType("nvarchar(max)").IsRequired();
         b.Property(x => x.Signature).HasMaxLength(256);
         b.Property(x => x.ErrorMessage).HasMaxLength(1000);
         b.HasIndex(x => new { x.Provider, x.EventId }).IsUnique();

@@ -12,15 +12,15 @@ namespace SmartPS.Tests.Unit;
 /// legacy memory behaviour; m6: <c>ClassifyVehicleAsync</c> is guarded by Parking.CheckIn OR Parking.CheckOut.
 /// </summary>
 // Writes the shared gate storage files (Storage/*.json[l]) like the integration gate tests: never run in parallel with them.
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 public class GateOfflineResidentVisitorTests
 {
-    private const string OfflineConnection = "Host=127.0.0.1;Port=1;Database=x;Username=x;Password=x;Timeout=1;Pooling=false";
+    private const string OfflineConnection = "Server=tcp:127.0.0.1,1;Database=x;User Id=x;Password=x;Connect Timeout=1;ConnectRetryCount=0;Pooling=false;TrustServerCertificate=True";
 
     private sealed class OfflineFactory : IDbContextFactory<SmartPsDbContext>
     {
         public SmartPsDbContext CreateDbContext()
-            => new(new DbContextOptionsBuilder<SmartPsDbContext>().UseNpgsql(OfflineConnection).Options);
+            => new(new DbContextOptionsBuilder<SmartPsDbContext>().UseSqlServer(OfflineConnection).Options);
     }
 
     private static GateControlService CreateGate(User user, IAuditService? audit = null)

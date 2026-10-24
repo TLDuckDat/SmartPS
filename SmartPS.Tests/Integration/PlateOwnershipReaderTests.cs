@@ -8,16 +8,16 @@ namespace SmartPS.Tests.Integration;
 /// Plates are stored RAW; the reader matches them after normalizing the stored column (upper, letters and digits only).
 /// Uses a fixed "now" so ticket validity edges are deterministic.
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class PlateOwnershipReaderTests : IClassFixture<PostgresDatabaseFixture>
+public class PlateOwnershipReaderTests : IClassFixture<SqlServerDatabaseFixture>
 {
     private static readonly DateTime Now = new(2026, 10, 13, 5, 0, 0, DateTimeKind.Utc);
 
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
     private readonly GateTestData _data;
 
-    public PlateOwnershipReaderTests(PostgresDatabaseFixture db)
+    public PlateOwnershipReaderTests(SqlServerDatabaseFixture db)
     {
         _db = db;
         _data = new GateTestData(db);

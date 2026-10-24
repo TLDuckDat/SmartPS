@@ -61,11 +61,11 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
                         <TextBlock Text="{DynamicResource Str_Menu_Settings}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <TextBlock Text="Tham số vận hành bãi xe và tình trạng các thành phần: cơ sở dữ liệu, nhận diện biển số, cổng thanh toán" FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                        <TextBlock Text="{DynamicResource Str_SetUi_Subtitle}" FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
                     <Button Grid.Column="1" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Center" Margin="16,0,0,0"
                             Command="{Binding RefreshCommand}">
-                        <TextBlock Text="🔄 Kiểm tra lại" FontSize="12" FontWeight="SemiBold"/>
+                        <TextBlock Text="{DynamicResource Str_SetUi_Recheck}" FontSize="12" FontWeight="SemiBold"/>
                     </Button>
                 </Grid>
             </Border>
@@ -73,8 +73,8 @@
             <!-- 1. Tham số vận hành -->
             <Border Style="{StaticResource SettingsCardStyle}">
                 <StackPanel>
-                    <TextBlock Text="THAM SỐ VẬN HÀNH" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                    <TextBlock Text="Thay đổi được ghi vào Nhật ký hệ thống (SETTINGS_UPDATE)." FontSize="12" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,18"/>
+                    <TextBlock Text="{DynamicResource Str_SetUi_ParamsTitle}" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{DynamicResource Str_SetUi_AuditNote}" FontSize="12" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,18"/>
 
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -84,29 +84,29 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="Ngưỡng xe gửi quá hạn (giờ)" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                            <TextBlock Text="{DynamicResource Str_SetUi_Overstay}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                             <TextBox Style="{StaticResource ModernTextBoxStyle}" MaxLength="3"
                                      Text="{Binding OverstayThresholdHours, UpdateSourceTrigger=PropertyChanged}"
                                      IsEnabled="{Binding CanManage}"/>
                             <TextBlock FontSize="11.5" Foreground="{StaticResource TextDimBrush}" Margin="0,5,0,0" TextWrapping="Wrap">
                                 <Run Text="{Binding OverstayRangeHint, Mode=OneWay}"/>
-                                <Run Text="· Nút &quot;Quét xe quá hạn&quot; ở màn Sự cố lập biên bản cho xe gửi lâu hơn ngưỡng này."/>
+                                <Run Text="{DynamicResource Str_SetUi_OverstayHint}"/>
                             </TextBlock>
                         </StackPanel>
 
                         <StackPanel Grid.Column="2">
-                            <TextBlock Text="Số xe tối đa mỗi hộ gia đình" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                            <TextBlock Text="{DynamicResource Str_SetUi_MaxVehicles}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                             <TextBox Style="{StaticResource ModernTextBoxStyle}" MaxLength="2"
                                      Text="{Binding MaxVehiclesPerHousehold, UpdateSourceTrigger=PropertyChanged}"
                                      IsEnabled="{Binding CanManage}"/>
                             <TextBlock FontSize="11.5" Foreground="{StaticResource TextDimBrush}" Margin="0,5,0,0" TextWrapping="Wrap">
                                 <Run Text="{Binding VehiclesRangeHint, Mode=OneWay}"/>
-                                <Run Text="· Áp dụng khi đăng ký phương tiện cho hộ cư dân."/>
+                                <Run Text="{DynamicResource Str_SetUi_MaxVehiclesHint}"/>
                             </TextBlock>
                         </StackPanel>
                     </Grid>
 
-                    <Button Style="{StaticResource PrimaryButtonStyle}" Content="Lưu thay đổi" HorizontalAlignment="Right" Margin="0,18,0,0"
+                    <Button Style="{StaticResource PrimaryButtonStyle}" Content="{DynamicResource Str_SetUi_Save}" HorizontalAlignment="Right" Margin="0,18,0,0"
                             Command="{Binding SaveCommand}"/>
                 </StackPanel>
             </Border>
@@ -114,14 +114,14 @@
             <!-- 2. Tình trạng hệ thống -->
             <Border Style="{StaticResource SettingsCardStyle}">
                 <StackPanel>
-                    <TextBlock Text="TÌNH TRẠNG HỆ THỐNG" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
+                    <TextBlock Text="{DynamicResource Str_SetUi_StatusTitle}" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
 
                     <!-- CSDL -->
                     <DockPanel Margin="0,0,0,16">
                         <Border DockPanel.Dock="Left" Style="{StaticResource StatusDotStyle}" Tag="{Binding IsDatabaseOnline}"/>
                         <StackPanel>
                             <TextBlock Style="{StaticResource StatusTitleStyle}">
-                                <Run Text="Cơ sở dữ liệu PostgreSQL ·"/>
+                                <Run Text="{DynamicResource Str_SetUi_Database}"/>
                                 <Run Text="{Binding DatabaseSummary, Mode=OneWay}" FontWeight="SemiBold"/>
                             </TextBlock>
                             <TextBlock Text="{Binding DatabaseDetail}" Style="{StaticResource StatusDetailStyle}"/>
@@ -133,11 +133,11 @@
                         <Border DockPanel.Dock="Left" Style="{StaticResource StatusDotStyle}" Tag="{Binding IsOcrAvailable}"/>
                         <Button DockPanel.Dock="Right" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Top" Margin="16,0,0,0"
                                 Command="{Binding TestOcrCommand}">
-                            <TextBlock Text="📷 Chạy thử nhận diện" FontSize="12" FontWeight="SemiBold"/>
+                            <TextBlock Text="{DynamicResource Str_SetUi_TestOcr}" FontSize="12" FontWeight="SemiBold"/>
                         </Button>
                         <StackPanel>
                             <TextBlock Style="{StaticResource StatusTitleStyle}">
-                                <Run Text="Engine nhận diện biển số (OCR) ·"/>
+                                <Run Text="{DynamicResource Str_SetUi_Ocr}"/>
                                 <Run Text="{Binding OcrSummary, Mode=OneWay}" FontWeight="SemiBold"/>
                             </TextBlock>
                             <TextBlock Text="{Binding OcrDetail}" Style="{StaticResource StatusDetailStyle}"/>
@@ -150,7 +150,7 @@
                         <Border DockPanel.Dock="Left" Style="{StaticResource StatusWarnDotStyle}" Tag="{Binding IsPaymentLive}"/>
                         <StackPanel>
                             <TextBlock Style="{StaticResource StatusTitleStyle}">
-                                <Run Text="Cổng thanh toán ·"/>
+                                <Run Text="{DynamicResource Str_SetUi_Payment}"/>
                                 <Run Text="{Binding PaymentSummary, Mode=OneWay}" FontWeight="SemiBold"/>
                             </TextBlock>
                             <TextBlock Text="{Binding PaymentDetail}" Style="{StaticResource StatusDetailStyle}"/>
@@ -161,7 +161,7 @@
                     <DockPanel Margin="0,0,0,16">
                         <Border DockPanel.Dock="Left" Style="{StaticResource StatusDotStyle}" Tag="{Binding IsWebhookRunning}"/>
                         <StackPanel>
-                            <TextBlock Text="Máy chủ nhận webhook thanh toán" Style="{StaticResource StatusTitleStyle}"/>
+                            <TextBlock Text="{DynamicResource Str_SetUi_Webhook}" Style="{StaticResource StatusTitleStyle}"/>
                             <TextBlock Text="{Binding WebhookSummary}" Style="{StaticResource StatusDetailStyle}"/>
                         </StackPanel>
                     </DockPanel>
@@ -177,9 +177,9 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Thư mục lưu ảnh xe vào/ra:" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,10,6"/>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource Str_SetUi_CaptureFolder}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,10,6"/>
                         <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CaptureStoragePath}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Phiên bản ứng dụng:" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,10,0"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="{DynamicResource Str_SetUi_Version}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,10,0"/>
                         <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding AppVersion}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"/>
                     </Grid>
                 </StackPanel>

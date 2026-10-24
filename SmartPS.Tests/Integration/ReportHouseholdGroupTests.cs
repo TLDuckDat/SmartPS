@@ -14,17 +14,17 @@ namespace SmartPS.Tests.Integration;
 /// no household, and an unknown plate). Revenue per group comes from the FinancialTransactions the checkout recorded.
 /// The class works on its own isolated vehicle type, so other data in the database does not affect the figures.
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class ReportHouseholdGroupTests : IClassFixture<PostgresDatabaseFixture>
+public class ReportHouseholdGroupTests : IClassFixture<SqlServerDatabaseFixture>
 {
     private const decimal Block4h = 6_000m;
     private const decimal Daily = 30_000m;
 
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
     private readonly GateTestData _data;
 
-    public ReportHouseholdGroupTests(PostgresDatabaseFixture db)
+    public ReportHouseholdGroupTests(SqlServerDatabaseFixture db)
     {
         _db = db;
         _data = new GateTestData(db);

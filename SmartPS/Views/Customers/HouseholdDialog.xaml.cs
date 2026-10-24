@@ -2,6 +2,7 @@ using System;
 using System.Windows;
 using SmartPS.Models.Parking;
 using System.Collections.Generic;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.Views.Customers
 {
@@ -18,8 +19,8 @@ namespace SmartPS.Views.Customers
 
         private void BtnSave_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(ApartmentCode)) { MessageBox.Show("Mã căn hộ không được để trống"); return; }
-            if (MaxVehicles < 1) { MessageBox.Show("Số xe tối đa của căn hộ phải từ 1 xe trở lên!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+            if (string.IsNullOrEmpty(ApartmentCode)) { MessageBox.Show(AppText.Get("Msg_Customers_DlgAptRequired")); return; }
+            if (MaxVehicles < 1) { MessageBox.Show(AppText.Get("Msg_Customers_DlgAptMaxVehicles"), AppText.Get("Str_Dialog_Title_Info"), MessageBoxButton.OK, MessageBoxImage.Warning); return; }
             DialogResult = true;
             Close();
         }

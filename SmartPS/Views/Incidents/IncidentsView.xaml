@@ -69,23 +69,23 @@
                             <TextBlock Text="⚠️" FontSize="20" Margin="0,0,8,0"/>
                             <TextBlock Text="{DynamicResource Str_Menu_Incidents}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         </StackPanel>
-                        <TextBlock Text="Ghi nhận và xử lý sự cố bất thường: Mất thẻ vé, biển số mờ, xe đỗ quá giờ hoặc nghi vấn an ninh"
+                        <TextBlock Text="{DynamicResource Str_Inc_Title}"
                                    FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
                         <Button Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0"
                                 Command="{Binding ScanOverstayCommand}"
-                                ToolTip="Lập biên bản cho các xe đang gửi quá số giờ quy định trong Cài đặt hệ thống">
-                            <TextBlock Text="⏰ Quét xe quá hạn" FontSize="12" FontWeight="SemiBold"/>
+                                ToolTip="{DynamicResource Str_Inc_ScanOverstayTip}">
+                            <TextBlock Text="{DynamicResource Str_Inc_ScanOverstay}" FontSize="12" FontWeight="SemiBold"/>
                         </Button>
                         <Button Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0"
                                 Command="{Binding RefreshCommand}">
-                            <TextBlock Text="🔄 Làm mới" FontSize="12" FontWeight="SemiBold"/>
+                            <TextBlock Text="{DynamicResource Str_Common_Refresh}" FontSize="12" FontWeight="SemiBold"/>
                         </Button>
                         <Button Style="{StaticResource PrimaryButtonStyle}"
                                 Command="{Binding OpenReportFormCommand}">
-                            <TextBlock Text="＋ Lập biên bản" FontSize="12" FontWeight="SemiBold" Foreground="White"/>
+                            <TextBlock Text="{DynamicResource Str_Inc_New}" FontSize="12" FontWeight="SemiBold" Foreground="White"/>
                         </Button>
                     </StackPanel>
                 </Grid>
@@ -105,11 +105,11 @@
                 <Border Grid.Column="0" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="18">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="TỔNG SỐ SỰ CỐ" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
+                            <TextBlock Text="{DynamicResource Str_Inc_KpiTotal}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
                             <TextBlock Text="⚠️" FontSize="16" HorizontalAlignment="Right"/>
                         </Grid>
-                        <TextBlock Text="{Binding TotalIncidents, StringFormat='{}{0} vụ việc'}" FontSize="26" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}" Margin="0,8,0,2"/>
-                        <TextBlock Text="Được lập biên bản ghi nhận" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock FontSize="26" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}" Margin="0,8,0,2"><Run Text="{Binding TotalIncidents, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_CasesSuffix}"/></TextBlock>
+                        <TextBlock Text="{DynamicResource Str_Inc_KpiTotalSub}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
                     </StackPanel>
                 </Border>
 
@@ -117,11 +117,11 @@
                 <Border Grid.Column="2" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="18">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="ĐANG XỬ LÝ (CHỜ GIẢI QUYẾT)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
+                            <TextBlock Text="{DynamicResource Str_Inc_KpiOpen}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
                             <TextBlock Text="⏳" FontSize="16" HorizontalAlignment="Right"/>
                         </Grid>
-                        <TextBlock Text="{Binding PendingIncidents, StringFormat='{}{0} vụ'}" FontSize="26" FontWeight="Bold" Foreground="#B91C1C" Margin="0,8,0,2"/>
-                        <TextBlock Text="Cần trưởng ca xác minh" FontSize="11.5" Foreground="#B91C1C"/>
+                        <TextBlock FontSize="26" FontWeight="Bold" Foreground="#B91C1C" Margin="0,8,0,2"><Run Text="{Binding PendingIncidents, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_CasesShortSuffix}"/></TextBlock>
+                        <TextBlock Text="{DynamicResource Str_Inc_KpiOpenSub}" FontSize="11.5" Foreground="#B91C1C"/>
                     </StackPanel>
                 </Border>
 
@@ -129,11 +129,11 @@
                 <Border Grid.Column="4" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="18">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="ĐÃ XỬ LÝ HOÀN TẤT" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
+                            <TextBlock Text="{DynamicResource Str_Inc_KpiResolved}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
                             <TextBlock Text="✅" FontSize="16" HorizontalAlignment="Right"/>
                         </Grid>
-                        <TextBlock Text="{Binding ResolvedIncidents, StringFormat='{}{0} vụ'}" FontSize="26" FontWeight="Bold" Foreground="#15803D" Margin="0,8,0,2"/>
-                        <TextBlock Text="Đã đối chiếu chứng từ hợp lệ" FontSize="11.5" Foreground="#16A34A"/>
+                        <TextBlock FontSize="26" FontWeight="Bold" Foreground="#15803D" Margin="0,8,0,2"><Run Text="{Binding ResolvedIncidents, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_CasesShortSuffix}"/></TextBlock>
+                        <TextBlock Text="{DynamicResource Str_Inc_KpiResolvedSub}" FontSize="11.5" Foreground="#16A34A"/>
                     </StackPanel>
                 </Border>
             </Grid>
@@ -147,7 +147,7 @@
                     Margin="0,0,0,20"
                     Visibility="{Binding IsReportFormOpen, Converter={StaticResource BoolToVisConverter}}">
                 <StackPanel>
-                    <TextBlock Text="LẬP BIÊN BẢN SỰ CỐ MỚI" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,14"/>
+                    <TextBlock Text="{DynamicResource Str_Inc_NewTitle}" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,14"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="2*"/>
@@ -155,23 +155,23 @@
                             <ColumnDefinition Width="1*"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="Loại sự cố" Style="{StaticResource IncidentFieldLabelStyle}"/>
+                            <TextBlock Text="{DynamicResource Str_Inc_TypeLabel}" Style="{StaticResource IncidentFieldLabelStyle}"/>
                             <ComboBox ItemsSource="{Binding TypeOptions}" SelectedItem="{Binding NewType}"
                                       DisplayMemberPath="Name" Height="36" FontSize="13" VerticalContentAlignment="Center"/>
                         </StackPanel>
                         <StackPanel Grid.Column="2">
-                            <TextBlock Text="Biển số xe liên quan (nếu có)" Style="{StaticResource IncidentFieldLabelStyle}"/>
+                            <TextBlock Text="{DynamicResource Str_Inc_PlateTip}" Style="{StaticResource IncidentFieldLabelStyle}"/>
                             <TextBox Style="{StaticResource ModernTextBoxStyle}" MaxLength="20"
                                      Text="{Binding NewLicensePlate, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
                     </Grid>
-                    <TextBlock Text="Mô tả sự cố" Style="{StaticResource IncidentFieldLabelStyle}" Margin="0,14,0,6"/>
+                    <TextBlock Text="{DynamicResource Str_Inc_DescLabel}" Style="{StaticResource IncidentFieldLabelStyle}" Margin="0,14,0,6"/>
                     <TextBox Style="{StaticResource IncidentMultilineTextBoxStyle}"
                              Text="{Binding NewDescription, UpdateSourceTrigger=PropertyChanged}"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
-                        <Button Style="{StaticResource SecondaryButtonStyle}" Content="Hủy" Margin="0,0,8,0"
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Content="{DynamicResource Str_Common_Cancel}" Margin="0,0,8,0"
                                 Command="{Binding CancelReportCommand}"/>
-                        <Button Style="{StaticResource PrimaryButtonStyle}" Content="Lưu biên bản"
+                        <Button Style="{StaticResource PrimaryButtonStyle}" Content="{DynamicResource Str_Inc_Save}"
                                 Command="{Binding SubmitReportCommand}"/>
                     </StackPanel>
                 </StackPanel>
@@ -187,7 +187,7 @@
                     Visibility="{Binding IsResolvePanelOpen, Converter={StaticResource BoolToVisConverter}}">
                 <StackPanel>
                     <TextBlock FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,6">
-                        <Run Text="XỬ LÝ BIÊN BẢN"/>
+                        <Run Text="{DynamicResource Str_Inc_ResolveTitle}"/>
                         <Run Text="{Binding ResolvingIncident.IncidentCode, Mode=OneWay}" Foreground="#0284C7"/>
                     </TextBlock>
                     <TextBlock FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,14">
@@ -197,13 +197,13 @@
                         <Run Text="·"/>
                         <Run Text="{Binding ResolvingIncident.Notes, Mode=OneWay}"/>
                     </TextBlock>
-                    <TextBlock Text="Nội dung xử lý / kết quả xác minh" Style="{StaticResource IncidentFieldLabelStyle}"/>
+                    <TextBlock Text="{DynamicResource Str_Inc_ResolutionLabel}" Style="{StaticResource IncidentFieldLabelStyle}"/>
                     <TextBox Style="{StaticResource IncidentMultilineTextBoxStyle}"
                              Text="{Binding ResolutionText, UpdateSourceTrigger=PropertyChanged}"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
-                        <Button Style="{StaticResource SecondaryButtonStyle}" Content="Hủy" Margin="0,0,8,0"
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Content="{DynamicResource Str_Common_Cancel}" Margin="0,0,8,0"
                                 Command="{Binding CancelResolveCommand}"/>
-                        <Button Style="{StaticResource PrimaryButtonStyle}" Content="Xác nhận đã giải quyết"
+                        <Button Style="{StaticResource PrimaryButtonStyle}" Content="{DynamicResource Str_Inc_ConfirmResolved}"
                                 Command="{Binding ConfirmResolveCommand}"/>
                     </StackPanel>
                 </StackPanel>
@@ -233,7 +233,7 @@
                             <TextBlock Grid.Column="0" Text="🔍" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             <TextBox Grid.Column="1"
                                      Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="Tìm theo mã biên bản, biển số, loại sự cố hoặc nhân viên"
+                                     ToolTip="{DynamicResource Str_Inc_SearchTip}"
                                      BorderThickness="0"
                                      Background="Transparent"
                                      VerticalContentAlignment="Center"
@@ -257,8 +257,8 @@
                     Padding="20">
                 <StackPanel>
                     <Grid Margin="0,0,0,14">
-                        <TextBlock Text="DANH SÁCH BIÊN BẢN SỰ CỐ BÃI ĐỖ XE" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <TextBlock Text="{Binding FilteredIncidents.Count, StringFormat='Hiển thị {0} biên bản'}" FontSize="12" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Right"/>
+                        <TextBlock Text="{DynamicResource Str_Inc_ListTitle}" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock FontSize="12" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Right"><Run Text="{DynamicResource Str_Inc_ShowingPrefix}"/><Run Text="{Binding FilteredIncidents.Count, Mode=OneWay}"/><Run Text="{DynamicResource Str_Inc_ShowingSuffix}"/></TextBlock>
                     </Grid>
 
                     <DataGrid ItemsSource="{Binding FilteredIncidents}"
@@ -280,7 +280,7 @@
 
                         <DataGrid.Columns>
                             <!-- Mã sự cố -->
-                            <DataGridTextColumn Header="Mã Sự Cố" Binding="{Binding IncidentCode}" Width="110">
+                            <DataGridTextColumn Header="{DynamicResource Str_Inc_ColCode}" Binding="{Binding IncidentCode}" Width="110">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock" BasedOn="{StaticResource IncidentCellTextStyle}">
                                         <Setter Property="FontWeight" Value="SemiBold"/>
@@ -290,7 +290,7 @@
                             </DataGridTextColumn>
 
                             <!-- Loại sự cố -->
-                            <DataGridTextColumn Header="Loại Sự Cố" Binding="{Binding IncidentType}" Width="1.6*">
+                            <DataGridTextColumn Header="{DynamicResource Str_Inc_ColType}" Binding="{Binding IncidentType}" Width="1.6*">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock" BasedOn="{StaticResource IncidentCellTextStyle}">
                                         <Setter Property="FontWeight" Value="Bold"/>
@@ -301,7 +301,7 @@
                             </DataGridTextColumn>
 
                             <!-- Biển số xe liên quan -->
-                            <DataGridTextColumn Header="Biển Số Xe" Binding="{Binding LicensePlate}" Width="110">
+                            <DataGridTextColumn Header="{DynamicResource Str_Common_Plate}" Binding="{Binding LicensePlate}" Width="110">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock" BasedOn="{StaticResource IncidentCellTextStyle}">
                                         <Setter Property="FontWeight" Value="Bold"/>
@@ -311,15 +311,15 @@
                             </DataGridTextColumn>
 
                             <!-- Thời gian phát sinh -->
-                            <DataGridTextColumn Header="Thời Gian" Binding="{Binding ReportedTime, StringFormat={}{0:dd/MM/yyyy HH:mm}}" Width="125"
+                            <DataGridTextColumn Header="{DynamicResource Str_Common_TimeTitle}" Binding="{Binding ReportedTime, StringFormat={}{0:dd/MM/yyyy HH:mm}}" Width="125"
                                                 ElementStyle="{StaticResource IncidentCellTextStyle}"/>
 
                             <!-- Người báo cáo -->
-                            <DataGridTextColumn Header="Người Lập" Binding="{Binding ReportedBy}" Width="1*"
+                            <DataGridTextColumn Header="{DynamicResource Str_Inc_ColReporter}" Binding="{Binding ReportedBy}" Width="1*"
                                                 ElementStyle="{StaticResource IncidentCellTextStyle}"/>
 
                             <!-- Trạng thái -->
-                            <DataGridTemplateColumn Header="Trạng Thái" Width="115">
+                            <DataGridTemplateColumn Header="{DynamicResource Str_Common_Status}" Width="115">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Border CornerRadius="3" Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0">
@@ -351,7 +351,7 @@
                             </DataGridTemplateColumn>
 
                             <!-- Hành động xử lý -->
-                            <DataGridTemplateColumn Header="Thao Tác" Width="120">
+                            <DataGridTemplateColumn Header="{DynamicResource Str_Common_Actions}" Width="120">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Button Command="{Binding DataContext.ResolveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -374,7 +374,7 @@
                                             <Button.Template>
                                                 <ControlTemplate TargetType="Button">
                                                     <Border Background="{TemplateBinding Background}" CornerRadius="3" Padding="{TemplateBinding Padding}">
-                                                        <TextBlock Text="✓ Giải Quyết" FontSize="11" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="{DynamicResource Str_Inc_Resolve}" FontSize="11" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
                                                     </Border>
                                                 </ControlTemplate>
                                             </Button.Template>
@@ -385,7 +385,7 @@
                         </DataGrid.Columns>
                     </DataGrid>
 
-                    <TextBlock Text="Chưa có biên bản sự cố nào. Bấm &quot;＋ Lập biên bản&quot; để ghi nhận sự cố mới."
+                    <TextBlock Text="{DynamicResource Str_Inc_Empty}"
                                FontSize="12.5" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Center" Margin="0,16,0,4">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
@@ -418,14 +418,14 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Style="{StaticResource IncidentFieldLabelStyle}">
-                                    <Run Text="Mô tả biên bản"/>
+                                    <Run Text="{DynamicResource Str_Inc_ReportDesc}"/>
                                     <Run Text="{Binding SelectedIncident.IncidentCode, Mode=OneWay}" Foreground="{StaticResource PrimaryButtonBrush}"/>
                                 </TextBlock>
                                 <TextBlock Text="{Binding SelectedIncident.Notes}" FontSize="12.5" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
                             </StackPanel>
                             <StackPanel Grid.Column="2">
                                 <TextBlock Style="{StaticResource IncidentFieldLabelStyle}">
-                                    <Run Text="Kết quả xử lý ·"/>
+                                    <Run Text="{DynamicResource Str_Inc_ResultPrefix}"/>
                                     <Run Text="{Binding SelectedIncident.ResolutionSummary, Mode=OneWay}"/>
                                 </TextBlock>
                                 <TextBlock Text="{Binding SelectedIncident.ResolutionNotes}" FontSize="12.5" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>

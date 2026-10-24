@@ -137,7 +137,7 @@
                             <TextBlock Text="🗺" FontSize="20" Margin="0,0,8,0"/>
                             <TextBlock Text="{DynamicResource Str_Menu_ParkingMap}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         </StackPanel>
-                        <TextBlock Text="Mặt bằng sơ đồ trực quan giám sát các phân khu ô đỗ và vị trí xe thực tế theo thời gian thực" 
+                        <TextBlock Text="{DynamicResource Str_MapUi_Subtitle}" 
                                    FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
                     </StackPanel>
 
@@ -153,7 +153,7 @@
                                     <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="🔄" FontSize="12" Margin="0,0,6,0"/>
-                                            <TextBlock Text="Cập Nhật Sơ Đồ" FontSize="12" FontWeight="SemiBold" Foreground="White"/>
+                                            <TextBlock Text="{DynamicResource Str_MapUi_Refresh}" FontSize="12" FontWeight="SemiBold" Foreground="White"/>
                                         </StackPanel>
                                     </Border>
                                 </ControlTemplate>
@@ -179,10 +179,10 @@
                 <Border Grid.Column="0" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="TỔNG SỨC CHỨA" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
+                            <TextBlock Text="{DynamicResource Str_MapUi_KpiCapacity}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
                             <TextBlock Text="🅿" FontSize="16" HorizontalAlignment="Right"/>
                         </Grid>
-                        <TextBlock Text="{Binding TotalSlots, StringFormat='{}{0} ô đỗ'}" FontSize="26" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,8,0,2"/>
+                        <TextBlock FontSize="26" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,8,0,2"><Run Text="{Binding TotalSlots, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_SlotsSuffix}"/></TextBlock>
                         <TextBlock Text="{Binding ZonesSummary}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
                 </Border>
@@ -191,10 +191,10 @@
                 <Border Grid.Column="2" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="Ô ĐỖ CÒN TRỐNG" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
+                            <TextBlock Text="{DynamicResource Str_MapUi_KpiFree}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
                             <TextBlock Text="🟢" FontSize="14" HorizontalAlignment="Right"/>
                         </Grid>
-                        <TextBlock Text="{Binding AvailableSlots, StringFormat='{}{0} vị trí'}" FontSize="26" FontWeight="Bold" Foreground="#15803D" Margin="0,8,0,2"/>
+                        <TextBlock FontSize="26" FontWeight="Bold" Foreground="#15803D" Margin="0,8,0,2"><Run Text="{Binding AvailableSlots, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_PositionsSuffix}"/></TextBlock>
                         <TextBlock Text="{Binding MaintenanceText}" FontSize="11.5" Foreground="#B45309"/>
                     </StackPanel>
                 </Border>
@@ -203,11 +203,11 @@
                 <Border Grid.Column="4" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="ĐANG CÓ XE ĐỖ" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
+                            <TextBlock Text="{DynamicResource Str_MapUi_KpiOccupied}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
                             <TextBlock Text="🔴" FontSize="14" HorizontalAlignment="Right"/>
                         </Grid>
-                        <TextBlock Text="{Binding OccupiedSlots, StringFormat='{}{0} xe'}" FontSize="26" FontWeight="Bold" Foreground="#B91C1C" Margin="0,8,0,2"/>
-                        <TextBlock Text="Đang chiếm dụng mặt bằng" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock FontSize="26" FontWeight="Bold" Foreground="#B91C1C" Margin="0,8,0,2"><Run Text="{Binding OccupiedSlots, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_VehicleSuffix}"/></TextBlock>
+                        <TextBlock Text="{DynamicResource Str_MapUi_KpiOccupiedSub}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
                     </StackPanel>
                 </Border>
 
@@ -215,7 +215,7 @@
                 <Border Grid.Column="6" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="TỶ LỆ LẤP ĐẦY" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
+                            <TextBlock Text="{DynamicResource Str_MapUi_KpiRate}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
                             <TextBlock Text="📊" FontSize="16" HorizontalAlignment="Right"/>
                         </Grid>
                         <TextBlock Text="{Binding OccupancyRateFormatted}" FontSize="26" FontWeight="Bold" Foreground="#0284C7" Margin="0,8,0,6"/>
@@ -261,11 +261,11 @@
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
                             <Border Width="12" Height="12" CornerRadius="2" Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1" Margin="0,0,6,0"/>
-                            <TextBlock Text="Ô đỗ còn trống" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock Text="{DynamicResource Str_MapUi_KpiFreeSub}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
                             <Border Width="12" Height="12" CornerRadius="2" Background="#FEE2E2" BorderBrush="#FCA5A5" BorderThickness="1" Margin="0,0,6,0"/>
-                            <TextBlock Text="Đang có xe đỗ" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock Text="{DynamicResource Str_MapUi_Occupied}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
                             <Border Width="12" Height="12" CornerRadius="2" Background="#FEF3C7" BorderBrush="#FCD34D" BorderThickness="1" Margin="0,0,6,0"/>
@@ -351,10 +351,10 @@
                     <Grid Margin="0,0,0,14">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="🔍" FontSize="16" Margin="0,0,8,0"/>
-                            <TextBlock Text="THÔNG TIN CHI TIẾT Ô ĐỖ ĐƯỢC CHỌN" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{DynamicResource Str_MapUi_DetailTitle}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding SlotCode, StringFormat='Vị trí: {0}'}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}"/>
+                            <TextBlock FontSize="13" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}"><Run Text="{DynamicResource Str_MapUi_PositionPrefix}"/><Run Text="{Binding SlotCode, Mode=OneWay}"/></TextBlock>
                         </StackPanel>
                     </Grid>
 
@@ -370,27 +370,27 @@
                         <!-- Cột 1: Thông tin phân khu & loại ô -->
                         <Border Grid.Column="0" Background="#F8FAFC" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="4" Padding="14">
                             <StackPanel>
-                                <TextBlock Text="PHÂN KHU &amp; PHƯƠNG TIỆN" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" Margin="0,0,0,6"/>
+                                <TextBlock Text="{DynamicResource Str_MapUi_ZoneAndVehicle}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" Margin="0,0,0,6"/>
                                 <TextBlock Text="{Binding ZoneName}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,2"/>
-                                <TextBlock Text="{Binding VehicleTypeName, StringFormat='Quy chuẩn: {0}'}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <TextBlock FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"><Run Text="{DynamicResource Str_MapUi_StandardPrefix}"/><Run Text="{Binding VehicleTypeName, Mode=OneWay}"/></TextBlock>
                             </StackPanel>
                         </Border>
 
                         <!-- Cột 2: Trạng thái & Biển số -->
                         <Border Grid.Column="2" Background="#F8FAFC" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="4" Padding="14">
                             <StackPanel>
-                                <TextBlock Text="TÌNH TRẠNG HIỆN TẠI" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" Margin="0,0,0,6"/>
+                                <TextBlock Text="{DynamicResource Str_MapUi_CurrentState}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" Margin="0,0,0,6"/>
                                 <TextBlock Text="{Binding StatusBadgeText}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}" Margin="0,0,0,2"/>
-                                <TextBlock Text="{Binding CurrentLicensePlate, StringFormat='Biển số: {0}', TargetNullValue='Biển số: (Chưa có xe)'}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"><Run Text="{DynamicResource Str_MapUi_PlatePrefix}"/><Run Text="{Binding CurrentLicensePlate, Mode=OneWay, TargetNullValue='—'}"/></TextBlock>
                             </StackPanel>
                         </Border>
 
                         <!-- Cột 3: Phiên đỗ & Thời gian -->
                         <Border Grid.Column="4" Background="#F8FAFC" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="4" Padding="14">
                             <StackPanel>
-                                <TextBlock Text="PHIÊN GỬI &amp; THỜI GIAN VÀO" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" Margin="0,0,0,6"/>
-                                <TextBlock Text="{Binding TicketCode, StringFormat='Mã vé: {0}', TargetNullValue='Mã vé: --'}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,2"/>
-                                <TextBlock Text="{Binding CheckInTime, StringFormat='Vào lúc: {0:dd/MM/yyyy HH:mm:ss}', TargetNullValue='Vào lúc: --:--:--'}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <TextBlock Text="{DynamicResource Str_MapUi_SessionAndTime}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" Margin="0,0,0,6"/>
+                                <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,2"><Run Text="{DynamicResource Str_MapUi_TicketPrefix}"/><Run Text="{Binding TicketCode, Mode=OneWay, TargetNullValue='--'}"/></TextBlock>
+                                <TextBlock FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"><Run Text="{DynamicResource Str_MapUi_CheckInPrefix}"/><Run Text="{Binding CheckInTime, Mode=OneWay, StringFormat='{}{0:dd/MM/yyyy HH:mm:ss}', TargetNullValue='--:--:--'}"/></TextBlock>
                             </StackPanel>
                         </Border>
                     </Grid>

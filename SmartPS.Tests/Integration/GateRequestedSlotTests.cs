@@ -6,14 +6,14 @@ using SmartPS.Services.GateControl;
 namespace SmartPS.Tests.Integration;
 
 /// <summary>AC-6 / R13: an operator-chosen SlotId is honoured but must be free, of the right vehicle type and of an allowed audience.</summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class GateRequestedSlotTests : IClassFixture<PostgresDatabaseFixture>
+public class GateRequestedSlotTests : IClassFixture<SqlServerDatabaseFixture>
 {
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
     private readonly GateTestData _data;
 
-    public GateRequestedSlotTests(PostgresDatabaseFixture db)
+    public GateRequestedSlotTests(SqlServerDatabaseFixture db)
     {
         _db = db;
         _data = new GateTestData(db);

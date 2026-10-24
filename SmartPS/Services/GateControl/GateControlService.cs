@@ -11,6 +11,7 @@ using SmartPS.Services.Shifts;
 using System.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.Services.GateControl;
 
@@ -453,7 +454,7 @@ public class GateControlService : IGateControlService
 
         if (string.IsNullOrWhiteSpace(request.LicensePlate))
         {
-            return new GateCheckInResult { Success = false, RejectReason = CheckInRejectReason.EmptyPlate, Message = "Biển số xe không được để trống." };
+            return new GateCheckInResult { Success = false, RejectReason = CheckInRejectReason.EmptyPlate, Message = AppText.Get("Msg_GateSvc_EmptyPlate") };
         }
 
         if (!LicensePlateNormalizer.IsValid(request.LicensePlate))
@@ -462,7 +463,7 @@ public class GateControlService : IGateControlService
             {
                 Success = false,
                 RejectReason = CheckInRejectReason.PlateInvalid,
-                Message = "Biển số không hợp lệ (cần 5 đến 12 ký tự chữ và số)."
+                Message = AppText.Get("Msg_GateSvc_InvalidPlate")
             };
         }
 
@@ -525,7 +526,7 @@ public class GateControlService : IGateControlService
                 {
                     Success = false,
                     RejectReason = CheckInRejectReason.ClassificationFailed,
-                    Message = "Không thể phân loại xe do lỗi hệ thống. Vui lòng thử lại."
+                    Message = AppText.Get("Msg_GateSvc_ClassificationFailed")
                 };
             }
         }
@@ -699,7 +700,7 @@ public class GateControlService : IGateControlService
                 {
                     Success = false,
                     RejectReason = CheckInRejectReason.PersistFailed,
-                    Message = "Không thể ghi nhận lượt vào bãi. Vui lòng thử lại."
+                    Message = AppText.Get("Msg_GateSvc_PersistFailed")
                 };
             }
 
@@ -771,9 +772,9 @@ public class GateControlService : IGateControlService
             Success = true,
             Message = category switch
             {
-                VehicleCategory.Resident => "Cư dân vào bãi thành công.",
-                VehicleCategory.MonthlyPass => "Xe vé tháng vào bãi thành công.",
-                _ => "Xe vãng lai vào bãi thành công."
+                VehicleCategory.Resident => AppText.Get("Msg_GateSvc_ResidentIn"),
+                VehicleCategory.MonthlyPass => AppText.Get("Msg_GateSvc_MonthlyIn"),
+                _ => AppText.Get("Msg_GateSvc_VisitorIn")
             },
             Session = session,
             Category = category,
@@ -800,7 +801,7 @@ public class GateControlService : IGateControlService
         RejectReason = CheckInRejectReason.Blacklisted,
         IsBlacklisted = true,
         BlacklistReason = match.Reason,
-        Message = $"XE BỊ CẤM VÀO BÃI! Biển số '{licensePlate}' nằm trong danh sách đen: {match.Reason}"
+        Message = AppText.Get("Msg_GateSvc_Blacklisted", licensePlate, match.Reason)
     };
 
     private static GateCheckInResult RejectedResult(CheckInRejectReason reason, VehicleCategory category, string licensePlate) => new()
@@ -810,28 +811,28 @@ public class GateControlService : IGateControlService
         RejectReason = reason,
         Message = reason switch
         {
-            CheckInRejectReason.NoSlotAvailable => $"Hết chỗ cho {CategoryGroupName(category)}",
-            CheckInRejectReason.AlreadyInside => $"Biển số '{licensePlate}' hiện đang có phiên gửi xe chưa xuất bãi!",
-            CheckInRejectReason.SlotNotFound => "Không tìm thấy ô đỗ được chỉ định.",
-            CheckInRejectReason.SlotVehicleTypeMismatch => "Ô đỗ được chỉ định không dành cho loại xe này.",
-            CheckInRejectReason.SlotAudienceNotAllowed => $"Ô đỗ được chỉ định không dành cho {CategoryGroupName(category)}.",
-            CheckInRejectReason.SlotNotAvailable => "Ô đỗ được chỉ định không còn trống.",
-            _ => "Không thể cấp ô đỗ cho xe."
+            CheckInRejectReason.NoSlotAvailable => AppText.Get("Msg_GateSvc_NoSlotFor", CategoryGroupName(category)),
+            CheckInRejectReason.AlreadyInside => AppText.Get("Msg_GateSvc_AlreadyInside", licensePlate),
+            CheckInRejectReason.SlotNotFound => AppText.Get("Msg_GateSvc_SlotNotFound"),
+            CheckInRejectReason.SlotVehicleTypeMismatch => AppText.Get("Msg_GateSvc_SlotTypeMismatch"),
+            CheckInRejectReason.SlotAudienceNotAllowed => AppText.Get("Msg_GateSvc_SlotAudienceNotAllowed", CategoryGroupName(category)),
+            CheckInRejectReason.SlotNotAvailable => AppText.Get("Msg_GateSvc_SlotNotAvailable"),
+            _ => AppText.Get("Msg_GateSvc_SlotAssignFailed")
         }
     };
 
     private static string CategoryGroupName(VehicleCategory category) => category switch
     {
-        VehicleCategory.Resident => "cư dân",
-        VehicleCategory.MonthlyPass => "khách vé tháng",
-        _ => "khách vãng lai"
+        VehicleCategory.Resident => AppText.Get("Str_GateSvc_GroupResident"),
+        VehicleCategory.MonthlyPass => AppText.Get("Str_GateSvc_GroupMonthly"),
+        _ => AppText.Get("Str_GateSvc_GroupVisitor")
     };
 
     public async Task<GateCheckOutCalculationResult> CalculateCheckOutAsync(string licensePlate, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(licensePlate))
         {
-            return new GateCheckOutCalculationResult { Success = false, Message = "Vui lòng nhập hoặc nhận diện biển số xe cần xuất bãi." };
+            return new GateCheckOutCalculationResult { Success = false, Message = AppText.Get("Msg_GateSvc_EnterPlateOut") };
         }
 
         var norm = NormalizePlate(licensePlate);
@@ -843,7 +844,7 @@ public class GateControlService : IGateControlService
             return new GateCheckOutCalculationResult
             {
                 Success = false,
-                Message = $"Không tìm thấy phiên gửi xe đang hoạt động cho biển số '{licensePlate}'!"
+                Message = AppText.Get("Msg_GateSvc_NoActiveSession", licensePlate)
             };
         }
 
@@ -869,7 +870,7 @@ public class GateControlService : IGateControlService
     public async Task<GateCheckOutResult> CompleteCheckOutAsync(GateCheckOutRequest request, CancellationToken cancellationToken = default)
     {
         if (_dbContextFactory == null || request.ActorUserId <= 0)
-            return new GateCheckOutResult { Success = false, Message = "Cần đăng nhập và kết nối cơ sở dữ liệu để thu tiền." };
+            return new GateCheckOutResult { Success = false, Message = AppText.Get("Msg_GateSvc_LoginAndDbRequired") };
 
         try
         {
@@ -900,12 +901,12 @@ public class GateControlService : IGateControlService
             {
                 var shift = await ShiftAccounting.FindActiveShiftAsync(db, request.ActorUserId, cancellationToken);
                 if (shift == null)
-                    return new GateCheckOutResult { Success = false, Message = "Bạn cần mở ca trực trước khi checkout." };
+                    return new GateCheckOutResult { Success = false, Message = AppText.Get("Msg_GateSvc_OpenShiftForCheckout") };
 
                 var session = await db.ParkingSessions.Include(s => s.Slot)
                     .FirstOrDefaultAsync(s => s.SessionId == request.SessionId, cancellationToken);
                 if (session == null || session.Status != SessionStatus.Active)
-                    return new GateCheckOutResult { Success = false, Message = "Phiên gửi xe không còn hoạt động." };
+                    return new GateCheckOutResult { Success = false, Message = AppText.Get("Msg_Payment_SessionNotActive") };
 
                 // Phí luôn do máy chủ tính lại bằng công thức và bảng giá hiện hành; số tiền từ máy trạm bị bỏ qua.
                 var checkOutTime = DateTime.UtcNow;
@@ -922,9 +923,9 @@ public class GateControlService : IGateControlService
                 var serverFee = _feeCalculator.CalculateFee(session, pricingRule, checkOutTime).TotalFee;
                 var method = serverFee <= 0 ? PaymentMethod.Free : request.PaymentMethod;
                 if (serverFee < 0 || (serverFee > 0 && method == PaymentMethod.Free))
-                    return new GateCheckOutResult { Success = false, Message = "Số tiền hoặc phương thức thanh toán không hợp lệ." };
+                    return new GateCheckOutResult { Success = false, Message = AppText.Get("Msg_GateSvc_InvalidPayment") };
                 if (serverFee > 0 && method == PaymentMethod.VietQR)
-                    return new GateCheckOutResult { Success = false, Message = "Thanh toán VietQR phải được xác nhận qua cổng thanh toán." };
+                    return new GateCheckOutResult { Success = false, Message = AppText.Get("Msg_GateSvc_QrMustUseGateway") };
 
                 await ShiftAccounting.AddParkingFeeAsync(db, shift, request.ActorUserId,
                     session.SessionId, method, serverFee, null, cancellationToken);
@@ -975,12 +976,12 @@ public class GateControlService : IGateControlService
                 SaveOfflineSessions();
                 AppendAuditLog("CHECK_OUT", completedSession, completedSession.TotalFee, completedMethod.ToString());
             }
-            return new GateCheckOutResult { Success = true, Message = "Xuất bãi và thanh toán hoàn tất.", CompletedSession = completedSession };
+            return new GateCheckOutResult { Success = true, Message = AppText.Get("Msg_GateSvc_CheckoutDone"), CompletedSession = completedSession };
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[GateControlService CompleteCheckOut DB Error]: {ex}");
-            return new GateCheckOutResult { Success = false, Message = $"Không thể hoàn tất checkout: {ex.Message}" };
+            return new GateCheckOutResult { Success = false, Message = AppText.Get("Msg_GateSvc_CheckoutFailed", ex.Message) };
         }
     }
 

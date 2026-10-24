@@ -3,13 +3,13 @@ using Microsoft.Extensions.DependencyInjection;
 namespace SmartPS.Tests.Integration;
 
 /// <summary>R16 / AC-14: audit log query (Vietnam-date filters, user/action/outcome, search in EntityId and Details, 50 per page, Audit.View).</summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class AuditQueryServiceTests : IClassFixture<PostgresDatabaseFixture>
+public class AuditQueryServiceTests : IClassFixture<SqlServerDatabaseFixture>
 {
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
 
-    public AuditQueryServiceTests(PostgresDatabaseFixture db)
+    public AuditQueryServiceTests(SqlServerDatabaseFixture db)
     {
         _db = db;
     }

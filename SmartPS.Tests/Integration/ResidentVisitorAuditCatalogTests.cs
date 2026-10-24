@@ -11,9 +11,9 @@ namespace SmartPS.Tests.Integration;
 /// detail keys, inside the hash chain. GATE_BLACKLIST_BLOCKED never copies the free-text blacklist reason or notes.
 /// PARKING_CHECKIN carries the gate category.
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class ResidentVisitorAuditCatalogTests : IClassFixture<PostgresDatabaseFixture>
+public class ResidentVisitorAuditCatalogTests : IClassFixture<SqlServerDatabaseFixture>
 {
     private sealed record Expectation(AuditOutcome Outcome, string EntityType, string[] Keys);
 
@@ -26,10 +26,10 @@ public class ResidentVisitorAuditCatalogTests : IClassFixture<PostgresDatabaseFi
     private const string SecretReason = "Chủ xe Nguyễn Văn Bí Mật, SĐT 0909123456";
     private const string SecretNotes = "CCCD 079099887766";
 
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
     private readonly GateTestData _data;
 
-    public ResidentVisitorAuditCatalogTests(PostgresDatabaseFixture db)
+    public ResidentVisitorAuditCatalogTests(SqlServerDatabaseFixture db)
     {
         _db = db;
         _data = new GateTestData(db);

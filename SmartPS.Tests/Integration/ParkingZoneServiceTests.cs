@@ -8,14 +8,14 @@ using SmartPS.Services.ParkingZones;
 namespace SmartPS.Tests.Integration;
 
 /// <summary>AC-12 / R21 / E4: zone audience is changed with Parking.Configure, audited ZONE_UPDATE, and does not touch parked vehicles.</summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class ParkingZoneServiceTests : IClassFixture<PostgresDatabaseFixture>
+public class ParkingZoneServiceTests : IClassFixture<SqlServerDatabaseFixture>
 {
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
     private readonly GateTestData _data;
 
-    public ParkingZoneServiceTests(PostgresDatabaseFixture db)
+    public ParkingZoneServiceTests(SqlServerDatabaseFixture db)
     {
         _db = db;
         _data = new GateTestData(db);

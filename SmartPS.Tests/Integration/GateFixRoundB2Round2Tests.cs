@@ -20,17 +20,17 @@ namespace SmartPS.Tests.Integration;
 /// audited, kept in memory or written to the JSONL log.</item>
 /// </list>
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class GateFixRoundB2Round2Tests : IClassFixture<PostgresDatabaseFixture>
+public class GateFixRoundB2Round2Tests : IClassFixture<SqlServerDatabaseFixture>
 {
     private static readonly string JsonlPath = Path.Combine(AppContext.BaseDirectory, "Storage", "gate_audit_log.jsonl");
     private static readonly string OfflinePath = Path.Combine(AppContext.BaseDirectory, "Storage", "offline_active_sessions.json");
 
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
     private readonly GateTestData _data;
 
-    public GateFixRoundB2Round2Tests(PostgresDatabaseFixture db)
+    public GateFixRoundB2Round2Tests(SqlServerDatabaseFixture db)
     {
         _db = db;
         _data = new GateTestData(db);

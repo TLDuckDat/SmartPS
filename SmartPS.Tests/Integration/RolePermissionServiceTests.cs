@@ -6,13 +6,13 @@ using SmartPS.Services.RolePermissions;
 namespace SmartPS.Tests.Integration;
 
 /// <summary>R9–R11, AC-4 (with seed re-run, m11), AC-5, R7 reload after a matrix save, FX2 (spec §6.10: only system Admin saves).</summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class RolePermissionServiceTests : IClassFixture<PostgresDatabaseFixture>
+public class RolePermissionServiceTests : IClassFixture<SqlServerDatabaseFixture>
 {
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
 
-    public RolePermissionServiceTests(PostgresDatabaseFixture db)
+    public RolePermissionServiceTests(SqlServerDatabaseFixture db)
     {
         _db = db;
     }
@@ -21,7 +21,7 @@ public class RolePermissionServiceTests : IClassFixture<PostgresDatabaseFixture>
 
     private async Task SetGrantsAsync(string roleName, IEnumerable<string> permissions)
     {
-        await _db.ExecuteAsync("DELETE FROM \"RolePermissions\" rp USING \"Roles\" r WHERE rp.\"RoleId\" = r.\"RoleId\" AND r.\"RoleName\" = @r", ("r", roleName));
+        await _db.ExecuteAsync("DELETE rp FROM \"RolePermissions\" rp JOIN \"Roles\" r ON rp.\"RoleId\" = r.\"RoleId\" WHERE r.\"RoleName\" = @r", ("r", roleName));
         foreach (var p in permissions)
         {
             await _db.ExecuteAsync(

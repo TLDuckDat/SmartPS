@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SmartPS.Data;
 using SmartPS.Models.Parking;
 using SmartPS.Models.Shifts;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.Services.Shifts;
 
@@ -21,7 +22,7 @@ public static class ShiftAccounting
     {
         if (await db.FinancialTransactions.AnyAsync(
             t => t.ParkingSessionId == sessionId && t.Type == FinancialTransactionType.ParkingFee, ct))
-            throw new InvalidOperationException("Phiên gửi xe này đã có giao dịch thu phí.");
+            throw new InvalidOperationException(AppText.Get("Msg_Shift_SessionAlreadyCharged"));
 
         db.FinancialTransactions.Add(new FinancialTransaction
         {

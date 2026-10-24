@@ -43,9 +43,28 @@ public class SmartPsDbContext : DbContext
     // Audit Trail (append-only)
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
+    /// <summary>
+    /// Collation của database: phân biệt hoa/thường (giống PostgreSQL, để so khớp mã/biển số/tên đăng nhập chính xác)
+    /// và sắp xếp đúng tiếng Việt.
+    /// </summary>
+    public const string DatabaseCollation = "Vietnamese_100_CS_AS";
+
+    /// <summary>Collation không phân biệt hoa/thường cho các truy vấn tìm kiếm (thay ILIKE của PostgreSQL).</summary>
+    public const string CaseInsensitiveCollation = "Vietnamese_100_CI_AS";
+
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        base.ConfigureConventions(configurationBuilder);
+
+        // Mọi thời điểm được lưu theo UTC; datetime2 không lưu Kind nên gắn lại Kind = Utc khi đọc (như timestamptz của PostgreSQL)
+        configurationBuilder.Properties<DateTime>().HaveConversion<UtcDateTimeConverter>();
+        configurationBuilder.Properties<DateTime?>().HaveConversion<UtcDateTimeConverter>();
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.UseCollation(DatabaseCollation);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(SmartPsDbContext).Assembly);
         SmartPS.Data.Configurations.Payment.PaymentConfiguration.Configure(modelBuilder);
     }

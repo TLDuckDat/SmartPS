@@ -7,13 +7,13 @@ using SmartPS.Services.Shifts;
 namespace SmartPS.Tests.Integration;
 
 /// <summary>AC-16 (Shift.Review / Shift.Adjust instead of role names), R5 Shift.Open/Close, T-ACTOR, T-R15b, R14 shift events.</summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class ShiftPermissionTests : IClassFixture<PostgresDatabaseFixture>
+public class ShiftPermissionTests : IClassFixture<SqlServerDatabaseFixture>
 {
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
 
-    public ShiftPermissionTests(PostgresDatabaseFixture db)
+    public ShiftPermissionTests(SqlServerDatabaseFixture db)
     {
         _db = db;
     }

@@ -3,6 +3,7 @@ using SmartPS.Models.Parking;
 using System.Collections.Generic;
 using System.Linq;
 using System;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.Views.Customers
 {
@@ -63,12 +64,12 @@ namespace SmartPS.Views.Customers
             var licensePlate = System.Text.RegularExpressions.Regex.Replace(txtPlate.Text.Trim(), @"[^a-zA-Z0-9]", "").ToUpperInvariant();
             if (string.IsNullOrEmpty(licensePlate)) 
             { 
-                MessageBox.Show("Biển số không hợp lệ hoặc để trống!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning); 
+                MessageBox.Show(AppText.Get("Msg_Customers_DlgPlateInvalid"), AppText.Get("Str_Dialog_Title_Info"), MessageBoxButton.OK, MessageBoxImage.Warning); 
                 return; 
             }
             if (licensePlate.Length > 20)
             {
-                MessageBox.Show("Biển số xe không được vượt quá 20 ký tự!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(AppText.Get("Msg_Customers_DlgPlateTooLong"), AppText.Get("Str_Dialog_Title_Info"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -89,7 +90,7 @@ namespace SmartPS.Views.Customers
 
             if (customerId == 0) 
             { 
-                MessageBox.Show("Vui lòng chọn chủ xe", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning); 
+                MessageBox.Show(AppText.Get("Msg_Customers_DlgChooseOwner"), AppText.Get("Str_Dialog_Title_Info"), MessageBoxButton.OK, MessageBoxImage.Warning); 
                 return; 
             }
 

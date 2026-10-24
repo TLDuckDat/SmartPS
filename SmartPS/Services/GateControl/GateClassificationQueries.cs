@@ -16,7 +16,7 @@ public static class GateClassificationQueries
         var norm = normalizedPlate;
         var reason = await db.BlacklistedVehicles.FromSql($"""
                 SELECT * FROM "BlacklistedVehicles"
-                WHERE "IsActive" AND upper(regexp_replace("LicensePlate", '[^a-zA-Z0-9]', '', 'g')) = {norm}
+                WHERE "IsActive" = 1 AND dbo.fn_NormalizePlate("LicensePlate") = {norm}
                 """)
             .AsNoTracking()
             .OrderByDescending(b => b.CreatedAt).ThenByDescending(b => b.BlacklistId)
@@ -33,7 +33,7 @@ public static class GateClassificationQueries
     {
         var norm = normalizedPlate;
         var count = await db.Database
-            .SqlQuery<int>($"""SELECT count(*)::int AS "Value" FROM "ParkingSessions" WHERE "Status" = 0 AND upper(regexp_replace("LicensePlate", '[^a-zA-Z0-9]', '', 'g')) = {norm}""")
+            .SqlQuery<int>($"""SELECT COUNT(*) AS "Value" FROM "ParkingSessions" WHERE "Status" = 0 AND dbo.fn_NormalizePlate("LicensePlate") = {norm}""")
             .SingleAsync(cancellationToken);
         return count > 0;
     }

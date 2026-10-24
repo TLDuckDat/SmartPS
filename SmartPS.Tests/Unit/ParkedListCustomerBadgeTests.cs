@@ -1,5 +1,6 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.Tests.Unit;
 
@@ -15,6 +16,15 @@ public class ParkedListCustomerBadgeTests
 
     private static readonly Regex MonthlyPassBinding = new(@"^\{Binding\s+(Path=)?IsMonthlyPass\s*\}$");
     private static readonly Regex CustomerTypeBinding = new(@"^\{Binding\s+(Path=)?CustomerType\s*\}$");
+    private static readonly Regex DynamicResourceRef = new(@"^\{DynamicResource\s+(\w+)\s*\}$");
+
+    /// <summary>Resolves a {DynamicResource Key} reference to its vi-VN text; plain literals are returned as-is.</summary>
+    private static string? Resolve(string? value)
+    {
+        if (value is null) return null;
+        var m = DynamicResourceRef.Match(value);
+        return m.Success ? AppText.Get(m.Groups[1].Value) : value;
+    }
 
     private static string ViewPath => Path.Combine(RepoPaths.AppProject, "Views", "GateControl", "GateControlView.xaml");
 
@@ -27,7 +37,7 @@ public class ParkedListCustomerBadgeTests
             .Single(g => ((string?)g.Attribute("ItemsSource"))?.Replace(" ", "") == "{BindingActiveSessions}");
 
         var column = grid.Descendants(P + "DataGridTemplateColumn")
-            .Single(c => (string?)c.Attribute("Header") == "Khách Hàng");
+            .Single(c => Resolve((string?)c.Attribute("Header"))?.Equals("Khách Hàng", StringComparison.OrdinalIgnoreCase) == true);
 
         return column.Descendants(P + "Border")
             .Single(b => b.Element(P + "Border.Style") is not null);
@@ -57,16 +67,16 @@ public class ParkedListCustomerBadgeTests
 
         // ---- TextBlock style (badge text) --------------------------------------------------------------------------
         var textStyle = border.Descendants(P + "TextBlock.Style").Single().Element(P + "Style")!;
-        Assert.Equal("Vãng lai", SetterValue(textStyle, "Text"));
+        Assert.Equal("Vãng lai", Resolve(SetterValue(textStyle, "Text")));
 
         var textTriggers = Triggers(textStyle);
         var monthlyText = IndexOf(textTriggers, MonthlyPassBinding, v => v == "True");
         Assert.True(monthlyText >= 0, "TextBlock style must keep the IsMonthlyPass=True DataTrigger");
-        Assert.Equal("👑 Vé tháng", SetterValue(textTriggers[monthlyText], "Text"));
+        Assert.Equal("👑 Vé tháng", Resolve(SetterValue(textTriggers[monthlyText], "Text")));
 
         var residentText = IndexOf(textTriggers, CustomerTypeBinding, IsResidentValue);
         Assert.True(residentText >= 0, "TextBlock style must have a DataTrigger Binding=\"{Binding CustomerType}\" Value=\"Resident\"");
-        Assert.Contains("Cư dân", SetterValue(textTriggers[residentText], "Text") ?? string.Empty, StringComparison.Ordinal);
+        Assert.Contains("Cư dân", Resolve(SetterValue(textTriggers[residentText], "Text")) ?? string.Empty, StringComparison.Ordinal);
         Assert.True(residentText > monthlyText, "The Resident trigger must come after the IsMonthlyPass trigger (resident wins)");
 
         // ---- Border style (badge background) -----------------------------------------------------------------------

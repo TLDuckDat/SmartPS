@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Npgsql;
+using Microsoft.Data.SqlClient;
 
 namespace SmartPS.Tests.Integration;
 
@@ -9,24 +9,24 @@ namespace SmartPS.Tests.Integration;
 /// R12/R13 against real PostgreSQL: DB triggers (AC-10), jsonb round trip (T-JSONB), tamper detection (AC-12 / E7),
 /// AUDIT_VERIFY logging (R17, A12), actor resolution and schema.
 /// </summary>
-[Collection(PostgresCollection.Name)]
+[Collection(DatabaseCollection.Name)]
 [Trait("Category", "Integration")]
-public class AuditTrailDbTests : IClassFixture<PostgresDatabaseFixture>
+public class AuditTrailDbTests : IClassFixture<SqlServerDatabaseFixture>
 {
-    private readonly PostgresDatabaseFixture _db;
+    private readonly SqlServerDatabaseFixture _db;
 
-    public AuditTrailDbTests(PostgresDatabaseFixture db)
+    public AuditTrailDbTests(SqlServerDatabaseFixture db)
     {
         _db = db;
     }
 
-    private static PostgresException? FindPostgres(Exception? ex)
+    private static SqlException? FindSql(Exception? ex)
     {
         while (ex is not null)
         {
-            if (ex is PostgresException pg)
+            if (ex is SqlException sql)
             {
-                return pg;
+                return sql;
             }
 
             ex = ex.InnerException;
@@ -51,11 +51,12 @@ public class AuditTrailDbTests : IClassFixture<PostgresDatabaseFixture>
     }
 
     [Theory]
-    [InlineData("UPDATE \"AuditLogs\" SET \"Action\" = 'X'")]
-    [InlineData("UPDATE \"AuditLogs\" SET \"Action\" = 'X' WHERE false")]
-    [InlineData("DELETE FROM \"AuditLogs\"")]
-    [InlineData("TRUNCATE \"AuditLogs\"")]
-    public async Task AC10_raw_update_delete_truncate_are_rejected_and_data_unchanged(string sql)
+    [InlineData("UPDATE \"AuditLogs\" SET \"Action\" = 'X'", "append-only")]
+    [InlineData("UPDATE \"AuditLogs\" SET \"Action\" = 'X' WHERE 1 = 0", "append-only")]
+    [InlineData("DELETE FROM \"AuditLogs\"", "append-only")]
+    // TRUNCATE không kích hoạt trigger: bị chặn vì bảng chốt AuditLogsTruncateGuard có khoá ngoại tới AuditLogs
+    [InlineData("TRUNCATE TABLE \"AuditLogs\"", "FOREIGN KEY")]
+    public async Task AC10_raw_update_delete_truncate_are_rejected_and_data_unchanged(string sql, string expectedMessage)
     {
         // AC-10: Given AuditLogs has data, When UPDATE / DELETE / TRUNCATE via SQL, Then error and data unchanged.
         _db.RequireAvailable();
@@ -64,9 +65,9 @@ public class AuditTrailDbTests : IClassFixture<PostgresDatabaseFixture>
         await SeedRowsAsync(sp, 3, "ac10");
         var before = await SnapshotAsync();
 
-        var ex = await Assert.ThrowsAsync<PostgresException>(() => _db.ExecuteAsync(sql));
+        var ex = await Assert.ThrowsAsync<SqlException>(() => _db.ExecuteAsync(sql));
 
-        Assert.Contains("append-only", ex.MessageText, StringComparison.Ordinal);
+        Assert.Contains(expectedMessage, ex.Message, StringComparison.Ordinal);
         Assert.Equal(before, await SnapshotAsync());
     }
 
@@ -83,10 +84,10 @@ public class AuditTrailDbTests : IClassFixture<PostgresDatabaseFixture>
         await using (var ctx = _db.CreateContext())
         {
             var del = await Record.ExceptionAsync(() => ctx.AuditLogs.ExecuteDeleteAsync());
-            Assert.Contains("append-only", FindPostgres(del)?.MessageText ?? string.Empty, StringComparison.Ordinal);
+            Assert.Contains("append-only", FindSql(del)?.Message ?? string.Empty, StringComparison.Ordinal);
 
             var upd = await Record.ExceptionAsync(() => ctx.AuditLogs.ExecuteUpdateAsync(s => s.SetProperty(a => a.Username, "x")));
-            Assert.Contains("append-only", FindPostgres(upd)?.MessageText ?? string.Empty, StringComparison.Ordinal);
+            Assert.Contains("append-only", FindSql(upd)?.Message ?? string.Empty, StringComparison.Ordinal);
         }
 
         Assert.Equal(before, await SnapshotAsync());
@@ -149,13 +150,16 @@ public class AuditTrailDbTests : IClassFixture<PostgresDatabaseFixture>
     }
 
     [Fact]
-    public async Task Details_column_is_jsonb_and_indexes_exist()
+    public async Task Details_column_is_checked_json_and_indexes_exist()
     {
         _db.RequireAvailable();
 
         var type = await _db.ScalarAsync<string>(
-            "SELECT data_type FROM information_schema.columns WHERE table_name = 'AuditLogs' AND column_name = 'Details'");
-        Assert.Equal("jsonb", type);
+            "SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'AuditLogs' AND COLUMN_NAME = 'Details'");
+        Assert.Equal("nvarchar", type);
+        var jsonCheck = await _db.ScalarAsync<int>(
+            "SELECT COUNT(*) FROM sys.check_constraints WHERE name = 'CK_AuditLogs_Details_IsJson' AND parent_object_id = OBJECT_ID('dbo.AuditLogs')");
+        Assert.Equal(1, jsonCheck);
 
         foreach (var index in new[]
                  {
@@ -163,15 +167,17 @@ public class AuditTrailDbTests : IClassFixture<PostgresDatabaseFixture>
                      "IX_AuditLogs_Username", "IX_AuditLogs_EntityType_EntityId", "IX_AuditLogs_PrevHash"
                  })
         {
-            var count = await _db.ScalarAsync<long>("SELECT count(*) FROM pg_indexes WHERE tablename = 'AuditLogs' AND indexname = @n", ("n", index));
+            var count = await _db.ScalarAsync<long>(
+                "SELECT COUNT(*) FROM sys.indexes WHERE object_id = OBJECT_ID('dbo.AuditLogs') AND name = @n", ("n", index));
             Assert.True(count == 1, $"index {index} missing");
         }
 
-        var unique = await _db.ScalarAsync<string>("SELECT indexdef FROM pg_indexes WHERE indexname = 'IX_AuditLogs_PrevHash'");
-        Assert.Contains("UNIQUE", unique, StringComparison.OrdinalIgnoreCase);
+        var unique = await _db.ScalarAsync<bool>(
+            "SELECT is_unique FROM sys.indexes WHERE object_id = OBJECT_ID('dbo.AuditLogs') AND name = 'IX_AuditLogs_PrevHash'");
+        Assert.True(unique);
 
         var fkCount = await _db.ScalarAsync<long>(
-            "SELECT count(*) FROM information_schema.table_constraints WHERE table_name = 'AuditLogs' AND constraint_type = 'FOREIGN KEY'");
+            "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_NAME = 'AuditLogs' AND CONSTRAINT_TYPE = 'FOREIGN KEY'");
         Assert.Equal(0, fkCount);
     }
 
@@ -185,12 +191,12 @@ public class AuditTrailDbTests : IClassFixture<PostgresDatabaseFixture>
         await SeedRowsAsync(sp, 1, "fork");
         var head = (await AuditDb.AllAsync(_db.Factory)).Last();
 
-        var ex = await Assert.ThrowsAsync<PostgresException>(() => _db.ExecuteAsync(
+        var ex = await Assert.ThrowsAsync<SqlException>(() => _db.ExecuteAsync(
             "INSERT INTO \"AuditLogs\" (\"OccurredAtUtc\",\"Username\",\"RoleName\",\"Action\",\"Outcome\",\"Details\",\"MachineName\",\"PrevHash\",\"Hash\") " +
-            "VALUES (now(), 'x', 'x', 'FORK', 'Success', '{}'::jsonb, 'x', @p, @h)",
+            "VALUES (SYSUTCDATETIME(), 'x', 'x', 'FORK', 'Success', N'{}', 'x', @p, @h)",
             ("p", head.PrevHash), ("h", new string('b', 64))));
 
-        Assert.Equal(PostgresErrorCodes.UniqueViolation, ex.SqlState);
+        Assert.Equal(2601, ex.Number); // trùng khoá ở chỉ mục duy nhất IX_AuditLogs_PrevHash
     }
 
     [Fact]
@@ -258,12 +264,11 @@ public class AuditTrailDbTests : IClassFixture<PostgresDatabaseFixture>
         var rows = await AuditDb.AllAsync(_db.Factory);
         var target = rows[rows.Count / 2];
         var originalUsername = target.Username;
-        // Keep the trigger's enable mode (ENABLE ALWAYS after HardenAuditTriggers, FX5) when restoring it.
-        var originalMode = await _db.ScalarAsync<string>("SELECT tgenabled::text FROM pg_trigger WHERE tgname = 'TR_AuditLogs_NoUpdate'");
+        const string trigger = SmartPS.Data.Configurations.Audit.AuditLogConfiguration.AuditLogTriggerName;
 
         try
         {
-            await _db.ExecuteAsync("ALTER TABLE \"AuditLogs\" DISABLE TRIGGER \"TR_AuditLogs_NoUpdate\"");
+            await _db.ExecuteAsync($"ALTER TABLE \"AuditLogs\" DISABLE TRIGGER \"{trigger}\"");
             await _db.ExecuteAsync("UPDATE \"AuditLogs\" SET \"Username\" = 'tampered' WHERE \"AuditLogId\" = @id", ("id", target.AuditLogId));
 
             var idBeforeBroken = await AuditDb.MaxIdAsync(_db.Factory);
@@ -278,13 +283,11 @@ public class AuditTrailDbTests : IClassFixture<PostgresDatabaseFixture>
         finally
         {
             await _db.ExecuteAsync("UPDATE \"AuditLogs\" SET \"Username\" = @u WHERE \"AuditLogId\" = @id", ("u", originalUsername), ("id", target.AuditLogId));
-            await _db.ExecuteAsync(originalMode == "A"
-                ? "ALTER TABLE \"AuditLogs\" ENABLE ALWAYS TRIGGER \"TR_AuditLogs_NoUpdate\""
-                : "ALTER TABLE \"AuditLogs\" ENABLE TRIGGER \"TR_AuditLogs_NoUpdate\"");
+            await _db.ExecuteAsync($"ALTER TABLE \"AuditLogs\" ENABLE TRIGGER \"{trigger}\"");
         }
 
         Assert.True((await verifier.VerifyAsync()).IsValid);
-        await Assert.ThrowsAsync<PostgresException>(() => _db.ExecuteAsync("UPDATE \"AuditLogs\" SET \"Action\" = 'X' WHERE false"));
+        await Assert.ThrowsAsync<SqlException>(() => _db.ExecuteAsync("UPDATE \"AuditLogs\" SET \"Action\" = 'X' WHERE 1 = 0"));
     }
 
     [Fact]

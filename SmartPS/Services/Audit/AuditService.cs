@@ -2,7 +2,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
+using Microsoft.Data.SqlClient;
 using SmartPS.Data;
 using SmartPS.Models.Audit;
 using SmartPS.Services.Authorization;
@@ -10,13 +10,13 @@ using SmartPS.Services.Authorization;
 namespace SmartPS.Services.Audit;
 
 /// <summary>
-/// Writes the hash-chained audit trail. Appends are serialized by a PostgreSQL session advisory lock that is taken
-/// before the transaction starts, so the chain head read inside the transaction is always the latest committed row.
-/// While the lock is held only database statements may run (no HTTP, no file I/O, no UI).
+/// Writes the hash-chained audit trail. Appends are serialized by a SQL Server session application lock (sp_getapplock)
+/// that is taken before the transaction starts, so the chain head read inside the transaction is always the latest
+/// committed row. While the lock is held only database statements may run (no HTTP, no file I/O, no UI).
 /// </summary>
 public sealed class AuditService : IAuditService
 {
-    public const long AuditChainLockKey = 0x534D_5053_4155_4454L;
+    public const string AuditChainLockResource = "SmartPS.AuditChain";
 
     public static readonly TimeSpan LockTimeout = TimeSpan.FromSeconds(15);
 
@@ -143,22 +143,34 @@ public sealed class AuditService : IAuditService
         LockMarker marker,
         CancellationToken cancellationToken)
     {
-        var connection = (NpgsqlConnection)db.Database.GetDbConnection();
+        var connection = (SqlConnection)db.Database.GetDbConnection();
         var lockPossiblyHeld = false;
         try
         {
             await db.Database.OpenConnectionAsync(cancellationToken);
 
             using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            timeoutSource.CancelAfter(LockTimeout);
+            timeoutSource.CancelAfter(LockTimeout + TimeSpan.FromSeconds(5));
             lockPossiblyHeld = true;
+            int result;
             try
             {
-                await using var command = new NpgsqlCommand("SELECT pg_advisory_lock(@key)", connection);
-                command.Parameters.AddWithValue("key", AuditChainLockKey);
-                await command.ExecuteNonQueryAsync(timeoutSource.Token);
+                // Khoá ứng dụng cấp phiên (giữ qua COMMIT/ROLLBACK cho tới khi nhả); máy chủ tự trả -1 khi hết thời gian chờ
+                await using var command = new SqlCommand(
+                    "DECLARE @r int; EXEC @r = sp_getapplock @Resource = @res, @LockMode = 'Exclusive', @LockOwner = 'Session', @LockTimeout = @timeoutMs; SELECT @r;",
+                    connection);
+                command.Parameters.AddWithValue("res", AuditChainLockResource);
+                command.Parameters.AddWithValue("timeoutMs", (int)LockTimeout.TotalMilliseconds);
+                command.CommandTimeout = (int)LockTimeout.TotalSeconds + 10;
+                result = Convert.ToInt32(await command.ExecuteScalarAsync(timeoutSource.Token));
             }
             catch (Exception) when (timeoutSource.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+            {
+                throw new AuditLockTimeoutException("Không lấy được khóa nhật ký kiểm toán trong thời gian cho phép.");
+            }
+
+            // 0, 1: đã lấy được khoá; -1: hết thời gian chờ; -2, -3, -999: bị huỷ, deadlock hoặc lỗi tham số
+            if (result < 0)
             {
                 throw new AuditLockTimeoutException("Không lấy được khóa nhật ký kiểm toán trong thời gian cho phép.");
             }
@@ -175,14 +187,18 @@ public sealed class AuditService : IAuditService
         }
     }
 
-    private static async Task ReleaseAsync(SmartPsDbContext db, NpgsqlConnection connection, LockMarker marker, bool lockPossiblyHeld)
+    private static async Task ReleaseAsync(SmartPsDbContext db, SqlConnection connection, LockMarker marker, bool lockPossiblyHeld)
     {
         s_transactions.Remove(db);
         try
         {
             if (lockPossiblyHeld && connection.State == ConnectionState.Open)
             {
-                await using var command = new NpgsqlCommand("SELECT pg_advisory_unlock_all()", connection);
+                // Chỉ nhả khi phiên đang giữ khoá (nhả khoá không giữ sẽ báo lỗi); lặp vì khoá ứng dụng có đếm số lần lấy
+                await using var command = new SqlCommand(
+                    "WHILE APPLOCK_MODE('public', @res, 'Session') <> 'NoLock' EXEC sp_releaseapplock @Resource = @res, @LockOwner = 'Session';",
+                    connection);
+                command.Parameters.AddWithValue("res", AuditChainLockResource);
                 await command.ExecuteNonQueryAsync(CancellationToken.None);
             }
         }
@@ -191,7 +207,7 @@ public sealed class AuditService : IAuditService
             // The connection may still own the lock: never hand it back to the pool.
             try
             {
-                NpgsqlConnection.ClearPool(connection);
+                SqlConnection.ClearPool(connection);
             }
             catch
             {

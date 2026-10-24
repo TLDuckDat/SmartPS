@@ -9,7 +9,7 @@ using SmartPS.Services.Authorization;
 namespace SmartPS.Services.Reports;
 
 /// <summary>
-/// Report queries. SQL filters and groups in PostgreSQL (no row cap); Vietnam-day bucketing and every metric rule run in
+/// Report queries. SQL filters and groups in SQL Server (no row cap); Vietnam-day bucketing and every metric rule run in
 /// the pure <see cref="ReportAggregator"/> over the small aggregate sets.
 /// </summary>
 public sealed class ReportService : IReportService

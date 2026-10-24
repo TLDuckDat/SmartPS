@@ -77,7 +77,7 @@
                                 </StackPanel>
                             </Border>
                         </StackPanel>
-                        <TextBlock Text="Hệ thống tự động kiểm soát phương tiện vào/ra không dừng, nhận diện biển số AI và đối soát barrier tự động"
+                        <TextBlock Text="{DynamicResource Str_GateUi_Subtitle}"
                                    FontSize="12" Foreground="{StaticResource TextDimBrush}" Margin="0,3,0,0"/>
                     </StackPanel>
 
@@ -85,7 +85,7 @@
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <Border Background="#F1F5F9" CornerRadius="4" Padding="12,6" Margin="0,0,10,0">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Xe đang gửi: " FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <TextBlock Text="{DynamicResource Str_GateUi_ParkedNow}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
                                 <TextBlock Text="{Binding ActiveSessions.Count}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}"/>
                             </StackPanel>
                         </Border>
@@ -94,7 +94,7 @@
                                 Height="32" Padding="10,0"
                                 Command="{Binding RefreshActiveSessionsCommand}">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="🔄 Làm mới bãi" FontSize="11.5"/>
+                                <TextBlock Text="{DynamicResource Str_GateUi_RefreshLot}" FontSize="11.5"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>
@@ -135,7 +135,7 @@
                         </Button>
 
                         <!-- Tùy chọn: Tự động cho ra cả xe vãng lai -->
-                        <CheckBox Content="Tự động xuất bãi xe vãng lai (không cần dừng thu tiền)"
+                        <CheckBox Content="{DynamicResource Str_GateUi_AutoExitVisitors}"
                                   IsChecked="{Binding IsAutoCheckoutAllVehicles}"
                                   Foreground="#CBD5E1" FontSize="12"
                                   VerticalAlignment="Center" Margin="16,0,0,0"/>
@@ -147,7 +147,7 @@
                         <Button Command="{Binding ToggleCameraWatcherCommand}"
                                 Cursor="Hand" Height="34" Padding="12,0" Margin="0,0,10,0"
                                 Style="{StaticResource SecondaryButtonStyle}"
-                                ToolTip="Tự động bắt ảnh khi camera ngoài bãi chụp lưu vào thư mục Cameras/In hoặc Cameras/Out">
+                                ToolTip="{DynamicResource Str_GateUi_CameraWatchTip}">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding CameraWatcherStatusText}" FontSize="12" FontWeight="SemiBold"/>
                             </StackPanel>
@@ -177,7 +177,7 @@
                             </Button.Style>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <TextBlock Text="🎬" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="Chạy Mô Phỏng Tự Động (Auto Demo)" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource Str_GateUi_RunDemo}" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>
@@ -213,9 +213,9 @@
                             <StackPanel Grid.Column="0">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <Border Background="#1D4ED8" Width="10" Height="10" CornerRadius="2" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="LÀN XE VÀO (IN GATE 01)" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_InLaneTitle}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                                 </StackPanel>
-                                <TextBlock Text="⚡ Tự động nhận diện biển số &amp; Mở Barrier khi có xe"
+                                <TextBlock Text="{DynamicResource Str_GateUi_InLaneSub}"
                                            FontSize="11" Foreground="#16A34A" FontWeight="SemiBold" Margin="18,2,0,0"/>
                             </StackPanel>
 
@@ -237,11 +237,11 @@
                                 <TextBlock FontSize="11" FontWeight="Bold">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
-                                            <Setter Property="Text" Value="BARRIER: ĐÓNG"/>
+                                            <Setter Property="Text" Value="{DynamicResource Str_GateUi_BarrierClosed}"/>
                                             <Setter Property="Foreground" Value="#B91C1C"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsBarrierInOpen}" Value="True">
-                                                    <Setter Property="Text" Value="BARRIER: MỞ (3s)"/>
+                                                    <Setter Property="Text" Value="{DynamicResource Str_GateUi_BarrierOpen}"/>
                                                     <Setter Property="Foreground" Value="#15803D"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
@@ -285,16 +285,16 @@
                                         </Style>
                                     </StackPanel.Style>
                                     <TextBlock Text="📹" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,6"/>
-                                    <TextBlock Text="Camera Làn Vào (Đang chờ phương tiện)" FontSize="12" Foreground="#94A3B8" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Bấm 'Tự động vào mẫu' hoặc chọn ảnh từ máy" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_InCameraTitle}" FontSize="12" Foreground="#94A3B8" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_InCameraHint}" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" Margin="0,2,0,0"/>
                                 </StackPanel>
 
                                 <!-- Overlay thông số OCR bên góc trên -->
                                 <Border Background="#CC0F172A" CornerRadius="4" Padding="8,4" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="OCR: " FontSize="10.5" Foreground="#94A3B8"/>
+                                        <TextBlock Text="{DynamicResource Str_GateUi_Ocr}" FontSize="10.5" Foreground="#94A3B8"/>
                                         <TextBlock Text="{Binding InConfidenceFormatted}" FontSize="10.5" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,8,0"/>
-                                        <TextBlock Text="Thời gian: " FontSize="10.5" Foreground="#94A3B8"/>
+                                        <TextBlock Text="{DynamicResource Str_GateUi_Time}" FontSize="10.5" Foreground="#94A3B8"/>
                                         <TextBlock Text="{Binding InProcessingTimeMs, StringFormat={}{0:0.0}ms}" FontSize="10.5" FontWeight="Bold" Foreground="#4ADE80"/>
                                     </StackPanel>
                                 </Border>
@@ -313,7 +313,7 @@
                                 <Border Grid.Column="0" Height="68" Background="#E2E8F0" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4" Margin="0,0,12,0" ClipToBounds="True">
                                     <Grid>
                                         <Image Source="{Binding InCropImagePath, Converter={StaticResource ImagePathConverter}}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Vùng biển số" FontSize="10" Foreground="#94A3B8" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Text="{DynamicResource Str_GateUi_PlateRegion}" FontSize="10" Foreground="#94A3B8" HorizontalAlignment="Center" VerticalAlignment="Center">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -330,7 +330,7 @@
 
                                 <!-- Biển số xe & Phân loại -->
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                    <TextBlock Text="BIỂN SỐ XE NHẬN DIỆN (LÀN VÀO):" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextDimBrush}"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_InPlateTitle}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextDimBrush}"/>
                                     <TextBox Text="{Binding InPlateText, UpdateSourceTrigger=PropertyChanged}"
                                              FontSize="20" FontWeight="Bold" Foreground="#1E293B"
                                              Background="#FEF08A" BorderBrush="#FACC15" BorderThickness="2"
@@ -359,18 +359,18 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0">
-                                    <TextBlock Text="ĐÃ GHI NHẬN LƯU TRỮ VÀO BÃI:" FontSize="10" FontWeight="Bold" Foreground="#15803D"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_InRecorded}" FontSize="10" FontWeight="Bold" Foreground="#15803D"/>
                                     <TextBlock FontSize="11.5" Foreground="#1E293B" Margin="0,2,0,0">
-                                        <Run Text="⏱ Giờ vào: " FontWeight="SemiBold"/>
+                                        <Run Text="{DynamicResource Str_GateUi_InTime}" FontWeight="SemiBold"/>
                                         <Run Text="{Binding LastInTimeFormatted, FallbackValue='--:--'}" FontWeight="Bold" Foreground="#047857"/>
-                                        <Run Text=" | 🎫 Vé: " FontWeight="SemiBold"/>
+                                        <Run Text="{DynamicResource Str_GateUi_InTicket}" FontWeight="SemiBold"/>
                                         <Run Text="{Binding LastInTicketCode, FallbackValue='--'}" FontWeight="SemiBold"/>
-                                        <Run Text=" | 🅿 Ô đỗ: " FontWeight="SemiBold"/>
-                                        <Run Text="{Binding LastInSlotCode, FallbackValue='Tự do'}" FontWeight="Bold" Foreground="#0F766E"/>
+                                        <Run Text="{DynamicResource Str_GateUi_InSlot}" FontWeight="SemiBold"/>
+                                        <Run Text="{Binding LastInSlotCode, FallbackValue='—'}" FontWeight="Bold" Foreground="#0F766E"/>
                                     </TextBlock>
                                 </StackPanel>
                                 <Border Grid.Column="1" Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
-                                    <TextBlock Text="✔ CSDL An Toàn" FontSize="10.5" FontWeight="Bold" Foreground="#15803D"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_DbSafe}" FontSize="10.5" FontWeight="Bold" Foreground="#15803D"/>
                                 </Border>
                             </Grid>
                         </Border>
@@ -385,7 +385,7 @@
 
                             <!-- Loại phương tiện -->
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="Loại phương tiện:" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                <TextBlock Text="{DynamicResource Str_GateUi_VehicleType}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                                 <ComboBox ItemsSource="{Binding VehicleTypes}"
                                           SelectedItem="{Binding InSelectedVehicleType}"
                                           DisplayMemberPath="TypeName"
@@ -394,7 +394,7 @@
 
                             <!-- Ô đỗ đề xuất -->
                             <StackPanel Grid.Column="2">
-                                <TextBlock Text="Ô đỗ đề xuất:" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                <TextBlock Text="{DynamicResource Str_GateUi_SuggestedSlot}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                                 <Border Height="34" Background="#F1F5F9" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,0">
                                     <TextBlock Text="{Binding InSuggestedSlotCode}" FontSize="13" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
                                 </Border>
@@ -412,18 +412,18 @@
                             <Button Grid.Column="0" Style="{StaticResource SecondaryButtonStyle}"
                                     Height="36" Padding="10,0" Margin="0,0,6,0"
                                     Command="{Binding SelectInImageCommand}"
-                                    ToolTip="Chọn tệp ảnh phương tiện từ máy tính">
+                                    ToolTip="{DynamicResource Str_GateUi_PickImageInTip}">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="📁 Chọn ảnh" FontSize="12"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_PickImage}" FontSize="12"/>
                                 </StackPanel>
                             </Button>
 
                             <Button Grid.Column="1" Style="{StaticResource SecondaryButtonStyle}"
                                     Height="36" Padding="10,0" Margin="0,0,6,0"
                                     Command="{Binding QuickTestInCommand}"
-                                    ToolTip="Chụp thử ảnh mẫu biển số 30K55555 và tự động chạy quy trình vào">
+                                    ToolTip="{DynamicResource Str_GateUi_SampleInTip}">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="⚡ Tự động vào mẫu" FontSize="12" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_SampleIn}" FontSize="12" FontWeight="SemiBold"/>
                                 </StackPanel>
                             </Button>
 
@@ -431,7 +431,7 @@
                                     Height="36" Margin="0"
                                     Command="{Binding ConfirmCheckInCommand}">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="✅ Xác Nhận Vào &amp; Mở Cổng" FontSize="12" FontWeight="Bold"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_ConfirmIn}" FontSize="12" FontWeight="Bold"/>
                                 </StackPanel>
                             </Button>
                         </Grid>
@@ -460,9 +460,9 @@
                             <StackPanel Grid.Column="0">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <Border Background="#16A34A" Width="10" Height="10" CornerRadius="2" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="LÀN XE RA (OUT GATE 02)" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_OutLaneTitle}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                                 </StackPanel>
-                                <TextBlock Text="⚡ Tự động đối soát &amp; Mở Barrier khi xe xuất bãi"
+                                <TextBlock Text="{DynamicResource Str_GateUi_OutLaneSub}"
                                            FontSize="11" Foreground="#16A34A" FontWeight="SemiBold" Margin="18,2,0,0"/>
                             </StackPanel>
 
@@ -484,11 +484,11 @@
                                 <TextBlock FontSize="11" FontWeight="Bold">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
-                                            <Setter Property="Text" Value="BARRIER: ĐÓNG"/>
+                                            <Setter Property="Text" Value="{DynamicResource Str_GateUi_BarrierClosed}"/>
                                             <Setter Property="Foreground" Value="#B91C1C"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsBarrierOutOpen}" Value="True">
-                                                    <Setter Property="Text" Value="BARRIER: MỞ (3s)"/>
+                                                    <Setter Property="Text" Value="{DynamicResource Str_GateUi_BarrierOpen}"/>
                                                     <Setter Property="Foreground" Value="#15803D"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
@@ -532,16 +532,16 @@
                                         </Style>
                                     </StackPanel.Style>
                                     <TextBlock Text="📹" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,6"/>
-                                    <TextBlock Text="Camera Làn Ra (Đang chờ phương tiện xuất bãi)" FontSize="12" Foreground="#94A3B8" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Bấm 'Tự động ra mẫu' hoặc chọn ảnh từ máy" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_OutCameraTitle}" FontSize="12" Foreground="#94A3B8" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_OutCameraHint}" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" Margin="0,2,0,0"/>
                                 </StackPanel>
 
                                 <!-- Overlay thông số OCR bên góc trên -->
                                 <Border Background="#CC0F172A" CornerRadius="4" Padding="8,4" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="OCR: " FontSize="10.5" Foreground="#94A3B8"/>
+                                        <TextBlock Text="{DynamicResource Str_GateUi_Ocr}" FontSize="10.5" Foreground="#94A3B8"/>
                                         <TextBlock Text="{Binding OutConfidenceFormatted}" FontSize="10.5" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,8,0"/>
-                                        <TextBlock Text="Thời gian: " FontSize="10.5" Foreground="#94A3B8"/>
+                                        <TextBlock Text="{DynamicResource Str_GateUi_Time}" FontSize="10.5" Foreground="#94A3B8"/>
                                         <TextBlock Text="{Binding OutProcessingTimeMs, StringFormat={}{0:0.0}ms}" FontSize="10.5" FontWeight="Bold" Foreground="#4ADE80"/>
                                     </StackPanel>
                                 </Border>
@@ -560,7 +560,7 @@
                                 <Border Grid.Column="0" Height="68" Background="#E2E8F0" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4" Margin="0,0,12,0" ClipToBounds="True">
                                     <Grid>
                                         <Image Source="{Binding OutCropImagePath, Converter={StaticResource ImagePathConverter}}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Vùng biển số" FontSize="10" Foreground="#94A3B8" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Text="{DynamicResource Str_GateUi_PlateRegion}" FontSize="10" Foreground="#94A3B8" HorizontalAlignment="Center" VerticalAlignment="Center">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -577,7 +577,7 @@
 
                                 <!-- Biển số xe & Chỉ báo so khớp -->
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                    <TextBlock Text="BIỂN SỐ XE NHẬN DIỆN (LÀN RA):" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextDimBrush}"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_OutPlateTitle}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextDimBrush}"/>
                                     <TextBox Text="{Binding OutPlateText, UpdateSourceTrigger=PropertyChanged}"
                                              FontSize="20" FontWeight="Bold" Foreground="#1E293B"
                                              Background="#FEF08A" BorderBrush="#FACC15" BorderThickness="2"
@@ -611,7 +611,7 @@
                                 <Border Grid.Column="0" Height="68" Background="#E2E8F0" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4" Margin="0,0,12,0" ClipToBounds="True">
                                     <Grid>
                                         <Image Source="{Binding MatchedSession.CheckInImagePath, Converter={StaticResource ImagePathConverter}}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Ảnh lúc vào" FontSize="9.5" Foreground="#64748B" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Text="{DynamicResource Str_GateUi_EntryPhoto}" FontSize="9.5" Foreground="#64748B" HorizontalAlignment="Center" VerticalAlignment="Center">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -629,11 +629,11 @@
                                 <!-- Thời gian gửi & Phương thức thanh toán -->
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
-                                        <TextBlock Text="Thời lượng gửi: " FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                        <TextBlock Text="{DynamicResource Str_GateUi_Duration}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
                                         <TextBlock Text="{Binding DurationFormatted}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Thanh toán: " FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{DynamicResource Str_GateUi_Payment}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                                         <ComboBox ItemsSource="{Binding AvailablePaymentMethods}"
                                                   SelectedItem="{Binding SelectedPaymentMethod}"
                                                   Height="28" Width="100" FontSize="11.5"/>
@@ -642,7 +642,7 @@
 
                                 <!-- Tổng tiền cước -->
                                 <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                    <TextBlock Text="TỔNG CƯỚC PHÍ:" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Right"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_TotalFee}" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Right"/>
                                     <TextBlock Text="{Binding CalculatedFeeFormatted}" FontSize="20" FontWeight="Bold" Foreground="#DC2626" HorizontalAlignment="Right"/>
                                 </StackPanel>
                                 <!-- Chi tiết cước phí -->
@@ -661,18 +661,18 @@
                             <Button Grid.Column="0" Style="{StaticResource SecondaryButtonStyle}"
                                     Height="36" Padding="10,0" Margin="0,0,6,0"
                                     Command="{Binding SelectOutImageCommand}"
-                                    ToolTip="Chọn ảnh xe xuất bãi từ máy tính">
+                                    ToolTip="{DynamicResource Str_GateUi_PickImageOutTip}">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="📁 Chọn ảnh" FontSize="12"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_PickImage}" FontSize="12"/>
                                 </StackPanel>
                             </Button>
 
                             <Button Grid.Column="1" Style="{StaticResource SecondaryButtonStyle}"
                                     Height="36" Padding="10,0" Margin="0,0,6,0"
                                     Command="{Binding QuickTestOutCommand}"
-                                    ToolTip="Chụp thử ảnh mẫu làn ra và tự động chạy quy trình xuất bãi">
+                                    ToolTip="{DynamicResource Str_GateUi_SampleOutTip}">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="⚡ Tự động ra mẫu" FontSize="12" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_SampleOut}" FontSize="12" FontWeight="SemiBold"/>
                                 </StackPanel>
                             </Button>
 
@@ -681,7 +681,7 @@
                                     Background="#16A34A"
                                     Command="{Binding ConfirmCheckOutCommand}">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="💳 Thu Phí &amp; Mở Cổng Cho Ra" FontSize="12" FontWeight="Bold"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_ChargeAndOpen}" FontSize="12" FontWeight="Bold"/>
                                 </StackPanel>
                             </Button>
                         </Grid>
@@ -709,13 +709,15 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="DANH SÁCH XE HIỆN ĐANG ĐỖ TRONG BÃI" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{DynamicResource Str_GateUi_ParkedListTitle}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                             <Border Background="#F1F5F9" CornerRadius="10" Padding="8,2" Margin="10,0,0,0">
-                                <TextBlock Text="{Binding ActiveSessions.Count, StringFormat={}{0} xe}" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <TextBlock FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}">
+                                    <Run Text="{Binding ActiveSessions.Count, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_VehicleSuffix}"/>
+                                </TextBlock>
                             </Border>
                         </StackPanel>
 
-                        <TextBlock Grid.Column="1" Text="💡 Nhấp đúp vào phiên xe để nạp nhanh sang Làn Ra đối soát"
+                        <TextBlock Grid.Column="1" Text="{DynamicResource Str_GateUi_ParkedListHint}"
                                    FontSize="11.5" Foreground="{StaticResource TextDimBrush}" FontStyle="Italic" VerticalAlignment="Center"/>
                     </Grid>
 
@@ -738,7 +740,7 @@
 
                         <DataGrid.Columns>
                             <!-- Mã vé -->
-                            <DataGridTextColumn Header="Mã Thẻ / Vé" Binding="{Binding TicketCode}" Width="140">
+                            <DataGridTextColumn Header="{DynamicResource Str_GateUi_ColTicket}" Binding="{Binding TicketCode}" Width="140">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -750,7 +752,7 @@
                             </DataGridTextColumn>
 
                             <!-- Biển số xe -->
-                            <DataGridTextColumn Header="Biển Số Xe" Binding="{Binding LicensePlate}" Width="130">
+                            <DataGridTextColumn Header="{DynamicResource Str_GateUi_ColPlate}" Binding="{Binding LicensePlate}" Width="130">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -762,7 +764,7 @@
                             </DataGridTextColumn>
 
                             <!-- Loại phương tiện -->
-                            <DataGridTextColumn Header="Loại Xe" Binding="{Binding VehicleType.TypeName}" Width="120">
+                            <DataGridTextColumn Header="{DynamicResource Str_GateUi_ColVehicleType}" Binding="{Binding VehicleType.TypeName}" Width="120">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -773,7 +775,7 @@
                             </DataGridTextColumn>
 
                             <!-- Vị trí ô đỗ -->
-                            <DataGridTextColumn Header="Ô Đỗ" Binding="{Binding Slot.SlotCode}" Width="90">
+                            <DataGridTextColumn Header="{DynamicResource Str_GateUi_ColSlot}" Binding="{Binding Slot.SlotCode}" Width="90">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -785,7 +787,7 @@
                             </DataGridTextColumn>
 
                             <!-- Thời gian vào (chính xác theo giờ máy trạm địa phương) -->
-                            <DataGridTextColumn Header="Thời Gian Vào" Binding="{Binding CheckInTimeLocal, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}}" Width="160">
+                            <DataGridTextColumn Header="{DynamicResource Str_GateUi_ColCheckIn}" Binding="{Binding CheckInTimeLocal, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}}" Width="160">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -796,7 +798,7 @@
                             </DataGridTextColumn>
 
                             <!-- Thời lượng đã gửi trong bãi -->
-                            <DataGridTextColumn Header="Thời Lượng" Binding="{Binding DurationDisplay}" Width="120">
+                            <DataGridTextColumn Header="{DynamicResource Str_GateUi_ColDuration}" Binding="{Binding DurationDisplay}" Width="120">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -808,7 +810,7 @@
                             </DataGridTextColumn>
 
                             <!-- Phân loại khách hàng -->
-                            <DataGridTemplateColumn Header="Khách Hàng" Width="*">
+                            <DataGridTemplateColumn Header="{DynamicResource Str_GateUi_ColCustomer}" Width="*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
@@ -829,15 +831,15 @@
                                                 <TextBlock FontSize="11" FontWeight="SemiBold">
                                                     <TextBlock.Style>
                                                         <Style TargetType="TextBlock">
-                                                            <Setter Property="Text" Value="Vãng lai"/>
+                                                            <Setter Property="Text" Value="{DynamicResource Str_GateUi_Visitor}"/>
                                                             <Setter Property="Foreground" Value="#64748B"/>
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding IsMonthlyPass}" Value="True">
-                                                                    <Setter Property="Text" Value="👑 Vé tháng"/>
+                                                                    <Setter Property="Text" Value="{DynamicResource Str_GateUi_MonthlyPass}"/>
                                                                     <Setter Property="Foreground" Value="#15803D"/>
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding CustomerType}" Value="Resident">
-                                                                    <Setter Property="Text" Value="🏠 Cư dân"/>
+                                                                    <Setter Property="Text" Value="{DynamicResource Str_GateUi_Resident}"/>
                                                                     <Setter Property="Foreground" Value="#1D4ED8"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
@@ -898,9 +900,9 @@
                     <StackPanel Grid.Column="0">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="📱" FontSize="20" Margin="0,0,8,0"/>
-                            <TextBlock Text="THANH TOÁN XUẤT BÃI VIETQR" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{DynamicResource Str_GateUi_QrTitle}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         </StackPanel>
-                        <TextBlock Text="Quét mã QR bằng ứng dụng ngân hàng hoặc ví điện tử bất kỳ" FontSize="12" Foreground="{StaticResource TextDimBrush}" Margin="28,2,0,0"/>
+                        <TextBlock Text="{DynamicResource Str_GateUi_QrHint}" FontSize="12" Foreground="{StaticResource TextDimBrush}" Margin="28,2,0,0"/>
                     </StackPanel>
 
                     <!-- Nút Hủy / Đóng -->
@@ -941,12 +943,12 @@
                                             </Style>
                                         </StackPanel.Style>
                                         <TextBlock Text="⏳" FontSize="28" HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                                        <TextBlock Text="Đang tạo mã QR..." FontSize="12" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{DynamicResource Str_GateUi_QrCreating}" FontSize="12" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Grid>
                             </Border>
 
-                            <TextBlock Text="Napas 247 • VietQR Chuyển Nhanh" FontSize="11" FontWeight="SemiBold"
+                            <TextBlock Text="{DynamicResource Str_GateUi_QrNetwork}" FontSize="11" FontWeight="SemiBold"
                                        Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,10,0,0"/>
                         </StackPanel>
                     </Border>
@@ -958,11 +960,11 @@
                             <!-- Biển số xe & Mã vé -->
                             <Grid Margin="0,0,0,12">
                                 <StackPanel>
-                                    <TextBlock Text="BIỂN SỐ XE:" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextDimBrush}"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_QrPlate}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextDimBrush}"/>
                                     <TextBlock Text="{Binding MatchedSession.LicensePlate}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                                 </StackPanel>
                                 <StackPanel HorizontalAlignment="Right">
-                                    <TextBlock Text="MÃ VÉ:" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Right"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_QrTicket}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Right"/>
                                     <TextBlock Text="{Binding MatchedSession.TicketCode}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right"/>
                                 </StackPanel>
                             </Grid>
@@ -971,7 +973,7 @@
                             <Border Background="#FEF2F2" BorderBrush="#FECACA" BorderThickness="1" CornerRadius="6" Padding="12,10" Margin="0,0,0,14">
                                 <Grid>
                                     <StackPanel>
-                                        <TextBlock Text="SỐ TIỀN CẦN THANH TOÁN:" FontSize="10.5" FontWeight="Bold" Foreground="#991B1B"/>
+                                        <TextBlock Text="{DynamicResource Str_GateUi_QrAmount}" FontSize="10.5" FontWeight="Bold" Foreground="#991B1B"/>
                                         <TextBlock Text="{Binding VietQrAmountFormatted}" FontSize="26" FontWeight="Bold" Foreground="#DC2626"/>
                                     </StackPanel>
                                     <TextBlock Text="VND" FontSize="13" FontWeight="Bold" Foreground="#991B1B" HorizontalAlignment="Right" VerticalAlignment="Center"/>
@@ -980,7 +982,7 @@
 
                             <!-- Mã giao dịch đối soát -->
                             <StackPanel Margin="0,0,0,12">
-                                <TextBlock Text="MÃ GIAO DỊCH (THAM CHIẾU):" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource TextDimBrush}"/>
+                                <TextBlock Text="{DynamicResource Str_GateUi_QrReference}" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource TextDimBrush}"/>
                                 <TextBlock Text="{Binding VietQrTransactionReference}" FontSize="13" FontWeight="Bold" FontFamily="Consolas" Foreground="#1D4ED8"/>
                             </StackPanel>
 
@@ -1006,7 +1008,7 @@
                                             <Setter Property="Foreground" Value="#1D4ED8"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsVietQrPaidSuccess}" Value="True">
-                                                    <Setter Property="Text" Value="✅ THANH TOÁN THÀNH CÔNG! BARRIER ĐANG MỞ..."/>
+                                                    <Setter Property="Text" Value="{DynamicResource Str_GateUi_QrPaid}"/>
                                                     <Setter Property="Foreground" Value="#15803D"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
@@ -1026,21 +1028,21 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Column="0" Text="Hệ thống sẽ tự động mở barrier khi nhận được tiền từ ngân hàng."
+                    <TextBlock Grid.Column="0" Text="{DynamicResource Str_GateUi_QrAutoOpen}"
                                FontSize="11.5" Foreground="{StaticResource TextDimBrush}" FontStyle="Italic" VerticalAlignment="Center"/>
 
                     <Button Grid.Column="1" Command="{Binding RefreshVietQrStatusCommand}"
                             Style="{StaticResource SecondaryButtonStyle}" Height="38" Padding="14,0" Margin="0,0,10,0">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="🔄" FontSize="12" Margin="0,0,6,0"/>
-                            <TextBlock Text="Kiểm Tra Cổng" FontSize="12" FontWeight="SemiBold"/>
+                            <TextBlock Text="{DynamicResource Str_GateUi_QrCheck}" FontSize="12" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Button>
 
                     <Button Grid.Column="2" Command="{Binding CancelVietQrPaymentCommand}"
                             Background="#F1F5F9" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1"
                             Height="38" Padding="16,0" Cursor="Hand">
-                        <TextBlock Text="✕ Hủy Thanh Toán" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Text="{DynamicResource Str_GateUi_QrCancel}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
                     </Button>
                 </Grid>
             </StackPanel>

@@ -26,7 +26,7 @@
                             <TextBlock Text="👥" FontSize="20" Margin="0,0,8,0"/>
                             <TextBlock Text="{DynamicResource Str_Menu_Customers}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         </StackPanel>
-                        <TextBlock Text="Quản lý thông tin cư dân, khách hàng thân thiết và danh mục vé gửi xe định kỳ hàng tháng" 
+                        <TextBlock Text="{DynamicResource Str_Customers_Subtitle}" 
                                    FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
                     </StackPanel>
 
@@ -42,7 +42,7 @@
                                     <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="🔄" FontSize="12" Margin="0,0,6,0"/>
-                                            <TextBlock Text="Cập Nhật Danh Sách" FontSize="12" FontWeight="SemiBold" Foreground="White"/>
+                                            <TextBlock Text="{DynamicResource Str_Customers_RefreshList}" FontSize="12" FontWeight="SemiBold" Foreground="White"/>
                                         </StackPanel>
                                     </Border>
                                 </ControlTemplate>
@@ -68,11 +68,11 @@
                 <Border Grid.Column="0" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="TỔNG KHÁCH HÀNG" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
+                            <TextBlock Text="{DynamicResource Str_Customers_KpiTotal}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
                             <TextBlock Text="👥" FontSize="16" HorizontalAlignment="Right"/>
                         </Grid>
-                        <TextBlock Text="{Binding TotalCustomers, StringFormat='{}{0} hồ sơ'}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}" Margin="0,8,0,2"/>
-                        <TextBlock Text="Đã đăng ký trong hệ thống" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}" Margin="0,8,0,2"><Run Text="{Binding TotalCustomers, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_ProfilesSuffix}"/></TextBlock>
+                        <TextBlock Text="{DynamicResource Str_Customers_KpiTotalSub}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
                     </StackPanel>
                 </Border>
 
@@ -80,11 +80,11 @@
                 <Border Grid.Column="2" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="VÉ THÁNG HOẠT ĐỘNG" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
+                            <TextBlock Text="{DynamicResource Str_Customers_KpiActivePasses}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
                             <TextBlock Text="🎟" FontSize="16" HorizontalAlignment="Right"/>
                         </Grid>
-                        <TextBlock Text="{Binding ActiveTicketsCount, StringFormat='{}{0} vé'}" FontSize="24" FontWeight="Bold" Foreground="#15803D" Margin="0,8,0,2"/>
-                        <TextBlock Text="Đang còn thời hạn gửi xe" FontSize="11.5" Foreground="#16A34A"/>
+                        <TextBlock FontSize="24" FontWeight="Bold" Foreground="#15803D" Margin="0,8,0,2"><Run Text="{Binding ActiveTicketsCount, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_PassesSuffix}"/></TextBlock>
+                        <TextBlock Text="{DynamicResource Str_Customers_KpiActivePassesSub}" FontSize="11.5" Foreground="#16A34A"/>
                     </StackPanel>
                 </Border>
 
@@ -92,11 +92,11 @@
                 <Border Grid.Column="4" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="SẮP HẾT HẠN (≤15 NGÀY)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
+                            <TextBlock Text="{DynamicResource Str_Customers_KpiExpiring}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
                             <TextBlock Text="⏰" FontSize="16" HorizontalAlignment="Right"/>
                         </Grid>
-                        <TextBlock Text="{Binding ExpiringSoonCount, StringFormat='{}{0} vé'}" FontSize="24" FontWeight="Bold" Foreground="#D97706" Margin="0,8,0,2"/>
-                        <TextBlock Text="Cần nhắc thông báo gia hạn" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock FontSize="24" FontWeight="Bold" Foreground="#D97706" Margin="0,8,0,2"><Run Text="{Binding ExpiringSoonCount, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_PassesSuffix}"/></TextBlock>
+                        <TextBlock Text="{DynamicResource Str_Customers_KpiExpiringSub}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
                     </StackPanel>
                 </Border>
 
@@ -104,18 +104,18 @@
                 <Border Grid.Column="6" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="DOANH THU ĐỊNH KỲ" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
+                            <TextBlock Text="{DynamicResource Str_Customers_KpiRevenue}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
                             <TextBlock Text="💵" FontSize="16" HorizontalAlignment="Right"/>
                         </Grid>
                         <TextBlock Text="{Binding MonthlyRevenueTotalFormatted}" FontSize="22" FontWeight="Bold" Foreground="#7C3AED" Margin="0,8,0,2"/>
-                        <TextBlock Text="Thu từ gói thuê tháng" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Text="{DynamicResource Str_Customers_KpiRevenueSub}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
                     </StackPanel>
                 </Border>
             </Grid>
 
             <TabControl Background="Transparent" BorderThickness="0" Margin="0,0,0,20">
                 <!-- TAB 1: KHÁCH HÀNG & PHƯƠNG TIỆN -->
-                <TabItem Header="Khách Hàng &amp; Phương Tiện" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}">
+                <TabItem Header="{DynamicResource Str_Customers_Title}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}">
                     <StackPanel Margin="0,16,0,0">
                         <!-- 3. Thanh Tìm Kiếm Khách Hàng -->
                         <Border Background="{StaticResource CardBackgroundBrush}"
@@ -150,7 +150,7 @@
                                 </Border>
 
                                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="Sắp xếp:" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12.5" Margin="0,0,8,0"/>
+                                    <TextBlock Text="{DynamicResource Str_Customers_SortBy}" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12.5" Margin="0,0,8,0"/>
                                     <ComboBox ItemsSource="{Binding CustomerSortOptions}" SelectedIndex="{Binding SelectedCustomerSortIndex}" Width="200" Height="34" VerticalContentAlignment="Center"/>
                                 </StackPanel>
                             </Grid>
@@ -168,11 +168,11 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="DANH SÁCH KHÁCH HÀNG &amp; HỢP ĐỒNG GỬI XE" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="0" Text="{DynamicResource Str_Customers_CustomersTitle}" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                        <Button Content="Thêm Khách Hàng" Command="{Binding AddCustomerCommand}" Padding="10,5" Margin="0,0,10,0" Background="#10B981" Foreground="White" BorderThickness="0"/>
-                                        <Button Content="Thêm Phương Tiện" Command="{Binding AddVehicleCommand}" Padding="10,5" Margin="0,0,10,0" Background="#3B82F6" Foreground="White" BorderThickness="0"/>
-                                        <Button Content="Xóa" Command="{Binding DeleteCustomerCommand}" Padding="10,5" Background="#EF4444" Foreground="White" BorderThickness="0" ToolTip="Xóa khách hàng đang chọn"/>
+                                        <Button Content="{DynamicResource Str_Customers_AddCustomer}" Command="{Binding AddCustomerCommand}" Padding="10,5" Margin="0,0,10,0" Background="#10B981" Foreground="White" BorderThickness="0"/>
+                                        <Button Content="{DynamicResource Str_Customers_AddVehicle}" Command="{Binding AddVehicleCommand}" Padding="10,5" Margin="0,0,10,0" Background="#3B82F6" Foreground="White" BorderThickness="0"/>
+                                        <Button Content="{DynamicResource Str_Common_Delete}" Command="{Binding DeleteCustomerCommand}" Padding="10,5" Background="#EF4444" Foreground="White" BorderThickness="0" ToolTip="{DynamicResource Str_Customers_DeleteCustomerTip}"/>
                                     </StackPanel>
                                 </Grid>
 
@@ -194,7 +194,7 @@
 
                         <DataGrid.Columns>
                             <!-- Mã vé tháng -->
-                            <DataGridTextColumn Header="Mã Vé Tháng" Binding="{Binding MonthlyTicketCode}" Width="130">
+                            <DataGridTextColumn Header="{DynamicResource Str_Customers_ColPassCode}" Binding="{Binding MonthlyTicketCode}" Width="130">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -206,7 +206,7 @@
                             </DataGridTextColumn>
 
                             <!-- Họ và tên -->
-                            <DataGridTextColumn Header="Họ Và Tên" Binding="{Binding FullName}" Width="160">
+                            <DataGridTextColumn Header="{DynamicResource Str_Customers_ColFullName}" Binding="{Binding FullName}" Width="160">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -218,7 +218,7 @@
                             </DataGridTextColumn>
 
                             <!-- Số điện thoại -->
-                            <DataGridTextColumn Header="Số Điện Thoại" Binding="{Binding PhoneNumber}" Width="120">
+                            <DataGridTextColumn Header="{DynamicResource Str_Customers_ColPhone}" Binding="{Binding PhoneNumber}" Width="120">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -229,7 +229,7 @@
                             </DataGridTextColumn>
 
                             <!-- Biển số xe đăng ký -->
-                            <DataGridTextColumn Header="Biển Số Xe" Binding="{Binding DefaultLicensePlate}" Width="120">
+                            <DataGridTextColumn Header="{DynamicResource Str_Common_Plate}" Binding="{Binding DefaultLicensePlate}" Width="120">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -241,7 +241,7 @@
                             </DataGridTextColumn>
 
                             <!-- Loại phương tiện -->
-                            <DataGridTextColumn Header="Loại Xe" Binding="{Binding VehicleTypeName}" Width="130">
+                            <DataGridTextColumn Header="{DynamicResource Str_Common_VehicleType}" Binding="{Binding VehicleTypeName}" Width="130">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -252,7 +252,7 @@
                             </DataGridTextColumn>
 
                             <!-- Phân hạng -->
-                            <DataGridTextColumn Header="Phân Hạng" Binding="{Binding CustomerTypeDisplay}" Width="140">
+                            <DataGridTextColumn Header="{DynamicResource Str_Customers_ColTier}" Binding="{Binding CustomerTypeDisplay}" Width="140">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -264,7 +264,7 @@
                             </DataGridTextColumn>
 
                             <!-- Hạn sử dụng vé -->
-                            <DataGridTextColumn Header="Hạn Sử Dụng" Binding="{Binding TicketExpiry, StringFormat={}{0:dd/MM/yyyy}}" Width="120">
+                            <DataGridTextColumn Header="{DynamicResource Str_Customers_ColValidUntil}" Binding="{Binding TicketExpiry, StringFormat={}{0:dd/MM/yyyy}}" Width="120">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -275,7 +275,7 @@
                             </DataGridTextColumn>
 
                             <!-- Trạng thái -->
-                            <DataGridTemplateColumn Header="Trạng Thái Vé" Width="*">
+                            <DataGridTemplateColumn Header="{DynamicResource Str_Customers_ColPassStatus}" Width="*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Border CornerRadius="3" Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0">
@@ -307,11 +307,11 @@
                             </DataGridTemplateColumn>
 
                             <!-- Thao tác xóa từng dòng -->
-                            <DataGridTemplateColumn Header="Thao Tác" Width="100">
+                            <DataGridTemplateColumn Header="{DynamicResource Str_Common_Actions}" Width="100">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button Content="Xóa xe"
-                                                ToolTip="Xóa phương tiện này (không xóa khách hàng nếu khách còn xe khác)"
+                                        <Button Content="{DynamicResource Str_Customers_DeleteVehicle}"
+                                                ToolTip="{DynamicResource Str_Customers_DeleteVehicleTip}"
                                                 Command="{Binding DataContext.DeleteRowVehicleCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                 CommandParameter="{Binding}"
                                                 Padding="8,3" Height="26"
@@ -337,7 +337,7 @@
                 </TabItem>
                 
                 <!-- TAB 2: QUẢN LÝ HỘ GIA ĐÌNH -->
-                <TabItem Header="Quản Lý Hộ Gia Đình" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}">
+                <TabItem Header="{DynamicResource Str_Customers_TabHouseholds}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}">
                     <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="20" Margin="0,16,0,0">
                         <StackPanel>
                             <Grid Margin="0,0,0,14">
@@ -345,10 +345,10 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="DANH SÁCH HỘ GIA ĐÌNH CƯ DÂN" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="0" Text="{DynamicResource Str_Customers_HouseholdsTitle}" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                    <Button Content="Thêm Hộ Gia Đình" Command="{Binding AddHouseholdCommand}" Padding="10,5" Margin="0,0,10,0" Background="#10B981" Foreground="White" BorderThickness="0"/>
-                                    <Button Content="Xóa" Command="{Binding DeleteHouseholdCommand}" Padding="10,5" Background="#EF4444" Foreground="White" BorderThickness="0" ToolTip="Xóa hộ đang chọn"/>
+                                    <Button Content="{DynamicResource Str_Customers_AddHousehold}" Command="{Binding AddHouseholdCommand}" Padding="10,5" Margin="0,0,10,0" Background="#10B981" Foreground="White" BorderThickness="0"/>
+                                    <Button Content="{DynamicResource Str_Common_Delete}" Command="{Binding DeleteHouseholdCommand}" Padding="10,5" Background="#EF4444" Foreground="White" BorderThickness="0" ToolTip="{DynamicResource Str_Customers_DeleteHouseholdTip}"/>
                                 </StackPanel>
                             </Grid>
 
@@ -371,7 +371,7 @@
                                         </Grid>
                                     </Border>
                                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="Sắp xếp:" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12.5" Margin="0,0,8,0"/>
+                                        <TextBlock Text="{DynamicResource Str_Customers_SortBy}" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12.5" Margin="0,0,8,0"/>
                                         <ComboBox ItemsSource="{Binding HouseholdSortOptions}" SelectedIndex="{Binding SelectedHouseholdSortIndex}" Width="190" Height="34" VerticalContentAlignment="Center"/>
                                     </StackPanel>
                                 </Grid>
@@ -379,10 +379,10 @@
 
                             <DataGrid ItemsSource="{Binding Households}" SelectedItem="{Binding SelectedHousehold}" AutoGenerateColumns="False" IsReadOnly="True" RowHeight="38" MaxHeight="550" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{StaticResource DividerBrush}" Background="Transparent" BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0" HeadersVisibility="Column">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Mã Căn Hộ" Binding="{Binding ApartmentCode}" Width="150"/>
-                                    <DataGridTextColumn Header="Số Xe Tối Đa" Binding="{Binding MaxVehicles}" Width="120"/>
-                                    <DataGridTextColumn Header="Ghi Chú" Binding="{Binding Notes}" Width="*"/>
-                                    <DataGridTextColumn Header="Ngày Tạo" Binding="{Binding CreatedAt, StringFormat={}{0:dd/MM/yyyy}}" Width="120"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Customers_ColApartment}" Binding="{Binding ApartmentCode}" Width="150"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Customers_ColMaxVehicles}" Binding="{Binding MaxVehicles}" Width="120"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Common_Notes}" Binding="{Binding Notes}" Width="*"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Customers_ColCreatedAt}" Binding="{Binding CreatedAt, StringFormat={}{0:dd/MM/yyyy}}" Width="120"/>
                                 </DataGrid.Columns>
                             </DataGrid>
                         </StackPanel>
@@ -390,7 +390,7 @@
                 </TabItem>
 
                 <!-- TAB 3: QUẢN LÝ VÉ THÁNG -->
-                <TabItem Header="Quản Lý Vé Tháng" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}">
+                <TabItem Header="{DynamicResource Str_Customers_TabPasses}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}">
                     <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="20" Margin="0,16,0,0">
                         <StackPanel>
                             <Grid Margin="0,0,0,14">
@@ -398,12 +398,12 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="DANH SÁCH VÉ THÁNG ĐANG HOẠT ĐỘNG" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="0" Text="{DynamicResource Str_Customers_PassesTitle}" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                    <Button Content="Đăng Ký Vé Tháng" Command="{Binding AddTicketCommand}" Padding="10,5" Margin="0,0,10,0" Background="#8B5CF6" Foreground="White" BorderThickness="0"/>
-                                    <Button Content="Khóa/Mở Thẻ" Command="{Binding ToggleTicketCommand}" Padding="10,5" Margin="0,0,10,0" Background="#F59E0B" Foreground="White" BorderThickness="0" ToolTip="Khóa hoặc mở khóa thẻ"/>
-                                    <Button Content="Gia Hạn" Command="{Binding RenewTicketCommand}" Padding="10,5" Margin="0,0,10,0" Background="#3B82F6" Foreground="White" BorderThickness="0" ToolTip="Gia hạn thêm 1 tháng"/>
-                                    <Button Content="Xóa Vé" Command="{Binding DeleteTicketCommand}" Padding="10,5" Background="#EF4444" Foreground="White" BorderThickness="0" ToolTip="Xóa vé đang chọn"/>
+                                    <Button Content="{DynamicResource Str_Customers_IssuePass}" Command="{Binding AddTicketCommand}" Padding="10,5" Margin="0,0,10,0" Background="#8B5CF6" Foreground="White" BorderThickness="0"/>
+                                    <Button Content="{DynamicResource Str_Customers_LockToggle}" Command="{Binding ToggleTicketCommand}" Padding="10,5" Margin="0,0,10,0" Background="#F59E0B" Foreground="White" BorderThickness="0" ToolTip="{DynamicResource Str_Customers_LockToggleTip}"/>
+                                    <Button Content="{DynamicResource Str_Customers_Renew}" Command="{Binding RenewTicketCommand}" Padding="10,5" Margin="0,0,10,0" Background="#3B82F6" Foreground="White" BorderThickness="0" ToolTip="{DynamicResource Str_Customers_RenewTip}"/>
+                                    <Button Content="{DynamicResource Str_Customers_DeletePass}" Command="{Binding DeleteTicketCommand}" Padding="10,5" Background="#EF4444" Foreground="White" BorderThickness="0" ToolTip="{DynamicResource Str_Customers_DeletePassTip}"/>
                                 </StackPanel>
                             </Grid>
 
@@ -426,7 +426,7 @@
                                         </Grid>
                                     </Border>
                                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="Sắp xếp:" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12.5" Margin="0,0,8,0"/>
+                                        <TextBlock Text="{DynamicResource Str_Customers_SortBy}" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12.5" Margin="0,0,8,0"/>
                                         <ComboBox ItemsSource="{Binding TicketSortOptions}" SelectedIndex="{Binding SelectedTicketSortIndex}" Width="220" Height="34" VerticalContentAlignment="Center"/>
                                     </StackPanel>
                                 </Grid>
@@ -434,20 +434,20 @@
 
                             <DataGrid ItemsSource="{Binding Tickets}" SelectedItem="{Binding SelectedTicket}" AutoGenerateColumns="False" IsReadOnly="True" RowHeight="38" MaxHeight="550" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{StaticResource DividerBrush}" Background="Transparent" BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0" HeadersVisibility="Column">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Mã Vé" Binding="{Binding TicketCode}" Width="150">
+                                    <DataGridTextColumn Header="{DynamicResource Str_Customers_ColTicket}" Binding="{Binding TicketCode}" Width="150">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock"><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Margin" Value="10,0"/><Setter Property="Foreground" Value="{StaticResource PrimaryButtonBrush}"/></Style>
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
-                                    <DataGridTextColumn Header="Khách Hàng" Binding="{Binding Customer.FullName}" Width="160"/>
-                                    <DataGridTextColumn Header="Biển Số" Binding="{Binding RegisteredLicensePlate}" Width="120"/>
-                                    <DataGridTextColumn Header="Tháng ĐK" Binding="{Binding DurationMonths}" Width="80"/>
-                                    <DataGridTextColumn Header="Tiền Vé" Binding="{Binding MonthlyPrice, StringFormat={}{0:N0} đ}" Width="110"/>
-                                    <DataGridTextColumn Header="Hạn Dùng" Binding="{Binding EndDate, StringFormat={}{0:dd/MM/yyyy}}" Width="110"/>
-                                    <DataGridTextColumn Header="Ngày Đăng Ký" Binding="{Binding CreatedAt, StringFormat={}{0:dd/MM/yyyy}}" Width="110"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Common_Customer}" Binding="{Binding Customer.FullName}" Width="160"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Common_PlateShort}" Binding="{Binding RegisteredLicensePlate}" Width="120"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Customers_ColMonths}" Binding="{Binding DurationMonths}" Width="80"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Customers_ColFee}" Binding="{Binding MonthlyPrice, StringFormat={}{0:N0} đ}" Width="110"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Customers_ColExpiry}" Binding="{Binding EndDate, StringFormat={}{0:dd/MM/yyyy}}" Width="110"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Customers_ColRegisteredAt}" Binding="{Binding CreatedAt, StringFormat={}{0:dd/MM/yyyy}}" Width="110"/>
 
                                     <!-- Trạng thái thẻ -->
-                                    <DataGridTemplateColumn Header="Trạng Thái Thẻ" Width="135">
+                                    <DataGridTemplateColumn Header="{DynamicResource Str_Customers_ColCardStatus}" Width="135">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Border CornerRadius="3" Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0">
@@ -488,12 +488,12 @@
                                     </DataGridTemplateColumn>
 
                                     <!-- Thao tác trên từng dòng vé -->
-                                    <DataGridTemplateColumn Header="Thao Tác" Width="150">
+                                    <DataGridTemplateColumn Header="{DynamicResource Str_Common_Actions}" Width="150">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                    <Button Content="Hủy vé"
-                                                            ToolTip="Hủy vé tháng này (giữ lại lịch sử cước phí để đối soát)"
+                                                    <Button Content="{DynamicResource Str_Customers_CancelPass}"
+                                                            ToolTip="{DynamicResource Str_Customers_CancelPassTip}"
                                                             Command="{Binding DataContext.CancelTicketCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                             CommandParameter="{Binding}"
                                                             Padding="6,2" Height="26" Margin="0,0,6,0"
@@ -513,20 +513,20 @@
                                                             FontSize="11" FontWeight="SemiBold" Cursor="Hand">
                                                         <Button.Style>
                                                             <Style TargetType="Button">
-                                                                <Setter Property="Content" Value="Khóa"/>
+                                                                <Setter Property="Content" Value="{DynamicResource Str_Customers_Lock}"/>
                                                                 <Setter Property="Background" Value="#FEF3C7"/>
                                                                 <Setter Property="Foreground" Value="#D97706"/>
                                                                 <Setter Property="BorderBrush" Value="#FCD34D"/>
                                                                 <Setter Property="BorderThickness" Value="1"/>
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding Status}" Value="Suspended">
-                                                                        <Setter Property="Content" Value="Mở"/>
+                                                                        <Setter Property="Content" Value="{DynamicResource Str_Customers_Unlock}"/>
                                                                         <Setter Property="Background" Value="#DCFCE7"/>
                                                                         <Setter Property="Foreground" Value="#15803D"/>
                                                                         <Setter Property="BorderBrush" Value="#86EFAC"/>
                                                                     </DataTrigger>
                                                                     <DataTrigger Binding="{Binding Status}" Value="Cancelled">
-                                                                        <Setter Property="Content" Value="Mở lại"/>
+                                                                        <Setter Property="Content" Value="{DynamicResource Str_Customers_Reopen}"/>
                                                                         <Setter Property="Background" Value="#DCFCE7"/>
                                                                         <Setter Property="Foreground" Value="#15803D"/>
                                                                         <Setter Property="BorderBrush" Value="#86EFAC"/>
@@ -551,7 +551,7 @@
                 </TabItem>
 
                 <!-- TAB 4: DANH SÁCH CẤM (BLACKLIST) -->
-                <TabItem Header="Danh Sách Cấm" FontSize="13" FontWeight="Bold" Foreground="#DC2626">
+                <TabItem Header="{DynamicResource Str_Customers_TabBlacklist}" FontSize="13" FontWeight="Bold" Foreground="#DC2626">
                     <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="20" Margin="0,16,0,0">
                         <StackPanel>
                             <Grid Margin="0,0,0,14">
@@ -560,13 +560,13 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="⛔ DANH SÁCH PHƯƠNG TIỆN BỊ CẤM VÀO BÃI" FontSize="13.5" FontWeight="Bold" Foreground="#DC2626" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{DynamicResource Str_Customers_BlacklistTitle}" FontSize="13.5" FontWeight="Bold" Foreground="#DC2626" VerticalAlignment="Center"/>
                                     <Border Background="#FEE2E2" CornerRadius="10" Padding="8,2" Margin="10,0,0,0">
-                                        <TextBlock Text="{Binding BlacklistedCount, StringFormat='{}{0} xe đang bị cấm'}" FontSize="11" FontWeight="Bold" Foreground="#B91C1C"/>
+                                        <TextBlock FontSize="11" FontWeight="Bold" Foreground="#B91C1C"><Run Text="{Binding BlacklistedCount, Mode=OneWay}"/><Run Text="{DynamicResource Str_Customers_BannedCountSuffix}"/></TextBlock>
                                     </Border>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                    <Button Content="+ Thêm Vào Danh Sách Cấm" Command="{Binding AddBlacklistCommand}" Padding="12,6" Background="#EF4444" Foreground="White" FontWeight="Bold" BorderThickness="0" Cursor="Hand">
+                                    <Button Content="{DynamicResource Str_Customers_AddToBlacklist}" Command="{Binding AddBlacklistCommand}" Padding="12,6" Background="#EF4444" Foreground="White" FontWeight="Bold" BorderThickness="0" Cursor="Hand">
                                         <Button.Resources>
                                             <Style TargetType="Border">
                                                 <Setter Property="CornerRadius" Value="4"/>
@@ -585,7 +585,7 @@
                                     </Grid.ColumnDefinitions>
                                     <Border Grid.Column="0" Background="White" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Height="34">
                                         <Grid>
-                                            <TextBlock Text="🔍 Tìm theo biển số, lý do, chủ xe..." VerticalAlignment="Center" Margin="10,0" Foreground="{StaticResource TextDimBrush}" IsHitTestVisible="False">
+                                            <TextBlock Text="{DynamicResource Str_Customers_BlacklistSearch}" VerticalAlignment="Center" Margin="10,0" Foreground="{StaticResource TextDimBrush}" IsHitTestVisible="False">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="Visibility" Value="Collapsed"/>
@@ -625,7 +625,7 @@
 
                                 <DataGrid.Columns>
                                     <!-- Biển số xe -->
-                                    <DataGridTextColumn Header="Biển Số Xe" Binding="{Binding LicensePlate}" Width="130">
+                                    <DataGridTextColumn Header="{DynamicResource Str_Common_Plate}" Binding="{Binding LicensePlate}" Width="130">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="VerticalAlignment" Value="Center"/>
@@ -638,7 +638,7 @@
                                     </DataGridTextColumn>
 
                                     <!-- Lý do cấm -->
-                                    <DataGridTextColumn Header="Lý Do Bị Cấm" Binding="{Binding Reason}" Width="250">
+                                    <DataGridTextColumn Header="{DynamicResource Str_Customers_ColBanReason}" Binding="{Binding Reason}" Width="250">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="VerticalAlignment" Value="Center"/>
@@ -650,7 +650,7 @@
                                     </DataGridTextColumn>
 
                                     <!-- Chủ xe liên quan -->
-                                    <DataGridTextColumn Header="Chủ Xe (Nếu Có)" Binding="{Binding Customer.FullName, TargetNullValue='-- Chưa xác định --'}" Width="160">
+                                    <DataGridTextColumn Header="{DynamicResource Str_Customers_ColOwnerOptional}" Binding="{Binding Customer.FullName, TargetNullValue='—'}" Width="160">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="VerticalAlignment" Value="Center"/>
@@ -661,7 +661,7 @@
                                     </DataGridTextColumn>
 
                                     <!-- Thời gian lập lệnh cấm -->
-                                    <DataGridTextColumn Header="Thời Điểm Cấm" Binding="{Binding CreatedAt, StringFormat={}{0:dd/MM/yyyy HH:mm}}" Width="140">
+                                    <DataGridTextColumn Header="{DynamicResource Str_Customers_ColBannedAt}" Binding="{Binding CreatedAt, StringFormat={}{0:dd/MM/yyyy HH:mm}}" Width="140">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="VerticalAlignment" Value="Center"/>
@@ -672,7 +672,7 @@
                                     </DataGridTextColumn>
 
                                     <!-- Ghi chú chi tiết -->
-                                    <DataGridTextColumn Header="Ghi Chú" Binding="{Binding Notes, TargetNullValue='--'}" Width="*">
+                                    <DataGridTextColumn Header="{DynamicResource Str_Common_Notes}" Binding="{Binding Notes, TargetNullValue='--'}" Width="*">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="VerticalAlignment" Value="Center"/>
@@ -684,7 +684,7 @@
                                     </DataGridTextColumn>
 
                                     <!-- Trạng thái cấm -->
-                                    <DataGridTemplateColumn Header="Trạng Thái" Width="130">
+                                    <DataGridTemplateColumn Header="{DynamicResource Str_Common_Status}" Width="130">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Border CornerRadius="3" Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0">
@@ -701,11 +701,11 @@
                                                     <TextBlock FontSize="11" FontWeight="Bold">
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
-                                                                <Setter Property="Text" Value="⛔ Đang cấm"/>
+                                                                <Setter Property="Text" Value="{DynamicResource Str_Customers_Banned}"/>
                                                                 <Setter Property="Foreground" Value="#DC2626"/>
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding IsActive}" Value="False">
-                                                                        <Setter Property="Text" Value="✔ Đã gỡ cấm"/>
+                                                                        <Setter Property="Text" Value="{DynamicResource Str_Customers_Unbanned}"/>
                                                                         <Setter Property="Foreground" Value="#6B7280"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
@@ -718,7 +718,7 @@
                                     </DataGridTemplateColumn>
 
                                     <!-- Cột Thao Tác (Gỡ cấm / Cấm lại & Xóa) -->
-                                    <DataGridTemplateColumn Header="Thao Tác" Width="160">
+                                    <DataGridTemplateColumn Header="{DynamicResource Str_Common_Actions}" Width="160">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -728,14 +728,14 @@
                                                             FontSize="11" FontWeight="SemiBold" Cursor="Hand">
                                                         <Button.Style>
                                                             <Style TargetType="Button">
-                                                                <Setter Property="Content" Value="Gỡ cấm"/>
+                                                                <Setter Property="Content" Value="{DynamicResource Str_Customers_Unban}"/>
                                                                 <Setter Property="Background" Value="#DCFCE7"/>
                                                                 <Setter Property="Foreground" Value="#15803D"/>
                                                                 <Setter Property="BorderBrush" Value="#86EFAC"/>
                                                                 <Setter Property="BorderThickness" Value="1"/>
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding IsActive}" Value="False">
-                                                                        <Setter Property="Content" Value="Cấm lại"/>
+                                                                        <Setter Property="Content" Value="{DynamicResource Str_Customers_Reban}"/>
                                                                         <Setter Property="Background" Value="#FEE2E2"/>
                                                                         <Setter Property="Foreground" Value="#B91C1C"/>
                                                                         <Setter Property="BorderBrush" Value="#FCA5A5"/>
@@ -750,8 +750,8 @@
                                                         </Button.Resources>
                                                     </Button>
 
-                                                    <Button Content="Xóa"
-                                                            ToolTip="Xóa hoàn toàn khỏi danh sách đen"
+                                                    <Button Content="{DynamicResource Str_Common_Delete}"
+                                                            ToolTip="{DynamicResource Str_Customers_RemoveBlacklistTip}"
                                                             Command="{Binding DataContext.DeleteBlacklistCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                             CommandParameter="{Binding}"
                                                             Padding="6,2" Height="26"

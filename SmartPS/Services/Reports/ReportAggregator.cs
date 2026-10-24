@@ -5,7 +5,7 @@ using SmartPS.Models.Shifts;
 namespace SmartPS.Services.Reports;
 
 /// <summary>
-/// Pure metric rules over the small aggregate sets that PostgreSQL returns. SQL only filters and groups;
+/// Pure metric rules over the small aggregate sets that SQL Server returns. SQL only filters and groups;
 /// Vietnam day/hour bucketing, peak hour, occupancy and comparisons happen here (spec N2).
 /// </summary>
 public static class ReportAggregator

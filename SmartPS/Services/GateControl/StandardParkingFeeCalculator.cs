@@ -1,4 +1,5 @@
 using SmartPS.Models.Parking;
+using SmartPS.Services.Localization;
 
 namespace SmartPS.Services.GateControl;
 
@@ -17,9 +18,9 @@ public class StandardParkingFeeCalculator : IParkingFeeCalculator
         int minutes = duration.Minutes;
         
         string durationStr = "";
-        if (days > 0) durationStr += $"{days} ngày ";
-        if (hours > 0) durationStr += $"{hours} giờ ";
-        if (minutes > 0 || durationStr == "") durationStr += $"{minutes} phút";
+        if (days > 0) durationStr += AppText.Get("Str_Fee_Days", days);
+        if (hours > 0) durationStr += AppText.Get("Str_Fee_Hours", hours);
+        if (minutes > 0 || durationStr == "") durationStr += AppText.Get("Str_Fee_Minutes", minutes);
 
         // 1. Vé tháng
         if (session.IsMonthlyPass)
@@ -30,8 +31,8 @@ public class StandardParkingFeeCalculator : IParkingFeeCalculator
                 RawFee = 0,
                 TotalFee = 0,
                 IsMonthlyTicket = true,
-                Message = "Xe vé tháng được miễn cước lượt.",
-                FeeDetails = $"Thời gian đỗ: {durationStr.Trim()}. Miễn cước phí (Vé tháng)."
+                Message = AppText.Get("Msg_Fee_MonthlyFree"),
+                FeeDetails = AppText.Get("Str_Fee_MonthlyDetail", durationStr.Trim())
             };
         }
 
@@ -45,7 +46,7 @@ public class StandardParkingFeeCalculator : IParkingFeeCalculator
         if (days > 0)
         {
             fee += days * dailyPrice;
-            feeDetailCalc += $"{days} ngày ({dailyPrice:N0}đ/ngày)";
+            feeDetailCalc += AppText.Get("Str_Fee_DaysPart", days, dailyPrice);
             
             double remainingHours = duration.TotalHours - (days * 24);
             if (remainingHours > 0)
@@ -53,12 +54,12 @@ public class StandardParkingFeeCalculator : IParkingFeeCalculator
                 if (remainingHours <= 4)
                 {
                     fee += block4hPrice;
-                    feeDetailCalc += $" + vượt {remainingHours:F1}h ({block4hPrice:N0}đ)";
+                    feeDetailCalc += AppText.Get("Str_Fee_ExtraBlock", remainingHours, block4hPrice);
                 }
                 else
                 {
                     fee += dailyPrice;
-                    feeDetailCalc += $" + vượt {remainingHours:F1}h ({dailyPrice:N0}đ)";
+                    feeDetailCalc += AppText.Get("Str_Fee_ExtraDay", remainingHours, dailyPrice);
                 }
             }
         }
@@ -67,12 +68,12 @@ public class StandardParkingFeeCalculator : IParkingFeeCalculator
             if (duration.TotalHours <= 4)
             {
                 fee = block4hPrice;
-                feeDetailCalc = $"Khung 4h ({block4hPrice:N0}đ)";
+                feeDetailCalc = AppText.Get("Str_Fee_Block4h", block4hPrice);
             }
             else
             {
                 fee = dailyPrice;
-                feeDetailCalc = $"Gói 1 ngày ({dailyPrice:N0}đ)";
+                feeDetailCalc = AppText.Get("Str_Fee_OneDay", dailyPrice);
             }
         }
 
@@ -82,8 +83,8 @@ public class StandardParkingFeeCalculator : IParkingFeeCalculator
             RawFee = fee,
             TotalFee = Math.Max(0, Math.Round(fee, 0)),
             IsMonthlyTicket = false,
-            Message = "Tính cước thành công.",
-            FeeDetails = $"Thời gian đỗ: {durationStr.Trim()}. Cước phí: {feeDetailCalc} = {fee:N0}đ."
+            Message = AppText.Get("Msg_Fee_Calculated"),
+            FeeDetails = AppText.Get("Str_Fee_Detail", durationStr.Trim(), feeDetailCalc, fee)
         };
     }
 }
