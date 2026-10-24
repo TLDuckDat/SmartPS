@@ -286,8 +286,8 @@
                                          IsEnabled="{Binding CanInteract}"/>
                             </StackPanel>
 
-                            <!-- Password Input (Chiều cao chuẩn 42px, có nút Ẩn/Hiện mật khẩu) -->
-                            <StackPanel Grid.Row="2" Margin="0,0,0,22">
+                            <!-- Password Input (Chiều cao chuẩn 42px, có nút Ẩn/Hiện mật khẩu) + Ghi nhớ mật khẩu -->
+                            <StackPanel Grid.Row="2" Margin="0,0,0,20">
                                 <TextBlock Text="{DynamicResource Str_Login_PasswordLabel}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
                                 <common:RevealPasswordBox x:Name="PasswordInput"
                                                           Password="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -298,6 +298,16 @@
                                                           InputFocusedBorderBrush="{StaticResource InputFocusedBorderBrush}"
                                                           InputForeground="{StaticResource TextPrimaryBrush}"
                                                           IsEnabled="{Binding CanInteract}"/>
+                                <CheckBox x:Name="RememberPasswordCheck"
+                                          Content="{DynamicResource Str_Login_RememberPassword}"
+                                          ToolTip="{DynamicResource Str_Login_RememberPasswordHint}"
+                                          IsChecked="{Binding RememberPassword}"
+                                          IsEnabled="{Binding CanInteract}"
+                                          FontSize="12.5"
+                                          Foreground="{StaticResource TextSecondaryBrush}"
+                                          VerticalContentAlignment="Center"
+                                          Cursor="Hand"
+                                          Margin="0,12,0,0"/>
                             </StackPanel>
 
                             <!-- Loading Progress Bar -->

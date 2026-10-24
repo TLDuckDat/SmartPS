@@ -19,7 +19,11 @@ public sealed class FakeAuthService : IAuthService
 
     public bool IsLoggedIn => _currentUser.User is not null;
 
-    public Task<User?> LoginAsync(LoginRequest request) => throw new NotImplementedException();
+    /// <summary>Kết quả đăng nhập giả lập; null thì LoginAsync ném NotImplementedException như trước.</summary>
+    public Func<LoginRequest, User?>? LoginHandler { get; set; }
+
+    public Task<User?> LoginAsync(LoginRequest request)
+        => LoginHandler is { } handler ? Task.FromResult(handler(request)) : throw new NotImplementedException();
     public Task<bool> RegisterAsync(RegisterRequest request) => throw new NotImplementedException();
     public Task<List<Role>> GetRolesAsync() => throw new NotImplementedException();
     public Task<List<User>> GetUsersAsync() => throw new NotImplementedException();

@@ -13,8 +13,17 @@ public class LoginViewModel : ViewModelBase
     private readonly IAuthService _authService;
     private readonly IDialogService _dialogService;
     private readonly ILocalizationService _localizationService;
+    private readonly ICredentialStore _credentialStore;
 
     public string CurrentLanguage => _localizationService.CurrentLanguage;
+
+    // Ghi nhớ tên đăng nhập + mật khẩu (mã hoá DPAPI) cho lần mở sau trên máy này
+    private bool _rememberPassword;
+    public bool RememberPassword
+    {
+        get => _rememberPassword;
+        set => SetProperty(ref _rememberPassword, value);
+    }
 
     private string _username = string.Empty;
     public string Username
@@ -83,11 +92,24 @@ public class LoginViewModel : ViewModelBase
     public event Action<User>? LoginSucceeded;
     public event Action? RequestClose;
 
-    public LoginViewModel(IAuthService authService, IDialogService dialogService, ILocalizationService localizationService)
+    public LoginViewModel(
+        IAuthService authService,
+        IDialogService dialogService,
+        ILocalizationService localizationService,
+        ICredentialStore credentialStore)
     {
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
+        _credentialStore = credentialStore ?? throw new ArgumentNullException(nameof(credentialStore));
+
+        var saved = _credentialStore.Load();
+        if (saved is not null)
+        {
+            Username = saved.Username;
+            Password = saved.Password;
+            RememberPassword = true;
+        }
 
         _localizationService.LanguageChanged += () => OnPropertyChanged(nameof(CurrentLanguage));
 
@@ -184,6 +206,7 @@ public class LoginViewModel : ViewModelBase
             if (user is not null)
             {
                 IsDatabaseConnected = true;
+                RememberOrForget(password);
                 _dialogService.ShowSuccess(
                     _localizationService.GetString("Msg_Login_Success", user.FullName),
                     _localizationService.GetString("Str_Dialog_Title_Success"));
@@ -221,6 +244,26 @@ public class LoginViewModel : ViewModelBase
         finally
         {
             IsLoading = false;
+        }
+    }
+
+    /// <summary>Chỉ lưu sau khi đăng nhập thành công; bỏ chọn thì xoá thông tin đã lưu. Lỗi ghi tệp không chặn đăng nhập.</summary>
+    private void RememberOrForget(string password)
+    {
+        try
+        {
+            if (RememberPassword)
+            {
+                _credentialStore.Save(Username, password);
+            }
+            else
+            {
+                _credentialStore.Clear();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Login] Could not update remembered credentials: {ex.Message}");
         }
     }
 
