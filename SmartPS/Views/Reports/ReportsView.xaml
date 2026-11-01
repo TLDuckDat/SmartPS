@@ -6,7 +6,6 @@
              xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
              mc:Ignorable="d"
              d:DesignHeight="850" d:DesignWidth="1100">
-
     <UserControl.Resources>
         <!-- Nhãn nhỏ phía trên các ô lọc -->
         <Style x:Key="FilterLabelStyle" TargetType="TextBlock">
@@ -15,7 +14,6 @@
             <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
             <Setter Property="Margin" Value="0,0,0,4"/>
         </Style>
-
         <!-- Thẻ KPI: tiêu đề, giá trị, so sánh kỳ trước, dòng phụ -->
         <DataTemplate x:Key="KpiTileTemplate">
             <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}"
@@ -47,11 +45,9 @@
             </Border>
         </DataTemplate>
     </UserControl.Resources>
-
     <Grid Background="{StaticResource AppBackgroundBrush}">
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel Margin="28,24">
-
                 <!-- 1. Header: tiêu đề, Làm mới, Xuất Excel -->
                 <Border Background="{StaticResource CardBackgroundBrush}" CornerRadius="6" BorderBrush="{StaticResource AppBorderBrush}"
                         BorderThickness="1" Padding="24,16" Margin="0,0,0,14">
@@ -70,17 +66,21 @@
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                             <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding RefreshCommand}" Height="36" Padding="14,0" Margin="0,0,10,0"
                                     Content="{DynamicResource Str_Rpt_Refresh}"/>
-                            <Button Style="{StaticResource PrimaryButtonStyle}" Command="{Binding ExportCommand}" Height="36" Padding="14,0"
-                                    Content="{DynamicResource Str_Rpt_Export}"
-                                    ToolTip="{Binding ExportToolTip}" ToolTipService.ShowOnDisabled="True"/>
+                            <Button Style="{StaticResource PrimaryButtonStyle}" Command="{Binding ExportCommand}" Height="36" Padding="16,0"
+                                    ToolTip="{Binding ExportToolTip}" ToolTipService.ShowOnDisabled="True">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="📄" FontSize="13" Margin="0,0,6,0"/>
+                                    <TextBlock Text="{DynamicResource Str_Rpt_Export}" FontSize="12.5" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </Grid>
                 </Border>
-
                 <!-- 2. Bộ lọc chung -->
                 <Border Background="{StaticResource CardBackgroundBrush}" CornerRadius="6" BorderBrush="{StaticResource AppBorderBrush}"
                         BorderThickness="1" Padding="18,14,18,6" Margin="0,0,0,14">
                     <StackPanel>
+                        <!-- Bộ lọc chung hợp nhất trong 1 WrapPanel: ưu tiên nằm ngang và tự động co giãn/xuống dòng theo độ rộng màn hình -->
                         <WrapPanel Orientation="Horizontal">
                             <StackPanel Margin="0,0,14,8">
                                 <TextBlock Text="{DynamicResource Str_Rpt_Filter_Period}" Style="{StaticResource FilterLabelStyle}"/>
@@ -106,6 +106,18 @@
                                 <TextBlock Text="{DynamicResource Str_Rpt_Filter_Zone}" Style="{StaticResource FilterLabelStyle}"/>
                                 <ComboBox ItemsSource="{Binding ZoneOptions}" SelectedItem="{Binding SelectedZone}" DisplayMemberPath="Label" Width="170" Height="30"/>
                             </StackPanel>
+                            <StackPanel Margin="0,0,14,8">
+                                <TextBlock Text="{DynamicResource Str_Rpt_Filter_Staff}" Style="{StaticResource FilterLabelStyle}"/>
+                                <ComboBox ItemsSource="{Binding StaffOptions}" SelectedItem="{Binding SelectedStaff}" DisplayMemberPath="Label" Width="160" Height="30"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,14,8">
+                                <TextBlock Text="{DynamicResource Str_Rpt_Filter_Shift}" Style="{StaticResource FilterLabelStyle}"/>
+                                <ComboBox ItemsSource="{Binding ShiftOptions}" SelectedItem="{Binding SelectedShift}" DisplayMemberPath="Label" Width="180" Height="30"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,14,8">
+                                <TextBlock Text="{DynamicResource Str_Rpt_Filter_PaymentMethod}" Style="{StaticResource FilterLabelStyle}"/>
+                                <ComboBox ItemsSource="{Binding PaymentMethodOptions}" SelectedItem="{Binding SelectedPaymentMethod}" DisplayMemberPath="Label" Width="150" Height="30"/>
+                            </StackPanel>
                         </WrapPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                             <TextBlock Text="{Binding RangeDisplay}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
@@ -113,14 +125,12 @@
                         </StackPanel>
                     </StackPanel>
                 </Border>
-
                 <!-- 3. Thông báo lỗi (địa phương hóa) -->
                 <Border Background="{StaticResource ErrorBackgroundBrush}" BorderBrush="{StaticResource ErrorBorderBrush}" BorderThickness="1"
                         CornerRadius="6" Padding="14,10" Margin="0,0,0,14"
                         Visibility="{Binding HasError, Converter={StaticResource BoolToVisConverter}}">
                     <TextBlock Text="{Binding ErrorMessage}" FontSize="12.5" Foreground="{StaticResource ErrorTextBrush}" TextWrapping="Wrap"/>
                 </Border>
-
                 <!-- 4. Thẻ KPI (14 thẻ, so sánh kỳ trước) -->
                 <ItemsControl ItemsSource="{Binding KpiTiles}" ItemTemplate="{StaticResource KpiTileTemplate}" Margin="0,0,-10,4">
                     <ItemsControl.ItemsPanel>
@@ -129,7 +139,6 @@
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                 </ItemsControl>
-
                 <!-- 5. Sáu biểu đồ (lưới 2 x 3) -->
                 <Grid Margin="0,4,0,6">
                     <Grid.ColumnDefinitions>
@@ -209,7 +218,6 @@
                         </Grid>
                     </Border>
                 </Grid>
-
                 <!-- 6. Bảng chi tiết (4 tab) -->
                 <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1"
                         CornerRadius="6" Padding="18,12,18,14">
@@ -376,7 +384,6 @@
                 </Border>
             </StackPanel>
         </ScrollViewer>
-
         <!-- 7. Lớp phủ đang tải -->
         <Border Background="#99FFFFFF" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisConverter}}">
             <TextBlock Text="{DynamicResource Str_Rpt_Loading}" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextBrandBrush}"

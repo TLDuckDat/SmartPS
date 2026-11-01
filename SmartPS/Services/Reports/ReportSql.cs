@@ -18,6 +18,9 @@ internal static class ReportSql
         "s.\"Status\" <> @cancelled " +
         "AND (@vt IS NULL OR s.\"VehicleTypeId\" = @vt) " +
         "AND (@zone IS NULL OR sl.\"ZoneId\" = @zone) " +
+        "AND (@staff IS NULL OR s.\"CreatedByUserId\" = @staff) " +
+        "AND (@method IS NULL OR s.\"PaymentMethod\" = @method) " +
+        "AND (@shift IS NULL OR EXISTS (SELECT 1 FROM \"Payments\" p_sh WHERE p_sh.\"SessionId\" = s.\"SessionId\" AND p_sh.\"ShiftId\" = @shift)) " +
         "AND (@grp = 0 " +
         "OR (@grp = 1 AND s.\"CustomerType\" = @res) " +
         "OR (@grp = 2 AND s.\"IsMonthlyPass\" = 1 AND s.\"CustomerType\" <> @res) " +
@@ -70,6 +73,9 @@ internal static class ReportSql
         "LEFT JOIN \"ParkingSlots\" sl ON sl.\"SlotId\" = s.\"SlotId\" " +
         "WHERE f.\"CreatedAt\" >= @from AND f.\"CreatedAt\" < @to " +
         "AND f.\"Type\" IN (@fee, @refund, @adjust) " +
+        "AND (@staff IS NULL OR f.\"CreatedByUserId\" = @staff) " +
+        "AND (@shift IS NULL OR f.\"ShiftId\" = @shift) " +
+        "AND (@method IS NULL OR f.\"PaymentMethod\" = @method) " +
         "AND (@sessionFiltered = 0 OR (s.\"SessionId\" IS NOT NULL AND " + SessionFilter + ")) ";
 
     // Ngày theo giờ Việt Nam của thời điểm UTC

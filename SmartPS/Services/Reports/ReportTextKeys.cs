@@ -16,6 +16,9 @@ public static class ReportTextKeys
     public const string FilterVehicleType = "Str_Rpt_Filter_VehicleType";
     public const string FilterCustomerGroup = "Str_Rpt_Filter_CustomerGroup";
     public const string FilterZone = "Str_Rpt_Filter_Zone";
+    public const string FilterStaff = "Str_Rpt_Filter_Staff";
+    public const string FilterShift = "Str_Rpt_Filter_Shift";
+    public const string FilterPaymentMethod = "Str_Rpt_Filter_PaymentMethod";
     public const string FilterAll = "Str_Rpt_Filter_All";
     public const string PresetToday = "Str_Rpt_Preset_Today";
     public const string PresetYesterday = "Str_Rpt_Preset_Yesterday";
@@ -154,6 +157,9 @@ public static class ReportTextKeys
         FilterVehicleType,
         FilterCustomerGroup,
         FilterZone,
+        FilterStaff,
+        FilterShift,
+        FilterPaymentMethod,
         FilterAll,
         PresetToday,
         PresetYesterday,

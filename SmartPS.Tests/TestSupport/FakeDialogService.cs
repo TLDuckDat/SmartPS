@@ -16,7 +16,12 @@ public sealed class FakeDialogService : IDialogService
     public void ShowError(string message, string? title = null) => Errors.Add(message);
 
     public bool ShowConfirm(string message, string? title = null, string? confirmText = null, string? cancelText = null) => true;
-    public bool ShowYesNo(string message, string? title = null, string? yesText = null, string? noText = null) => true;
+    public bool ShowYesNo(string message, string? title = null, string? yesText = null, string? noText = null)
+    {
+        var firstLine = message.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? message;
+        Successes.Add(firstLine);
+        return true;
+    }
 
     public Task<bool> ShowEditUserDialogAsync(User user, IEnumerable<Role> availableRoles) => Task.FromResult(false);
 

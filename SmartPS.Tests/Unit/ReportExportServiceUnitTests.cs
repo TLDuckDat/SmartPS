@@ -196,10 +196,11 @@ public sealed class ReportExportServiceUnitTests : IDisposable
     }
 
     [Theory]
-    [InlineData("report.csv")]
+    [InlineData("report.txt")]
     [InlineData("report")]
     [InlineData("report.xls")]
-    public async Task Non_xlsx_path_is_rejected(string name)
+    [InlineData("report.doc")]
+    public async Task Unsupported_extension_is_rejected(string name)
     {
         var h = Create(TestUsers.Manager());
 
@@ -207,6 +208,33 @@ public sealed class ReportExportServiceUnitTests : IDisposable
 
         Assert.False(File.Exists(PathFor(name)));
         Assert.DoesNotContain(h.Audit.Entries, e => e.Action == AuditActions.ReportExport && e.Outcome == AuditOutcome.Success);
+    }
+
+    [Fact]
+    public async Task Export_csv_writes_valid_csv_file()
+    {
+        var h = Create(TestUsers.Manager());
+        var path = PathFor("report.csv");
+
+        var result = await h.Service.ExportAsync(Filter, path);
+
+        Assert.Equal(ReportExportStatus.Success, result.Status);
+        Assert.True(File.Exists(path));
+        var csvContent = await File.ReadAllTextAsync(path);
+        Assert.NotEmpty(csvContent);
+    }
+
+    [Fact]
+    public async Task Export_pdf_writes_valid_pdf_file()
+    {
+        var h = Create(TestUsers.Manager());
+        var path = PathFor("report.pdf");
+
+        var result = await h.Service.ExportAsync(Filter, path);
+
+        Assert.Equal(ReportExportStatus.Success, result.Status);
+        Assert.True(File.Exists(path));
+        Assert.True(new FileInfo(path).Length > 0);
     }
 
     [Theory]

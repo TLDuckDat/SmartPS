@@ -90,11 +90,21 @@ public partial class App : Application
 
         // Cấu hình thanh toán điện tử (VietQR / PayOS)
         services.Configure<PayOSPaymentGatewayOptions>(configuration.GetSection("PayOS"));
-        services.AddHttpClient("PayOS");
 
-        // Kiểm tra PayOS có đủ 3 key hay không
         var payOsSection = configuration.GetSection("PayOS");
+        var timeoutSeconds = 15;
+        if (int.TryParse(payOsSection["TimeoutSeconds"], out var t) && t > 0)
+        {
+            timeoutSeconds = t;
+        }
 
+        services.AddHttpClient("PayOS", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
+        });
+
+        // Kiểm tra cấu hình chọn PayOS thật hay Mock (UseMock)
+        var useMockConfig = payOsSection["UseMock"];
         var clientId = payOsSection["ClientId"];
         var apiKey = payOsSection["ApiKey"];
         var checksumKey = payOsSection["ChecksumKey"];
@@ -104,18 +114,30 @@ public partial class App : Application
             !string.IsNullOrWhiteSpace(apiKey) &&
             !string.IsNullOrWhiteSpace(checksumKey);
 
-        if (hasPayOsKeys)
+        bool useMock;
+        if (!string.IsNullOrWhiteSpace(useMockConfig) && bool.TryParse(useMockConfig, out var parsedUseMock))
         {
-            // Có Key → dùng PayOS thật
-            services.AddSingleton<IPaymentGateway, PayOSPaymentGateway>();
+            useMock = parsedUseMock;
         }
         else
         {
-            // Không có Key → dùng Demo
-            services.AddSingleton<IPaymentGateway, MockPaymentGateway>();
+            useMock = !hasPayOsKeys;
+        }
 
+        if (useMock)
+        {
+            services.AddSingleton<IPaymentGateway, MockPaymentGateway>();
             System.Diagnostics.Debug.WriteLine(
-                "[SmartPS Payment] Không có PayOS Key → đang sử dụng DEMO/MOCK.");
+                "[SmartPS Payment] Đang sử dụng DEMO/MOCK theo cấu hình (UseMock = true).");
+        }
+        else
+        {
+            if (!hasPayOsKeys)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    "[SmartPS Payment Cảnh báo] Đang cấu hình dùng PayOS thật (UseMock = false) nhưng thiếu key (ClientId/ApiKey/ChecksumKey).");
+            }
+            services.AddSingleton<IPaymentGateway, PayOSPaymentGateway>();
         }
 
         services.AddSingleton<IPaymentService, PaymentService>();

@@ -21,6 +21,14 @@ public interface IPaymentService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Thu ngân xác nhận đã nhận tiền (chuyển khoản VietQR thành công) trực tiếp từ bốt trực.
+    /// </summary>
+    Task<PaymentStatusResult> ConfirmPaymentReceivedAsync(
+        int paymentId,
+        int actorUserId = 0,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Xác nhận hoàn tiền thủ công cho một giao dịch đã thanh toán.
     /// Việc chuyển tiền thực tế phải được thực hiện qua quy trình hoàn tiền của nhà cung cấp.
     /// </summary>

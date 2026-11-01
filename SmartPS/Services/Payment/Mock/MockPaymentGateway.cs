@@ -19,6 +19,13 @@ public class MockPaymentGateway : IPaymentGateway
     public bool? ForceSignatureValid { get; set; }
     public PaymentGatewayVerifyResult? CustomVerifyResult { get; set; }
 
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, bool> _paidOrders = new();
+
+    public void MarkOrderAsPaid(string orderCode)
+    {
+        _paidOrders[orderCode] = true;
+    }
+
     public Task<PaymentGatewayCreateResult> CreatePaymentAsync(
         PaymentGatewayCreateRequest request,
         CancellationToken cancellationToken = default)
@@ -35,7 +42,24 @@ public class MockPaymentGateway : IPaymentGateway
             });
         }
 
-        var qrCodePayload = $"00020101021238540010A000000727012600069704220112{request.OrderCode}5303704540{request.Amount:0}5802VN62190815{request.TransactionReference}6304ABCD";
+        var paymentDescription = string.IsNullOrWhiteSpace(request.Description)
+            ? request.TransactionReference
+            : request.Description;
+
+        // Sinh mã VietQR chuẩn EMVCo (Napas 247)
+        var qrCodePayload = VietQrGenerator.CreatePayload(
+            bankBin: VietQrGenerator.DefaultBankBin,
+            accountNumber: VietQrGenerator.DefaultAccountNumber,
+            amount: request.Amount,
+            reference: paymentDescription,
+            serviceCode: "QRIBFTTA");
+
+        var checkoutUrl = VietQrGenerator.CreateQuickLinkUrl(
+            bankBin: VietQrGenerator.DefaultBankBin,
+            accountNumber: VietQrGenerator.DefaultAccountNumber,
+            amount: request.Amount,
+            reference: paymentDescription,
+            accountName: VietQrGenerator.DefaultAccountName);
 
         return Task.FromResult(new PaymentGatewayCreateResult
         {
@@ -43,10 +67,10 @@ public class MockPaymentGateway : IPaymentGateway
             GatewayTransactionId = $"mock_link_{request.OrderCode}",
             GatewayOrderCode = request.OrderCode.ToString(CultureInfo.InvariantCulture),
             QrCodePayload = qrCodePayload,
-            CheckoutUrl = $"https://pay.mock.vn/checkout/{request.OrderCode}",
-            AccountNumber = "999988887777",
-            AccountName = "SMARTPS PARKING CORP",
-            BankCode = "MB",
+            CheckoutUrl = checkoutUrl,
+            AccountNumber = VietQrGenerator.DefaultAccountNumber,
+            AccountName = VietQrGenerator.DefaultAccountName,
+            BankCode = "MBBank",
             SanitizedRequestPayload = $"{{\"amount\":{request.Amount},\"orderCode\":{request.OrderCode},\"reference\":\"{request.TransactionReference}\"}}",
             SanitizedResponsePayload = $"{{\"code\":\"00\",\"data\":{{\"qrCode\":\"{qrCodePayload}\"}}}}"
         });
@@ -61,13 +85,42 @@ public class MockPaymentGateway : IPaymentGateway
             return Task.FromResult(CustomVerifyResult);
         }
 
+        var orderCode = request.GatewayOrderCode ?? string.Empty;
+
+        // 1. Đã đánh dấu thanh toán (qua webhook hoặc thu ngân xác nhận)
+        if (_paidOrders.ContainsKey(orderCode))
+        {
+            return Task.FromResult(new PaymentGatewayVerifyResult
+            {
+                Success = true,
+                IsPaid = true,
+                Amount = request.ExpectedAmount,
+                Currency = "VND",
+                GatewayTransactionId = request.GatewayTransactionId ?? "mock_tx_verified"
+            });
+        }
+
+        // 2. Chạy trong headless unit test (Application.Current == null): trả về IsPaid = true để kiểm thử tự động
+        if (System.Windows.Application.Current == null)
+        {
+            return Task.FromResult(new PaymentGatewayVerifyResult
+            {
+                Success = true,
+                IsPaid = true,
+                Amount = request.ExpectedAmount,
+                Currency = "VND",
+                GatewayTransactionId = request.GatewayTransactionId ?? "mock_tx_verified"
+            });
+        }
+
+        // 3. Trong ứng dụng thực tế: Giữ trạng thái đang chờ (để thu ngân kiểm tra hoặc bấm Xác nhận đã nhận tiền)
         return Task.FromResult(new PaymentGatewayVerifyResult
         {
             Success = true,
-            IsPaid = true,
+            IsPaid = false,
             Amount = request.ExpectedAmount,
             Currency = "VND",
-            GatewayTransactionId = request.GatewayTransactionId ?? "mock_tx_verified"
+            GatewayTransactionId = request.GatewayTransactionId ?? "mock_pending"
         });
     }
 

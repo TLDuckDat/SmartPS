@@ -3,14 +3,13 @@ using System.Globalization;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 using SmartPS.Constants;
+using SmartPS.Models.Parking;
 using SmartPS.Models.Reports;
 using SmartPS.Services.Authorization;
 using SmartPS.Services.Dialog;
 using SmartPS.Services.Localization;
 using SmartPS.Services.Reports;
-
 namespace SmartPS.ViewModels.Reports;
-
 public class ReportsViewModel : ViewModelBase
 {
     private static readonly string[] TileKeys =
@@ -20,7 +19,6 @@ public class ReportsViewModel : ViewModelBase
         ReportTextKeys.KpiAvgDuration, ReportTextKeys.KpiPeakHour, ReportTextKeys.KpiAvgOccupancy, ReportTextKeys.KpiPeakOccupancy,
         ReportTextKeys.KpiResidentShare
     };
-
     private readonly IReportService _reportService;
     private readonly IReportExportService _exportService;
     private readonly IPermissionService _permissions;
@@ -28,7 +26,6 @@ public class ReportsViewModel : ViewModelBase
     private readonly IFileDialogService _fileDialogService;
     private readonly ILocalizationService _localization;
     private readonly TimeProvider _timeProvider;
-
     private CancellationTokenSource? _reloadCts;
     private int _loadVersion;
     private bool _suppressReload;
@@ -36,7 +33,6 @@ public class ReportsViewModel : ViewModelBase
     private bool _reloadPending;
     private bool _rangeInvalid;
     private ReportFilterOptions? _options;
-
     private IReadOnlyList<ReportPresetOption> _presets;
     private ReportPresetOption _selectedPreset;
     private DateTime? _customFrom;
@@ -45,14 +41,16 @@ public class ReportsViewModel : ViewModelBase
     private IReadOnlyList<CustomerGroupOption> _customerGroupOptions;
     private CustomerGroupOption _selectedCustomerGroup;
     private LookupOption? _selectedZone;
-
+    private LookupOption? _selectedStaff;
+    private LookupOption? _selectedShift;
+    private IReadOnlyList<PaymentMethodOption> _paymentMethodOptions;
+    private PaymentMethodOption _selectedPaymentMethod;
     private bool _isLoading;
     private bool _isExporting;
     private string? _errorMessage;
     private string _rangeDisplay = string.Empty;
     private string _previousRangeDisplay = string.Empty;
     private ReportResult? _currentResult;
-
     private ISeries[] _revenueSeries = Array.Empty<ISeries>();
     private Axis[] _revenueXAxes = Array.Empty<Axis>();
     private Axis[] _revenueYAxes = Array.Empty<Axis>();
@@ -73,7 +71,6 @@ public class ReportsViewModel : ViewModelBase
     private bool _zoneHasData;
     private ISeries[] _vehicleTypeSeries = Array.Empty<ISeries>();
     private bool _vehicleTypeHasData;
-
     public ReportsViewModel(
         IReportService reportService,
         IReportExportService exportService,
@@ -90,10 +87,8 @@ public class ReportsViewModel : ViewModelBase
         _fileDialogService = fileDialogService ?? throw new ArgumentNullException(nameof(fileDialogService));
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
         _timeProvider = timeProvider ?? TimeProvider.System;
-
         DebounceDelay = TimeSpan.FromMilliseconds(ReportLimits.DebounceMilliseconds);
         DelayAsync = Task.Delay;
-
         _presets = BuildPresets();
         _selectedPreset = _presets.First(p => p.Preset == ReportPeriodPreset.Last7Days);
         _customerGroupOptions = BuildCustomerGroups();
@@ -102,31 +97,30 @@ public class ReportsViewModel : ViewModelBase
         _selectedVehicleType = VehicleTypeOptions[0];
         ZoneOptions.Add(new LookupOption(null, L(ReportTextKeys.FilterAll)));
         _selectedZone = ZoneOptions[0];
-
+        _paymentMethodOptions = BuildPaymentMethods();
+        _selectedPaymentMethod = _paymentMethodOptions[0];
+        StaffOptions.Add(new LookupOption(null, L(ReportTextKeys.FilterAll)));
+        _selectedStaff = StaffOptions[0];
+        ShiftOptions.Add(new LookupOption(null, L(ReportTextKeys.FilterAll)));
+        _selectedShift = ShiftOptions[0];
         foreach (var titleKey in TileKeys)
         {
             KpiTiles.Add(new KpiTileViewModel(titleKey, L(titleKey)));
         }
-
-        RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
+        RefreshCommand = new AsyncRelayCommand(RefreshAsync);
         ExportCommand = new AsyncRelayCommand(ExportAsync, () => CanExport);
-
+        PreviewCommand = ExportCommand;
         _localization.LanguageChanged += OnLanguageChanged;
     }
-
     // ---- filters ---------------------------------------------------------------------------------------------------
-
     public TimeSpan DebounceDelay { get; set; }
-
     /// <summary>Awaited before a debounced reload; replaced by tests so no wall-clock time is involved.</summary>
     public Func<TimeSpan, CancellationToken, Task> DelayAsync { get; set; }
-
     public IReadOnlyList<ReportPresetOption> Presets
     {
         get => _presets;
         private set => SetProperty(ref _presets, value);
     }
-
     public ReportPresetOption SelectedPreset
     {
         get => _selectedPreset;
@@ -136,21 +130,17 @@ public class ReportsViewModel : ViewModelBase
             {
                 return;
             }
-
             var previous = _selectedPreset;
             _selectedPreset = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(IsCustomRange));
-
             if (value.Preset == ReportPeriodPreset.Custom && (_customFrom is null || _customTo is null))
             {
                 PrefillCustomRange(previous.Preset);
             }
-
             ScheduleReload();
         }
     }
-
     public DateTime? CustomFrom
     {
         get => _customFrom;
@@ -162,7 +152,6 @@ public class ReportsViewModel : ViewModelBase
             }
         }
     }
-
     public DateTime? CustomTo
     {
         get => _customTo;
@@ -174,11 +163,8 @@ public class ReportsViewModel : ViewModelBase
             }
         }
     }
-
     public bool IsCustomRange => _selectedPreset.Preset == ReportPeriodPreset.Custom;
-
     public ObservableCollection<LookupOption> VehicleTypeOptions { get; } = new();
-
     public LookupOption? SelectedVehicleType
     {
         get => _selectedVehicleType;
@@ -190,13 +176,11 @@ public class ReportsViewModel : ViewModelBase
             }
         }
     }
-
     public IReadOnlyList<CustomerGroupOption> CustomerGroupOptions
     {
         get => _customerGroupOptions;
         private set => SetProperty(ref _customerGroupOptions, value);
     }
-
     public CustomerGroupOption SelectedCustomerGroup
     {
         get => _selectedCustomerGroup;
@@ -208,9 +192,7 @@ public class ReportsViewModel : ViewModelBase
             }
         }
     }
-
     public ObservableCollection<LookupOption> ZoneOptions { get; } = new();
-
     public LookupOption? SelectedZone
     {
         get => _selectedZone;
@@ -222,9 +204,47 @@ public class ReportsViewModel : ViewModelBase
             }
         }
     }
-
+    public ObservableCollection<LookupOption> StaffOptions { get; } = new();
+    public LookupOption? SelectedStaff
+    {
+        get => _selectedStaff;
+        set
+        {
+            if (SetProperty(ref _selectedStaff, value))
+            {
+                ScheduleReload();
+            }
+        }
+    }
+    public ObservableCollection<LookupOption> ShiftOptions { get; } = new();
+    public LookupOption? SelectedShift
+    {
+        get => _selectedShift;
+        set
+        {
+            if (SetProperty(ref _selectedShift, value))
+            {
+                ScheduleReload();
+            }
+        }
+    }
+    public IReadOnlyList<PaymentMethodOption> PaymentMethodOptions
+    {
+        get => _paymentMethodOptions;
+        private set => SetProperty(ref _paymentMethodOptions, value);
+    }
+    public PaymentMethodOption SelectedPaymentMethod
+    {
+        get => _selectedPaymentMethod;
+        set
+        {
+            if (value is not null && SetProperty(ref _selectedPaymentMethod, value))
+            {
+                ScheduleReload();
+            }
+        }
+    }
     // ---- state -----------------------------------------------------------------------------------------------------
-
     public bool IsLoading
     {
         get => _isLoading;
@@ -234,10 +254,10 @@ public class ReportsViewModel : ViewModelBase
             {
                 OnPropertyChanged(nameof(CanExport));
                 ExportCommand?.RaiseCanExecuteChanged();
+                PreviewCommand?.RaiseCanExecuteChanged();
             }
         }
     }
-
     public bool IsExporting
     {
         get => _isExporting;
@@ -247,10 +267,10 @@ public class ReportsViewModel : ViewModelBase
             {
                 OnPropertyChanged(nameof(CanExport));
                 ExportCommand?.RaiseCanExecuteChanged();
+                PreviewCommand?.RaiseCanExecuteChanged();
             }
         }
     }
-
     public string? ErrorMessage
     {
         get => _errorMessage;
@@ -262,21 +282,17 @@ public class ReportsViewModel : ViewModelBase
             }
         }
     }
-
     public bool HasError => !string.IsNullOrEmpty(_errorMessage);
-
     public string RangeDisplay
     {
         get => _rangeDisplay;
         private set => SetProperty(ref _rangeDisplay, value);
     }
-
     public string PreviousRangeDisplay
     {
         get => _previousRangeDisplay;
         private set => SetProperty(ref _previousRangeDisplay, value);
     }
-
     public ReportResult? CurrentResult
     {
         get => _currentResult;
@@ -287,88 +303,103 @@ public class ReportsViewModel : ViewModelBase
                 OnPropertyChanged(nameof(CanExport));
                 OnPropertyChanged(nameof(HasResult));
                 ExportCommand?.RaiseCanExecuteChanged();
+                PreviewCommand?.RaiseCanExecuteChanged();
             }
         }
     }
-
     public bool HasResult => _currentResult is not null;
-
     public bool HasExportPermission => _permissions.HasPermission(Permissions.ReportExport);
-
     /// <summary>Tooltip of the disabled export button; null when the user may export.</summary>
     public string? ExportToolTip => HasExportPermission ? null : L("Msg_Auth_PermissionDenied");
-
     public bool CanExport => HasExportPermission && !IsExporting && !IsLoading && !_reloadPending && !_rangeInvalid && CurrentResult is not null;
-
     private void SetExportGate(bool? pending = null, bool? invalid = null)
     {
         _reloadPending = pending ?? _reloadPending;
         _rangeInvalid = invalid ?? _rangeInvalid;
         OnPropertyChanged(nameof(CanExport));
         ExportCommand?.RaiseCanExecuteChanged();
+        PreviewCommand?.RaiseCanExecuteChanged();
     }
-
     // ---- KPIs, charts, tables --------------------------------------------------------------------------------------
-
     public ObservableCollection<KpiTileViewModel> KpiTiles { get; } = new();
-
     public ISeries[] RevenueSeries { get => _revenueSeries; private set => SetProperty(ref _revenueSeries, value); }
-
     public Axis[] RevenueXAxes { get => _revenueXAxes; private set => SetProperty(ref _revenueXAxes, value); }
-
     public Axis[] RevenueYAxes { get => _revenueYAxes; private set => SetProperty(ref _revenueYAxes, value); }
-
     public bool RevenueHasData { get => _revenueHasData; private set => SetProperty(ref _revenueHasData, value); }
-
     public ISeries[] HourlySeries { get => _hourlySeries; private set => SetProperty(ref _hourlySeries, value); }
-
     public Axis[] HourlyXAxes { get => _hourlyXAxes; private set => SetProperty(ref _hourlyXAxes, value); }
-
     public Axis[] HourlyYAxes { get => _hourlyYAxes; private set => SetProperty(ref _hourlyYAxes, value); }
-
     public bool HourlyHasData { get => _hourlyHasData; private set => SetProperty(ref _hourlyHasData, value); }
-
     public ISeries[] DailyTrafficSeries { get => _dailyTrafficSeries; private set => SetProperty(ref _dailyTrafficSeries, value); }
-
     public Axis[] DailyTrafficXAxes { get => _dailyTrafficXAxes; private set => SetProperty(ref _dailyTrafficXAxes, value); }
-
     public Axis[] DailyTrafficYAxes { get => _dailyTrafficYAxes; private set => SetProperty(ref _dailyTrafficYAxes, value); }
-
     public bool DailyTrafficHasData { get => _dailyTrafficHasData; private set => SetProperty(ref _dailyTrafficHasData, value); }
-
     public ISeries[] CustomerGroupSeries { get => _customerGroupSeries; private set => SetProperty(ref _customerGroupSeries, value); }
-
     public bool CustomerGroupHasData { get => _customerGroupHasData; private set => SetProperty(ref _customerGroupHasData, value); }
-
     public ISeries[] ZoneSeries { get => _zoneSeries; private set => SetProperty(ref _zoneSeries, value); }
-
     /// <summary>Row series: the X axis holds the values.</summary>
     public Axis[] ZoneXAxes { get => _zoneXAxes; private set => SetProperty(ref _zoneXAxes, value); }
-
     /// <summary>Row series: the Y axis holds the zone names.</summary>
     public Axis[] ZoneYAxes { get => _zoneYAxes; private set => SetProperty(ref _zoneYAxes, value); }
-
     public bool ZoneHasData { get => _zoneHasData; private set => SetProperty(ref _zoneHasData, value); }
-
     public ISeries[] VehicleTypeSeries { get => _vehicleTypeSeries; private set => SetProperty(ref _vehicleTypeSeries, value); }
-
     public bool VehicleTypeHasData { get => _vehicleTypeHasData; private set => SetProperty(ref _vehicleTypeHasData, value); }
-
     public ObservableCollection<DailyReportRow> DailyRows { get; } = new();
-
     public ObservableCollection<ShiftReportRow> ShiftRows { get; } = new();
-
     public ObservableCollection<VehicleTypeReportRow> VehicleTypeRows { get; } = new();
-
     public ObservableCollection<TopPlateRow> TopPlateRows { get; } = new();
-
     public AsyncRelayCommand RefreshCommand { get; }
-
     public AsyncRelayCommand ExportCommand { get; }
-
+    public AsyncRelayCommand PreviewCommand { get; }
     // ---- loading ---------------------------------------------------------------------------------------------------
-
     /// <summary>Loads the filter options once, then the report for the current filter (no debounce).</summary>
+    public async Task RefreshAsync()
+    {
+        ResetFilters();
+        await LoadDataAsync();
+    }
+    public void ResetFilters()
+    {
+        _suppressReload = true;
+        try
+        {
+            var defaultPreset = _presets.FirstOrDefault(p => p.Preset == ReportPeriodPreset.Last7Days) ?? _presets.FirstOrDefault();
+            if (defaultPreset is not null)
+            {
+                _selectedPreset = defaultPreset;
+                OnPropertyChanged(nameof(SelectedPreset));
+                OnPropertyChanged(nameof(IsCustomRange));
+            }
+            _customFrom = null;
+            OnPropertyChanged(nameof(CustomFrom));
+            _customTo = null;
+            OnPropertyChanged(nameof(CustomTo));
+            _selectedVehicleType = VehicleTypeOptions.FirstOrDefault();
+            OnPropertyChanged(nameof(SelectedVehicleType));
+            var defaultGroup = _customerGroupOptions.FirstOrDefault(g => g.Group == ReportCustomerGroup.All) ?? _customerGroupOptions.FirstOrDefault();
+            if (defaultGroup is not null)
+            {
+                _selectedCustomerGroup = defaultGroup;
+                OnPropertyChanged(nameof(SelectedCustomerGroup));
+            }
+            _selectedZone = ZoneOptions.FirstOrDefault();
+            OnPropertyChanged(nameof(SelectedZone));
+            _selectedStaff = StaffOptions.FirstOrDefault();
+            OnPropertyChanged(nameof(SelectedStaff));
+            _selectedShift = ShiftOptions.FirstOrDefault();
+            OnPropertyChanged(nameof(SelectedShift));
+            var defaultMethod = _paymentMethodOptions.FirstOrDefault(m => m.Method is null) ?? _paymentMethodOptions.FirstOrDefault();
+            if (defaultMethod is not null)
+            {
+                _selectedPaymentMethod = defaultMethod;
+                OnPropertyChanged(nameof(SelectedPaymentMethod));
+            }
+        }
+        finally
+        {
+            _suppressReload = false;
+        }
+    }
     public async Task LoadDataAsync()
     {
         CancelPendingReload();
@@ -376,21 +407,18 @@ public class ReportsViewModel : ViewModelBase
         _reloadCts = cts;
         await LoadAsync(cts.Token, loadOptions: true);
     }
-
     private void ScheduleReload()
     {
         if (_suppressReload)
         {
             return;
         }
-
         CancelPendingReload();
         SetExportGate(pending: true);
         var cts = new CancellationTokenSource();
         _reloadCts = cts;
         _ = ReloadAfterDelayAsync(cts.Token);
     }
-
     private void CancelPendingReload()
     {
         var previous = _reloadCts;
@@ -399,7 +427,6 @@ public class ReportsViewModel : ViewModelBase
         {
             return;
         }
-
         try
         {
             previous.Cancel();
@@ -409,7 +436,6 @@ public class ReportsViewModel : ViewModelBase
             // already finished
         }
     }
-
     private async Task ReloadAfterDelayAsync(CancellationToken token)
     {
         try
@@ -423,7 +449,6 @@ public class ReportsViewModel : ViewModelBase
             // superseded by a newer filter change
         }
     }
-
     private async Task LoadAsync(CancellationToken token, bool loadOptions)
     {
         var version = Interlocked.Increment(ref _loadVersion);
@@ -431,7 +456,6 @@ public class ReportsViewModel : ViewModelBase
         {
             SetExportGate(pending: false);
             IsLoading = true;
-
             if (loadOptions && !_optionsLoaded)
             {
                 _options = await _reportService.GetFilterOptionsAsync(token);
@@ -439,14 +463,12 @@ public class ReportsViewModel : ViewModelBase
                 FillOptions(_options);
                 _optionsLoaded = true;
             }
-
             if (!TryBuildFilter(out var filter, out var invalidMessageKey))
             {
                 SetExportGate(invalid: true);
                 ErrorMessage = L(invalidMessageKey!);
                 return;
             }
-
             SetExportGate(invalid: false);
             ErrorMessage = null;
             var result = await _reportService.GetReportAsync(filter!, token);
@@ -454,7 +476,6 @@ public class ReportsViewModel : ViewModelBase
             {
                 return;
             }
-
             ApplyResult(result);
         }
         catch (OperationCanceledException)
@@ -484,13 +505,11 @@ public class ReportsViewModel : ViewModelBase
             }
         }
     }
-
     private bool TryBuildFilter(out ReportFilter? filter, out string? invalidMessageKey)
     {
         filter = null;
         invalidMessageKey = null;
         var today = ReportPeriodCalculator.TodayVn(_timeProvider.GetUtcNow().UtcDateTime);
-
         ReportDateRange range;
         if (_selectedPreset.Preset == ReportPeriodPreset.Custom)
         {
@@ -507,33 +526,38 @@ public class ReportsViewModel : ViewModelBase
                     invalidMessageKey = ReportTextKeys.MsgInvalidRange;
                     return false;
             }
-
             range = ReportPeriodCalculator.Resolve(ReportPeriodPreset.Custom, today, from, to);
         }
         else
         {
             range = ReportPeriodCalculator.Resolve(_selectedPreset.Preset, today);
         }
-
-        filter = new ReportFilter(range, _selectedVehicleType?.Id, _selectedCustomerGroup.Group, _selectedZone?.Id, _selectedPreset.Preset);
+        filter = new ReportFilter(
+            range,
+            _selectedVehicleType?.Id,
+            _selectedCustomerGroup.Group,
+            _selectedZone?.Id,
+            _selectedPreset.Preset,
+            _selectedStaff?.Id,
+            _selectedShift?.Id,
+            _selectedPaymentMethod?.Method);
         return true;
     }
-
     private void PrefillCustomRange(ReportPeriodPreset basedOn)
     {
         var today = ReportPeriodCalculator.TodayVn(_timeProvider.GetUtcNow().UtcDateTime);
         var range = ReportPeriodCalculator.Resolve(basedOn == ReportPeriodPreset.Custom ? ReportPeriodPreset.Last7Days : basedOn, today);
-
         _customFrom = range.FromVn.ToDateTime(TimeOnly.MinValue);
         _customTo = range.ToVn.ToDateTime(TimeOnly.MinValue);
         OnPropertyChanged(nameof(CustomFrom));
         OnPropertyChanged(nameof(CustomTo));
     }
-
     private void FillOptions(ReportFilterOptions options)
     {
         var vehicleId = _selectedVehicleType?.Id;
         var zoneId = _selectedZone?.Id;
+        var staffId = _selectedStaff?.Id;
+        var shiftId = _selectedShift?.Id;
         var previousSuppress = _suppressReload;
         _suppressReload = true;
         try
@@ -544,44 +568,56 @@ public class ReportsViewModel : ViewModelBase
             {
                 VehicleTypeOptions.Add(new LookupOption(item.Id, item.Name));
             }
-
             ZoneOptions.Clear();
             ZoneOptions.Add(new LookupOption(null, L(ReportTextKeys.FilterAll)));
             foreach (var item in options.Zones)
             {
                 ZoneOptions.Add(new LookupOption(item.Id, item.Name));
             }
-
+            StaffOptions.Clear();
+            StaffOptions.Add(new LookupOption(null, L(ReportTextKeys.FilterAll)));
+            if (options.StaffUsers != null)
+            {
+                foreach (var item in options.StaffUsers)
+                {
+                    StaffOptions.Add(new LookupOption(item.Id, item.Name));
+                }
+            }
+            ShiftOptions.Clear();
+            ShiftOptions.Add(new LookupOption(null, L(ReportTextKeys.FilterAll)));
+            if (options.Shifts != null)
+            {
+                foreach (var item in options.Shifts)
+                {
+                    ShiftOptions.Add(new LookupOption(item.Id, item.Name));
+                }
+            }
             SelectedVehicleType = VehicleTypeOptions.FirstOrDefault(o => o.Id == vehicleId) ?? VehicleTypeOptions[0];
             SelectedZone = ZoneOptions.FirstOrDefault(o => o.Id == zoneId) ?? ZoneOptions[0];
+            SelectedStaff = StaffOptions.FirstOrDefault(o => o.Id == staffId) ?? StaffOptions[0];
+            SelectedShift = ShiftOptions.FirstOrDefault(o => o.Id == shiftId) ?? ShiftOptions[0];
         }
         finally
         {
             _suppressReload = previousSuppress;
         }
     }
-
     // ---- presentation ----------------------------------------------------------------------------------------------
-
     private void ApplyResult(ReportResult result)
     {
         CurrentResult = result;
         RangeDisplay = DisplayRange(result.Filter.Range);
         PreviousRangeDisplay = L(ReportTextKeys.ComparedTo) + ": " + DisplayRange(result.PreviousRange);
-
         ApplyTiles(result);
         ApplyCharts(result);
-
         Replace(DailyRows, result.Daily);
         Replace(ShiftRows, result.Shifts);
         Replace(VehicleTypeRows, result.VehicleTypes);
         Replace(TopPlateRows, result.TopPlates);
     }
-
     private void ApplyTiles(ReportResult result)
     {
         var k = result.Kpis;
-
         void Set(string key, string value, KpiComparison? comparison, string? sub = null)
         {
             var tile = KpiTiles.First(t => t.TitleKey == key);
@@ -591,7 +627,6 @@ public class ReportsViewModel : ViewModelBase
             tile.Trend = comparison?.Trend ?? KpiTrend.None;
             tile.SubText = sub;
         }
-
         Set(ReportTextKeys.KpiCheckIns, ReportFormat.Number((double)k.CheckIns.Current), k.CheckIns);
         Set(ReportTextKeys.KpiCheckOuts, ReportFormat.Number((double)k.CheckOuts.Current), k.CheckOuts);
         Set(ReportTextKeys.KpiInLotNow, ReportFormat.Number(k.VehiclesInLotNow), null);
@@ -615,7 +650,6 @@ public class ReportsViewModel : ViewModelBase
                     ReportFormat.Percent(ToDouble(k.ResidentSharePercent)),
                     ReportFormat.Percent(k.VisitorSharePercent is null ? null : (double)k.VisitorSharePercent.Value)));
     }
-
     private void ApplyCharts(ReportResult result)
     {
         var revenue = ReportChartMapper.RevenueByDay(result);
@@ -623,34 +657,28 @@ public class ReportsViewModel : ViewModelBase
         RevenueXAxes = LiveChartsSeriesFactory.CreateCategoryAxes(revenue);
         RevenueYAxes = LiveChartsSeriesFactory.CreateValueAxes(revenue.IsCurrency);
         RevenueHasData = revenue.HasData;
-
         var hourly = ReportChartMapper.HourlyTraffic(result);
         HourlySeries = LiveChartsSeriesFactory.CreateCartesian(hourly, L);
         HourlyXAxes = LiveChartsSeriesFactory.CreateCategoryAxes(hourly);
         HourlyYAxes = LiveChartsSeriesFactory.CreateValueAxes(hourly.IsCurrency);
         HourlyHasData = hourly.HasData;
-
         var daily = ReportChartMapper.DailyTraffic(result);
         DailyTrafficSeries = LiveChartsSeriesFactory.CreateCartesian(daily, L);
         DailyTrafficXAxes = LiveChartsSeriesFactory.CreateCategoryAxes(daily);
         DailyTrafficYAxes = LiveChartsSeriesFactory.CreateValueAxes(daily.IsCurrency);
         DailyTrafficHasData = daily.HasData;
-
         var groups = ReportChartMapper.CustomerGroups(result);
         CustomerGroupSeries = LiveChartsSeriesFactory.CreatePie(groups, L);
         CustomerGroupHasData = groups.HasData;
-
         var zones = ReportChartMapper.ZoneOccupancy(result);
         ZoneSeries = LiveChartsSeriesFactory.CreateCartesian(zones, L);
         ZoneXAxes = LiveChartsSeriesFactory.CreateValueAxes(zones.IsCurrency);
         ZoneYAxes = LiveChartsSeriesFactory.CreateCategoryAxes(zones);
         ZoneHasData = zones.HasData;
-
         var vehicles = ReportChartMapper.VehicleTypeMix(result);
         VehicleTypeSeries = LiveChartsSeriesFactory.CreatePie(vehicles, L);
         VehicleTypeHasData = vehicles.HasData;
     }
-
     private static void Replace<T>(ObservableCollection<T> target, IReadOnlyList<T> source)
     {
         target.Clear();
@@ -659,16 +687,19 @@ public class ReportsViewModel : ViewModelBase
             target.Add(item);
         }
     }
-
     private static double? ToDouble(KpiComparison? comparison) => comparison is null ? null : (double)comparison.Current;
-
     private static string DisplayRange(ReportDateRange range)
         => string.Create(CultureInfo.InvariantCulture, $"{range.FromVn:dd/MM/yyyy} – {range.ToVn:dd/MM/yyyy}");
-
     private string L(string key) => _localization.GetString(key);
-
     private string Format(string key, params object[] args) => _localization.GetString(key, args);
-
+    private IReadOnlyList<PaymentMethodOption> BuildPaymentMethods() => new[]
+    {
+        new PaymentMethodOption(null, L(ReportTextKeys.FilterAll)),
+        new PaymentMethodOption(PaymentMethod.Cash, L("Str_Tx_Cash")),
+        new PaymentMethodOption(PaymentMethod.VietQR, "VietQR"),
+        new PaymentMethodOption(PaymentMethod.Card, L("Str_Rpt_Col_Card")),
+        new PaymentMethodOption(PaymentMethod.Free, L("Str_Rpt_Col_FreeCheckOuts"))
+    };
     private ReportPresetOption[] BuildPresets() => new[]
     {
         new ReportPresetOption(ReportPeriodPreset.Today, L(ReportTextKeys.PresetToday)),
@@ -679,7 +710,6 @@ public class ReportsViewModel : ViewModelBase
         new ReportPresetOption(ReportPeriodPreset.LastMonth, L(ReportTextKeys.PresetLastMonth)),
         new ReportPresetOption(ReportPeriodPreset.Custom, L(ReportTextKeys.PresetCustom))
     };
-
     private CustomerGroupOption[] BuildCustomerGroups() => new[]
     {
         new CustomerGroupOption(ReportCustomerGroup.All, L(ReportTextKeys.GroupAll)),
@@ -687,7 +717,6 @@ public class ReportsViewModel : ViewModelBase
         new CustomerGroupOption(ReportCustomerGroup.MonthlyPass, L(ReportTextKeys.GroupMonthlyPass)),
         new CustomerGroupOption(ReportCustomerGroup.Visitor, L(ReportTextKeys.GroupVisitor))
     };
-
     private void OnLanguageChanged()
     {
         var preset = _selectedPreset.Preset;
@@ -698,11 +727,15 @@ public class ReportsViewModel : ViewModelBase
         {
             Presets = BuildPresets();
             CustomerGroupOptions = BuildCustomerGroups();
+            PaymentMethodOptions = BuildPaymentMethods();
+            _selectedPaymentMethod = PaymentMethodOptions.FirstOrDefault(m => m.Method == _selectedPaymentMethod.Method) ?? PaymentMethodOptions[0];
+            OnPropertyChanged(nameof(SelectedPaymentMethod));
+            if (StaffOptions.Count > 0) StaffOptions[0] = new LookupOption(null, L(ReportTextKeys.FilterAll));
+            if (ShiftOptions.Count > 0) ShiftOptions[0] = new LookupOption(null, L(ReportTextKeys.FilterAll));
             _selectedPreset = Presets.First(p => p.Preset == preset);
             _selectedCustomerGroup = CustomerGroupOptions.First(g => g.Group == group);
             OnPropertyChanged(nameof(SelectedPreset));
             OnPropertyChanged(nameof(SelectedCustomerGroup));
-
             if (_options is not null)
             {
                 FillOptions(_options);
@@ -719,21 +752,17 @@ public class ReportsViewModel : ViewModelBase
         {
             _suppressReload = previousSuppress;
         }
-
         foreach (var tile in KpiTiles)
         {
             tile.Title = L(tile.TitleKey);
         }
-
         OnPropertyChanged(nameof(ExportToolTip));
         if (_currentResult is not null)
         {
             ApplyResult(_currentResult);
         }
     }
-
     // ---- export ----------------------------------------------------------------------------------------------------
-
     private async Task ExportAsync()
     {
         var result = CurrentResult;
@@ -741,41 +770,58 @@ public class ReportsViewModel : ViewModelBase
         {
             return;
         }
-
         var filter = result.Filter;
-        var path = _fileDialogService.ShowSaveFileDialog(
-            L(ReportTextKeys.SaveDialogFilter),
-            _exportService.GetDefaultFileName(filter.Range),
-            L(ReportTextKeys.SaveDialogTitle));
-        if (string.IsNullOrWhiteSpace(path))
+        // Trong môi trường kiểm thử không có giao diện WPF (Application.Current == null)
+        if (System.Windows.Application.Current is null)
         {
+            var path = _fileDialogService.ShowSaveFileDialog(
+                L(ReportTextKeys.SaveDialogFilter),
+                _exportService.GetDefaultFileName(filter.Range),
+                L(ReportTextKeys.SaveDialogTitle));
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return;
+            }
+            try
+            {
+                IsExporting = true;
+                var export = await _exportService.ExportAsync(filter, path);
+                HandleExportResult(export, path);
+            }
+            catch (PermissionDeniedException)
+            {
+                _dialogService.ShowError(L("Msg_Auth_PermissionDenied"));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ReportsViewModel] export failed: {ex.Message}");
+                _dialogService.ShowError(L(ReportTextKeys.MsgExportError));
+            }
+            finally
+            {
+                IsExporting = false;
+            }
             return;
         }
-
+        // Quy trình thực tế: ấn nút Xuất báo cáo mở cửa sổ xem trước với DocumentViewer và các nút in/lưu/đóng ở dưới
         try
         {
             IsExporting = true;
-            var export = await _exportService.ExportAsync(filter, path);
-            switch (export.Status)
+            var sessions = await _reportService.GetSessionDetailsAsync(filter, ReportLimits.MaxExportSessionRows);
+            var labels = ReportWorkbookLabels.Resolve(_localization);
+            var writer = new ReportPdfWriter(labels);
+            var doc = writer.CreateDocument(result, sessions);
+            var previewWindow = new SmartPS.Views.Reports.ReportPreviewWindow(
+                doc,
+                filter,
+                _exportService,
+                _dialogService,
+                _localization,
+                _fileDialogService)
             {
-                case ReportExportStatus.Success when !export.AuditWritten:
-                    _dialogService.ShowWarning(L(ReportTextKeys.MsgExportAuditNotWritten));
-                    break;
-                case ReportExportStatus.Success:
-                    _dialogService.ShowSuccess(Format(ReportTextKeys.MsgExportSuccess, export.FilePath ?? path));
-                    break;
-                case ReportExportStatus.FileLocked:
-                    _dialogService.ShowError(L(ReportTextKeys.MsgExportFileLocked));
-                    break;
-                default:
-                    _dialogService.ShowError(L(ReportTextKeys.MsgExportError));
-                    break;
-            }
-
-            if (export.Status != ReportExportStatus.Success && !export.AuditWritten)
-            {
-                _dialogService.ShowWarning(L(ReportTextKeys.MsgExportAuditNotWritten));
-            }
+                Owner = System.Windows.Application.Current?.MainWindow
+            };
+            previewWindow.ShowDialog();
         }
         catch (PermissionDeniedException)
         {
@@ -783,12 +829,58 @@ public class ReportsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ReportsViewModel] export failed: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[ReportsViewModel] preview/export failed: {ex.Message}");
             _dialogService.ShowError(L(ReportTextKeys.MsgExportError));
         }
         finally
         {
             IsExporting = false;
+        }
+    }
+    private void HandleExportResult(ReportExportResult export, string path)
+    {
+        switch (export.Status)
+        {
+            case ReportExportStatus.Success when !export.AuditWritten:
+                _dialogService.ShowWarning(L(ReportTextKeys.MsgExportAuditNotWritten));
+                break;
+            case ReportExportStatus.Success:
+                var targetPath = export.FilePath ?? path;
+                var successMsg = Format(ReportTextKeys.MsgExportSuccess, targetPath);
+                var shouldOpen = _dialogService.ShowYesNo(
+                    $"{successMsg}\n\nBạn có muốn mở file vừa xuất lên luôn không?",
+                    "Xuất báo cáo thành công", "Mở file", "Đóng");
+                if (shouldOpen)
+                {
+                    TryOpenFile(targetPath);
+                }
+                break;
+            case ReportExportStatus.FileLocked:
+                _dialogService.ShowError(L(ReportTextKeys.MsgExportFileLocked));
+                break;
+            default:
+                _dialogService.ShowError(L(ReportTextKeys.MsgExportError));
+                break;
+        }
+        if (export.Status != ReportExportStatus.Success && !export.AuditWritten)
+        {
+            _dialogService.ShowWarning(L(ReportTextKeys.MsgExportAuditNotWritten));
+        }
+    }
+    private static void TryOpenFile(string? filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath) || !System.IO.File.Exists(filePath)) return;
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = filePath,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to open file: {ex.Message}");
         }
     }
 }

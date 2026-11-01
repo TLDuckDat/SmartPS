@@ -452,7 +452,7 @@
     <sys:String x:Key="Str_Rpt_Title">Reports &amp; Analytics</sys:String>
     <sys:String x:Key="Str_Rpt_Subtitle">Parking traffic, revenue and occupancy statistics in Vietnam time</sys:String>
     <sys:String x:Key="Str_Rpt_Refresh">Refresh</sys:String>
-    <sys:String x:Key="Str_Rpt_Export">Export to Excel</sys:String>
+    <sys:String x:Key="Str_Rpt_Export">Export report</sys:String>
     <sys:String x:Key="Str_Rpt_Loading">Loading data...</sys:String>
     <sys:String x:Key="Str_Rpt_ComparedTo">Compared with previous period</sys:String>
     <sys:String x:Key="Str_Rpt_Total">Total</sys:String>
@@ -463,6 +463,9 @@
     <sys:String x:Key="Str_Rpt_Filter_CustomerGroup">Customer group</sys:String>
     <sys:String x:Key="Str_Rpt_Filter_Zone">Zone</sys:String>
     <sys:String x:Key="Str_Rpt_Filter_All">All</sys:String>
+    <sys:String x:Key="Str_Rpt_Filter_Staff">Staff</sys:String>
+    <sys:String x:Key="Str_Rpt_Filter_Shift">Shift</sys:String>
+    <sys:String x:Key="Str_Rpt_Filter_PaymentMethod">Payment</sys:String>
     <sys:String x:Key="Str_Rpt_Preset_Today">Today</sys:String>
     <sys:String x:Key="Str_Rpt_Preset_Yesterday">Yesterday</sys:String>
     <sys:String x:Key="Str_Rpt_Preset_Last7Days">Last 7 days</sys:String>
@@ -573,7 +576,7 @@
     <sys:String x:Key="Str_Rpt_Xlsx_Truncated">The session detail sheet holds only {0} of {1} rows (export limit).</sys:String>
     <sys:String x:Key="Str_Rpt_Xlsx_TopPlates">Top 10 most frequent plates</sys:String>
     <sys:String x:Key="Str_Rpt_SaveDialogTitle">Save Excel report</sys:String>
-    <sys:String x:Key="Str_Rpt_SaveDialogFilter">Excel Workbook (*.xlsx)|*.xlsx</sys:String>
+    <sys:String x:Key="Str_Rpt_SaveDialogFilter">Excel Workbook (*.xlsx)|*.xlsx|CSV UTF-8 (*.csv)|*.csv|PDF Document (*.pdf)|*.pdf</sys:String>
     <sys:String x:Key="Msg_Rpt_LoadError">Could not load the report. Check the database connection and try again.</sys:String>
     <sys:String x:Key="Msg_Rpt_InvalidRange">Invalid date range: the start date must not be after the end date.</sys:String>
     <sys:String x:Key="Msg_Rpt_RangeTooLong">The date range can span at most 366 days.</sys:String>
@@ -686,6 +689,17 @@
     <sys:String x:Key="Str_GateUi_QrAutoOpen">The barrier opens automatically once the bank transfer is received.</sys:String>
     <sys:String x:Key="Str_GateUi_QrCheck">Check payment</sys:String>
     <sys:String x:Key="Str_GateUi_QrCancel">✕ Cancel payment</sys:String>
+    <sys:String x:Key="Str_GateUi_QrBank">BENEFICIARY BANK:</sys:String>
+    <sys:String x:Key="Str_GateUi_QrAccount">ACCOUNT NUMBER:</sys:String>
+    <sys:String x:Key="Str_GateUi_QrAccountName">ACCOUNT HOLDER:</sys:String>
+    <sys:String x:Key="Str_GateUi_QrContent">PAYMENT MEMO:</sys:String>
+    <sys:String x:Key="Str_GateUi_QrSuccessTitle">PAYMENT SUCCESSFUL!</sys:String>
+    <sys:String x:Key="Str_GateUi_QrSuccessDesc">Payment received successfully. The exit barrier is now open.</sys:String>
+    <sys:String x:Key="Str_GateUi_QrCompleteBtn">✓ Complete &amp; Next Vehicle</sys:String>
+    <sys:String x:Key="Str_GateUi_QrCopy">Copy</sys:String>
+    <sys:String x:Key="Str_GateUi_QrConfirmReceived">✓ Confirm Payment Received</sys:String>
+    <sys:String x:Key="Str_GateUi_QrOpenBrowser">🔗 Open payment page in browser</sys:String>
+    <sys:String x:Key="Str_GateUi_QrWaitingScanDetail">(The barrier opens automatically once confirmed on your phone)</sys:String>
     <sys:String x:Key="Str_Unit_VehicleSuffix"> vehicles</sys:String>
     <!-- Localization: Customers -->
     <sys:String x:Key="Str_Common_Cancel">Cancel</sys:String>

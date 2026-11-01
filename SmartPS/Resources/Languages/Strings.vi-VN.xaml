@@ -452,7 +452,7 @@
     <sys:String x:Key="Str_Rpt_Title">Báo cáo &amp; Phân tích</sys:String>
     <sys:String x:Key="Str_Rpt_Subtitle">Thống kê lượt gửi, doanh thu và công suất bãi theo giờ Việt Nam</sys:String>
     <sys:String x:Key="Str_Rpt_Refresh">Làm mới</sys:String>
-    <sys:String x:Key="Str_Rpt_Export">Xuất Excel</sys:String>
+    <sys:String x:Key="Str_Rpt_Export">Xuất báo cáo</sys:String>
     <sys:String x:Key="Str_Rpt_Loading">Đang tải dữ liệu...</sys:String>
     <sys:String x:Key="Str_Rpt_ComparedTo">So với kỳ trước</sys:String>
     <sys:String x:Key="Str_Rpt_Total">Tổng cộng</sys:String>
@@ -463,6 +463,9 @@
     <sys:String x:Key="Str_Rpt_Filter_CustomerGroup">Nhóm khách</sys:String>
     <sys:String x:Key="Str_Rpt_Filter_Zone">Khu</sys:String>
     <sys:String x:Key="Str_Rpt_Filter_All">Tất cả</sys:String>
+    <sys:String x:Key="Str_Rpt_Filter_Staff">Nhân viên</sys:String>
+    <sys:String x:Key="Str_Rpt_Filter_Shift">Ca trực</sys:String>
+    <sys:String x:Key="Str_Rpt_Filter_PaymentMethod">Thanh toán</sys:String>
     <sys:String x:Key="Str_Rpt_Preset_Today">Hôm nay</sys:String>
     <sys:String x:Key="Str_Rpt_Preset_Yesterday">Hôm qua</sys:String>
     <sys:String x:Key="Str_Rpt_Preset_Last7Days">7 ngày qua</sys:String>
@@ -573,7 +576,7 @@
     <sys:String x:Key="Str_Rpt_Xlsx_Truncated">Chi tiết lượt gửi chỉ gồm {0} trên tổng {1} dòng (giới hạn xuất).</sys:String>
     <sys:String x:Key="Str_Rpt_Xlsx_TopPlates">Top 10 biển số gửi nhiều nhất</sys:String>
     <sys:String x:Key="Str_Rpt_SaveDialogTitle">Lưu báo cáo Excel</sys:String>
-    <sys:String x:Key="Str_Rpt_SaveDialogFilter">Excel Workbook (*.xlsx)|*.xlsx</sys:String>
+    <sys:String x:Key="Str_Rpt_SaveDialogFilter">Excel Workbook (*.xlsx)|*.xlsx|CSV UTF-8 (*.csv)|*.csv|PDF Document (*.pdf)|*.pdf</sys:String>
     <sys:String x:Key="Msg_Rpt_LoadError">Không thể tải báo cáo. Vui lòng kiểm tra kết nối cơ sở dữ liệu và thử lại.</sys:String>
     <sys:String x:Key="Msg_Rpt_InvalidRange">Khoảng ngày không hợp lệ: ngày bắt đầu phải trước hoặc bằng ngày kết thúc.</sys:String>
     <sys:String x:Key="Msg_Rpt_RangeTooLong">Khoảng ngày tối đa là 366 ngày.</sys:String>
@@ -686,6 +689,17 @@
     <sys:String x:Key="Str_GateUi_QrAutoOpen">Hệ thống sẽ tự động mở barrier khi nhận được tiền từ ngân hàng.</sys:String>
     <sys:String x:Key="Str_GateUi_QrCheck">Kiểm Tra Cổng</sys:String>
     <sys:String x:Key="Str_GateUi_QrCancel">✕ Hủy Thanh Toán</sys:String>
+    <sys:String x:Key="Str_GateUi_QrBank">NGÂN HÀNG THỤ HƯỞNG:</sys:String>
+    <sys:String x:Key="Str_GateUi_QrAccount">SỐ TÀI KHOẢN:</sys:String>
+    <sys:String x:Key="Str_GateUi_QrAccountName">CHỦ TÀI KHOẢN:</sys:String>
+    <sys:String x:Key="Str_GateUi_QrContent">NỘI DUNG CHUYỂN KHOẢN:</sys:String>
+    <sys:String x:Key="Str_GateUi_QrSuccessTitle">THANH TOÁN THÀNH CÔNG!</sys:String>
+    <sys:String x:Key="Str_GateUi_QrSuccessDesc">Hệ thống đã nhận đủ cước gửi xe. Barie làn ra đã mở tự động cho xe qua cổng.</sys:String>
+    <sys:String x:Key="Str_GateUi_QrCompleteBtn">✓ Hoàn tất &amp; Cho xe tiếp theo</sys:String>
+    <sys:String x:Key="Str_GateUi_QrCopy">Sao chép</sys:String>
+    <sys:String x:Key="Str_GateUi_QrConfirmReceived">✓ Xác nhận đã nhận tiền</sys:String>
+    <sys:String x:Key="Str_GateUi_QrOpenBrowser">🔗 Mở trang thanh toán trên trình duyệt</sys:String>
+    <sys:String x:Key="Str_GateUi_QrWaitingScanDetail">(Hệ thống sẽ tự động mở barie ngay khi bạn bấm xác nhận trên điện thoại)</sys:String>
     <sys:String x:Key="Str_Unit_VehicleSuffix"> xe</sys:String>
     <!-- Localization: Customers -->
     <sys:String x:Key="Str_Common_Cancel">Hủy</sys:String>

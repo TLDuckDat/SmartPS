@@ -131,7 +131,10 @@ public class PaymentService : IPaymentService
                         QrCodePayload = existingTx.QrCodePayload,
                         QrImagePng = TransactionReferenceGenerator.CreateQrPng(existingTx.QrCodePayload),
                         CheckoutUrl = existingTx.CheckoutUrl,
-                        Description = existingTx.TransactionReference
+                        AccountNumber = existingTx.AccountNumber ?? VietQrGenerator.DefaultAccountNumber,
+                        AccountName = existingTx.AccountName ?? VietQrGenerator.DefaultAccountName,
+                        BankCode = existingTx.BankCode ?? "MBBank",
+                        Description = active.Description ?? existingTx.TransactionReference
                     };
                 }
                 else
@@ -197,6 +200,12 @@ public class PaymentService : IPaymentService
         await db.SaveChangesAsync(cancellationToken);
         await shiftReservation.CommitAsync(cancellationToken);
 
+        var cleanPlate = new string((session.LicensePlate ?? "").Where(char.IsLetterOrDigit).ToArray());
+        var paymentDescription = string.IsNullOrWhiteSpace(cleanPlate)
+            ? $"SMARTPS P{session.SessionId}"
+            : $"SMARTPS {cleanPlate}";
+        if (paymentDescription.Length > 25) paymentDescription = paymentDescription[..25];
+
         PaymentGatewayCreateResult gatewayResult;
         try
         {
@@ -206,7 +215,7 @@ public class PaymentService : IPaymentService
                 OrderCode = orderCode,
                 Amount = payment.Amount,
                 Currency = payment.Currency,
-                Description = reference,
+                Description = paymentDescription,
                 BuyerName = session.LicensePlate
             }, cancellationToken);
         }
@@ -275,7 +284,10 @@ public class PaymentService : IPaymentService
             QrCodePayload = transaction.QrCodePayload,
             QrImagePng = TransactionReferenceGenerator.CreateQrPng(transaction.QrCodePayload),
             CheckoutUrl = transaction.CheckoutUrl,
-            Description = reference
+            AccountNumber = transaction.AccountNumber ?? VietQrGenerator.DefaultAccountNumber,
+            AccountName = transaction.AccountName ?? VietQrGenerator.DefaultAccountName,
+            BankCode = transaction.BankCode ?? "MBBank",
+            Description = paymentDescription
         };
     }
 
@@ -490,6 +502,62 @@ public class PaymentService : IPaymentService
         if (failure != null)
         {
             return failure;
+        }
+
+        return await GetPaymentStatusAsync(paymentId, cancellationToken);
+    }
+
+    public async Task<PaymentStatusResult> ConfirmPaymentReceivedAsync(
+        int paymentId,
+        int actorUserId = 0,
+        CancellationToken cancellationToken = default)
+    {
+        await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var payment = await db.Payments
+            .Include(p => p.Transactions)
+            .FirstOrDefaultAsync(p => p.PaymentId == paymentId, cancellationToken);
+
+        if (payment == null)
+        {
+            return new PaymentStatusResult { Success = false, Message = AppText.Get("Msg_Payment_NotFound") };
+        }
+
+        if (payment.Status == PaymentStatus.Paid)
+        {
+            return await GetPaymentStatusAsync(paymentId, cancellationToken);
+        }
+
+        var tx = payment.Transactions.OrderByDescending(t => t.PaymentTransactionId).FirstOrDefault();
+        if (tx == null)
+        {
+            return await GetPaymentStatusAsync(paymentId, cancellationToken);
+        }
+
+        try
+        {
+            bool paid;
+            await using (var dbTx = await _audit.BeginAuditedTransactionAsync(db, System.Data.IsolationLevel.Serializable, cancellationToken))
+            {
+                paid = await TryMarkPaidAndCheckoutAsync(db, payment, tx, "manualConfirm", cancellationToken);
+                await db.SaveChangesAsync(cancellationToken);
+                await dbTx.CommitAsync(cancellationToken);
+            }
+
+            if (paid)
+            {
+                var session = await db.ParkingSessions.Include(s => s.Slot)
+                    .FirstOrDefaultAsync(s => s.SessionId == payment.SessionId, cancellationToken);
+                if (session != null)
+                {
+                    _gateControlService?.NotifySessionCompleted(session);
+                }
+                PaymentLog.Event("PaymentPaid", $"Payment #{payment.PaymentId} confirmed received by cashier (User #{actorUserId})");
+            }
+        }
+        catch (Exception ex)
+        {
+            PaymentLog.Event("PaymentProcessingError", ex.Message);
+            return new PaymentStatusResult { Success = false, Message = ex.Message };
         }
 
         return await GetPaymentStatusAsync(paymentId, cancellationToken);

@@ -452,7 +452,7 @@
     <sys:String x:Key="Str_Rpt_Title">レポートと分析</sys:String>
     <sys:String x:Key="Str_Rpt_Subtitle">ベトナム時間での駐車台数・売上・稼働率の統計</sys:String>
     <sys:String x:Key="Str_Rpt_Refresh">更新</sys:String>
-    <sys:String x:Key="Str_Rpt_Export">Excelに出力</sys:String>
+    <sys:String x:Key="Str_Rpt_Export">レポートを出力</sys:String>
     <sys:String x:Key="Str_Rpt_Loading">データを読み込み中...</sys:String>
     <sys:String x:Key="Str_Rpt_ComparedTo">前期間との比較</sys:String>
     <sys:String x:Key="Str_Rpt_Total">合計</sys:String>
@@ -463,6 +463,9 @@
     <sys:String x:Key="Str_Rpt_Filter_CustomerGroup">顧客グループ</sys:String>
     <sys:String x:Key="Str_Rpt_Filter_Zone">ゾーン</sys:String>
     <sys:String x:Key="Str_Rpt_Filter_All">すべて</sys:String>
+    <sys:String x:Key="Str_Rpt_Filter_Staff">担当者</sys:String>
+    <sys:String x:Key="Str_Rpt_Filter_Shift">シフト</sys:String>
+    <sys:String x:Key="Str_Rpt_Filter_PaymentMethod">支払方法</sys:String>
     <sys:String x:Key="Str_Rpt_Preset_Today">今日</sys:String>
     <sys:String x:Key="Str_Rpt_Preset_Yesterday">昨日</sys:String>
     <sys:String x:Key="Str_Rpt_Preset_Last7Days">過去7日間</sys:String>
@@ -573,7 +576,7 @@
     <sys:String x:Key="Str_Rpt_Xlsx_Truncated">セッション明細は出力上限のため {1} 行中 {0} 行のみです。</sys:String>
     <sys:String x:Key="Str_Rpt_Xlsx_TopPlates">利用回数の多いナンバー上位10</sys:String>
     <sys:String x:Key="Str_Rpt_SaveDialogTitle">Excelレポートを保存</sys:String>
-    <sys:String x:Key="Str_Rpt_SaveDialogFilter">Excel ブック (*.xlsx)|*.xlsx</sys:String>
+    <sys:String x:Key="Str_Rpt_SaveDialogFilter">Excel ブック (*.xlsx)|*.xlsx|CSV UTF-8 (*.csv)|*.csv|PDF ドキュメント (*.pdf)|*.pdf</sys:String>
     <sys:String x:Key="Msg_Rpt_LoadError">レポートを読み込めませんでした。データベース接続を確認して再試行してください。</sys:String>
     <sys:String x:Key="Msg_Rpt_InvalidRange">日付範囲が無効です。開始日は終了日以前にしてください。</sys:String>
     <sys:String x:Key="Msg_Rpt_RangeTooLong">日付範囲は最大366日です。</sys:String>
@@ -686,6 +689,17 @@
     <sys:String x:Key="Str_GateUi_QrAutoOpen">銀行からの入金を確認すると自動でゲートが開きます。</sys:String>
     <sys:String x:Key="Str_GateUi_QrCheck">支払いを確認</sys:String>
     <sys:String x:Key="Str_GateUi_QrCancel">✕ 支払いを取り消す</sys:String>
+    <sys:String x:Key="Str_GateUi_QrBank">受取銀行:</sys:String>
+    <sys:String x:Key="Str_GateUi_QrAccount">口座番号:</sys:String>
+    <sys:String x:Key="Str_GateUi_QrAccountName">口座名義:</sys:String>
+    <sys:String x:Key="Str_GateUi_QrContent">送金メモ:</sys:String>
+    <sys:String x:Key="Str_GateUi_QrSuccessTitle">お支払い完了！</sys:String>
+    <sys:String x:Key="Str_GateUi_QrSuccessDesc">VietQRでの入金を確認しました。出庫ゲートが開きました。</sys:String>
+    <sys:String x:Key="Str_GateUi_QrCompleteBtn">✓ 完了＆次の車両へ</sys:String>
+    <sys:String x:Key="Str_GateUi_QrCopy">コピー</sys:String>
+    <sys:String x:Key="Str_GateUi_QrConfirmReceived">✓ 入金を確認しました</sys:String>
+    <sys:String x:Key="Str_GateUi_QrOpenBrowser">🔗 ブラウザで支払いページを開く</sys:String>
+    <sys:String x:Key="Str_GateUi_QrWaitingScanDetail">(スマートフォンで確認すると自動でゲートが開きます)</sys:String>
     <sys:String x:Key="Str_Unit_VehicleSuffix"> 台</sys:String>
     <!-- Localization: Customers -->
     <sys:String x:Key="Str_Common_Cancel">キャンセル</sys:String>

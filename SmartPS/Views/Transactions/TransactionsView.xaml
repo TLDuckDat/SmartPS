@@ -5,12 +5,10 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
              d:DesignHeight="850" d:DesignWidth="1100">
-
     <Grid Background="{StaticResource AppBackgroundBrush}">
         <!-- Main Content -->
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel Margin="28,24">
-
                 <!-- 1. Header Phân Hệ & Nút Làm Mới Dữ Liệu -->
                 <Border Background="{StaticResource CardBackgroundBrush}"
                         CornerRadius="6"
@@ -31,7 +29,6 @@
                             <TextBlock Text="{DynamicResource Str_Tx_Subtitle}" 
                                        FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
                         </StackPanel>
-
                         <!-- Nút bấm Làm mới dữ liệu -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                             <Button Command="{Binding RefreshCommand}"
@@ -53,7 +50,6 @@
                         </StackPanel>
                     </Grid>
                 </Border>
-
                 <!-- 2. Hàng Thẻ KPI Tài Chính (4 Cột) -->
                 <Grid Margin="0,0,0,20">
                     <Grid.ColumnDefinitions>
@@ -65,7 +61,6 @@
                         <ColumnDefinition Width="12"/>
                         <ColumnDefinition Width="1*"/>
                     </Grid.ColumnDefinitions>
-
                     <!-- KPI 1: Tổng doanh thu cước -->
                     <Border Grid.Column="0" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                         <StackPanel>
@@ -77,7 +72,6 @@
                             <TextBlock FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"><Run Text="{DynamicResource Str_Tx_FromCompletedPrefix}"/><Run Text="{Binding CompletedTransactions, Mode=OneWay}"/><Run Text="{DynamicResource Str_Tx_FromCompletedSuffix}"/></TextBlock>
                         </StackPanel>
                     </Border>
-
                     <!-- KPI 2: Thu Tiền mặt -->
                     <Border Grid.Column="2" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                         <StackPanel>
@@ -89,7 +83,6 @@
                             <TextBlock Text="{DynamicResource Str_Tx_KpiCashSub}" FontSize="11.5" Foreground="#16A34A"/>
                         </StackPanel>
                     </Border>
-
                     <!-- KPI 3: Thu Chuyển khoản VietQR -->
                     <Border Grid.Column="4" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                         <StackPanel>
@@ -101,7 +94,6 @@
                             <TextBlock FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"><Run Text="{Binding PaidElectronicPayments, Mode=OneWay}"/><Run Text="{DynamicResource Str_Tx_PaidVietQrSuffix}"/></TextBlock>
                         </StackPanel>
                     </Border>
-
                     <!-- KPI 4: Tổng số phiên phát sinh -->
                     <Border Grid.Column="6" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                         <StackPanel>
@@ -114,27 +106,16 @@
                         </StackPanel>
                     </Border>
                 </Grid>
-
-                <!-- 3. Thanh Tìm Kiếm & Lọc Tiêu Chí -->
+                <!-- 3. Thanh Tìm Kiếm & Lọc Tiêu Chí (Ưu tiên nằm ngang, tự động co giãn/xuống dòng theo kích thước cửa sổ) -->
                 <Border Background="{StaticResource CardBackgroundBrush}"
                         BorderBrush="{StaticResource AppBorderBrush}"
                         BorderThickness="1"
                         CornerRadius="6"
-                        Padding="16"
+                        Padding="16,14,6,6"
                         Margin="0,0,0,20">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="320"/>
-                            <ColumnDefinition Width="14"/>
-                            <ColumnDefinition Width="180"/>
-                            <ColumnDefinition Width="14"/>
-                            <ColumnDefinition Width="180"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-
+                    <WrapPanel Orientation="Horizontal">
                         <!-- Tìm kiếm từ khóa -->
-                        <Border Grid.Column="0" Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Height="36">
+                        <Border Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Height="36" Width="220" Margin="0,0,10,8">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="32"/>
@@ -151,34 +132,49 @@
                                          Padding="0,0,8,0"/>
                             </Grid>
                         </Border>
-
                         <!-- Lọc Trạng thái -->
-                        <ComboBox Grid.Column="2"
-                                  SelectedValue="{Binding SelectedStatusFilter, Mode=TwoWay}"
+                        <ComboBox SelectedValue="{Binding SelectedStatusFilter, Mode=TwoWay}"
                                   SelectedValuePath="Tag"
+                                  Width="130"
                                   Height="36"
+                                  Margin="0,0,10,8"
                                   VerticalContentAlignment="Center">
                             <ComboBoxItem Tag="All" Content="{DynamicResource Str_Common_All}" IsSelected="True"/>
                             <ComboBoxItem Tag="Paid" Content="{DynamicResource Str_Tx_Paid}"/>
                             <ComboBoxItem Tag="Pending" Content="{DynamicResource Str_Tx_PendingPayment}"/>
                             <ComboBoxItem Tag="Parked" Content="{DynamicResource Str_Tx_Parked}"/>
                         </ComboBox>
-
                         <!-- Lọc Phương thức thanh toán -->
-                        <ComboBox Grid.Column="4"
-                                  SelectedValue="{Binding SelectedPaymentFilter, Mode=TwoWay}"
+                        <ComboBox SelectedValue="{Binding SelectedPaymentFilter, Mode=TwoWay}"
                                   SelectedValuePath="Tag"
+                                  Width="130"
                                   Height="36"
+                                  Margin="0,0,10,8"
                                   VerticalContentAlignment="Center">
                             <ComboBoxItem Tag="All" Content="{DynamicResource Str_Common_All}" IsSelected="True"/>
                             <ComboBoxItem Tag="Cash" Content="{DynamicResource Str_Tx_Cash}"/>
                             <ComboBoxItem Tag="VietQR" Content="VietQR"/>
                         </ComboBox>
-
+                        <!-- Lọc Nhân viên -->
+                        <ComboBox ItemsSource="{Binding StaffOptions}"
+                                  SelectedItem="{Binding SelectedStaffOption, Mode=TwoWay}"
+                                  DisplayMemberPath="Label"
+                                  Width="150"
+                                  Height="36"
+                                  Margin="0,0,10,8"
+                                  VerticalContentAlignment="Center"/>
+                        <!-- Lọc Ca trực -->
+                        <ComboBox ItemsSource="{Binding ShiftOptions}"
+                                  SelectedItem="{Binding SelectedShiftOption, Mode=TwoWay}"
+                                  DisplayMemberPath="Label"
+                                  Width="170"
+                                  Height="36"
+                                  Margin="0,0,10,8"
+                                  VerticalContentAlignment="Center"/>
                         <!-- Nút Xóa Lọc -->
-                        <Button Grid.Column="6"
-                                Command="{Binding ClearFilterCommand}"
+                        <Button Command="{Binding ClearFilterCommand}"
                                 Height="36" Padding="14,0"
+                                Margin="0,0,10,8"
                                 Background="#F1F5F9"
                                 BorderBrush="{StaticResource AppBorderBrush}"
                                 BorderThickness="1"
@@ -194,9 +190,8 @@
                                 </ControlTemplate>
                             </Button.Template>
                         </Button>
-                    </Grid>
+                    </WrapPanel>
                 </Border>
-
                 <!-- 4. TabControl Chuyển Đổi: Giao Dịch Điện Tử VietQR vs Sổ Cái Phiên Đỗ -->
                 <Border Background="{StaticResource CardBackgroundBrush}"
                         BorderBrush="{StaticResource AppBorderBrush}"
@@ -212,7 +207,6 @@
                                     <TextBlock Text="{DynamicResource Str_Tx_PaymentsTitle}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                                     <TextBlock FontSize="12" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Right"><Run Text="{DynamicResource Str_Tx_ShowingPaymentsPrefix}"/><Run Text="{Binding FilteredPayments.Count, Mode=OneWay}"/><Run Text="{DynamicResource Str_Tx_ShowingPaymentsSuffix}"/></TextBlock>
                                 </Grid>
-
                                 <DataGrid ItemsSource="{Binding FilteredPayments}"
                                           AutoGenerateColumns="False"
                                           IsReadOnly="True"
@@ -239,7 +233,6 @@
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
-
                                         <!-- Phiên Đỗ -->
                                         <DataGridTextColumn Header="{DynamicResource Str_Tx_ColSession}" Binding="{Binding SessionId, StringFormat='#S-{0}'}" Width="85">
                                             <DataGridTextColumn.ElementStyle>
@@ -250,7 +243,6 @@
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
-
                                         <!-- Biển Số Xe -->
                                         <DataGridTextColumn Header="{DynamicResource Str_Common_Plate}" Binding="{Binding LicensePlate}" Width="110">
                                             <DataGridTextColumn.ElementStyle>
@@ -262,7 +254,6 @@
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
-
                                         <!-- Mã Vé -->
                                         <DataGridTextColumn Header="{DynamicResource Str_Tx_ColTicket}" Binding="{Binding TicketCode}" Width="120">
                                             <DataGridTextColumn.ElementStyle>
@@ -273,7 +264,6 @@
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
-
                                         <!-- Số Tiền -->
                                         <DataGridTextColumn Header="{DynamicResource Str_Tx_ColAmount}" Binding="{Binding Amount, StringFormat={}{0:N0} đ}" Width="105">
                                             <DataGridTextColumn.ElementStyle>
@@ -285,7 +275,6 @@
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
-
                                         <!-- Cổng Thanh Toán -->
                                         <DataGridTextColumn Header="{DynamicResource Str_Tx_ColGateway}" Binding="{Binding Gateway}" Width="90">
                                             <DataGridTextColumn.ElementStyle>
@@ -296,7 +285,6 @@
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
-
                                         <!-- Trạng Thái -->
                                         <DataGridTemplateColumn Header="{DynamicResource Str_Common_Status}" Width="110">
                                             <DataGridTemplateColumn.CellTemplate>
@@ -358,7 +346,6 @@
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
-
                                         <!-- Thời Gian Thanh Toán -->
                                         <DataGridTextColumn Header="{DynamicResource Str_Tx_ColPaidAt}" Binding="{Binding CreatedAt, Converter={StaticResource UtcToVietnamTimeConverter}, TargetNullValue='--:--:--'}" Width="145">
                                             <DataGridTextColumn.ElementStyle>
@@ -369,7 +356,6 @@
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
-
                                         <!-- Thời Gian Thanh Toán theo UTC
                                         <DataGridTextColumn Header="{DynamicResource Str_Tx_ColPaidAtUtc}" Binding="{Binding PaidAt, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}, TargetNullValue='vì không được để - - nên có thể làm theo cái ở trên'}" Width="145">
                                             <DataGridTextColumn.ElementStyle>
@@ -380,7 +366,6 @@
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn> -->
-
                                         <!-- Thao Tác Chi Tiết -->
                                         <DataGridTemplateColumn Header="{DynamicResource Str_Common_Actions}" Width="190">
                                             <DataGridTemplateColumn.CellTemplate>
@@ -431,7 +416,6 @@
                                 </DataGrid>
                             </StackPanel>
                         </TabItem>
-
                         <!-- TAB 2: Sổ Cái Lượt Xe Đỗ (Sessions) -->
                         <TabItem Header="{DynamicResource Str_Tx_TabSessions}" FontSize="13" FontWeight="Bold" Padding="16,8">
                             <StackPanel Margin="0,16,0,0">
@@ -439,7 +423,6 @@
                                     <TextBlock Text="{DynamicResource Str_Tx_SessionsTitle}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                                     <TextBlock FontSize="12" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Right"><Run Text="{DynamicResource Str_Tx_ShowingSessionsPrefix}"/><Run Text="{Binding FilteredSessions.Count, Mode=OneWay}"/><Run Text="{DynamicResource Str_Tx_ShowingSessionsSuffix}"/></TextBlock>
                                 </Grid>
-
                                 <DataGrid ItemsSource="{Binding FilteredSessions}"
                                           AutoGenerateColumns="False"
                                           IsReadOnly="True"
@@ -454,7 +437,6 @@
                                           RowHeaderWidth="0"
                                           HeadersVisibility="Column"
                                           SelectionMode="Single">
-
                                     <DataGrid.Columns>
                                         <!-- Mã vé / Mã GD -->
                                         <DataGridTextColumn Header="{DynamicResource Str_Tx_ColTicketOrTx}" Binding="{Binding TicketCode}" Width="140">
@@ -467,7 +449,6 @@
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
-
                                         <!-- Biển số xe -->
                                         <DataGridTextColumn Header="{DynamicResource Str_Common_Plate}" Binding="{Binding LicensePlate}" Width="120">
                                             <DataGridTextColumn.ElementStyle>
@@ -479,7 +460,6 @@
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
-
                                         <!-- Loại phương tiện -->
                                         <DataGridTextColumn Header="{DynamicResource Str_Common_VehicleType}" Binding="{Binding VehicleType.TypeName}" Width="110">
                                             <DataGridTextColumn.ElementStyle>
@@ -490,7 +470,6 @@
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
-
                                         <!-- Hạng vé -->
                                         <DataGridTemplateColumn Header="{DynamicResource Str_Tx_ColTicketClass}" Width="95">
                                             <DataGridTemplateColumn.CellTemplate>
@@ -524,7 +503,6 @@
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
-
                                         <!-- Thời gian vào -->
                                         <DataGridTextColumn Header="{DynamicResource Str_Tx_ColCheckIn}" Binding="{Binding CheckInTimeLocal, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}}" Width="145">
                                             <DataGridTextColumn.ElementStyle>
@@ -535,7 +513,6 @@
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
-
                                         <!-- Thời gian ra -->
                                         <DataGridTextColumn Header="{DynamicResource Str_Tx_ColCheckOut}" Binding="{Binding CheckOutTimeLocal, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}, TargetNullValue='--:--:--'}" Width="145">
                                             <DataGridTextColumn.ElementStyle>
@@ -546,7 +523,6 @@
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
-
                                         <!-- Thời lượng đỗ -->
                                         <DataGridTextColumn Header="{DynamicResource Str_Tx_ColDuration}" Binding="{Binding DurationDisplay}" Width="100">
                                             <DataGridTextColumn.ElementStyle>
@@ -557,7 +533,6 @@
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
-
                                         <!-- Phương thức thanh toán -->
                                         <DataGridTemplateColumn Header="{DynamicResource Str_Tx_ColMethod}" Width="95">
                                             <DataGridTemplateColumn.CellTemplate>
@@ -566,7 +541,6 @@
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
-
                                         <!-- Số tiền thu -->
                                         <DataGridTextColumn Header="{DynamicResource Str_Tx_ColFee}" Binding="{Binding TotalFee, StringFormat={}{0:N0} đ}" Width="105">
                                             <DataGridTextColumn.ElementStyle>
@@ -578,7 +552,6 @@
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
-
                                         <!-- Trạng thái -->
                                         <DataGridTemplateColumn Header="{DynamicResource Str_Common_Status}" Width="*">
                                             <DataGridTemplateColumn.CellTemplate>
@@ -635,7 +608,6 @@
                 </Border>
             </StackPanel>
         </ScrollViewer>
-
         <!-- 5. Modal Chi Tiết Giao Dịch & Kiểm Toán (Payment Details & Audit Log Modal) -->
         <Grid Background="#66000000"
               Visibility="{Binding IsPaymentDetailsOpen, Converter={StaticResource BoolToVisConverter}}"
@@ -657,7 +629,6 @@
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-
                     <!-- Modal Header -->
                     <Grid Grid.Row="0" Margin="0,0,0,16">
                         <StackPanel>
@@ -678,7 +649,6 @@
                             <TextBlock Text="✕" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
                         </Button>
                     </Grid>
-
                     <!-- Modal Body -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel>
@@ -686,7 +656,6 @@
                             <TextBlock Text="{DynamicResource Str_Tx_LoadingAudit}" 
                                        Visibility="{Binding IsLoadingDetails, Converter={StaticResource BoolToVisConverter}}"
                                        FontSize="13" Foreground="{StaticResource PrimaryButtonBrush}" Margin="0,16"/>
-
                             <!-- Main details content -->
                             <StackPanel Visibility="{Binding SelectedPaymentDetails, Converter={StaticResource BoolToVisConverter}}">
                                 
@@ -703,7 +672,6 @@
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
-
                                         <!-- Hàng 1 -->
                                         <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,10">
                                             <TextBlock Text="{DynamicResource Str_Tx_Reference}" FontSize="11" Foreground="{StaticResource TextDimBrush}"/>
@@ -713,7 +681,6 @@
                                             <TextBlock Text="{DynamicResource Str_Tx_PaymentAmount}" FontSize="11" Foreground="{StaticResource TextDimBrush}"/>
                                             <TextBlock Text="{Binding SelectedPaymentDetails.Payment.Amount, StringFormat={}{0:N0} đ}" FontSize="16" FontWeight="Bold" Foreground="#7C3AED"/>
                                         </StackPanel>
-
                                         <!-- Hàng 2 -->
                                         <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,12,10">
                                             <TextBlock Text="{DynamicResource Str_Tx_PlateAndTicket}" FontSize="11" Foreground="{StaticResource TextDimBrush}"/>
@@ -728,7 +695,6 @@
                                             <TextBlock Text="{DynamicResource Str_Tx_PaymentStatus}" FontSize="11" Foreground="{StaticResource TextDimBrush}"/>
                                             <TextBlock Text="{Binding SelectedPaymentDetails.Payment.Status}" FontSize="13" FontWeight="Bold" Foreground="#15803D"/>
                                         </StackPanel>
-
                                         <!-- Hàng 3 -->
                                         <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,12,10">
                                             <TextBlock Text="{DynamicResource Str_Tx_GatewayAndCode}" FontSize="11" Foreground="{StaticResource TextDimBrush}"/>
@@ -768,7 +734,6 @@
                                                 </TextBlock>
                                             </StackPanel>
                                         </StackPanel>
-
                                         <!-- Hàng 4: Chuỗi QR Payload -->
                                         <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Margin="0,4,0,0">
                                             <TextBlock Text="{DynamicResource Str_Tx_QrPayload}" FontSize="11" Foreground="{StaticResource TextDimBrush}"/>
@@ -784,7 +749,6 @@
                                         </StackPanel>
                                     </Grid>
                                 </Border>
-
                                 <!-- Card Danh Sách Lần Thử Gọi Cổng (Payment Attempts Audit Trail) -->
                                 <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="14" Margin="0,0,0,16">
                                     <StackPanel>
@@ -813,7 +777,6 @@
                                         </DataGrid>
                                     </StackPanel>
                                 </Border>
-
                                 <!-- Card Lịch Sử Webhook Nhận Được (Webhook History) -->
                                 <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="14">
                                     <StackPanel>
@@ -860,11 +823,9 @@
                                         </DataGrid>
                                     </StackPanel>
                                 </Border>
-
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
-
                     <!-- Modal Footer -->
                     <Border Grid.Row="2" Margin="0,16,0,0" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="0,1,0,0" Padding="0,12,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
