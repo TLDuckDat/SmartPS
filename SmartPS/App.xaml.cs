@@ -124,6 +124,9 @@ public partial class App : Application
         services.AddSingleton<SmartPS.Services.Reports.IReportExportService, SmartPS.Services.Reports.ReportExportService>();
         services.AddSingleton<SmartPS.Services.Dialog.IFileDialogService, SmartPS.Services.Dialog.FileDialogService>();
         services.AddSingleton<IParkingZoneService, ParkingZoneService>();
+        services.AddSingleton<SmartPS.Services.Customers.IVehiclesService, SmartPS.Services.Customers.VehiclesService>();
+        services.AddSingleton<SmartPS.Services.Customers.ITicketsService, SmartPS.Services.Customers.TicketsService>();
+        services.AddSingleton<SmartPS.Services.Customers.ICustomersService, SmartPS.Services.Customers.CustomersService>();
         services.AddSingleton<SmartPS.Services.Incidents.IIncidentService, SmartPS.Services.Incidents.IncidentService>();
         services.AddSingleton<SmartPS.Services.Settings.ISystemSettingsService, SmartPS.Services.Settings.SystemSettingsService>();
         services.AddSingleton<PaymentWebhookServer>();
