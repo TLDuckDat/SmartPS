@@ -12,13 +12,13 @@
         </Grid.RowDefinitions>
         
         <TextBlock Text="{DynamicResource Str_Customers_DlgPlate}" Grid.Row="0" Margin="0,5,0,0"/>
-        <TextBox x:Name="txtPlate" Grid.Row="0" Margin="100,0,0,10" Height="25"/>
+        <TextBox x:Name="txtPlate" Text="{Binding LicensePlate, UpdateSourceTrigger=PropertyChanged}" Grid.Row="0" Margin="100,0,0,10" Height="25"/>
         
         <TextBlock Text="{DynamicResource Str_Customers_DlgVehicleType}" Grid.Row="1" Margin="0,5,0,0"/>
-        <ComboBox x:Name="cboType" Grid.Row="1" Margin="100,0,0,10" Height="25"/>
+        <ComboBox x:Name="cboType" ItemsSource="{Binding VehicleTypes}" SelectedItem="{Binding SelectedVehicleType, Mode=TwoWay}" DisplayMemberPath="TypeName" Grid.Row="1" Margin="100,0,0,10" Height="25"/>
         
         <TextBlock Text="{DynamicResource Str_Customers_DlgOwner}" Grid.Row="2" Margin="0,5,0,0"/>
-        <ComboBox x:Name="cboCustomer" Grid.Row="2" Margin="100,0,0,10" Height="25" IsEditable="True" IsTextSearchEnabled="True"/>
+        <ComboBox x:Name="cboCustomer" ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}" DisplayMemberPath="FullName" Grid.Row="2" Margin="100,0,0,10" Height="25" IsEditable="True" IsTextSearchEnabled="True"/>
         
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
             <Button Content="{DynamicResource Str_Common_Cancel}" Width="80" Height="30" Margin="0,0,10,0" Click="BtnCancel_Click"/>

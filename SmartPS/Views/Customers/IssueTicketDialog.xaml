@@ -13,10 +13,10 @@
         </Grid.RowDefinitions>
         
         <TextBlock Text="{DynamicResource Str_Customers_DlgCustomer}" Grid.Row="0" Margin="0,5,0,0"/>
-        <ComboBox x:Name="cboCustomer" Grid.Row="0" Margin="110,0,0,10" Height="25" IsEditable="True" IsTextSearchEnabled="True" SelectionChanged="CboCustomer_SelectionChanged"/>
+        <ComboBox x:Name="cboCustomer" ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}" DisplayMemberPath="FullName" Grid.Row="0" Margin="110,0,0,10" Height="25" IsEditable="True" IsTextSearchEnabled="True"/>
         
         <TextBlock Text="{DynamicResource Str_Customers_DlgVehicle}" Grid.Row="1" Margin="0,5,0,0"/>
-        <ComboBox x:Name="cboVehicle" Grid.Row="1" Margin="110,0,0,10" Height="25" SelectionChanged="CboVehicle_SelectionChanged"/>
+        <ComboBox x:Name="cboVehicle" ItemsSource="{Binding AvailableVehicles}" SelectedItem="{Binding SelectedVehicle, Mode=TwoWay}" DisplayMemberPath="LicensePlate" Grid.Row="1" Margin="110,0,0,10" Height="25"/>
         
         <TextBlock Text="{DynamicResource Str_Customers_DlgDuration}" Grid.Row="2" Margin="0,5,0,0"/>
         <ComboBox x:Name="cboDuration" Grid.Row="2" Margin="110,0,0,10" Height="25" SelectedIndex="0" SelectionChanged="CboDuration_SelectionChanged">
@@ -26,10 +26,10 @@
         </ComboBox>
         
         <TextBlock Text="{DynamicResource Str_Customers_DlgFee}" Grid.Row="3" Margin="0,5,0,0" FontWeight="SemiBold"/>
-        <TextBlock x:Name="txtPricePreview" Grid.Row="3" Margin="110,5,0,10" FontWeight="Bold" FontSize="14" Foreground="#2563EB" Text="0 đ"/>
+        <TextBlock x:Name="txtPricePreview" Text="{Binding EstimatedFeeDisplay}" Grid.Row="3" Margin="110,5,0,10" FontWeight="Bold" FontSize="14" Foreground="#2563EB"/>
         
         <TextBlock Text="{DynamicResource Str_Customers_DlgPayment}" Grid.Row="4" Margin="0,5,0,0" FontWeight="SemiBold"/>
-        <ComboBox x:Name="cboPaymentMethod" Grid.Row="4" Margin="110,0,0,10" Height="25" SelectedIndex="0">
+        <ComboBox x:Name="cboPaymentMethod" Grid.Row="4" Margin="110,0,0,10" Height="25" SelectedIndex="0" SelectionChanged="CboPaymentMethod_SelectionChanged">
             <ComboBoxItem Content="{DynamicResource Str_Customers_PayCash}"/>
             <ComboBoxItem Content="{DynamicResource Str_Customers_PayVietQr}"/>
             <ComboBoxItem Content="{DynamicResource Str_Customers_PayCard}"/>
