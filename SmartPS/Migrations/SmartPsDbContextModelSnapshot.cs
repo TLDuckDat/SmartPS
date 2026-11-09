@@ -478,6 +478,69 @@ namespace SmartPS.Migrations
                     b.ToTable("MonthlyTickets", (string)null);
                 });
 
+            modelBuilder.Entity("SmartPS.Models.Parking.MonthlyTicketHistory", b =>
+                {
+                    b.Property<int>("HistoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("HistoryId"));
+
+                    b.Property<int>("Action")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("AddedMonths")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("NewEndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NewLicensePlate")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int?>("NewVehicleId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("OldEndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("OldLicensePlate")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int?>("OldVehicleId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PaymentMethod")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PerformedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("TicketId")
+                        .HasColumnType("int");
+
+                    b.HasKey("HistoryId");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("TicketId");
+
+                    b.ToTable("MonthlyTicketHistories", (string)null);
+                });
+
             modelBuilder.Entity("SmartPS.Models.Parking.ParkingSession", b =>
                 {
                     b.Property<int>("SessionId")
@@ -1314,6 +1377,17 @@ namespace SmartPS.Migrations
                     b.Navigation("VehicleType");
                 });
 
+            modelBuilder.Entity("SmartPS.Models.Parking.MonthlyTicketHistory", b =>
+                {
+                    b.HasOne("SmartPS.Models.Parking.MonthlyTicket", "Ticket")
+                        .WithMany("Histories")
+                        .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Ticket");
+                });
+
             modelBuilder.Entity("SmartPS.Models.Parking.ParkingSession", b =>
                 {
                     b.HasOne("SmartPS.Models.Auth.User", "CreatedByUser")
@@ -1523,6 +1597,11 @@ namespace SmartPS.Migrations
             modelBuilder.Entity("SmartPS.Models.Parking.Household", b =>
                 {
                     b.Navigation("Customers");
+                });
+
+            modelBuilder.Entity("SmartPS.Models.Parking.MonthlyTicket", b =>
+                {
+                    b.Navigation("Histories");
                 });
 
             modelBuilder.Entity("SmartPS.Models.Parking.ParkingSession", b =>

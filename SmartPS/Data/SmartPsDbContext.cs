@@ -25,6 +25,7 @@ public class SmartPsDbContext : DbContext
     public DbSet<PricingRule> PricingRules => Set<PricingRule>();
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<MonthlyTicket> MonthlyTickets => Set<MonthlyTicket>();
+    public DbSet<MonthlyTicketHistory> MonthlyTicketHistories => Set<MonthlyTicketHistory>();
     public DbSet<Household> Households => Set<Household>();
     public DbSet<Vehicle> Vehicles => Set<Vehicle>();
     public DbSet<BlacklistedVehicle> BlacklistedVehicles => Set<BlacklistedVehicle>();

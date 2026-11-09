@@ -29,6 +29,7 @@ public class MonthlyTicket
 
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public ICollection<MonthlyTicketHistory> Histories { get; set; } = new List<MonthlyTicketHistory>();
 
     public bool IsCurrentlyValid => Status == MonthlyTicketStatus.Active && DateTime.UtcNow >= StartDate && DateTime.UtcNow <= EndDate;
 
