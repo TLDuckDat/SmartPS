@@ -1279,12 +1279,20 @@
     <sys:String x:Key="Str_Fee_Block4h">Khung 4h ({0:N0}đ)</sys:String>
     <sys:String x:Key="Str_Fee_OneDay">Gói 1 ngày ({0:N0}đ)</sys:String>
     <sys:String x:Key="Msg_Fee_Calculated">Tính cước thành công.</sys:String>
+    <sys:String x:Key="Str_Fee_Line_Grace">Miễn phí trong {0} phút đầu (ân hạn).</sys:String>
+    <sys:String x:Key="Str_Fee_Line_MonthlyFree">Vé tháng còn hạn: miễn phí {0}.</sys:String>
+    <sys:String x:Key="Str_Fee_Line_Cycle">Chu kỳ 24h #{0} ({1}): {2} khung x {3:N0}đ = {4:N0}đ</sys:String>
+    <sys:String x:Key="Str_Fee_Line_CycleCapped">Chu kỳ 24h #{0} ({1}): {2} khung x {3:N0}đ, áp trần ngày = {4:N0}đ</sys:String>
+    <sys:String x:Key="Str_Fee_Line_OverQuota">Chu kỳ 24h #{0} ({1}): xe vượt định mức = {2:N0}đ</sys:String>
+    <sys:String x:Key="Str_Fee_Line_Overnight">Phụ phí qua đêm: {0} lần x {1:N0}đ = {2:N0}đ</sys:String>
     <sys:String x:Key="Str_Fee_Detail">Thời gian đỗ: {0}. Cước phí: {1} = {2:N0}đ.</sys:String>
     <sys:String x:Key="Str_Price_UnknownType">Không xác định</sys:String>
     <sys:String x:Key="Msg_Price_LoadError">Lỗi tải cấu hình biểu phí: {0}</sys:String>
     <sys:String x:Key="Msg_Price_MaxVehiclesMin">Số xe tối đa mặc định cho mỗi hộ gia đình phải từ 1 xe trở lên!</sys:String>
     <sys:String x:Key="Msg_Price_NegativeValue">Biểu phí của '{0}' không được có giá trị âm!</sys:String>
     <sys:String x:Key="Msg_Price_MustBePositive">Giá vé lượt và vé tháng của '{0}' phải lớn hơn 0đ!</sys:String>
+    <sys:String x:Key="Msg_Price_GraceRange">Thời gian ân hạn của '{0}' phải từ 0 đến {1} phút!</sys:String>
+    <sys:String x:Key="Msg_Price_RuleNotFound">Không tìm thấy biểu phí của '{0}'. Vui lòng tải lại.</sys:String>
     <sys:String x:Key="Msg_Price_Saved">Lưu thay đổi thành công!</sys:String>
     <sys:String x:Key="Msg_Price_SaveError">Lỗi lưu cấu hình biểu phí: {0}</sys:String>
     <sys:String x:Key="Msg_Ocr_EmptyPath">Đường dẫn ảnh không được để trống.</sys:String>
