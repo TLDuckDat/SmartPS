@@ -1301,6 +1301,7 @@
     <sys:String x:Key="Msg_Price_MustBePositive">「{0}」の都度料金と定期料金は 0 ₫ より大きくしてください！</sys:String>
     <sys:String x:Key="Msg_Price_GraceRange">「{0}」の猶予時間は0〜{1}分で指定してください。</sys:String>
     <sys:String x:Key="Msg_Price_NotANumber">入力値は有効な数値にしてください！</sys:String>
+    <sys:String x:Key="Msg_Price_TooLarge">「{0}」の料金は {1:N0} を超えないようにしてください！</sys:String>
     <sys:String x:Key="Msg_Price_Conflict">「{0}」の料金は、読み込み後に他のユーザーが変更しました。再読み込みしてからやり直してください！</sys:String>
     <sys:String x:Key="Msg_Price_ConflictMaxVehicles">世帯あたりの最大台数は、読み込み後に他のユーザーが変更しました。再読み込みしてからやり直してください！</sys:String>
     <sys:String x:Key="Msg_Price_RuleNotFound">「{0}」の料金設定が見つかりません。再読み込みしてください。</sys:String>

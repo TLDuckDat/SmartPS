@@ -25,8 +25,13 @@ public sealed record PricingRuleData
     public string? LoadedStamp { get; init; }
 
     /// <summary>Dấu hiệu theo các giá trị cấu hình của bản ghi này.</summary>
-    public string ValuesStamp() => string.Join('|', Block4hPrice, DailyPrice, Monthly1Price, Monthly3Price, Monthly6Price,
-        GracePeriodMinutes, OvernightSurcharge, OverQuotaDailyPrice);
+    /// <remarks>Dùng InvariantCulture và chuẩn hoá scale decimal (5000.00 và 5000 cho cùng dấu hiệu).</remarks>
+    public string ValuesStamp()
+    {
+        static string N(decimal v) => v.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+        return string.Join('|', N(Block4hPrice), N(DailyPrice), N(Monthly1Price), N(Monthly3Price), N(Monthly6Price),
+            GracePeriodMinutes.ToString(System.Globalization.CultureInfo.InvariantCulture), N(OvernightSurcharge), N(OverQuotaDailyPrice));
+    }
 }
 
 /// <summary>Toàn bộ cấu hình trên màn Bảng giá: bảng giá từng loại xe và số xe tối đa mỗi hộ.</summary>
@@ -37,6 +42,9 @@ public interface IPricingService
 {
     /// <summary>Số phút ân hạn tối đa được phép cấu hình.</summary>
     public const int MaxGracePeriodMinutes = 120;
+
+    /// <summary>Giá tiền tối đa mỗi ô (VNĐ), nằm trong decimal(18,2) của CSDL.</summary>
+    public const decimal MaxPrice = 1_000_000_000m;
 
     /// <summary>Đọc bảng giá hiện hành. Cần quyền Pricing.Manage; thiếu quyền thì ghi ACCESS_DENIED và ném PermissionDeniedException.</summary>
     Task<PricingConfiguration> LoadPoliciesAsync(CancellationToken cancellationToken = default);

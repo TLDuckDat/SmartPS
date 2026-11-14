@@ -33,9 +33,7 @@ public class PricingViewModel : ValidatableViewModelBase
             {
                 if (!_fromText)
                 {
-                    _rawMaxText = null;
-                    ClearErrors(nameof(DefaultMaxVehiclesText));
-                    OnPropertyChanged(nameof(DefaultMaxVehiclesText));
+                    ResetMaxText();
                 }
 
                 ValidateMaxVehicles();
@@ -43,6 +41,7 @@ public class PricingViewModel : ValidatableViewModelBase
         }
     }
 
+    private bool _maxParseError;
     private int? _loadedMaxVehicles;
     private string? _rawMaxText;
     private bool _fromText;
@@ -56,11 +55,12 @@ public class PricingViewModel : ValidatableViewModelBase
             _rawMaxText = value ?? string.Empty;
             if (!PricingRuleItemViewModel.TryParseInt(_rawMaxText, out var parsed))
             {
+                _maxParseError = true;
                 SetErrors(nameof(DefaultMaxVehiclesText), new[] { AppText.Get("Msg_Price_NotANumber") });
                 return;
             }
 
-            ClearErrors(nameof(DefaultMaxVehiclesText));
+            _maxParseError = false;
             _fromText = true;
             try
             {
@@ -129,9 +129,23 @@ public class PricingViewModel : ValidatableViewModelBase
         SaveCommand?.RaiseCanExecuteChanged();
     }
 
+    private void ResetMaxText()
+    {
+        _rawMaxText = null;
+        _maxParseError = false;
+        ClearErrors(nameof(DefaultMaxVehiclesText));
+        OnPropertyChanged(nameof(DefaultMaxVehiclesText));
+    }
+
     private void ValidateMaxVehicles()
-        => ValidateProperty(nameof(DefaultMaxVehicles),
-            DefaultMaxVehicles < 1 ? AppText.Get("Msg_Price_MaxVehiclesMin") : null);
+    {
+        var error = DefaultMaxVehicles < 1 ? AppText.Get("Msg_Price_MaxVehiclesMin") : null;
+        ValidateProperty(nameof(DefaultMaxVehicles), error);
+        if (!_maxParseError)
+        {
+            ValidateProperty(nameof(DefaultMaxVehiclesText), error);
+        }
+    }
 
     public async Task LoadDataAsync()
     {
@@ -163,6 +177,7 @@ public class PricingViewModel : ValidatableViewModelBase
                 PricingRules.Add(item);
             }
 
+            ResetMaxText();
             DefaultMaxVehicles = configuration.DefaultMaxVehiclesPerHousehold;
             _loadedMaxVehicles = configuration.LoadedDefaultMaxVehicles;
             ValidateMaxVehicles();
@@ -221,6 +236,8 @@ public class PricingViewModel : ValidatableViewModelBase
             if (result.Success)
             {
                 _dialogService.ShowSuccess(AppText.Get("Msg_Price_Saved"));
+                // Tải lại để lấy dấu hiệu/giá trị hiện hành mới, lần lưu sau không xung đột giả với chính mình.
+                await LoadDataAsync();
             }
             else if (result.Error == OperationError.PermissionDenied)
             {

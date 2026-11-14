@@ -195,6 +195,26 @@ public class PricingRuleItemViewModel : ValidatableViewModelBase
 
     private readonly Dictionary<string, string> _rawText = new(StringComparer.Ordinal);
     private bool _fromText;
+    private readonly HashSet<string> _parseErrors = new(StringComparer.Ordinal);
+
+    private static string BaseName(string textProperty) => textProperty[..^"Text".Length];
+
+    /// <summary>Lỗi nghiệp vụ đặt ở thuộc tính gốc được phản chiếu sang khoá *Text mà ô nhập bind, trừ khi đang có lỗi chuyển đổi.</summary>
+    private void MirrorBusinessError(string textProperty)
+    {
+        if (_parseErrors.Contains(textProperty))
+        {
+            return;
+        }
+
+        ValidateProperty(textProperty, GetErrors(BaseName(textProperty)).Cast<string>().FirstOrDefault());
+    }
+
+    private void ApplyBusinessError(string propertyName, string? error)
+    {
+        ValidateProperty(propertyName, error);
+        MirrorBusinessError(propertyName + "Text");
+    }
 
     private string TextOf(string textProperty, string formatted)
         => _rawText.TryGetValue(textProperty, out var raw) ? raw : formatted;
@@ -208,7 +228,8 @@ public class PricingRuleItemViewModel : ValidatableViewModelBase
         }
 
         _rawText.Remove(textProperty);
-        ClearErrors(textProperty);
+        _parseErrors.Remove(textProperty);
+        MirrorBusinessError(textProperty);
         OnPropertyChanged(textProperty);
     }
 
@@ -226,11 +247,12 @@ public class PricingRuleItemViewModel : ValidatableViewModelBase
         _rawText[textProperty] = text;
         if (!parse(text, out var value))
         {
+            _parseErrors.Add(textProperty);
             SetErrors(textProperty, new[] { AppText.Get("Msg_Price_NotANumber") });
             return;
         }
 
-        ClearErrors(textProperty);
+        _parseErrors.Remove(textProperty);
         _fromText = true;
         try
         {
@@ -240,14 +262,27 @@ public class PricingRuleItemViewModel : ValidatableViewModelBase
         {
             _fromText = false;
         }
+
+        MirrorBusinessError(textProperty);
     }
 
     /// <summary>Số tiền nguyên; chấp nhận dấu chấm/phẩy ngăn cách hàng nghìn (như ô hiển thị 100.000).</summary>
     internal static bool TryParseMoney(string text, out decimal value)
     {
-        var cleaned = text.Trim().Replace(".", string.Empty).Replace(",", string.Empty).Replace(" ", string.Empty);
+        value = 0m;
+        var trimmed = text.Trim();
+        if (!MoneyPattern.IsMatch(trimmed))
+        {
+            return false;
+        }
+
+        var cleaned = trimmed.Replace(".", string.Empty).Replace(",", string.Empty);
         return decimal.TryParse(cleaned, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out value);
     }
+
+    /// <summary>Số nguyên, hoặc nhóm hàng nghìn đúng 3 chữ số (1.234.567 / 1,234,567); không nhận phần thập phân.</summary>
+    private static readonly System.Text.RegularExpressions.Regex MoneyPattern =
+        new(@"^-?(\d+|\d{1,3}([.,]\d{3})+)$", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
 
     internal static bool TryParseInt(string text, out int value)
         => int.TryParse(text.Trim(), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out value);
@@ -279,7 +314,7 @@ public class PricingRuleItemViewModel : ValidatableViewModelBase
     }
 
     private void ValidateGrace()
-        => ValidateProperty(nameof(GracePeriodMinutes),
+        => ApplyBusinessError(nameof(GracePeriodMinutes),
             GracePeriodMinutes is < 0 or > IPricingService.MaxGracePeriodMinutes
                 ? AppText.Get("Msg_Price_GraceRange", VehicleTypeName, IPricingService.MaxGracePeriodMinutes)
                 : null);
@@ -291,11 +326,15 @@ public class PricingRuleItemViewModel : ValidatableViewModelBase
         {
             error = AppText.Get("Msg_Price_NegativeValue", VehicleTypeName);
         }
+        else if (value > IPricingService.MaxPrice)
+        {
+            error = AppText.Get("Msg_Price_TooLarge", VehicleTypeName, IPricingService.MaxPrice);
+        }
         else if (requiresPositive && value <= 0 && RequiresPositivePrices)
         {
             error = AppText.Get("Msg_Price_MustBePositive", VehicleTypeName);
         }
 
-        ValidateProperty(propertyName, error);
+        ApplyBusinessError(propertyName, error);
     }
 }

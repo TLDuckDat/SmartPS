@@ -31,7 +31,7 @@ public class PricingViewModelTests
                 Monthly1Price = 100000, Monthly3Price = 285000, Monthly6Price = 540000,
                 GracePeriodMinutes = 15, OvernightSurcharge = 2000, OverQuotaDailyPrice = 30000
             }
-        }, 2);
+        }.Select(r => r with { LoadedStamp = r.ValuesStamp() }).ToList(), 2, 2);
 
         public PricingConfiguration? Saved { get; private set; }
         public OperationResult SaveResult { get; set; } = OperationResult.Ok();
@@ -43,6 +43,14 @@ public class PricingViewModelTests
         public Task<OperationResult> SavePoliciesAsync(PricingConfiguration configuration, CancellationToken cancellationToken = default)
         {
             Saved = configuration;
+            if (SaveResult.Success)
+            {
+                Configuration = new PricingConfiguration(
+                    configuration.Rules.Select(r => r with { LoadedStamp = r.ValuesStamp() }).ToList(),
+                    configuration.DefaultMaxVehiclesPerHousehold,
+                    configuration.DefaultMaxVehiclesPerHousehold);
+            }
+
             return Task.FromResult(SaveResult);
         }
     }
@@ -239,5 +247,144 @@ public class PricingViewModelTests
         vm.DefaultMaxVehiclesText = "5";
         Assert.False(vm.HasAnyErrors);
         Assert.Equal(5, vm.DefaultMaxVehicles);
+    }
+
+    /// <summary>Fake dùng chung cho kiểm tra đồng thời: lưu giả lập kiểm tra dấu hiệu như dịch vụ thật.</summary>
+    [Fact]
+    public async Task Saving_twice_in_a_row_does_not_conflict_with_itself()
+    {
+        var (vm, service, dialogs) = Create();
+        await vm.LoadDataAsync();
+        var rule = vm.PricingRules[0];
+
+        rule.GracePeriodMinutesText = "45";
+        await vm.SaveDataAsync();
+        Assert.Equal(45, Assert.Single(service.Saved!.Rules).GracePeriodMinutes);
+        var stampAfterFirst = vm.PricingRules[0].LoadedStamp;
+        Assert.Equal(service.Configuration.Rules[0].ValuesStamp(), stampAfterFirst);
+
+        vm.PricingRules[0].GracePeriodMinutesText = "60";
+        vm.DefaultMaxVehiclesText = "7";
+        await vm.SaveDataAsync();
+
+        var saved = Assert.Single(service.Saved!.Rules);
+        Assert.Equal(60, saved.GracePeriodMinutes);
+        Assert.Equal(stampAfterFirst, saved.LoadedStamp);
+        Assert.Equal(2, service.Saved.LoadedDefaultMaxVehicles);
+        Assert.Equal(2, dialogs.Successes.Count);
+    }
+
+    [Fact]
+    public void Stamp_ignores_decimal_scale_and_current_culture()
+    {
+        var a = new PricingRuleData { Block4hPrice = 5000.00m, DailyPrice = 25000m, OvernightSurcharge = 1500.5m };
+        var b = new PricingRuleData { Block4hPrice = 5000m, DailyPrice = 25000.0m, OvernightSurcharge = 1500.50m };
+        Assert.Equal(a.ValuesStamp(), b.ValuesStamp());
+
+        var previous = System.Globalization.CultureInfo.CurrentCulture;
+        try
+        {
+            System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("vi-VN");
+            var vi = a.ValuesStamp();
+            System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("en-US");
+            Assert.Equal(vi, a.ValuesStamp());
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentCulture = previous;
+        }
+    }
+
+    [Theory]
+    [InlineData("Block4hPriceText", "-5")]
+    [InlineData("Block4hPriceText", "0")]
+    [InlineData("Monthly1PriceText", "0")]
+    [InlineData("OverQuotaDailyPriceText", "-1")]
+    [InlineData("GracePeriodMinutesText", "500")]
+    [InlineData("GracePeriodMinutesText", "-1")]
+    [InlineData("Block4hPriceText", "99999999999999999999")]
+    public async Task Business_errors_are_reported_on_the_bound_text_property(string textProperty, string input)
+    {
+        var (vm, _, _) = Create();
+        await vm.LoadDataAsync();
+        var rule = vm.PricingRules[0];
+
+        typeof(PricingRuleItemViewModel).GetProperty(textProperty)!.SetValue(rule, input);
+
+        Assert.NotEmpty(rule.GetErrors(textProperty).Cast<string>());
+        Assert.False(vm.SaveCommand.CanExecute(null));
+
+        var fine = textProperty == "GracePeriodMinutesText" ? "10" : "7000";
+        typeof(PricingRuleItemViewModel).GetProperty(textProperty)!.SetValue(rule, fine);
+        Assert.Empty(rule.GetErrors(textProperty).Cast<string>());
+        Assert.False(vm.HasAnyErrors);
+    }
+
+    [Fact]
+    public async Task Max_vehicles_business_error_is_reported_on_the_bound_text_property()
+    {
+        var (vm, _, _) = Create();
+        await vm.LoadDataAsync();
+
+        vm.DefaultMaxVehiclesText = "0";
+        Assert.NotEmpty(vm.GetErrors(nameof(vm.DefaultMaxVehiclesText)).Cast<string>());
+        Assert.False(vm.SaveCommand.CanExecute(null));
+        vm.DefaultMaxVehiclesText = "3";
+        Assert.Empty(vm.GetErrors(nameof(vm.DefaultMaxVehiclesText)).Cast<string>());
+        Assert.False(vm.HasAnyErrors);
+    }
+
+    [Theory]
+    [InlineData("1.5")]
+    [InlineData("6,5")]
+    [InlineData("2.500,50")]
+    [InlineData("1.23")]
+    [InlineData("12.3456")]
+    [InlineData(".5")]
+    public async Task Ambiguous_or_decimal_money_text_is_rejected(string input)
+    {
+        var (vm, _, _) = Create();
+        await vm.LoadDataAsync();
+        var rule = vm.PricingRules[0];
+
+        rule.Block4hPriceText = input;
+
+        Assert.Equal(new[] { AppText.Get("Msg_Price_NotANumber") }, rule.GetErrors(nameof(rule.Block4hPriceText)).Cast<string>());
+        Assert.Equal(5000m, rule.Block4hPrice);
+        Assert.False(vm.SaveCommand.CanExecute(null));
+    }
+
+    [Theory]
+    [InlineData("6.000", 6000)]
+    [InlineData("6,000", 6000)]
+    [InlineData("1.234.567", 1234567)]
+    [InlineData("6000", 6000)]
+    [InlineData(" 7000 ", 7000)]
+    public async Task Plain_and_thousand_grouped_money_text_is_accepted(string input, int expected)
+    {
+        var (vm, _, _) = Create();
+        await vm.LoadDataAsync();
+        var rule = vm.PricingRules[0];
+
+        rule.Block4hPriceText = input;
+
+        Assert.False(vm.HasAnyErrors);
+        Assert.Equal(expected, rule.Block4hPrice);
+    }
+
+    [Fact]
+    public async Task Max_vehicles_error_does_not_stick_after_refresh_when_the_number_is_unchanged()
+    {
+        var (vm, _, _) = Create();
+        await vm.LoadDataAsync();
+
+        vm.DefaultMaxVehiclesText = "abc";
+        Assert.True(vm.HasAnyErrors);
+
+        await vm.LoadDataAsync();
+
+        Assert.False(vm.HasAnyErrors);
+        Assert.Equal("2", vm.DefaultMaxVehiclesText);
+        Assert.True(vm.SaveCommand.CanExecute(null));
     }
 }

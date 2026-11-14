@@ -235,6 +235,14 @@ public sealed class PricingService : IPricingService
                 return AppText.Get("Msg_Price_NegativeValue", name);
             }
 
+            if (rule.Block4hPrice > IPricingService.MaxPrice || rule.DailyPrice > IPricingService.MaxPrice
+                || rule.Monthly1Price > IPricingService.MaxPrice || rule.Monthly3Price > IPricingService.MaxPrice
+                || rule.Monthly6Price > IPricingService.MaxPrice || rule.OvernightSurcharge > IPricingService.MaxPrice
+                || rule.OverQuotaDailyPrice > IPricingService.MaxPrice)
+            {
+                return AppText.Get("Msg_Price_TooLarge", name, IPricingService.MaxPrice);
+            }
+
             if (RequiresPositivePrices(name) && (rule.Block4hPrice <= 0 || rule.DailyPrice <= 0 || rule.Monthly1Price <= 0))
             {
                 return AppText.Get("Msg_Price_MustBePositive", name);
