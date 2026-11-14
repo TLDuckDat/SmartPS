@@ -166,4 +166,78 @@ public class PricingViewModelTests
 
         Assert.Contains(AppText.Get("Msg_Auth_PermissionDenied"), dialogs.Errors);
     }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("abc")]
+    [InlineData("12x")]
+    public async Task Garbage_in_an_integer_box_raises_an_error_locks_save_and_clears_when_fixed(string input)
+    {
+        var (vm, service, _) = Create();
+        await vm.LoadDataAsync();
+        var rule = vm.PricingRules[0];
+
+        rule.GracePeriodMinutesText = input;
+        Assert.True(rule.HasErrors);
+        Assert.True(vm.HasAnyErrors);
+        Assert.False(vm.SaveCommand.CanExecute(null));
+        Assert.Equal(new[] { AppText.Get("Msg_Price_NotANumber") }, rule.GetErrors(nameof(rule.GracePeriodMinutesText)).Cast<string>());
+        await vm.SaveDataAsync();
+        Assert.Null(service.Saved);
+
+        rule.GracePeriodMinutesText = "20";
+        Assert.False(vm.HasAnyErrors);
+        Assert.True(vm.SaveCommand.CanExecute(null));
+        Assert.Equal(20, rule.GracePeriodMinutes);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("abc")]
+    [InlineData("1.5x")]
+    public async Task Garbage_in_a_money_box_raises_an_error_instead_of_becoming_zero(string input)
+    {
+        var (vm, service, _) = Create();
+        await vm.LoadDataAsync();
+        var rule = vm.PricingRules[0];
+
+        rule.Block4hPriceText = input;
+        Assert.True(vm.HasAnyErrors);
+        Assert.False(vm.SaveCommand.CanExecute(null));
+        Assert.Equal(5000m, rule.Block4hPrice);
+
+        rule.Block4hPriceText = "6.000";
+        Assert.False(vm.HasAnyErrors);
+        Assert.Equal(6000m, rule.Block4hPrice);
+        await vm.SaveDataAsync();
+        Assert.Equal(6000m, Assert.Single(service.Saved!.Rules).Block4hPrice);
+    }
+
+    [Fact]
+    public async Task Money_text_shows_the_dotted_format_of_the_loaded_value()
+    {
+        var (vm, _, _) = Create();
+        await vm.LoadDataAsync();
+
+        Assert.Equal("100.000", vm.PricingRules[0].Monthly1PriceText);
+        Assert.Equal("2", vm.DefaultMaxVehiclesText);
+    }
+
+    [Fact]
+    public async Task Garbage_in_the_max_vehicles_box_raises_an_error_and_locks_save()
+    {
+        var (vm, service, _) = Create();
+        await vm.LoadDataAsync();
+
+        vm.DefaultMaxVehiclesText = "";
+        Assert.True(vm.HasAnyErrors);
+        Assert.False(vm.SaveCommand.CanExecute(null));
+        Assert.Equal(new[] { AppText.Get("Msg_Price_NotANumber") }, vm.GetErrors(nameof(vm.DefaultMaxVehiclesText)).Cast<string>());
+        await vm.SaveDataAsync();
+        Assert.Null(service.Saved);
+
+        vm.DefaultMaxVehiclesText = "5";
+        Assert.False(vm.HasAnyErrors);
+        Assert.Equal(5, vm.DefaultMaxVehicles);
+    }
 }

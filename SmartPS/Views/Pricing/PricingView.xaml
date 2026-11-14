@@ -3,13 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:conv="clr-namespace:SmartPS.Converters"
              mc:Ignorable="d"
              d:DesignHeight="850" d:DesignWidth="1100">
-
-    <UserControl.Resources>
-        <conv:CurrencyConverter x:Key="CurrencyConverter"/>
-    </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="{StaticResource AppBackgroundBrush}">
         <StackPanel Margin="28,24">
@@ -73,7 +68,7 @@
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="{DynamicResource Str_PriceUi_Block4h}" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                                            <TextBox Grid.Column="1" Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}" Text="{Binding Block4hPrice, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Padding="4" HorizontalContentAlignment="Right" />
+                                            <TextBox Grid.Column="1" Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}" Text="{Binding Block4hPriceText, UpdateSourceTrigger=PropertyChanged}" Padding="4" HorizontalContentAlignment="Right" />
                                             <TextBlock Grid.Column="2" Text="VNĐ" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                         </Grid>
 
@@ -84,7 +79,7 @@
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="{DynamicResource Str_PriceUi_Daily}" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                                            <TextBox Grid.Column="1" Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}" Text="{Binding DailyPrice, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Padding="4" HorizontalContentAlignment="Right" />
+                                            <TextBox Grid.Column="1" Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}" Text="{Binding DailyPriceText, UpdateSourceTrigger=PropertyChanged}" Padding="4" HorizontalContentAlignment="Right" />
                                             <TextBlock Grid.Column="2" Text="VNĐ" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                         </Grid>
                                     </StackPanel>
@@ -101,7 +96,7 @@
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="{DynamicResource Str_PriceUi_Monthly1}" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                                            <TextBox Grid.Column="1" Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}" Text="{Binding Monthly1Price, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Padding="4" HorizontalContentAlignment="Right" />
+                                            <TextBox Grid.Column="1" Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}" Text="{Binding Monthly1PriceText, UpdateSourceTrigger=PropertyChanged}" Padding="4" HorizontalContentAlignment="Right" />
                                             <TextBlock Grid.Column="2" Text="VNĐ" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                         </Grid>
 
@@ -112,7 +107,7 @@
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="{DynamicResource Str_PriceUi_Monthly3}" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                                            <TextBox Grid.Column="1" Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}" Text="{Binding Monthly3Price, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Padding="4" HorizontalContentAlignment="Right" />
+                                            <TextBox Grid.Column="1" Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}" Text="{Binding Monthly3PriceText, UpdateSourceTrigger=PropertyChanged}" Padding="4" HorizontalContentAlignment="Right" />
                                             <TextBlock Grid.Column="2" Text="VNĐ" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                         </Grid>
 
@@ -123,7 +118,7 @@
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="{DynamicResource Str_PriceUi_Monthly6}" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                                            <TextBox Grid.Column="1" Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}" Text="{Binding Monthly6Price, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Padding="4" HorizontalContentAlignment="Right" />
+                                            <TextBox Grid.Column="1" Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}" Text="{Binding Monthly6PriceText, UpdateSourceTrigger=PropertyChanged}" Padding="4" HorizontalContentAlignment="Right" />
                                             <TextBlock Grid.Column="2" Text="VNĐ" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                         </Grid>
 
@@ -141,7 +136,7 @@
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="{DynamicResource Str_PriceUi_Grace}" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap"/>
-                                            <TextBox Grid.Column="1" Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}" Text="{Binding GracePeriodMinutes, UpdateSourceTrigger=PropertyChanged}" Padding="4" HorizontalContentAlignment="Right" />
+                                            <TextBox Grid.Column="1" Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}" Text="{Binding GracePeriodMinutesText, UpdateSourceTrigger=PropertyChanged}" Padding="4" HorizontalContentAlignment="Right" />
                                             <TextBlock Grid.Column="2" Text="{DynamicResource Str_PriceUi_Minutes}" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                         </Grid>
                                         <Grid Margin="0,4">
@@ -151,7 +146,7 @@
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="{DynamicResource Str_PriceUi_Overnight}" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap"/>
-                                            <TextBox Grid.Column="1" Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}" Text="{Binding OvernightSurcharge, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Padding="4" HorizontalContentAlignment="Right" />
+                                            <TextBox Grid.Column="1" Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}" Text="{Binding OvernightSurchargeText, UpdateSourceTrigger=PropertyChanged}" Padding="4" HorizontalContentAlignment="Right" />
                                             <TextBlock Grid.Column="2" Text="VNĐ" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                         </Grid>
                                         <Grid Margin="0,4">
@@ -161,7 +156,7 @@
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="{DynamicResource Str_PriceUi_OverQuota}" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap"/>
-                                            <TextBox Grid.Column="1" Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}" Text="{Binding OverQuotaDailyPrice, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" Padding="4" HorizontalContentAlignment="Right" />
+                                            <TextBox Grid.Column="1" Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}" Text="{Binding OverQuotaDailyPriceText, UpdateSourceTrigger=PropertyChanged}" Padding="4" HorizontalContentAlignment="Right" />
                                             <TextBlock Grid.Column="2" Text="VNĐ" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                         </Grid>
                                     </StackPanel>
@@ -180,7 +175,7 @@
                             <ColumnDefinition Width="100" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="{DynamicResource Str_PriceUi_MaxVehicles}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                        <TextBox Grid.Column="1" Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}" Text="{Binding DefaultMaxVehicles, UpdateSourceTrigger=PropertyChanged}" Padding="4" HorizontalContentAlignment="Right" />
+                        <TextBox Grid.Column="1" Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}" Text="{Binding DefaultMaxVehiclesText, UpdateSourceTrigger=PropertyChanged}" Padding="4" HorizontalContentAlignment="Right" />
                     </Grid>
                     <TextBlock Text="{DynamicResource Str_PriceUi_MaxVehiclesHint}" FontSize="11" Foreground="{StaticResource TextDimBrush}" Margin="0,6,0,0"/>
                 </StackPanel>

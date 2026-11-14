@@ -1300,6 +1300,7 @@
     <sys:String x:Key="Msg_Price_NegativeValue">「{0}」の料金に負の値は設定できません！</sys:String>
     <sys:String x:Key="Msg_Price_MustBePositive">「{0}」の都度料金と定期料金は 0 ₫ より大きくしてください！</sys:String>
     <sys:String x:Key="Msg_Price_GraceRange">「{0}」の猶予時間は0〜{1}分で指定してください。</sys:String>
+    <sys:String x:Key="Msg_Price_NotANumber">入力値は有効な数値にしてください！</sys:String>
     <sys:String x:Key="Msg_Price_RuleNotFound">「{0}」の料金設定が見つかりません。再読み込みしてください。</sys:String>
     <sys:String x:Key="Msg_Price_Saved">変更を保存しました！</sys:String>
     <sys:String x:Key="Msg_Price_SaveError">料金表の保存エラー: {0}</sys:String>

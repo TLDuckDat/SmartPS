@@ -1300,6 +1300,7 @@
     <sys:String x:Key="Msg_Price_NegativeValue">Prices for '{0}' cannot be negative!</sys:String>
     <sys:String x:Key="Msg_Price_MustBePositive">Per-visit and monthly prices for '{0}' must be greater than 0 ₫!</sys:String>
     <sys:String x:Key="Msg_Price_GraceRange">The grace period of '{0}' must be between 0 and {1} minutes!</sys:String>
+    <sys:String x:Key="Msg_Price_NotANumber">The entered value must be a valid number!</sys:String>
     <sys:String x:Key="Msg_Price_RuleNotFound">Pricing for '{0}' was not found. Please reload.</sys:String>
     <sys:String x:Key="Msg_Price_Saved">Changes saved!</sys:String>
     <sys:String x:Key="Msg_Price_SaveError">Error saving the price list: {0}</sys:String>

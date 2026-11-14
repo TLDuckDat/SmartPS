@@ -31,7 +31,43 @@ public class PricingViewModel : ValidatableViewModelBase
         {
             if (SetProperty(ref _defaultMaxVehicles, value))
             {
+                if (!_fromText)
+                {
+                    _rawMaxText = null;
+                    ClearErrors(nameof(DefaultMaxVehiclesText));
+                    OnPropertyChanged(nameof(DefaultMaxVehiclesText));
+                }
+
                 ValidateMaxVehicles();
+            }
+        }
+    }
+
+    private string? _rawMaxText;
+    private bool _fromText;
+
+    /// <summary>Ô nhập số xe tối đa dạng chuỗi: để trống/gõ chữ tạo lỗi và khoá nút Lưu.</summary>
+    public string DefaultMaxVehiclesText
+    {
+        get => _rawMaxText ?? DefaultMaxVehicles.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        set
+        {
+            _rawMaxText = value ?? string.Empty;
+            if (!PricingRuleItemViewModel.TryParseInt(_rawMaxText, out var parsed))
+            {
+                SetErrors(nameof(DefaultMaxVehiclesText), new[] { AppText.Get("Msg_Price_NotANumber") });
+                return;
+            }
+
+            ClearErrors(nameof(DefaultMaxVehiclesText));
+            _fromText = true;
+            try
+            {
+                DefaultMaxVehicles = parsed;
+            }
+            finally
+            {
+                _fromText = false;
             }
         }
     }

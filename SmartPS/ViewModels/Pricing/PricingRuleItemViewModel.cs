@@ -1,3 +1,4 @@
+using System.Globalization;
 using SmartPS.Services.Localization;
 using SmartPS.Services.Pricing;
 
@@ -31,6 +32,7 @@ public class PricingRuleItemViewModel : ValidatableViewModelBase
         {
             if (SetProperty(ref _block4hPrice, value))
             {
+                ResetText(nameof(Block4hPriceText));
                 ValidatePrice(nameof(Block4hPrice), _block4hPrice, requiresPositive: true);
             }
         }
@@ -44,6 +46,7 @@ public class PricingRuleItemViewModel : ValidatableViewModelBase
         {
             if (SetProperty(ref _dailyPrice, value))
             {
+                ResetText(nameof(DailyPriceText));
                 ValidatePrice(nameof(DailyPrice), _dailyPrice, requiresPositive: true);
             }
         }
@@ -57,6 +60,7 @@ public class PricingRuleItemViewModel : ValidatableViewModelBase
         {
             if (SetProperty(ref _monthly1Price, value))
             {
+                ResetText(nameof(Monthly1PriceText));
                 ValidatePrice(nameof(Monthly1Price), _monthly1Price, requiresPositive: true);
             }
         }
@@ -70,6 +74,7 @@ public class PricingRuleItemViewModel : ValidatableViewModelBase
         {
             if (SetProperty(ref _monthly3Price, value))
             {
+                ResetText(nameof(Monthly3PriceText));
                 ValidatePrice(nameof(Monthly3Price), _monthly3Price, requiresPositive: false);
             }
         }
@@ -83,6 +88,7 @@ public class PricingRuleItemViewModel : ValidatableViewModelBase
         {
             if (SetProperty(ref _monthly6Price, value))
             {
+                ResetText(nameof(Monthly6PriceText));
                 ValidatePrice(nameof(Monthly6Price), _monthly6Price, requiresPositive: false);
             }
         }
@@ -96,6 +102,7 @@ public class PricingRuleItemViewModel : ValidatableViewModelBase
         {
             if (SetProperty(ref _gracePeriodMinutes, value))
             {
+                ResetText(nameof(GracePeriodMinutesText));
                 ValidateGrace();
             }
         }
@@ -109,6 +116,7 @@ public class PricingRuleItemViewModel : ValidatableViewModelBase
         {
             if (SetProperty(ref _overnightSurcharge, value))
             {
+                ResetText(nameof(OvernightSurchargeText));
                 ValidatePrice(nameof(OvernightSurcharge), _overnightSurcharge, requiresPositive: false);
             }
         }
@@ -122,10 +130,130 @@ public class PricingRuleItemViewModel : ValidatableViewModelBase
         {
             if (SetProperty(ref _overQuotaDailyPrice, value))
             {
+                ResetText(nameof(OverQuotaDailyPriceText));
                 ValidatePrice(nameof(OverQuotaDailyPrice), _overQuotaDailyPrice, requiresPositive: false);
             }
         }
     }
+
+
+    /// <summary>Ô nhập tiền dạng chuỗi: chữ rác không thành 0 âm thầm mà tạo lỗi và khoá nút Lưu.</summary>
+    public string Block4hPriceText
+    {
+        get => TextOf(nameof(Block4hPriceText), FormatMoney(Block4hPrice));
+        set => SetMoneyText(nameof(Block4hPriceText), value, v => Block4hPrice = v);
+    }
+
+    /// <summary>Ô nhập tiền dạng chuỗi: chữ rác không thành 0 âm thầm mà tạo lỗi và khoá nút Lưu.</summary>
+    public string DailyPriceText
+    {
+        get => TextOf(nameof(DailyPriceText), FormatMoney(DailyPrice));
+        set => SetMoneyText(nameof(DailyPriceText), value, v => DailyPrice = v);
+    }
+
+    /// <summary>Ô nhập tiền dạng chuỗi: chữ rác không thành 0 âm thầm mà tạo lỗi và khoá nút Lưu.</summary>
+    public string Monthly1PriceText
+    {
+        get => TextOf(nameof(Monthly1PriceText), FormatMoney(Monthly1Price));
+        set => SetMoneyText(nameof(Monthly1PriceText), value, v => Monthly1Price = v);
+    }
+
+    /// <summary>Ô nhập tiền dạng chuỗi: chữ rác không thành 0 âm thầm mà tạo lỗi và khoá nút Lưu.</summary>
+    public string Monthly3PriceText
+    {
+        get => TextOf(nameof(Monthly3PriceText), FormatMoney(Monthly3Price));
+        set => SetMoneyText(nameof(Monthly3PriceText), value, v => Monthly3Price = v);
+    }
+
+    /// <summary>Ô nhập tiền dạng chuỗi: chữ rác không thành 0 âm thầm mà tạo lỗi và khoá nút Lưu.</summary>
+    public string Monthly6PriceText
+    {
+        get => TextOf(nameof(Monthly6PriceText), FormatMoney(Monthly6Price));
+        set => SetMoneyText(nameof(Monthly6PriceText), value, v => Monthly6Price = v);
+    }
+
+    /// <summary>Ô nhập tiền dạng chuỗi: chữ rác không thành 0 âm thầm mà tạo lỗi và khoá nút Lưu.</summary>
+    public string OvernightSurchargeText
+    {
+        get => TextOf(nameof(OvernightSurchargeText), FormatMoney(OvernightSurcharge));
+        set => SetMoneyText(nameof(OvernightSurchargeText), value, v => OvernightSurcharge = v);
+    }
+
+    /// <summary>Ô nhập tiền dạng chuỗi: chữ rác không thành 0 âm thầm mà tạo lỗi và khoá nút Lưu.</summary>
+    public string OverQuotaDailyPriceText
+    {
+        get => TextOf(nameof(OverQuotaDailyPriceText), FormatMoney(OverQuotaDailyPrice));
+        set => SetMoneyText(nameof(OverQuotaDailyPriceText), value, v => OverQuotaDailyPrice = v);
+    }
+
+    /// <summary>Ô nhập số nguyên dạng chuỗi: để trống/gõ chữ tạo lỗi và khoá nút Lưu.</summary>
+    public string GracePeriodMinutesText
+    {
+        get => TextOf(nameof(GracePeriodMinutesText), GracePeriodMinutes.ToString(CultureInfo.InvariantCulture));
+        set => SetIntText(nameof(GracePeriodMinutesText), value, v => GracePeriodMinutes = v);
+    }
+
+    private readonly Dictionary<string, string> _rawText = new(StringComparer.Ordinal);
+    private bool _fromText;
+
+    private string TextOf(string textProperty, string formatted)
+        => _rawText.TryGetValue(textProperty, out var raw) ? raw : formatted;
+
+    /// <summary>Giá trị được gán từ mã (không phải do gõ): bỏ chuỗi đang gõ dở và lỗi chuyển đổi, làm mới ô.</summary>
+    private void ResetText(string textProperty)
+    {
+        if (_fromText)
+        {
+            return;
+        }
+
+        _rawText.Remove(textProperty);
+        ClearErrors(textProperty);
+        OnPropertyChanged(textProperty);
+    }
+
+    private void SetMoneyText(string textProperty, string? text, Action<decimal> apply)
+        => SetText(textProperty, text, TryParseMoney, apply);
+
+    private void SetIntText(string textProperty, string? text, Action<int> apply)
+        => SetText(textProperty, text, TryParseInt, apply);
+
+    private delegate bool TryParse<T>(string text, out T value);
+
+    private void SetText<T>(string textProperty, string? text, TryParse<T> parse, Action<T> apply)
+    {
+        text ??= string.Empty;
+        _rawText[textProperty] = text;
+        if (!parse(text, out var value))
+        {
+            SetErrors(textProperty, new[] { AppText.Get("Msg_Price_NotANumber") });
+            return;
+        }
+
+        ClearErrors(textProperty);
+        _fromText = true;
+        try
+        {
+            apply(value);
+        }
+        finally
+        {
+            _fromText = false;
+        }
+    }
+
+    /// <summary>Số tiền nguyên; chấp nhận dấu chấm/phẩy ngăn cách hàng nghìn (như ô hiển thị 100.000).</summary>
+    internal static bool TryParseMoney(string text, out decimal value)
+    {
+        var cleaned = text.Trim().Replace(".", string.Empty).Replace(",", string.Empty).Replace(" ", string.Empty);
+        return decimal.TryParse(cleaned, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out value);
+    }
+
+    internal static bool TryParseInt(string text, out int value)
+        => int.TryParse(text.Trim(), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out value);
+
+    internal static string FormatMoney(decimal value)
+        => value == 0 ? "0" : value.ToString("N0", CultureInfo.InvariantCulture).Replace(",", ".");
 
     public string Description { get; set; } = string.Empty;
 
