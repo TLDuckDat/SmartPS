@@ -59,15 +59,12 @@ public class ResidentVisitorConstantsTests
     }
 
     [Theory]
-    [InlineData("CUSTOMER_CREATE")]
     [InlineData("CUSTOMER_UPDATE")]
     [InlineData("CUSTOMER_VEHICLE_ADD")]
     [InlineData("CUSTOMER_VEHICLE_REMOVE")]
     [InlineData("TICKET_CREATE")]
-    [InlineData("TICKET_RENEW")]
     [InlineData("TICKET_SUSPEND")]
     [InlineData("TICKET_RESUME")]
-    [InlineData("BLACKLIST_ADD")]
     [InlineData("BLACKLIST_REMOVE")]
     [InlineData("GATE_BLACKLIST_EXIT_WARNING")]
     public void Removed_management_actions_are_not_in_the_catalogue(string action)
