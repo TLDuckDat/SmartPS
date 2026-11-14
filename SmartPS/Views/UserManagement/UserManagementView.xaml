@@ -494,6 +494,7 @@
                         <StackPanel Margin="0,0,0,12">
                             <TextBlock Text="{DynamicResource Str_CreateUser_PasswordLabel}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                             <common:RevealPasswordBox x:Name="NewPasswordInput"
+                                                      Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}"
                                                       Password="{Binding NewPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                       InputHeight="36"
                                                       InputCornerRadius="4"
@@ -507,6 +508,7 @@
                         <StackPanel Margin="0,0,0,12">
                             <TextBlock Text="{DynamicResource Str_CreateUser_ConfirmPasswordLabel}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                             <common:RevealPasswordBox x:Name="ConfirmPasswordInput"
+                                                      Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}"
                                                       Password="{Binding ConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                       InputHeight="36"
                                                       InputCornerRadius="4"
@@ -521,6 +523,7 @@
                             <TextBlock Text="{DynamicResource Str_CreateUser_RoleLabel}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                             <ComboBox ItemsSource="{Binding AvailableRoles}"
                                       SelectedItem="{Binding SelectedRole}"
+                                      Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}"
                                       Height="36"
                                       FontSize="12.5"
                                       VerticalContentAlignment="Center"

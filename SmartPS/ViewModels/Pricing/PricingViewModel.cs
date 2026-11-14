@@ -7,7 +7,7 @@ using SmartPS.Services.Localization;
 
 namespace SmartPS.ViewModels.Pricing;
 
-public class PricingViewModel : ViewModelBase
+public class PricingViewModel : ValidatableViewModelBase
 {
     private readonly IDbContextFactory<SmartPsDbContext> _dbContextFactory;
     private readonly IDialogService _dialogService;
@@ -25,8 +25,28 @@ public class PricingViewModel : ViewModelBase
     public int DefaultMaxVehicles
     {
         get => _defaultMaxVehicles;
-        set => SetProperty(ref _defaultMaxVehicles, value);
+        set
+        {
+            if (SetProperty(ref _defaultMaxVehicles, value))
+            {
+                ValidateMaxVehicles();
+                OnPropertyChanged(nameof(HasAnyErrors));
+            }
+        }
     }
+
+    /// <summary>Còn lỗi ở số xe tối đa hoặc ở bất kỳ ô giá nào: khoá nút Lưu.</summary>
+    public bool HasAnyErrors => HasErrors || PricingRules.Any(r => r.HasErrors);
+
+    private void RefreshErrorState()
+    {
+        OnPropertyChanged(nameof(HasAnyErrors));
+        SaveCommand.RaiseCanExecuteChanged();
+    }
+
+    private void ValidateMaxVehicles()
+        => ValidateProperty(nameof(DefaultMaxVehicles),
+            DefaultMaxVehicles < 1 ? AppText.Get("Msg_Price_MaxVehiclesMin") : null);
 
     public AsyncRelayCommand RefreshCommand { get; }
     public AsyncRelayCommand SaveCommand { get; }
@@ -37,7 +57,20 @@ public class PricingViewModel : ViewModelBase
         _dialogService = dialogService;
 
         RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
-        SaveCommand = new AsyncRelayCommand(SaveDataAsync);
+        SaveCommand = new AsyncRelayCommand(SaveDataAsync, () => !HasAnyErrors);
+        ErrorsChanged += (_, _) => RefreshErrorState();
+        PricingRules.CollectionChanged += (_, e) =>
+        {
+            if (e.NewItems is not null)
+            {
+                foreach (PricingRuleItemViewModel item in e.NewItems)
+                {
+                    item.ErrorsChanged += (_, _) => RefreshErrorState();
+                }
+            }
+
+            RefreshErrorState();
+        };
 
         _ = LoadDataAsync();
     }
@@ -53,7 +86,7 @@ public class PricingViewModel : ViewModelBase
             PricingRules.Clear();
             foreach (var rule in rules)
             {
-                PricingRules.Add(new PricingRuleItemViewModel
+                var item = new PricingRuleItemViewModel
                 {
                     RuleId = rule.RuleId,
                     VehicleTypeName = rule.VehicleType?.TypeName ?? AppText.Get("Str_Price_UnknownType"),
@@ -64,13 +97,17 @@ public class PricingViewModel : ViewModelBase
                     Monthly3Price = rule.Monthly3Price,
                     Monthly6Price = rule.Monthly6Price,
                     Description = rule.Description ?? string.Empty
-                });
+                };
+                item.ValidateAll();
+                PricingRules.Add(item);
             }
 
             if (settings != null)
             {
                 DefaultMaxVehicles = settings.DefaultMaxVehiclesPerHousehold;
             }
+
+            ValidateMaxVehicles();
 
             SelectedRule = PricingRules.FirstOrDefault();
         }
@@ -84,29 +121,15 @@ public class PricingViewModel : ViewModelBase
     {
         try
         {
-            // 1. Validate số xe tối đa mỗi hộ
-            if (DefaultMaxVehicles < 1)
-            {
-                _dialogService.ShowError(AppText.Get("Msg_Price_MaxVehiclesMin"));
-                return;
-            }
-
-            // 2. Validate biểu phí từng loại phương tiện
+            ValidateMaxVehicles();
             foreach (var vm in PricingRules)
             {
-                if (vm.Block4hPrice < 0 || vm.DailyPrice < 0 || vm.Monthly1Price < 0 || vm.Monthly3Price < 0 || vm.Monthly6Price < 0)
-                {
-                    _dialogService.ShowError(AppText.Get("Msg_Price_NegativeValue", vm.VehicleTypeName));
-                    return;
-                }
+                vm.ValidateAll();
+            }
 
-                // Với xe máy và ô tô, giá vé lượt và vé tháng không được bằng 0
-                if ((vm.VehicleTypeName.Contains("máy", StringComparison.OrdinalIgnoreCase) || vm.VehicleTypeName.Contains("ô tô", StringComparison.OrdinalIgnoreCase))
-                    && (vm.Block4hPrice <= 0 || vm.DailyPrice <= 0 || vm.Monthly1Price <= 0))
-                {
-                    _dialogService.ShowError(AppText.Get("Msg_Price_MustBePositive", vm.VehicleTypeName));
-                    return;
-                }
+            if (HasAnyErrors)
+            {
+                return;
             }
 
             await using var db = await _dbContextFactory.CreateDbContextAsync();

@@ -10,7 +10,7 @@ using SmartPS.Services.Localization;
 
 namespace SmartPS.ViewModels.UserManagement;
 
-public class UserManagementViewModel : ViewModelBase
+public class UserManagementViewModel : ValidatableViewModelBase
 {
     private readonly IAuthService _authService;
     private readonly IDialogService _dialogService;
@@ -89,35 +89,65 @@ public class UserManagementViewModel : ViewModelBase
     public string NewUsername
     {
         get => _newUsername;
-        set => SetProperty(ref _newUsername, value);
+        set
+        {
+            if (SetProperty(ref _newUsername, value))
+            {
+                ValidateNewUsername();
+            }
+        }
     }
 
     private string _newFullName = string.Empty;
     public string NewFullName
     {
         get => _newFullName;
-        set => SetProperty(ref _newFullName, value);
+        set
+        {
+            if (SetProperty(ref _newFullName, value))
+            {
+                ValidateNewFullName();
+            }
+        }
     }
 
     private string _newPassword = string.Empty;
     public string NewPassword
     {
         get => _newPassword;
-        set => SetProperty(ref _newPassword, value);
+        set
+        {
+            if (SetProperty(ref _newPassword, value))
+            {
+                ValidateNewPasswords();
+            }
+        }
     }
 
     private string _confirmPassword = string.Empty;
     public string ConfirmPassword
     {
         get => _confirmPassword;
-        set => SetProperty(ref _confirmPassword, value);
+        set
+        {
+            if (SetProperty(ref _confirmPassword, value))
+            {
+                ValidateNewPasswords();
+            }
+        }
     }
 
     private Role? _selectedRole;
     public Role? SelectedRole
     {
         get => _selectedRole;
-        set => SetProperty(ref _selectedRole, value);
+        set
+        {
+            if (SetProperty(ref _selectedRole, value))
+            {
+                ValidateNewRole();
+            }
+        }
     }
 
     private bool _isBusy;
@@ -176,7 +206,8 @@ public class UserManagementViewModel : ViewModelBase
             }
         };
 
-        CreateUserCommand = new AsyncRelayCommand(ExecuteCreateUserAsync, () => !IsBusy && _permissionService.HasPermission(Permissions.UserCreate));
+        CreateUserCommand = new AsyncRelayCommand(ExecuteCreateUserAsync, () => !IsBusy && !HasErrors && _permissionService.HasPermission(Permissions.UserCreate));
+        ErrorsChanged += (_, _) => CreateUserCommand.RaiseCanExecuteChanged();
         EditUserCommand = new AsyncRelayCommand(ExecuteEditUserAsync, _ => !IsBusy && _permissionService.HasPermission(Permissions.UserEdit));
         DeleteUserCommand = new AsyncRelayCommand(ExecuteDeleteUserAsync, _ => !IsBusy && _permissionService.HasPermission(Permissions.UserDelete));
 
@@ -191,6 +222,36 @@ public class UserManagementViewModel : ViewModelBase
         RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
 
         _ = LoadDataAsync();
+    }
+
+    /// <summary>Kiểm tra toàn bộ form tạo tài khoản (ô còn trống cũng báo lỗi ngay tại ô).</summary>
+    public void ValidateCreateForm()
+    {
+        ValidateNewUsername();
+        ValidateNewFullName();
+        ValidateNewRole();
+        ValidateNewPasswords();
+    }
+
+    private void ValidateNewUsername()
+        => ValidateProperty(nameof(NewUsername),
+            string.IsNullOrWhiteSpace(NewUsername) ? AppText.Get("Msg_CreateUser_RequiredUsername") : null);
+
+    private void ValidateNewFullName()
+        => ValidateProperty(nameof(NewFullName),
+            string.IsNullOrWhiteSpace(NewFullName) ? AppText.Get("Msg_CreateUser_RequiredFullName") : null);
+
+    private void ValidateNewRole()
+        => ValidateProperty(nameof(SelectedRole),
+            SelectedRole is null ? AppText.Get("Msg_CreateUser_RequiredRole") : null);
+
+    private void ValidateNewPasswords()
+    {
+        ValidateProperty(nameof(NewPassword),
+            string.IsNullOrWhiteSpace(NewPassword) ? AppText.Get("Msg_CreateUser_RequiredPassword")
+            : NewPassword.Length < 6 ? AppText.Get("Msg_CreateUser_PasswordMinLength") : null);
+        ValidateProperty(nameof(ConfirmPassword),
+            NewPassword != ConfirmPassword ? AppText.Get("Msg_CreateUser_PasswordMismatch") : null);
     }
 
     public async Task LoadDataAsync(object? parameter = null)
@@ -274,39 +335,9 @@ public class UserManagementViewModel : ViewModelBase
 
     private async Task ExecuteCreateUserAsync()
     {
-        if (string.IsNullOrWhiteSpace(NewUsername))
+        ValidateCreateForm();
+        if (HasErrors)
         {
-            _dialogService.ShowWarning(_localizationService.GetString("Msg_CreateUser_RequiredUsername"));
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(NewFullName))
-        {
-            _dialogService.ShowWarning(_localizationService.GetString("Msg_CreateUser_RequiredFullName"));
-            return;
-        }
-
-        if (SelectedRole is null)
-        {
-            _dialogService.ShowWarning(_localizationService.GetString("Msg_CreateUser_RequiredRole"));
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(NewPassword))
-        {
-            _dialogService.ShowWarning(_localizationService.GetString("Msg_CreateUser_RequiredPassword"));
-            return;
-        }
-
-        if (NewPassword.Length < 6)
-        {
-            _dialogService.ShowWarning(_localizationService.GetString("Msg_CreateUser_PasswordMinLength"));
-            return;
-        }
-
-        if (NewPassword != ConfirmPassword)
-        {
-            _dialogService.ShowWarning(_localizationService.GetString("Msg_CreateUser_PasswordMismatch"));
             return;
         }
 
@@ -319,7 +350,7 @@ public class UserManagementViewModel : ViewModelBase
                 Username = NewUsername.Trim(),
                 FullName = NewFullName.Trim(),
                 Password = NewPassword,
-                RoleId = SelectedRole.RoleId
+                RoleId = SelectedRole!.RoleId
             };
 
             var success = await _authService.RegisterAsync(request);
@@ -334,6 +365,10 @@ public class UserManagementViewModel : ViewModelBase
                 NewFullName = string.Empty;
                 NewPassword = string.Empty;
                 ConfirmPassword = string.Empty;
+                foreach (var name in new[] { nameof(NewUsername), nameof(NewFullName), nameof(NewPassword), nameof(ConfirmPassword), nameof(SelectedRole) })
+                {
+                    ClearErrors(name);
+                }
                 IsCreatePanelVisible = false;
 
                 // Tải lại danh sách
