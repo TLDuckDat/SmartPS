@@ -173,52 +173,57 @@ public class TicketsService : ITicketsService
 
         try
         {
-            await using var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct);
-            var ticket = new MonthlyTicket
+            string ticketCode;
+            await using (var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct))
             {
-                CustomerId = request.CustomerId,
-                VehicleId = request.VehicleId,
-                RegisteredLicensePlate = vehicle.LicensePlate,
-                VehicleTypeId = vehicle.VehicleTypeId,
-                DurationMonths = request.DurationMonths,
-                MonthlyPrice = fee.Value,
-                StartDate = now,
-                EndDate = now.AddMonths(request.DurationMonths),
-                TicketCode = $"MT-{now:yyyyMM}-{Random.Shared.Next(1000, 9999)}",
-                Status = MonthlyTicketStatus.Active,
-                CreatedAt = now
-            };
+                var ticket = new MonthlyTicket
+                {
+                    CustomerId = request.CustomerId,
+                    VehicleId = request.VehicleId,
+                    RegisteredLicensePlate = vehicle.LicensePlate,
+                    VehicleTypeId = vehicle.VehicleTypeId,
+                    DurationMonths = request.DurationMonths,
+                    MonthlyPrice = fee.Value,
+                    StartDate = now,
+                    EndDate = now.AddMonths(request.DurationMonths),
+                    TicketCode = $"MT-{now:yyyyMM}-{Random.Shared.Next(1000, 9999)}",
+                    Status = MonthlyTicketStatus.Active,
+                    CreatedAt = now
+                };
 
-            db.MonthlyTickets.Add(ticket);
-            await db.SaveChangesAsync(ct);
+                db.MonthlyTickets.Add(ticket);
+                ticketCode = ticket.TicketCode;
+                await db.SaveChangesAsync(ct);
 
-            // Ghi lịch sử cấp mới
-            var history = new MonthlyTicketHistory
-            {
-                TicketId = ticket.TicketId,
-                Action = TicketHistoryAction.Issue,
-                NewVehicleId = vehicle.VehicleId,
-                NewLicensePlate = vehicle.LicensePlate,
-                NewEndDate = ticket.EndDate,
-                AddedMonths = request.DurationMonths,
-                Amount = fee.Value,
-                PaymentMethod = request.PaymentMethod,
-                Reason = "Cấp mới vé tháng",
-                PerformedByUserId = _currentUser.User?.UserId,
-                CreatedAt = now
-            };
-            db.MonthlyTicketHistories.Add(history);
-            await db.SaveChangesAsync(ct);
+                // Ghi lịch sử cấp mới
+                var history = new MonthlyTicketHistory
+                {
+                    TicketId = ticket.TicketId,
+                    Action = TicketHistoryAction.Issue,
+                    NewVehicleId = vehicle.VehicleId,
+                    NewLicensePlate = vehicle.LicensePlate,
+                    NewEndDate = ticket.EndDate,
+                    AddedMonths = request.DurationMonths,
+                    Amount = fee.Value,
+                    PaymentMethod = request.PaymentMethod,
+                    Reason = "Cấp mới vé tháng",
+                    PerformedByUserId = _currentUser.User?.UserId,
+                    CreatedAt = now
+                };
+                db.MonthlyTicketHistories.Add(history);
+                await db.SaveChangesAsync(ct);
 
-            await _audit.AppendChangeAsync(db, AuditActions.TicketIssue, "MonthlyTicket", ticket.TicketId, null, TicketSnapshot(ticket), ct, new
-            {
-                ticket.CustomerId,
-                PaymentMethod = request.PaymentMethod.ToString(),
-                Amount = fee.Value
-            });
-            await db.SaveChangesAsync(ct);
-            await tx.CommitAsync(ct);
-            return OperationResult.Ok(ticket.TicketCode);
+                await _audit.AppendChangeAsync(db, AuditActions.TicketIssue, "MonthlyTicket", ticket.TicketId, null, TicketSnapshot(ticket), ct, new
+                {
+                    ticket.CustomerId,
+                    PaymentMethod = request.PaymentMethod.ToString(),
+                    Amount = fee.Value
+                });
+                await db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+            }
+
+            return OperationResult.Ok(ticketCode);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -264,40 +269,43 @@ public class TicketsService : ITicketsService
 
         try
         {
-            await using var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct);
-            var oldEndDate = ticket.EndDate;
-            var oldSnapshot = TicketSnapshot(ticket);
-
-            ticket.EndDate = newEnd;
-            ticket.Status = MonthlyTicketStatus.Active;
-            ticket.DurationMonths += request.AddedMonths;
-            ticket.MonthlyPrice += fee.Value;
-
-            var history = new MonthlyTicketHistory
+            await using (var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct))
             {
-                TicketId = ticket.TicketId,
-                Action = TicketHistoryAction.Renew,
-                OldEndDate = oldEndDate,
-                NewEndDate = newEnd,
-                AddedMonths = request.AddedMonths,
-                Amount = fee.Value,
-                PaymentMethod = request.PaymentMethod,
-                Reason = $"Gia hạn thêm {request.AddedMonths} tháng",
-                PerformedByUserId = _currentUser.User?.UserId,
-                CreatedAt = now
-            };
+                var oldEndDate = ticket.EndDate;
+                var oldSnapshot = TicketSnapshot(ticket);
 
-            db.MonthlyTicketHistories.Add(history);
-            await db.SaveChangesAsync(ct);
+                ticket.EndDate = newEnd;
+                ticket.Status = MonthlyTicketStatus.Active;
+                ticket.DurationMonths += request.AddedMonths;
+                ticket.MonthlyPrice += fee.Value;
 
-            await _audit.AppendChangeAsync(db, AuditActions.TicketRenew, "MonthlyTicket", ticket.TicketId, oldSnapshot, TicketSnapshot(ticket), ct, new
-            {
-                request.AddedMonths,
-                PaymentMethod = request.PaymentMethod.ToString(),
-                Amount = fee.Value
-            });
-            await db.SaveChangesAsync(ct);
-            await tx.CommitAsync(ct);
+                var history = new MonthlyTicketHistory
+                {
+                    TicketId = ticket.TicketId,
+                    Action = TicketHistoryAction.Renew,
+                    OldEndDate = oldEndDate,
+                    NewEndDate = newEnd,
+                    AddedMonths = request.AddedMonths,
+                    Amount = fee.Value,
+                    PaymentMethod = request.PaymentMethod,
+                    Reason = $"Gia hạn thêm {request.AddedMonths} tháng",
+                    PerformedByUserId = _currentUser.User?.UserId,
+                    CreatedAt = now
+                };
+
+                db.MonthlyTicketHistories.Add(history);
+                await db.SaveChangesAsync(ct);
+
+                await _audit.AppendChangeAsync(db, AuditActions.TicketRenew, "MonthlyTicket", ticket.TicketId, oldSnapshot, TicketSnapshot(ticket), ct, new
+                {
+                    request.AddedMonths,
+                    PaymentMethod = request.PaymentMethod.ToString(),
+                    Amount = fee.Value
+                });
+                await db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+            }
+
             return OperationResult.Ok();
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -363,37 +371,40 @@ public class TicketsService : ITicketsService
 
         try
         {
-            await using var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct);
-            var oldVehicleId = ticket.VehicleId;
-            var oldPlate = ticket.RegisteredLicensePlate;
-            var oldSnapshot = TicketSnapshot(ticket);
-
-            ticket.VehicleId = newVehicle.VehicleId;
-            ticket.RegisteredLicensePlate = newVehicle.LicensePlate;
-            ticket.VehicleTypeId = newVehicle.VehicleTypeId;
-
-            var history = new MonthlyTicketHistory
+            await using (var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct))
             {
-                TicketId = ticket.TicketId,
-                Action = TicketHistoryAction.ChangePlate,
-                OldVehicleId = oldVehicleId,
-                NewVehicleId = newVehicle.VehicleId,
-                OldLicensePlate = oldPlate,
-                NewLicensePlate = newVehicle.LicensePlate,
-                Reason = string.IsNullOrWhiteSpace(request.Reason) ? "Đổi phương tiện / biển số" : request.Reason.Trim(),
-                PerformedByUserId = _currentUser.User?.UserId,
-                CreatedAt = now
-            };
+                var oldVehicleId = ticket.VehicleId;
+                var oldPlate = ticket.RegisteredLicensePlate;
+                var oldSnapshot = TicketSnapshot(ticket);
 
-            db.MonthlyTicketHistories.Add(history);
-            await db.SaveChangesAsync(ct);
+                ticket.VehicleId = newVehicle.VehicleId;
+                ticket.RegisteredLicensePlate = newVehicle.LicensePlate;
+                ticket.VehicleTypeId = newVehicle.VehicleTypeId;
 
-            await _audit.AppendChangeAsync(db, AuditActions.TicketChangePlate, "MonthlyTicket", ticket.TicketId, oldSnapshot, TicketSnapshot(ticket), ct, new
-            {
-                history.Reason
-            });
-            await db.SaveChangesAsync(ct);
-            await tx.CommitAsync(ct);
+                var history = new MonthlyTicketHistory
+                {
+                    TicketId = ticket.TicketId,
+                    Action = TicketHistoryAction.ChangePlate,
+                    OldVehicleId = oldVehicleId,
+                    NewVehicleId = newVehicle.VehicleId,
+                    OldLicensePlate = oldPlate,
+                    NewLicensePlate = newVehicle.LicensePlate,
+                    Reason = string.IsNullOrWhiteSpace(request.Reason) ? "Đổi phương tiện / biển số" : request.Reason.Trim(),
+                    PerformedByUserId = _currentUser.User?.UserId,
+                    CreatedAt = now
+                };
+
+                db.MonthlyTicketHistories.Add(history);
+                await db.SaveChangesAsync(ct);
+
+                await _audit.AppendChangeAsync(db, AuditActions.TicketChangePlate, "MonthlyTicket", ticket.TicketId, oldSnapshot, TicketSnapshot(ticket), ct, new
+                {
+                    history.Reason
+                });
+                await db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+            }
+
             return OperationResult.Ok();
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -444,28 +455,31 @@ public class TicketsService : ITicketsService
 
         try
         {
-            await using var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct);
-            var oldSnapshot = TicketSnapshot(ticket);
-            ticket.Status = willLock ? MonthlyTicketStatus.Suspended : MonthlyTicketStatus.Active;
-
-            var history = new MonthlyTicketHistory
+            await using (var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct))
             {
-                TicketId = ticket.TicketId,
-                Action = action,
-                Reason = string.IsNullOrWhiteSpace(reason) ? (willLock ? "Khóa vé tạm thời" : "Mở khóa vé hoạt động lại") : reason.Trim(),
-                PerformedByUserId = _currentUser.User?.UserId,
-                CreatedAt = now
-            };
+                var oldSnapshot = TicketSnapshot(ticket);
+                ticket.Status = willLock ? MonthlyTicketStatus.Suspended : MonthlyTicketStatus.Active;
 
-            db.MonthlyTicketHistories.Add(history);
-            await db.SaveChangesAsync(ct);
+                var history = new MonthlyTicketHistory
+                {
+                    TicketId = ticket.TicketId,
+                    Action = action,
+                    Reason = string.IsNullOrWhiteSpace(reason) ? (willLock ? "Khóa vé tạm thời" : "Mở khóa vé hoạt động lại") : reason.Trim(),
+                    PerformedByUserId = _currentUser.User?.UserId,
+                    CreatedAt = now
+                };
 
-            await _audit.AppendChangeAsync(db, AuditActions.TicketLockToggle, "MonthlyTicket", ticket.TicketId, oldSnapshot, TicketSnapshot(ticket), ct, new
-            {
-                history.Reason
-            });
-            await db.SaveChangesAsync(ct);
-            await tx.CommitAsync(ct);
+                db.MonthlyTicketHistories.Add(history);
+                await db.SaveChangesAsync(ct);
+
+                await _audit.AppendChangeAsync(db, AuditActions.TicketLockToggle, "MonthlyTicket", ticket.TicketId, oldSnapshot, TicketSnapshot(ticket), ct, new
+                {
+                    history.Reason
+                });
+                await db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+            }
+
             return OperationResult.Ok();
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -498,28 +512,31 @@ public class TicketsService : ITicketsService
 
         try
         {
-            await using var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct);
-            var oldSnapshot = TicketSnapshot(ticket);
-            ticket.Status = MonthlyTicketStatus.Cancelled;
-
-            var history = new MonthlyTicketHistory
+            await using (var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct))
             {
-                TicketId = ticket.TicketId,
-                Action = TicketHistoryAction.Cancel,
-                Reason = string.IsNullOrWhiteSpace(reason) ? "Hủy vé tháng" : reason.Trim(),
-                PerformedByUserId = _currentUser.User?.UserId,
-                CreatedAt = now
-            };
+                var oldSnapshot = TicketSnapshot(ticket);
+                ticket.Status = MonthlyTicketStatus.Cancelled;
 
-            db.MonthlyTicketHistories.Add(history);
-            await db.SaveChangesAsync(ct);
+                var history = new MonthlyTicketHistory
+                {
+                    TicketId = ticket.TicketId,
+                    Action = TicketHistoryAction.Cancel,
+                    Reason = string.IsNullOrWhiteSpace(reason) ? "Hủy vé tháng" : reason.Trim(),
+                    PerformedByUserId = _currentUser.User?.UserId,
+                    CreatedAt = now
+                };
 
-            await _audit.AppendChangeAsync(db, AuditActions.TicketCancel, "MonthlyTicket", ticket.TicketId, oldSnapshot, TicketSnapshot(ticket), ct, new
-            {
-                history.Reason
-            });
-            await db.SaveChangesAsync(ct);
-            await tx.CommitAsync(ct);
+                db.MonthlyTicketHistories.Add(history);
+                await db.SaveChangesAsync(ct);
+
+                await _audit.AppendChangeAsync(db, AuditActions.TicketCancel, "MonthlyTicket", ticket.TicketId, oldSnapshot, TicketSnapshot(ticket), ct, new
+                {
+                    history.Reason
+                });
+                await db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+            }
+
             return OperationResult.Ok();
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
