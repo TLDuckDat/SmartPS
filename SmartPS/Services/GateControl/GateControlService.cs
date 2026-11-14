@@ -6,6 +6,7 @@ using SmartPS.Models.GateControl;
 using SmartPS.Models.Parking;
 using SmartPS.Services.Audit;
 using SmartPS.Services.Authorization;
+using SmartPS.Services.Pricing;
 using SmartPS.Services.Storage;
 using SmartPS.Services.Shifts;
 using System.IO;
@@ -76,17 +77,17 @@ public class GateControlService : IGateControlService
             new PricingRule
             {
                 RuleId = 1, VehicleTypeId = 1, Block4hPrice = 5000,
-                DailyPrice = 25000, Monthly1Price = 100000, Description = "Biểu phí xe máy tiêu chuẩn"
+                DailyPrice = 25000, OverQuotaDailyPrice = 25000, Monthly1Price = 100000, Description = "Biểu phí xe máy tiêu chuẩn"
             },
             new PricingRule
             {
                 RuleId = 2, VehicleTypeId = 2, Block4hPrice = 25000,
-                DailyPrice = 100000, Monthly1Price = 1200000, Description = "Biểu phí ô tô con tiêu chuẩn"
+                DailyPrice = 100000, OverQuotaDailyPrice = 100000, Monthly1Price = 1200000, Description = "Biểu phí ô tô con tiêu chuẩn"
             },
             new PricingRule
             {
                 RuleId = 3, VehicleTypeId = 3, Block4hPrice = 2000,
-                DailyPrice = 10000, Monthly1Price = 50000, Description = "Biểu phí xe tải tiêu chuẩn"
+                DailyPrice = 10000, OverQuotaDailyPrice = 10000, Monthly1Price = 50000, Description = "Biểu phí xe tải tiêu chuẩn"
             }
         });
 
@@ -849,8 +850,8 @@ public class GateControlService : IGateControlService
         }
 
         var now = DateTime.UtcNow;
-        var pricingRule = await GetPricingRuleAsync(session.VehicleTypeId, cancellationToken);
-        var feeResult = _feeCalculator.CalculateFee(session, pricingRule, now);
+        var pricing = await ResolvePricingContextAsync(session, now, cancellationToken);
+        var feeResult = _feeCalculator.CalculateFee(session, pricing.Policy, now, pricing.MonthlyPass, pricing.IsOverQuota);
 
         return new GateCheckOutCalculationResult
         {
@@ -910,17 +911,9 @@ public class GateControlService : IGateControlService
 
                 // Phí luôn do máy chủ tính lại bằng công thức và bảng giá hiện hành; số tiền từ máy trạm bị bỏ qua.
                 var checkOutTime = DateTime.UtcNow;
-                var pricingRule = await db.PricingRules.AsNoTracking()
-                    .FirstOrDefaultAsync(r => r.VehicleTypeId == session.VehicleTypeId, cancellationToken);
-                if (pricingRule == null)
-                {
-                    lock (_syncLock)
-                    {
-                        pricingRule = _memoryPricingRules.FirstOrDefault(r => r.VehicleTypeId == session.VehicleTypeId);
-                    }
-                }
-
-                var serverFee = _feeCalculator.CalculateFee(session, pricingRule, checkOutTime).TotalFee;
+                var pricing = await PricingContextResolver.ResolveAsync(db, session, checkOutTime, MemoryPricingRulesSnapshot(), cancellationToken);
+                var feeResult = _feeCalculator.CalculateFee(session, pricing.Policy, checkOutTime, pricing.MonthlyPass, pricing.IsOverQuota);
+                var serverFee = feeResult.TotalFee;
                 var method = serverFee <= 0 ? PaymentMethod.Free : request.PaymentMethod;
                 if (serverFee < 0 || (serverFee > 0 && method == PaymentMethod.Free))
                     return new GateCheckOutResult { Success = false, Message = AppText.Get("Msg_GateSvc_InvalidPayment") };
@@ -932,6 +925,8 @@ public class GateControlService : IGateControlService
                 session.CheckOutTime = checkOutTime;
                 session.CheckOutImagePath = archivedOutImage ?? request.CheckOutImagePath;
                 session.TotalFee = serverFee;
+                session.PricingPolicyVersionId = feeResult.PolicyVersionId;
+                session.FeeBreakdownJson = feeResult.FeeBreakdownJson;
                 session.PaymentMethod = method;
                 session.Status = SessionStatus.Completed;
                 if (session.Slot != null)
@@ -1019,25 +1014,37 @@ public class GateControlService : IGateControlService
         }
     }
 
-    private async Task<PricingRule?> GetPricingRuleAsync(int vehicleTypeId, CancellationToken cancellationToken = default)
+    private List<PricingRule> MemoryPricingRulesSnapshot()
+    {
+        lock (_syncLock)
+        {
+            return _memoryPricingRules.ToList();
+        }
+    }
+
+    /// <summary>
+    /// Bảng giá, vé tháng và cờ vượt định mức của phiên để tính cước. Mất kết nối CSDL thì dùng bảng giá dự phòng trong
+    /// bộ nhớ (khớp bảng giá mặc định), vé tháng theo cờ của phiên và không xét vượt định mức.
+    /// </summary>
+    private async Task<PricingContext> ResolvePricingContextAsync(ParkingSession session, DateTime nowUtc, CancellationToken cancellationToken)
     {
         if (_dbContextFactory != null)
         {
             try
             {
                 await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
-                var rule = await db.PricingRules
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(r => r.VehicleTypeId == vehicleTypeId, cancellationToken);
-                if (rule != null) return rule;
+                return await PricingContextResolver.ResolveAsync(db, session, nowUtc, MemoryPricingRulesSnapshot(), cancellationToken);
             }
+            catch (OperationCanceledException) { throw; }
             catch { /* Fallback */ }
         }
 
-        lock (_syncLock)
-        {
-            return _memoryPricingRules.FirstOrDefault(r => r.VehicleTypeId == vehicleTypeId);
-        }
+        var rule = MemoryPricingRulesSnapshot().FirstOrDefault(r => r.VehicleTypeId == session.VehicleTypeId);
+        var policy = rule is null ? PricingPolicy.Default(session.VehicleTypeId) : PricingPolicy.FromRule(rule);
+        var pass = session.IsMonthlyPass
+            ? new MonthlyPassInfo(DateTime.MinValue, DateTime.MaxValue, MonthlyTicketStatus.Active)
+            : null;
+        return new PricingContext(policy, pass, false);
     }
 
     public async Task<List<ParkingSlot>> GetAllSlotsAsync(CancellationToken cancellationToken = default)

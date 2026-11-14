@@ -78,9 +78,8 @@ public class PaymentService : IPaymentService
         }
 
         var now = DateTime.UtcNow;
-        var pricingRule = await db.PricingRules.AsNoTracking()
-            .FirstOrDefaultAsync(r => r.VehicleTypeId == session.VehicleTypeId, cancellationToken);
-        var fee = _feeCalculator.CalculateFee(session, pricingRule, now);
+        var pricing = await Pricing.PricingContextResolver.ResolveAsync(db, session, now, null, cancellationToken);
+        var fee = _feeCalculator.CalculateFee(session, pricing.Policy, now, pricing.MonthlyPass, pricing.IsOverQuota);
 
         if (fee.IsMonthlyTicket || fee.TotalFee <= 0)
         {
@@ -88,6 +87,8 @@ public class PaymentService : IPaymentService
         }
 
         session.TotalFee = fee.TotalFee;
+        session.PricingPolicyVersionId = fee.PolicyVersionId;
+        session.FeeBreakdownJson = fee.FeeBreakdownJson;
         if (session.TotalFee <= 0 || session.TotalFee != fee.TotalFee)
         {
             return FailCreate(AppText.Get("Msg_Payment_InvalidAmount"));

@@ -25,6 +25,12 @@ public static class ParkingFlows
     public static async Task<Shift> OpenShiftAsync(IServiceProvider sp, int userId, decimal beginningCash = 100_000m)
         => await sp.GetRequiredService<IShiftService>().OpenShiftAsync(userId, beginningCash);
 
+    /// <summary>
+    /// Thời gian đã gửi mà CheckInAsync tạo ra cho phiên: lớn hơn thời gian ân hạn của bảng giá (15 phút) để lúc ra
+    /// cước luôn lớn hơn 0 như các test này mong đợi từ trước khi có ân hạn.
+    /// </summary>
+    public static readonly TimeSpan DefaultStay = TimeSpan.FromHours(1);
+
     public static async Task<GateCheckInResult> CheckInAsync(IServiceProvider sp, string plate)
     {
         var typeId = await MotorbikeTypeIdAsync(sp.DbFactory());
@@ -36,6 +42,13 @@ public static class ParkingFlows
         Assert.True(result.Success, $"check-in failed: {result.Message}");
         Assert.NotNull(result.Session);
         Assert.True(result.Session!.SessionId > 0);
+
+        await using var db = await sp.DbFactory().CreateDbContextAsync();
+        var sessionId = result.Session.SessionId;
+        var backdated = DateTime.UtcNow - DefaultStay;
+        await db.ParkingSessions.Where(s => s.SessionId == sessionId)
+            .ExecuteUpdateAsync(u => u.SetProperty(s => s.CheckInTime, backdated));
+        result.Session.CheckInTime = backdated;
         return result;
     }
 

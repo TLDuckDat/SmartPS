@@ -103,7 +103,7 @@ public class GateCheckoutFeeTests : IClassFixture<SqlServerDatabaseFixture>
     }
 
     [Fact]
-    public async Task Resident_without_ticket_staying_over_4_hours_pays_the_daily_price()
+    public async Task Resident_without_ticket_staying_over_4_hours_pays_two_4h_blocks()
     {
         _db.RequireAvailable();
         var (sp, userId) = await OperatorWithShiftAsync();
@@ -115,9 +115,10 @@ public class GateCheckoutFeeTests : IClassFixture<SqlServerDatabaseFixture>
         var calc = await Gate(sp).CalculateCheckOutAsync(resident.NormalizedPlate);
         var done = await CompleteAsync(sp, sessionId, userId, PaymentMethod.Cash, calc.TotalFee);
 
-        Assert.Equal(Daily, calc.TotalFee);
+        // KAN-29b: 5 giờ = ceil(5/4) = 2 khung 4h (trước đây cứ quá 4 giờ là tính cả giá ngày)
+        Assert.Equal(2 * Block4h, calc.TotalFee);
         Assert.True(done.Success, done.Message);
-        Assert.Equal(Daily, (await DbSessionAsync(sessionId)).TotalFee);
+        Assert.Equal(2 * Block4h, (await DbSessionAsync(sessionId)).TotalFee);
     }
 
     // ---- AC-R2 / AC-R3: ticket holders pay nothing ------------------------------------------------------------------
@@ -171,8 +172,9 @@ public class GateCheckoutFeeTests : IClassFixture<SqlServerDatabaseFixture>
     }
 
     [Fact]
-    public async Task A2_ticket_expiring_during_the_stay_is_still_free_because_check_in_decides()
+    public async Task A2_ticket_expiring_during_the_stay_charges_only_the_part_after_expiry()
     {
+        // KAN-29b: trước đây vé hết hạn giữa lượt vẫn miễn phí cả lượt (check-in quyết định); nay phần sau hạn tính như khách thường.
         _db.RequireAvailable();
         var (sp, userId) = await OperatorWithShiftAsync();
         using var scope = sp;
@@ -182,11 +184,15 @@ public class GateCheckoutFeeTests : IClassFixture<SqlServerDatabaseFixture>
         await _data.SetTicketEndAsync(external.TicketId!.Value, DateTime.UtcNow.AddHours(-1));
 
         var calc = await Gate(sp).CalculateCheckOutAsync(external.NormalizedPlate);
-        var done = await CompleteAsync(sp, sessionId, userId, PaymentMethod.Free, 0m);
+        var done = await CompleteAsync(sp, sessionId, userId, PaymentMethod.Cash, 0m);
 
-        Assert.Equal(0m, calc.TotalFee);
+        Assert.False(calc.IsMonthlyTicket);
+        Assert.Equal(Block4h, calc.TotalFee); // 1 giờ sau hạn = 1 khung 4h
         Assert.True(done.Success, done.Message);
-        Assert.Equal(0m, (await DbSessionAsync(sessionId)).TotalFee);
+        var stored = await DbSessionAsync(sessionId);
+        Assert.Equal(Block4h, stored.TotalFee);
+        Assert.Equal(PaymentMethod.Cash, stored.PaymentMethod);
+        Assert.True(stored.IsMonthlyPass);
     }
 
     // ---- B6: the client fee is never trusted ----------------------------------------------------------------------------
