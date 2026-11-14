@@ -82,8 +82,10 @@ public static class PricingContextResolver
            && v.OverQuotaDailyPrice == r.OverQuotaDailyPrice;
 
     /// <summary>
-    /// Vé tháng của phiên đã vào bằng vé (IsMonthlyPass): tìm vé còn hiệu lực lúc vào theo xe/biển số. Không tìm thấy
-    /// (dữ liệu cũ chỉ có cờ) thì coi như vé miễn phí cả lượt như trước.
+    /// Vé tháng của phiên đã vào bằng vé (IsMonthlyPass): tìm vé theo xe/biển số, không lọc trạng thái/ngày, ưu tiên vé
+    /// Active còn hạn lúc vào rồi đến vé có hạn muộn nhất. Thấy vé thì trả đúng trạng thái/ngày của vé (engine tự quyết
+    /// vé có còn hợp lệ không; vé huỷ/khoá/hết hạn trước lúc vào thì tính như khách thường). Không tìm thấy vé nào
+    /// thì trả null, tính như khách thường (không có cơ sở để miễn phí).
     /// </summary>
     private static async Task<MonthlyPassInfo?> ResolvePassAsync(SmartPsDbContext db, ParkingSession session, CancellationToken cancellationToken)
     {
@@ -94,19 +96,23 @@ public static class PricingContextResolver
 
         var norm = LicensePlateNormalizer.Normalize(session.LicensePlate);
         var entry = session.CheckInTime;
-        var ticket = await db.MonthlyTickets.FromSql($"""
+        var tickets = await db.MonthlyTickets.FromSql($"""
                 SELECT * FROM "MonthlyTickets"
-                WHERE "Status" = 0 AND "StartDate" <= {entry} AND {entry} <= "EndDate"
-                  AND (dbo.fn_NormalizePlate("RegisteredLicensePlate") = {norm}
-                       OR "VehicleId" IN (SELECT "VehicleId" FROM "Vehicles"
-                                          WHERE "IsActive" = 1 AND dbo.fn_NormalizePlate("LicensePlate") = {norm}))
+                WHERE dbo.fn_NormalizePlate("RegisteredLicensePlate") = {norm}
+                   OR "VehicleId" IN (SELECT "VehicleId" FROM "Vehicles"
+                                      WHERE "IsActive" = 1 AND dbo.fn_NormalizePlate("LicensePlate") = {norm})
                 """)
             .AsNoTracking()
-            .OrderByDescending(t => t.EndDate).ThenByDescending(t => t.TicketId)
-            .FirstOrDefaultAsync(cancellationToken);
+            .ToListAsync(cancellationToken);
+
+        var ticket = tickets
+            .OrderByDescending(t => t.Status == MonthlyTicketStatus.Active && t.StartDate <= entry && entry <= t.EndDate)
+            .ThenByDescending(t => t.EndDate)
+            .ThenByDescending(t => t.TicketId)
+            .FirstOrDefault();
 
         return ticket is null
-            ? new MonthlyPassInfo(DateTime.MinValue, DateTime.MaxValue, MonthlyTicketStatus.Active)
+            ? null
             : new MonthlyPassInfo(
                 DateTime.SpecifyKind(ticket.StartDate, DateTimeKind.Utc),
                 DateTime.SpecifyKind(ticket.EndDate, DateTimeKind.Utc),
