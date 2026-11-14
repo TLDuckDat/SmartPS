@@ -153,6 +153,78 @@ public class CustomersAuthzAuditTests : IClassFixture<SqlServerDatabaseFixture>
         Assert.Equal(new[] { Permissions.ParkingConfigure }, AuditDb.StringArray(AuditDb.Details(denied), "requiredPermissions"));
     }
 
+    /// <summary>Members that are intentionally not guarded (pure functions with no data access).</summary>
+    private static readonly HashSet<string> UnguardedMembers = new()
+    {
+        "Vehicles.NormalizePlate", // pure string normalisation, touches no data
+    };
+
+    [Fact]
+    public void Every_public_service_method_is_covered_by_the_permission_operations_list()
+    {
+        var interfaces = new (string Prefix, Type Type)[]
+        {
+            ("Customers", typeof(ICustomersService)),
+            ("Tickets", typeof(ITicketsService)),
+            ("Vehicles", typeof(IVehiclesService)),
+        };
+
+        var missing = new List<string>();
+        foreach (var (prefix, type) in interfaces)
+        {
+            foreach (var method in type.GetMethods())
+            {
+                var key = prefix + "." + (method.Name.EndsWith("Async", StringComparison.Ordinal) ? method.Name[..^5] : method.Name);
+                if (!Operations.ContainsKey(key) && !UnguardedMembers.Contains(key))
+                {
+                    missing.Add(key);
+                }
+            }
+        }
+
+        Assert.True(missing.Count == 0, "Add these to Operations (and guard them with Parking.Configure): " + string.Join(", ", missing));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Ticket_audit_failure_rolls_back_ticket_and_history(bool renew)
+    {
+        _db.RequireAvailable();
+        var action = renew ? AuditActions.TicketRenew : AuditActions.TicketIssue;
+        using var sp = IntegrationServices.Create(_db, IntegrationServices.FailAppendFor(action));
+        await sp.LoginAdminAsync();
+        var (customer, vehicle) = await SeedCustomerWithVehicleAsync();
+        MonthlyTicket? seeded = renew ? await SeedTicketAsync(customer, vehicle) : null;
+        int historiesBefore;
+        DateTime? endBefore = seeded?.EndDate;
+        await using (var db = await _db.Factory.CreateDbContextAsync())
+        {
+            historiesBefore = await db.MonthlyTicketHistories.CountAsync(h => h.Ticket.CustomerId == customer.CustomerId);
+        }
+
+        var tickets = sp.GetRequiredService<ITicketsService>();
+        // The ticket service turns a failed transaction into a failed OperationResult instead of throwing.
+        var result = renew
+            ? await tickets.RenewTicketAsync(new RenewTicketRequest(seeded!.TicketId, 2, PaymentMethod.Cash))
+            : await tickets.IssueTicketAsync(new IssueTicketRequest(customer.CustomerId, vehicle.VehicleId, 1, PaymentMethod.Cash));
+        Assert.False(result.Success);
+        Assert.Equal(1, sp.GetRequiredService<ThrowingAuditServiceDecorator>().FailuresThrown);
+
+        await using var verify = await _db.Factory.CreateDbContextAsync();
+        Assert.Equal(historiesBefore, await verify.MonthlyTicketHistories.CountAsync(h => h.Ticket.CustomerId == customer.CustomerId));
+        if (renew)
+        {
+            var after = await verify.MonthlyTickets.AsNoTracking().SingleAsync(t => t.TicketId == seeded!.TicketId);
+            Assert.Equal(endBefore, after.EndDate);
+            Assert.Equal(1, after.DurationMonths);
+        }
+        else
+        {
+            Assert.False(await verify.MonthlyTickets.AnyAsync(t => t.CustomerId == customer.CustomerId));
+        }
+    }
+
     [Fact]
     public async Task Denied_write_does_not_change_data()
     {
