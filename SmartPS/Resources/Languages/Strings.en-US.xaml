@@ -988,6 +988,14 @@
     <sys:String x:Key="Str_PriceUi_Monthly3">3-month plan:</sys:String>
     <sys:String x:Key="Str_PriceUi_Monthly6">6-month plan:</sys:String>
     <sys:String x:Key="Str_PriceUi_Save">SAVE CHANGES</sys:String>
+    <sys:String x:Key="Str_PriceUi_Extra">GRACE PERIOD AND SURCHARGES</sys:String>
+    <sys:String x:Key="Str_PriceUi_Grace">Grace period (minutes):</sys:String>
+    <sys:String x:Key="Str_PriceUi_Overnight">Overnight surcharge (each time 00:00 is crossed):</sys:String>
+    <sys:String x:Key="Str_PriceUi_OverQuota">Over-quota vehicle price (per 24h):</sys:String>
+    <sys:String x:Key="Str_PriceUi_Minutes">min</sys:String>
+    <sys:String x:Key="Str_PriceUi_MaxVehicles">Max vehicles per household:</sys:String>
+    <sys:String x:Key="Str_PriceUi_MaxVehiclesHint">From a household's (N+1)th vehicle on, the over-quota price applies</sys:String>
+    <sys:String x:Key="Str_PriceUi_SaveNoPermission">You do not have permission to edit pricing</sys:String>
     <!-- Localization: Units 3 -->
     <sys:String x:Key="Str_Unit_SlotsSuffix"> slots</sys:String>
     <sys:String x:Key="Str_Unit_PositionsSuffix"> spaces</sys:String>

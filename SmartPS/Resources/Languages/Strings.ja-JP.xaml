@@ -988,6 +988,14 @@
     <sys:String x:Key="Str_PriceUi_Monthly3">3か月プラン:</sys:String>
     <sys:String x:Key="Str_PriceUi_Monthly6">6か月プラン:</sys:String>
     <sys:String x:Key="Str_PriceUi_Save">変更を保存</sys:String>
+    <sys:String x:Key="Str_PriceUi_Extra">猶予時間と加算料金</sys:String>
+    <sys:String x:Key="Str_PriceUi_Grace">猶予時間（分）：</sys:String>
+    <sys:String x:Key="Str_PriceUi_Overnight">夜間加算（0:00をまたぐごと）：</sys:String>
+    <sys:String x:Key="Str_PriceUi_OverQuota">台数超過車両の料金（24時間ごと）：</sys:String>
+    <sys:String x:Key="Str_PriceUi_Minutes">分</sys:String>
+    <sys:String x:Key="Str_PriceUi_MaxVehicles">世帯あたりの最大台数：</sys:String>
+    <sys:String x:Key="Str_PriceUi_MaxVehiclesHint">世帯のN+1台目からは台数超過料金が適用されます</sys:String>
+    <sys:String x:Key="Str_PriceUi_SaveNoPermission">料金を編集する権限がありません</sys:String>
     <!-- Localization: Units 3 -->
     <sys:String x:Key="Str_Unit_SlotsSuffix"> 区画</sys:String>
     <sys:String x:Key="Str_Unit_PositionsSuffix"> 区画</sys:String>

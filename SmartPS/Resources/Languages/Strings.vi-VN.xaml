@@ -988,6 +988,14 @@
     <sys:String x:Key="Str_PriceUi_Monthly3">Gói 3 tháng:</sys:String>
     <sys:String x:Key="Str_PriceUi_Monthly6">Gói 6 tháng:</sys:String>
     <sys:String x:Key="Str_PriceUi_Save">LƯU THAY ĐỔI</sys:String>
+    <sys:String x:Key="Str_PriceUi_Extra">ÂN HẠN VÀ PHỤ PHÍ</sys:String>
+    <sys:String x:Key="Str_PriceUi_Grace">Ân hạn (phút):</sys:String>
+    <sys:String x:Key="Str_PriceUi_Overnight">Phụ phí qua đêm (mỗi lần qua 00:00):</sys:String>
+    <sys:String x:Key="Str_PriceUi_OverQuota">Giá xe vượt định mức (mỗi 24h):</sys:String>
+    <sys:String x:Key="Str_PriceUi_Minutes">phút</sys:String>
+    <sys:String x:Key="Str_PriceUi_MaxVehicles">Số xe tối đa mỗi hộ:</sys:String>
+    <sys:String x:Key="Str_PriceUi_MaxVehiclesHint">Xe thứ N+1 của hộ trở đi tính giá vượt định mức</sys:String>
+    <sys:String x:Key="Str_PriceUi_SaveNoPermission">Bạn không có quyền chỉnh bảng giá</sys:String>
     <!-- Localization: Units 3 -->
     <sys:String x:Key="Str_Unit_SlotsSuffix"> ô đỗ</sys:String>
     <sys:String x:Key="Str_Unit_PositionsSuffix"> vị trí</sys:String>

@@ -1,10 +1,12 @@
 using SmartPS.Services.Localization;
+using SmartPS.Services.Pricing;
 
 namespace SmartPS.ViewModels.Pricing;
 
 public class PricingRuleItemViewModel : ValidatableViewModelBase
 {
     public int RuleId { get; set; }
+    public int VehicleTypeId { get; set; }
 
     private string _vehicleTypeName = string.Empty;
     public string VehicleTypeName
@@ -86,6 +88,45 @@ public class PricingRuleItemViewModel : ValidatableViewModelBase
         }
     }
 
+    private int _gracePeriodMinutes = 15;
+    public int GracePeriodMinutes
+    {
+        get => _gracePeriodMinutes;
+        set
+        {
+            if (SetProperty(ref _gracePeriodMinutes, value))
+            {
+                ValidateGrace();
+            }
+        }
+    }
+
+    private decimal _overnightSurcharge;
+    public decimal OvernightSurcharge
+    {
+        get => _overnightSurcharge;
+        set
+        {
+            if (SetProperty(ref _overnightSurcharge, value))
+            {
+                ValidatePrice(nameof(OvernightSurcharge), _overnightSurcharge, requiresPositive: false);
+            }
+        }
+    }
+
+    private decimal _overQuotaDailyPrice;
+    public decimal OverQuotaDailyPrice
+    {
+        get => _overQuotaDailyPrice;
+        set
+        {
+            if (SetProperty(ref _overQuotaDailyPrice, value))
+            {
+                ValidatePrice(nameof(OverQuotaDailyPrice), _overQuotaDailyPrice, requiresPositive: false);
+            }
+        }
+    }
+
     public string Description { get; set; } = string.Empty;
 
     /// <summary>Xe máy và ô tô: giá lượt (4 giờ, ngày) và vé tháng 1 tháng phải lớn hơn 0.</summary>
@@ -101,7 +142,16 @@ public class PricingRuleItemViewModel : ValidatableViewModelBase
         ValidatePrice(nameof(Monthly1Price), Monthly1Price, requiresPositive: true);
         ValidatePrice(nameof(Monthly3Price), Monthly3Price, requiresPositive: false);
         ValidatePrice(nameof(Monthly6Price), Monthly6Price, requiresPositive: false);
+        ValidatePrice(nameof(OvernightSurcharge), OvernightSurcharge, requiresPositive: false);
+        ValidatePrice(nameof(OverQuotaDailyPrice), OverQuotaDailyPrice, requiresPositive: false);
+        ValidateGrace();
     }
+
+    private void ValidateGrace()
+        => ValidateProperty(nameof(GracePeriodMinutes),
+            GracePeriodMinutes is < 0 or > IPricingService.MaxGracePeriodMinutes
+                ? AppText.Get("Msg_Price_GraceRange", VehicleTypeName, IPricingService.MaxGracePeriodMinutes)
+                : null);
 
     protected void ValidatePrice(string propertyName, decimal value, bool requiresPositive)
     {
