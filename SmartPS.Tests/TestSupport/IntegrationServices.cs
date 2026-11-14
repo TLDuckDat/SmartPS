@@ -39,6 +39,8 @@ public static class IntegrationServices
         services.AddSingleton<IAuditIntegrityVerifier, AuditIntegrityVerifier>();
 
         services.AddSingleton<IShiftService, ShiftService>();
+        services.AddSingleton<SmartPS.Services.Pricing.IPricingEngine, SmartPS.Services.Pricing.PricingEngine>();
+        services.AddSingleton<SmartPS.Services.Pricing.IPricingService, SmartPS.Services.Pricing.PricingService>();
         services.AddSingleton<IParkingFeeCalculator, StandardParkingFeeCalculator>();
         services.AddSingleton<IImageStorageService, ImageStorageService>();
         services.AddSingleton<IGateControlService, GateControlService>();

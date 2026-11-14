@@ -45,6 +45,7 @@ public class AuditEventsCatalogTests : IClassFixture<SqlServerDatabaseFixture>
         [AuditActions.IncidentReport] = new(AuditOutcome.Success, "Incident", new[] { "incidentCode", "type", "licensePlate" }),
         [AuditActions.IncidentResolve] = new(AuditOutcome.Success, "Incident", new[] { "incidentCode", "notes" }),
         [AuditActions.SettingsUpdate] = new(AuditOutcome.Success, "ParkingSettings", new[] { "before", "after" }),
+        [AuditActions.PricingUpdated] = new(AuditOutcome.Success, "PricingPolicy", new[] { "old", "new", "versions" }),
     };
 
     private readonly SqlServerDatabaseFixture _db;
@@ -72,7 +73,7 @@ public class AuditEventsCatalogTests : IClassFixture<SqlServerDatabaseFixture>
         Assert.Equal(
             AuditActions.All.Except(ResidentVisitorAuditActions.All).OrderBy(a => a, StringComparer.Ordinal),
             Catalogue.Keys.OrderBy(a => a, StringComparer.Ordinal));
-        Assert.Equal(21, Catalogue.Count);
+        Assert.Equal(22, Catalogue.Count);
     }
 
     [Theory]
@@ -349,6 +350,22 @@ public class AuditEventsCatalogTests : IClassFixture<SqlServerDatabaseFixture>
                 var current = await settings.GetOperationalSettingsAsync();
                 var id = await Mark();
                 var result = await settings.UpdateOperationalSettingsAsync(current with { OverstayThresholdHours = current.OverstayThresholdHours % 700 + 1 });
+                Assert.True(result.Success, result.Message);
+                return (id, Array.Empty<string>());
+            }
+
+            case AuditActions.PricingUpdated:
+            {
+                await sp.LoginAdminAsync();
+                var pricing = sp.GetRequiredService<SmartPS.Services.Pricing.IPricingService>();
+                var config = await pricing.LoadPoliciesAsync();
+                var id = await Mark();
+                var first = config.Rules[0];
+                var edited = config with
+                {
+                    Rules = config.Rules.Select(r => r.RuleId == first.RuleId ? r with { GracePeriodMinutes = first.GracePeriodMinutes % 100 + 1 } : r).ToList()
+                };
+                var result = await pricing.SavePoliciesAsync(edited);
                 Assert.True(result.Success, result.Message);
                 return (id, Array.Empty<string>());
             }

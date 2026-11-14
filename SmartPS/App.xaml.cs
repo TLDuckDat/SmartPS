@@ -82,6 +82,8 @@ public partial class App : Application
         services.AddSingleton<ILocalizationService, LocalizationService>();
         services.AddSingleton<SmartPS.Services.Audio.IAudioAlertService, SmartPS.Services.Audio.SystemAudioAlertService>();
         services.AddSingleton<SmartPS.Services.Storage.IImageStorageService, SmartPS.Services.Storage.ImageStorageService>();
+        services.AddSingleton<SmartPS.Services.Pricing.IPricingEngine, SmartPS.Services.Pricing.PricingEngine>();
+        services.AddSingleton<SmartPS.Services.Pricing.IPricingService, SmartPS.Services.Pricing.PricingService>();
         services.AddSingleton<SmartPS.Services.GateControl.IParkingFeeCalculator, SmartPS.Services.GateControl.StandardParkingFeeCalculator>();
         services.AddSingleton<SmartPS.Services.OcrLisencePlate.IOcrLicensePlateService, SmartPS.Services.OcrLisencePlate.LicensePlateOcrService>();
         services.AddSingleton<SmartPS.Services.GateControl.IPlateOwnershipReader, SmartPS.Services.GateControl.PlateOwnershipReader>();
