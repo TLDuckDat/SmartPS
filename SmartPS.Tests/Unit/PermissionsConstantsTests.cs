@@ -74,7 +74,11 @@ public class PermissionsConstantsTests
             "GATE_BLACKLIST_BLOCKED", "ZONE_UPDATE",
             "REPORT_EXPORT",
             // Incidents and system settings
-            "INCIDENT_REPORT", "INCIDENT_RESOLVE", "SETTINGS_UPDATE"
+            "INCIDENT_REPORT", "INCIDENT_RESOLVE", "SETTINGS_UPDATE",
+            // Customers / tickets / vehicles / blacklist (KAN-33b)
+            "HOUSEHOLD_CREATE", "HOUSEHOLD_DELETE", "CUSTOMER_CREATE", "CUSTOMER_DELETE", "VEHICLE_CREATE", "VEHICLE_DELETE",
+            "TICKET_ISSUE", "TICKET_RENEW", "TICKET_CHANGE_PLATE", "TICKET_LOCK_TOGGLE", "TICKET_CANCEL",
+            "BLACKLIST_ADD", "BLACKLIST_TOGGLE", "BLACKLIST_DELETE"
         }, AuditActions.All);
     }
 

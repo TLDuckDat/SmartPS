@@ -58,7 +58,7 @@ public class AuditEventsCatalogTests : IClassFixture<SqlServerDatabaseFixture>
     {
         var data = new TheoryData<string>();
         // Resident/visitor actions are covered by ResidentVisitorAuditCatalogTests.
-        foreach (var action in AuditActions.All.Except(ResidentVisitorAuditActions.All))
+        foreach (var action in AuditActions.All.Except(ResidentVisitorAuditActions.All).Except(CustomerAuditActions.All))
         {
             data.Add(action);
         }
@@ -70,7 +70,7 @@ public class AuditEventsCatalogTests : IClassFixture<SqlServerDatabaseFixture>
     public void Catalogue_covers_every_R14_action()
     {
         Assert.Equal(
-            AuditActions.All.Except(ResidentVisitorAuditActions.All).OrderBy(a => a, StringComparer.Ordinal),
+            AuditActions.All.Except(ResidentVisitorAuditActions.All).Except(CustomerAuditActions.All).OrderBy(a => a, StringComparer.Ordinal),
             Catalogue.Keys.OrderBy(a => a, StringComparer.Ordinal));
         Assert.Equal(21, Catalogue.Count);
     }

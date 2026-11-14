@@ -27,6 +27,20 @@ public static class AuditActions
     public const string IncidentReport = "INCIDENT_REPORT";
     public const string IncidentResolve = "INCIDENT_RESOLVE";
     public const string SettingsUpdate = "SETTINGS_UPDATE";
+    public const string HouseholdCreate = "HOUSEHOLD_CREATE";
+    public const string HouseholdDelete = "HOUSEHOLD_DELETE";
+    public const string CustomerCreate = "CUSTOMER_CREATE";
+    public const string CustomerDelete = "CUSTOMER_DELETE";
+    public const string VehicleCreate = "VEHICLE_CREATE";
+    public const string VehicleDelete = "VEHICLE_DELETE";
+    public const string TicketIssue = "TICKET_ISSUE";
+    public const string TicketRenew = "TICKET_RENEW";
+    public const string TicketChangePlate = "TICKET_CHANGE_PLATE";
+    public const string TicketLockToggle = "TICKET_LOCK_TOGGLE";
+    public const string TicketCancel = "TICKET_CANCEL";
+    public const string BlacklistAdd = "BLACKLIST_ADD";
+    public const string BlacklistToggle = "BLACKLIST_TOGGLE";
+    public const string BlacklistDelete = "BLACKLIST_DELETE";
 
     public static IReadOnlyList<string> All { get; } = typeof(AuditActions)
         .GetFields(BindingFlags.Public | BindingFlags.Static)
