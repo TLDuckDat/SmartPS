@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using SmartPS.Constants;
 using SmartPS.Models.Parking;
+using SmartPS.Services.Authorization;
 using SmartPS.Services.Common;
 using SmartPS.Services.Customers;
 using SmartPS.Services.Dialog;
@@ -18,6 +20,7 @@ public class CustomersViewModel : ViewModelBase
     private readonly ITicketsService _ticketsService;
     private readonly IVehiclesService _vehiclesService;
     private readonly IDialogService _dialogService;
+    private readonly IPermissionService _permissions;
 
     private readonly List<CustomerItemViewModel> _allCustomers = new();
     private readonly List<Household> _allHouseholds = new();
@@ -143,34 +146,54 @@ public class CustomersViewModel : ViewModelBase
         ICustomersService customersService,
         ITicketsService ticketsService,
         IVehiclesService vehiclesService,
-        IDialogService dialogService)
+        IDialogService dialogService,
+        IPermissionService permissions)
     {
+        _permissions = permissions ?? throw new ArgumentNullException(nameof(permissions));
         _customersService = customersService;
         _ticketsService = ticketsService;
         _vehiclesService = vehiclesService;
         _dialogService = dialogService;
 
         AppText.Changed += OnLanguageChanged;
-        RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
+        RefreshCommand = new AsyncRelayCommand(LoadDataAsync, () => CanManage);
 
-        AddHouseholdCommand = new AsyncRelayCommand(AddHouseholdAsync);
-        AddCustomerCommand = new AsyncRelayCommand(AddCustomerAsync);
-        AddVehicleCommand = new AsyncRelayCommand(AddVehicleAsync);
-        AddTicketCommand = new AsyncRelayCommand(AddTicketAsync);
-        AddBlacklistCommand = new AsyncRelayCommand(AddBlacklistAsync);
+        AddHouseholdCommand = new AsyncRelayCommand(() => RunGuardedAsync(AddHouseholdAsync), () => CanManage);
+        AddCustomerCommand = new AsyncRelayCommand(() => RunGuardedAsync(AddCustomerAsync), () => CanManage);
+        AddVehicleCommand = new AsyncRelayCommand(() => RunGuardedAsync(AddVehicleAsync), () => CanManage);
+        AddTicketCommand = new AsyncRelayCommand(() => RunGuardedAsync(AddTicketAsync), () => CanManage);
+        AddBlacklistCommand = new AsyncRelayCommand(() => RunGuardedAsync(AddBlacklistAsync), () => CanManage);
 
-        DeleteHouseholdCommand = new AsyncRelayCommand(DeleteHouseholdAsync);
-        DeleteCustomerCommand = new AsyncRelayCommand(DeleteCustomerAsync);
-        DeleteTicketCommand = new AsyncRelayCommand(DeleteTicketAsync);
-        CancelTicketCommand = new AsyncRelayCommand(CancelTicketAsync);
-        ToggleTicketCommand = new AsyncRelayCommand(ToggleTicketAsync);
-        RenewTicketCommand = new AsyncRelayCommand(RenewTicketAsync);
-        ChangePlateCommand = new AsyncRelayCommand(ChangePlateAsync);
-        DeleteRowVehicleCommand = new AsyncRelayCommand(DeleteRowVehicleAsync);
-        ToggleBlacklistCommand = new AsyncRelayCommand(ToggleBlacklistAsync);
-        DeleteBlacklistCommand = new AsyncRelayCommand(DeleteBlacklistAsync);
+        DeleteHouseholdCommand = new AsyncRelayCommand(() => RunGuardedAsync(DeleteHouseholdAsync), () => CanManage);
+        DeleteCustomerCommand = new AsyncRelayCommand(() => RunGuardedAsync(DeleteCustomerAsync), () => CanManage);
+        DeleteTicketCommand = new AsyncRelayCommand(p => RunGuardedAsync(() => DeleteTicketAsync(p)), _ => CanManage);
+        CancelTicketCommand = new AsyncRelayCommand(p => RunGuardedAsync(() => CancelTicketAsync(p)), _ => CanManage);
+        ToggleTicketCommand = new AsyncRelayCommand(p => RunGuardedAsync(() => ToggleTicketAsync(p)), _ => CanManage);
+        RenewTicketCommand = new AsyncRelayCommand(() => RunGuardedAsync(RenewTicketAsync), () => CanManage);
+        ChangePlateCommand = new AsyncRelayCommand(p => RunGuardedAsync(() => ChangePlateAsync(p)), _ => CanManage);
+        DeleteRowVehicleCommand = new AsyncRelayCommand(p => RunGuardedAsync(() => DeleteRowVehicleAsync(p)), _ => CanManage);
+        ToggleBlacklistCommand = new AsyncRelayCommand(p => RunGuardedAsync(() => ToggleBlacklistAsync(p)), _ => CanManage);
+        DeleteBlacklistCommand = new AsyncRelayCommand(p => RunGuardedAsync(() => DeleteBlacklistAsync(p)), _ => CanManage);
 
-        _ = LoadDataAsync();
+        if (CanManage)
+        {
+            _ = LoadDataAsync();
+        }
+    }
+
+    /// <summary>Quyền Parking.Configure: khoá mọi nút thêm/xoá/vé/blacklist khi thiếu quyền (service vẫn kiểm lại).</summary>
+    public bool CanManage => _permissions.HasPermission(Permissions.ParkingConfigure);
+
+    private async Task RunGuardedAsync(Func<Task> action)
+    {
+        try
+        {
+            await action();
+        }
+        catch (PermissionDeniedException)
+        {
+            _dialogService.ShowWarning(AppText.Get("Msg_Auth_PermissionDenied"));
+        }
     }
 
     private void OnLanguageChanged()
@@ -302,6 +325,10 @@ public class CustomersViewModel : ViewModelBase
             MonthlyRevenueTotal = totalMonthlyRev;
 
             ApplyCustomerFilter();
+        }
+        catch (PermissionDeniedException)
+        {
+            _dialogService.ShowWarning(AppText.Get("Msg_Auth_PermissionDenied"));
         }
         catch (Exception ex)
         {
