@@ -1,5 +1,6 @@
 using System.Windows.Input;
 using SmartPS.Models.Parking;
+using SmartPS.Services.Authorization;
 using SmartPS.Services.Common;
 using SmartPS.Services.Customers;
 using SmartPS.ViewModels.Customers;
@@ -27,9 +28,16 @@ public class CustomersViewModelPermissionTests
 
     private sealed class FakeTickets : ITicketsService
     {
-        public Task<IReadOnlyList<MonthlyTicket>> GetTicketsAsync(string? keyword = null, bool onlyExpiringSoon = false, CancellationToken ct = default) => Task.FromResult<IReadOnlyList<MonthlyTicket>>(Array.Empty<MonthlyTicket>());
-        public Task<IReadOnlyList<MonthlyTicketHistory>> GetTicketHistoriesAsync(int ticketId, CancellationToken ct = default) => Task.FromResult<IReadOnlyList<MonthlyTicketHistory>>(Array.Empty<MonthlyTicketHistory>());
-        public Task<IReadOnlyList<PricingRule>> GetPricingRulesAsync(CancellationToken ct = default) => Task.FromResult<IReadOnlyList<PricingRule>>(Array.Empty<PricingRule>());
+        public int Calls { get; private set; }
+        public Exception? HistoriesException { get; set; }
+
+        public Task<IReadOnlyList<MonthlyTicket>> GetTicketsAsync(string? keyword = null, bool onlyExpiringSoon = false, CancellationToken ct = default) { Calls++; return Task.FromResult<IReadOnlyList<MonthlyTicket>>(Array.Empty<MonthlyTicket>()); }
+        public Task<IReadOnlyList<MonthlyTicketHistory>> GetTicketHistoriesAsync(int ticketId, CancellationToken ct = default)
+        {
+            Calls++;
+            return HistoriesException != null ? Task.FromException<IReadOnlyList<MonthlyTicketHistory>>(HistoriesException) : Task.FromResult<IReadOnlyList<MonthlyTicketHistory>>(Array.Empty<MonthlyTicketHistory>());
+        }
+        public Task<IReadOnlyList<PricingRule>> GetPricingRulesAsync(CancellationToken ct = default) { Calls++; return Task.FromResult<IReadOnlyList<PricingRule>>(Array.Empty<PricingRule>()); }
         public Task<decimal?> CalculateTicketFeeAsync(int vehicleTypeId, int durationMonths, CancellationToken ct = default) => Task.FromResult<decimal?>(null);
         public Task<OperationResult> IssueTicketAsync(IssueTicketRequest request, CancellationToken ct = default) => Task.FromResult(OperationResult.Ok());
         public Task<OperationResult> RenewTicketAsync(RenewTicketRequest request, CancellationToken ct = default) => Task.FromResult(OperationResult.Ok());
@@ -40,22 +48,38 @@ public class CustomersViewModelPermissionTests
 
     private sealed class FakeVehicles : IVehiclesService
     {
+        public int Calls { get; private set; }
+
         public Task<bool> CheckVehicleLimitAsync(int householdId, int? excludeVehicleId = null, CancellationToken ct = default) => Task.FromResult(true);
-        public Task<IReadOnlyList<Vehicle>> GetVehiclesAsync(CancellationToken ct = default) => Task.FromResult<IReadOnlyList<Vehicle>>(Array.Empty<Vehicle>());
+        public Task<IReadOnlyList<Vehicle>> GetVehiclesAsync(CancellationToken ct = default) { Calls++; return Task.FromResult<IReadOnlyList<Vehicle>>(Array.Empty<Vehicle>()); }
         public Task<IReadOnlyList<Vehicle>> GetVehiclesByCustomerAsync(int customerId, CancellationToken ct = default) => Task.FromResult<IReadOnlyList<Vehicle>>(Array.Empty<Vehicle>());
-        public Task<IReadOnlyList<VehicleType>> GetVehicleTypesAsync(CancellationToken ct = default) => Task.FromResult<IReadOnlyList<VehicleType>>(Array.Empty<VehicleType>());
+        public Task<IReadOnlyList<VehicleType>> GetVehicleTypesAsync(CancellationToken ct = default) { Calls++; return Task.FromResult<IReadOnlyList<VehicleType>>(Array.Empty<VehicleType>()); }
         public Task<OperationResult> AddVehicleAsync(CreateVehicleRequest request, CancellationToken ct = default) => Task.FromResult(OperationResult.Ok());
         public Task<OperationResult> DeleteVehicleAsync(int vehicleId, CancellationToken ct = default) => Task.FromResult(OperationResult.Ok());
         public string NormalizePlate(string licensePlate) => licensePlate;
     }
 
-    private static (CustomersViewModel Vm, FakeCustomers Customers) Create(Models.Auth.User? user)
+    private sealed record Harness(CustomersViewModel Vm, FakeCustomers Customers, FakeTickets Tickets, FakeVehicles Vehicles, FakeDialogService Dialogs, CurrentUserContext Context)
+    {
+        public int ServiceCalls => Customers.Calls + Tickets.Calls + Vehicles.Calls;
+    }
+
+    private static Harness CreateHarness(Models.Auth.User? user)
     {
         var context = new CurrentUserContext();
         context.SetUser(user);
         var customers = new FakeCustomers();
-        var vm = new CustomersViewModel(customers, new FakeTickets(), new FakeVehicles(), new FakeDialogService(), new PermissionService(context));
-        return (vm, customers);
+        var tickets = new FakeTickets();
+        var vehicles = new FakeVehicles();
+        var dialogs = new FakeDialogService();
+        var vm = new CustomersViewModel(customers, tickets, vehicles, dialogs, new PermissionService(context));
+        return new Harness(vm, customers, tickets, vehicles, dialogs, context);
+    }
+
+    private static (CustomersViewModel Vm, FakeCustomers Customers) Create(Models.Auth.User? user)
+    {
+        var h = CreateHarness(user);
+        return (h.Vm, h.Customers);
     }
 
     private static IEnumerable<(string Name, ICommand Command)> Commands(CustomersViewModel vm) => new (string, ICommand)[]
@@ -116,5 +140,95 @@ public class CustomersViewModelPermissionTests
         var (vm, _) = Create(TestUsers.AdminWithoutGrants());
 
         Assert.True(vm.CanManage);
+    }
+
+    [Fact]
+    public async Task LoadDataAsync_without_ParkingConfigure_returns_early_without_calling_any_service()
+    {
+        var h = CreateHarness(TestUsers.Operator());
+
+        await h.Vm.LoadDataAsync();
+
+        Assert.Equal(0, h.ServiceCalls);
+        Assert.Empty(h.Dialogs.Warnings);
+    }
+
+    [Fact]
+    public async Task LoadDataAsync_with_ParkingConfigure_calls_the_services()
+    {
+        var h = CreateHarness(TestUsers.Manager());
+        var before = h.ServiceCalls;
+
+        await h.Vm.LoadDataAsync();
+
+        Assert.True(h.ServiceCalls > before);
+    }
+
+    [Fact]
+    public async Task LoadTicketHistoriesAsync_shows_permission_warning_instead_of_swallowing_PermissionDenied()
+    {
+        var h = CreateHarness(TestUsers.Operator());
+        h.Tickets.HistoriesException = new PermissionDeniedException(new[] { Permissions.ParkingConfigure }, "op");
+
+        await h.Vm.LoadTicketHistoriesAsync(new MonthlyTicket { TicketId = 1 });
+
+        Assert.Single(h.Dialogs.Warnings);
+        Assert.Empty(h.Vm.SelectedTicketHistories);
+        Assert.False(h.Vm.IsLoadingHistories);
+    }
+
+    [Fact]
+    public async Task LoadTicketHistoriesAsync_still_ignores_other_exceptions()
+    {
+        var h = CreateHarness(TestUsers.Manager());
+        h.Tickets.HistoriesException = new InvalidOperationException("boom");
+
+        await h.Vm.LoadTicketHistoriesAsync(new MonthlyTicket { TicketId = 1 });
+
+        Assert.Empty(h.Dialogs.Warnings);
+        Assert.False(h.Vm.IsLoadingHistories);
+    }
+
+    /// <summary>Row buttons in the DataGrids pass the row item as CommandParameter.</summary>
+    private static IEnumerable<(string Name, ICommand Command, object Parameter)> RowCommands(CustomersViewModel vm) => new (string, ICommand, object)[]
+    {
+        (nameof(vm.DeleteTicketCommand), vm.DeleteTicketCommand, new MonthlyTicket { TicketId = 1 }),
+        (nameof(vm.CancelTicketCommand), vm.CancelTicketCommand, new MonthlyTicket { TicketId = 1 }),
+        (nameof(vm.ToggleTicketCommand), vm.ToggleTicketCommand, new MonthlyTicket { TicketId = 1 }),
+        (nameof(vm.DeleteRowVehicleCommand), vm.DeleteRowVehicleCommand, new CustomerItemViewModel { CustomerId = 1, VehicleId = 1 }),
+        (nameof(vm.ToggleBlacklistCommand), vm.ToggleBlacklistCommand, new BlacklistedVehicle { BlacklistId = 1 }),
+        (nameof(vm.DeleteBlacklistCommand), vm.DeleteBlacklistCommand, new BlacklistedVehicle { BlacklistId = 1 }),
+    };
+
+    [Fact]
+    public void Row_buttons_with_CommandParameter_are_locked_without_ParkingConfigure()
+    {
+        var (vm, _) = Create(TestUsers.Operator());
+
+        Assert.All(RowCommands(vm), c => Assert.False(c.Command.CanExecute(c.Parameter), c.Name));
+    }
+
+    [Fact]
+    public void Row_buttons_with_CommandParameter_are_enabled_with_ParkingConfigure()
+    {
+        var (vm, _) = Create(TestUsers.Manager());
+
+        Assert.All(RowCommands(vm), c => Assert.True(c.Command.CanExecute(c.Parameter), c.Name));
+    }
+
+    [Fact]
+    public void Commands_follow_the_current_user_when_the_user_changes_or_logs_out()
+    {
+        var h = CreateHarness(TestUsers.Manager());
+        Assert.All(RowCommands(h.Vm), c => Assert.True(c.Command.CanExecute(c.Parameter), c.Name));
+
+        h.Context.SetUser(TestUsers.Operator());
+        Assert.All(RowCommands(h.Vm), c => Assert.False(c.Command.CanExecute(c.Parameter), c.Name));
+
+        h.Context.SetUser(TestUsers.Manager());
+        Assert.All(RowCommands(h.Vm), c => Assert.True(c.Command.CanExecute(c.Parameter), c.Name));
+
+        h.Context.SetUser(null);
+        Assert.All(RowCommands(h.Vm), c => Assert.False(c.Command.CanExecute(c.Parameter), c.Name));
     }
 }

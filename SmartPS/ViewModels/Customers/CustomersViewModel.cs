@@ -210,6 +210,9 @@ public class CustomersViewModel : ViewModelBase
 
     public async Task LoadDataAsync()
     {
+        // Thiếu quyền: không gọi service (mỗi lần gọi sẽ ghi 7 dòng ACCESS_DENIED). Dashboard gọi thẳng hàm này khi Làm mới.
+        if (!CanManage) return;
+
         try
         {
             var tHouseholds = _customersService.GetHouseholdsAsync();
@@ -868,6 +871,10 @@ public class CustomersViewModel : ViewModelBase
             {
                 SelectedTicketHistories.Add(h);
             }
+        }
+        catch (PermissionDeniedException)
+        {
+            _dialogService.ShowWarning(AppText.Get("Msg_Auth_PermissionDenied"));
         }
         catch (Exception ex)
         {
