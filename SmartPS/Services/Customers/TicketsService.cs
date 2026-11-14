@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
+using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using SmartPS.Constants;
 using SmartPS.Data;
 using SmartPS.Models.Parking;
+using SmartPS.Services.Audit;
 using SmartPS.Services.Authorization;
 using SmartPS.Services.Common;
 using SmartPS.Services.Localization;
@@ -18,14 +20,44 @@ public class TicketsService : ITicketsService
 {
     private readonly IDbContextFactory<SmartPsDbContext> _dbFactory;
     private readonly ICurrentUserContext _currentUser;
+    private readonly IAuthorizationGuard _guard;
+    private readonly IAuditService _audit;
 
-    public TicketsService(IDbContextFactory<SmartPsDbContext> dbFactory, ICurrentUserContext currentUser)
+    public TicketsService(
+        IDbContextFactory<SmartPsDbContext> dbFactory,
+        ICurrentUserContext currentUser,
+        IAuthorizationGuard guard,
+        IAuditService audit)
     {
         _dbFactory = dbFactory;
         _currentUser = currentUser;
+        _guard = guard;
+        _audit = audit;
     }
 
+    private Task DemandAsync(CancellationToken ct, string? entityId = null)
+        => _guard.DemandAsync(Permissions.ParkingConfigure, "MonthlyTicket", entityId, ct);
+
+    private static object TicketSnapshot(MonthlyTicket t) => new
+    {
+        t.TicketCode,
+        t.VehicleId,
+        t.RegisteredLicensePlate,
+        t.VehicleTypeId,
+        t.DurationMonths,
+        t.MonthlyPrice,
+        t.StartDate,
+        t.EndDate,
+        Status = t.Status.ToString()
+    };
+
     public async Task<decimal?> CalculateTicketFeeAsync(int vehicleTypeId, int durationMonths, CancellationToken ct = default)
+    {
+        await DemandAsync(ct);
+        return await CalculateTicketFeeCoreAsync(vehicleTypeId, durationMonths, ct);
+    }
+
+    private async Task<decimal?> CalculateTicketFeeCoreAsync(int vehicleTypeId, int durationMonths, CancellationToken ct)
     {
         if (durationMonths <= 0) return null;
 
@@ -47,6 +79,7 @@ public class TicketsService : ITicketsService
 
     public async Task<IReadOnlyList<MonthlyTicket>> GetTicketsAsync(string? keyword = null, bool onlyExpiringSoon = false, CancellationToken ct = default)
     {
+        await DemandAsync(ct);
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var query = db.MonthlyTickets
             .AsNoTracking()
@@ -77,6 +110,7 @@ public class TicketsService : ITicketsService
 
     public async Task<IReadOnlyList<MonthlyTicketHistory>> GetTicketHistoriesAsync(int ticketId, CancellationToken ct = default)
     {
+        await DemandAsync(ct, ticketId.ToString());
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         return await db.MonthlyTicketHistories
             .AsNoTracking()
@@ -87,12 +121,14 @@ public class TicketsService : ITicketsService
 
     public async Task<IReadOnlyList<PricingRule>> GetPricingRulesAsync(CancellationToken ct = default)
     {
+        await DemandAsync(ct);
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         return await db.PricingRules.AsNoTracking().ToListAsync(ct);
     }
 
     public async Task<OperationResult> IssueTicketAsync(IssueTicketRequest request, CancellationToken ct = default)
     {
+        await DemandAsync(ct);
         if (request.DurationMonths <= 0)
         {
             return OperationResult.Fail(OperationError.Validation, "Thời hạn vé phải lớn hơn 0.");
@@ -129,15 +165,15 @@ public class TicketsService : ITicketsService
         }
 
         // Tự động tính cước từ PricingRules (không hardcode giá)
-        var fee = await CalculateTicketFeeAsync(vehicle.VehicleTypeId, request.DurationMonths, ct);
+        var fee = await CalculateTicketFeeCoreAsync(vehicle.VehicleTypeId, request.DurationMonths, ct);
         if (!fee.HasValue)
         {
             return OperationResult.Fail(OperationError.Validation, "Loại phương tiện này chưa được cấu hình bảng giá vé tháng trong hệ thống.");
         }
 
-        await using var tx = await db.Database.BeginTransactionAsync(ct);
         try
         {
+            await using var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct);
             var ticket = new MonthlyTicket
             {
                 CustomerId = request.CustomerId,
@@ -174,14 +210,22 @@ public class TicketsService : ITicketsService
             db.MonthlyTicketHistories.Add(history);
             await db.SaveChangesAsync(ct);
 
+            await _audit.AppendChangeAsync(db, AuditActions.TicketIssue, "MonthlyTicket", ticket.TicketId, null, TicketSnapshot(ticket), ct, new
+            {
+                ticket.CustomerId,
+                PaymentMethod = request.PaymentMethod.ToString(),
+                Amount = fee.Value
+            });
+            await db.SaveChangesAsync(ct);
             await tx.CommitAsync(ct);
-
-            await LogAuditLineAsync("IssueTicket", $"TicketCode={ticket.TicketCode}, Plate={ticket.RegisteredLicensePlate}, Fee={fee.Value}, PaymentMethod={request.PaymentMethod}");
             return OperationResult.Ok(ticket.TicketCode);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
-            await tx.RollbackAsync(ct);
             Debug.WriteLine($"[TicketsService.IssueTicketAsync Error]: {ex}");
             return OperationResult.Fail(OperationError.DatabaseError, "Không thể hoàn tất cấp vé tháng do lỗi cơ sở dữ liệu. Vui lòng thử lại sau.");
         }
@@ -189,6 +233,7 @@ public class TicketsService : ITicketsService
 
     public async Task<OperationResult> RenewTicketAsync(RenewTicketRequest request, CancellationToken ct = default)
     {
+        await DemandAsync(ct, request.TicketId.ToString());
         if (request.AddedMonths <= 0)
         {
             return OperationResult.Fail(OperationError.Validation, "Số tháng gia hạn phải lớn hơn 0.");
@@ -207,7 +252,7 @@ public class TicketsService : ITicketsService
         }
 
         // Tự động tính cước từ PricingRules (không hardcode giá)
-        var fee = await CalculateTicketFeeAsync(ticket.VehicleTypeId, request.AddedMonths, ct);
+        var fee = await CalculateTicketFeeCoreAsync(ticket.VehicleTypeId, request.AddedMonths, ct);
         if (!fee.HasValue)
         {
             return OperationResult.Fail(OperationError.Validation, "Loại phương tiện này chưa được cấu hình bảng giá vé tháng trong hệ thống.");
@@ -217,10 +262,11 @@ public class TicketsService : ITicketsService
         DateTime baseDate = ticket.EndDate < now ? now : ticket.EndDate;
         DateTime newEnd = baseDate.AddMonths(request.AddedMonths);
 
-        await using var tx = await db.Database.BeginTransactionAsync(ct);
         try
         {
+            await using var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct);
             var oldEndDate = ticket.EndDate;
+            var oldSnapshot = TicketSnapshot(ticket);
 
             ticket.EndDate = newEnd;
             ticket.Status = MonthlyTicketStatus.Active;
@@ -243,14 +289,23 @@ public class TicketsService : ITicketsService
 
             db.MonthlyTicketHistories.Add(history);
             await db.SaveChangesAsync(ct);
-            await tx.CommitAsync(ct);
 
-            await LogAuditLineAsync("RenewTicket", $"TicketCode={ticket.TicketCode}, DurationAdded={request.AddedMonths}, Fee={fee.Value}, PaymentMethod={request.PaymentMethod}");
+            await _audit.AppendChangeAsync(db, AuditActions.TicketRenew, "MonthlyTicket", ticket.TicketId, oldSnapshot, TicketSnapshot(ticket), ct, new
+            {
+                request.AddedMonths,
+                PaymentMethod = request.PaymentMethod.ToString(),
+                Amount = fee.Value
+            });
+            await db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
             return OperationResult.Ok();
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
-            await tx.RollbackAsync(ct);
             Debug.WriteLine($"[TicketsService.RenewTicketAsync Error]: {ex}");
             return OperationResult.Fail(OperationError.DatabaseError, "Không thể hoàn tất gia hạn vé do lỗi cơ sở dữ liệu. Vui lòng thử lại sau.");
         }
@@ -258,6 +313,7 @@ public class TicketsService : ITicketsService
 
     public async Task<OperationResult> ChangePlateAsync(ChangePlateRequest request, CancellationToken ct = default)
     {
+        await DemandAsync(ct, request.TicketId.ToString());
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var ticket = await db.MonthlyTickets.FirstOrDefaultAsync(t => t.TicketId == request.TicketId, ct);
         if (ticket == null)
@@ -305,11 +361,12 @@ public class TicketsService : ITicketsService
             return OperationResult.Fail(OperationError.Validation, AppText.Get("Msg_Customers_AlreadyBanned", newVehicle.LicensePlate));
         }
 
-        await using var tx = await db.Database.BeginTransactionAsync(ct);
         try
         {
+            await using var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct);
             var oldVehicleId = ticket.VehicleId;
             var oldPlate = ticket.RegisteredLicensePlate;
+            var oldSnapshot = TicketSnapshot(ticket);
 
             ticket.VehicleId = newVehicle.VehicleId;
             ticket.RegisteredLicensePlate = newVehicle.LicensePlate;
@@ -330,14 +387,21 @@ public class TicketsService : ITicketsService
 
             db.MonthlyTicketHistories.Add(history);
             await db.SaveChangesAsync(ct);
-            await tx.CommitAsync(ct);
 
-            await LogAuditLineAsync("ChangePlate", $"TicketCode={ticket.TicketCode}, OldPlate={oldPlate}, NewPlate={newVehicle.LicensePlate}, Reason={history.Reason}");
+            await _audit.AppendChangeAsync(db, AuditActions.TicketChangePlate, "MonthlyTicket", ticket.TicketId, oldSnapshot, TicketSnapshot(ticket), ct, new
+            {
+                history.Reason
+            });
+            await db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
             return OperationResult.Ok();
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
-            await tx.RollbackAsync(ct);
             Debug.WriteLine($"[TicketsService.ChangePlateAsync Error]: {ex}");
             return OperationResult.Fail(OperationError.DatabaseError, "Không thể hoàn tất đổi biển số do lỗi cơ sở dữ liệu. Vui lòng thử lại sau.");
         }
@@ -345,6 +409,7 @@ public class TicketsService : ITicketsService
 
     public async Task<OperationResult> ToggleLockTicketAsync(int ticketId, string reason, CancellationToken ct = default)
     {
+        await DemandAsync(ct, ticketId.ToString());
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var ticket = await db.MonthlyTickets.FirstOrDefaultAsync(t => t.TicketId == ticketId, ct);
         if (ticket == null)
@@ -377,9 +442,10 @@ public class TicketsService : ITicketsService
 
         var action = willLock ? TicketHistoryAction.Lock : TicketHistoryAction.Unlock;
 
-        await using var tx = await db.Database.BeginTransactionAsync(ct);
         try
         {
+            await using var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct);
+            var oldSnapshot = TicketSnapshot(ticket);
             ticket.Status = willLock ? MonthlyTicketStatus.Suspended : MonthlyTicketStatus.Active;
 
             var history = new MonthlyTicketHistory
@@ -393,14 +459,21 @@ public class TicketsService : ITicketsService
 
             db.MonthlyTicketHistories.Add(history);
             await db.SaveChangesAsync(ct);
-            await tx.CommitAsync(ct);
 
-            await LogAuditLineAsync(willLock ? "LockTicket" : "UnlockTicket", $"TicketCode={ticket.TicketCode}, Status={ticket.Status}");
+            await _audit.AppendChangeAsync(db, AuditActions.TicketLockToggle, "MonthlyTicket", ticket.TicketId, oldSnapshot, TicketSnapshot(ticket), ct, new
+            {
+                history.Reason
+            });
+            await db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
             return OperationResult.Ok();
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
-            await tx.RollbackAsync(ct);
             Debug.WriteLine($"[TicketsService.ToggleLockTicketAsync Error]: {ex}");
             return OperationResult.Fail(OperationError.DatabaseError, "Không thể thay đổi trạng thái vé do lỗi cơ sở dữ liệu. Vui lòng thử lại sau.");
         }
@@ -408,6 +481,7 @@ public class TicketsService : ITicketsService
 
     public async Task<OperationResult> CancelTicketAsync(int ticketId, string reason, CancellationToken ct = default)
     {
+        await DemandAsync(ct, ticketId.ToString());
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var ticket = await db.MonthlyTickets.FirstOrDefaultAsync(t => t.TicketId == ticketId, ct);
         if (ticket == null)
@@ -422,9 +496,10 @@ public class TicketsService : ITicketsService
 
         var now = DateTime.UtcNow;
 
-        await using var tx = await db.Database.BeginTransactionAsync(ct);
         try
         {
+            await using var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct);
+            var oldSnapshot = TicketSnapshot(ticket);
             ticket.Status = MonthlyTicketStatus.Cancelled;
 
             var history = new MonthlyTicketHistory
@@ -438,28 +513,23 @@ public class TicketsService : ITicketsService
 
             db.MonthlyTicketHistories.Add(history);
             await db.SaveChangesAsync(ct);
-            await tx.CommitAsync(ct);
 
-            await LogAuditLineAsync("CancelTicket", $"TicketCode={ticket.TicketCode}, Status=Cancelled, Reason={history.Reason}");
+            await _audit.AppendChangeAsync(db, AuditActions.TicketCancel, "MonthlyTicket", ticket.TicketId, oldSnapshot, TicketSnapshot(ticket), ct, new
+            {
+                history.Reason
+            });
+            await db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
             return OperationResult.Ok();
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
-            await tx.RollbackAsync(ct);
             Debug.WriteLine($"[TicketsService.CancelTicketAsync Error]: {ex}");
             return OperationResult.Fail(OperationError.DatabaseError, "Không thể hủy vé do lỗi cơ sở dữ liệu. Vui lòng thử lại sau.");
-        }
-    }
-
-    private static async Task LogAuditLineAsync(string action, string details)
-    {
-        try
-        {
-            var logLine = $"{{\"timestamp\":\"{DateTime.UtcNow:O}\",\"action\":\"{action}\",\"details\":\"{details}\"}}\n";
-            await File.AppendAllTextAsync("gate_audit_log.jsonl", logLine);
-        }
-        catch
-        {
         }
     }
 }

@@ -1,12 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using SmartPS.Constants;
 using SmartPS.Data;
 using SmartPS.Models.Parking;
+using SmartPS.Services.Audit;
+using SmartPS.Services.Authorization;
 using SmartPS.Services.Common;
 using SmartPS.Services.Localization;
 
@@ -16,10 +20,18 @@ public class VehiclesService : IVehiclesService
 {
     private readonly IDbContextFactory<SmartPsDbContext> _dbFactory;
 
-    public VehiclesService(IDbContextFactory<SmartPsDbContext> dbFactory)
+    private readonly IAuthorizationGuard _guard;
+    private readonly IAuditService _audit;
+
+    public VehiclesService(IDbContextFactory<SmartPsDbContext> dbFactory, IAuthorizationGuard guard, IAuditService audit)
     {
         _dbFactory = dbFactory;
+        _guard = guard;
+        _audit = audit;
     }
+
+    private Task DemandAsync(CancellationToken ct, string? entityId = null)
+        => _guard.DemandAsync(Permissions.ParkingConfigure, "Vehicle", entityId, ct);
 
     public string NormalizePlate(string licensePlate)
     {
@@ -28,6 +40,12 @@ public class VehiclesService : IVehiclesService
     }
 
     public async Task<bool> CheckVehicleLimitAsync(int householdId, int? excludeVehicleId = null, CancellationToken ct = default)
+    {
+        await DemandAsync(ct);
+        return await CheckVehicleLimitCoreAsync(householdId, excludeVehicleId, ct);
+    }
+
+    private async Task<bool> CheckVehicleLimitCoreAsync(int householdId, int? excludeVehicleId, CancellationToken ct)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var household = await db.Households.FirstOrDefaultAsync(h => h.HouseholdId == householdId, ct);
@@ -47,6 +65,7 @@ public class VehiclesService : IVehiclesService
 
     public async Task<IReadOnlyList<Vehicle>> GetVehiclesAsync(CancellationToken ct = default)
     {
+        await DemandAsync(ct);
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         return await db.Vehicles
             .AsNoTracking()
@@ -59,6 +78,7 @@ public class VehiclesService : IVehiclesService
 
     public async Task<IReadOnlyList<Vehicle>> GetVehiclesByCustomerAsync(int customerId, CancellationToken ct = default)
     {
+        await DemandAsync(ct, customerId.ToString());
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         return await db.Vehicles
             .AsNoTracking()
@@ -70,6 +90,7 @@ public class VehiclesService : IVehiclesService
 
     public async Task<IReadOnlyList<VehicleType>> GetVehicleTypesAsync(CancellationToken ct = default)
     {
+        await DemandAsync(ct);
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         return await db.VehicleTypes
             .AsNoTracking()
@@ -79,6 +100,7 @@ public class VehiclesService : IVehiclesService
 
     public async Task<OperationResult> AddVehicleAsync(CreateVehicleRequest request, CancellationToken ct = default)
     {
+        await DemandAsync(ct);
         var normPlate = NormalizePlate(request.LicensePlate);
         if (string.IsNullOrEmpty(normPlate))
         {
@@ -108,7 +130,7 @@ public class VehiclesService : IVehiclesService
         // Kiểm tra quota hộ gia đình nếu là cư dân
         if (customer.HouseholdId.HasValue)
         {
-            var canAdd = await CheckVehicleLimitAsync(customer.HouseholdId.Value, null, ct);
+            var canAdd = await CheckVehicleLimitCoreAsync(customer.HouseholdId.Value, null, ct);
             if (!canAdd)
             {
                 var h = await db.Households.FirstOrDefaultAsync(x => x.HouseholdId == customer.HouseholdId.Value, ct);
@@ -127,13 +149,27 @@ public class VehiclesService : IVehiclesService
             IsActive = true
         };
 
-        db.Vehicles.Add(vehicle);
-        await db.SaveChangesAsync(ct);
+        await using (var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct))
+        {
+            db.Vehicles.Add(vehicle);
+            await db.SaveChangesAsync(ct);
+            await _audit.AppendChangeAsync(db, AuditActions.VehicleCreate, "Vehicle", vehicle.VehicleId, null, new
+            {
+                vehicle.LicensePlate,
+                vehicle.VehicleTypeId,
+                vehicle.OwnerCustomerId,
+                vehicle.IsActive
+            }, ct);
+            await db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
+        }
+
         return OperationResult.Ok();
     }
 
     public async Task<OperationResult> DeleteVehicleAsync(int vehicleId, CancellationToken ct = default)
     {
+        await DemandAsync(ct, vehicleId.ToString());
         try
         {
             await using var db = await _dbFactory.CreateDbContextAsync(ct);
@@ -159,19 +195,35 @@ public class VehiclesService : IVehiclesService
             var hasHistory = await db.MonthlyTickets.AnyAsync(t => t.VehicleId == vehicleId, ct)
                 || await db.ParkingSessions.AnyAsync(s => s.LicensePlate == vehicle.LicensePlate, ct);
 
-            if (hasHistory)
+            var oldSnapshot = new { vehicle.LicensePlate, vehicle.VehicleTypeId, vehicle.OwnerCustomerId, vehicle.IsActive };
+
+            await using (var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct))
             {
-                // Xóa mềm: đánh dấu xe ngưng hoạt động để bảo toàn lịch sử
-                vehicle.IsActive = false;
-            }
-            else
-            {
-                // Xe chưa từng phát sinh dữ liệu: cho phép xóa cứng khỏi DB
-                db.Vehicles.Remove(vehicle);
+                object newSnapshot;
+                if (hasHistory)
+                {
+                    // Xóa mềm: đánh dấu xe ngưng hoạt động để bảo toàn lịch sử
+                    vehicle.IsActive = false;
+                    newSnapshot = new { vehicle.LicensePlate, vehicle.VehicleTypeId, vehicle.OwnerCustomerId, IsActive = false, Deleted = false };
+                }
+                else
+                {
+                    // Xe chưa từng phát sinh dữ liệu: cho phép xóa cứng khỏi DB
+                    db.Vehicles.Remove(vehicle);
+                    newSnapshot = new { Deleted = true };
+                }
+
+                await db.SaveChangesAsync(ct);
+                await _audit.AppendChangeAsync(db, AuditActions.VehicleDelete, "Vehicle", vehicleId, oldSnapshot, newSnapshot, ct);
+                await db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
             }
 
-            await db.SaveChangesAsync(ct);
             return OperationResult.Ok();
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {

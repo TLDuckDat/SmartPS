@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using SmartPS.Constants;
 using SmartPS.Data;
 using SmartPS.Models.Parking;
+using SmartPS.Services.Audit;
+using SmartPS.Services.Authorization;
 using SmartPS.Services.Common;
 using SmartPS.Services.Localization;
 
@@ -16,15 +19,31 @@ public class CustomersService : ICustomersService
 {
     private readonly IDbContextFactory<SmartPsDbContext> _dbFactory;
     private readonly IVehiclesService _vehiclesService;
+    private readonly IAuthorizationGuard _guard;
+    private readonly IAuditService _audit;
 
-    public CustomersService(IDbContextFactory<SmartPsDbContext> dbFactory, IVehiclesService vehiclesService)
+    public CustomersService(
+        IDbContextFactory<SmartPsDbContext> dbFactory,
+        IVehiclesService vehiclesService,
+        IAuthorizationGuard guard,
+        IAuditService audit)
     {
         _dbFactory = dbFactory;
         _vehiclesService = vehiclesService;
+        _guard = guard;
+        _audit = audit;
     }
+
+    private Task DemandAsync(string entityType, CancellationToken ct, string? entityId = null)
+        => _guard.DemandAsync(Permissions.ParkingConfigure, entityType, entityId, ct);
+
+    private static object HouseholdSnapshot(Household h) => new { h.ApartmentCode, h.MaxVehicles, h.Notes, h.IsActive };
+
+    private static object BlacklistSnapshot(BlacklistedVehicle b) => new { b.LicensePlate, b.Reason, b.Notes, b.CustomerId, b.IsActive };
 
     public async Task<IReadOnlyList<Customer>> GetCustomersAsync(string? keyword = null, CancellationToken ct = default)
     {
+        await DemandAsync("Customer", ct);
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var query = db.Customers
             .AsNoTracking()
@@ -47,6 +66,7 @@ public class CustomersService : ICustomersService
 
     public async Task<IReadOnlyList<Household>> GetHouseholdsAsync(string? keyword = null, CancellationToken ct = default)
     {
+        await DemandAsync("Household", ct);
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var query = db.Households.AsNoTracking().AsQueryable();
 
@@ -63,6 +83,7 @@ public class CustomersService : ICustomersService
 
     public async Task<IReadOnlyList<BlacklistedVehicle>> GetBlacklistAsync(string? keyword = null, CancellationToken ct = default)
     {
+        await DemandAsync("BlacklistedVehicle", ct);
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var query = db.BlacklistedVehicles
             .AsNoTracking()
@@ -84,6 +105,7 @@ public class CustomersService : ICustomersService
 
     public async Task<OperationResult> AddHouseholdAsync(CreateHouseholdRequest request, CancellationToken ct = default)
     {
+        await DemandAsync("Household", ct);
         var code = request.ApartmentCode?.Trim();
         if (string.IsNullOrEmpty(code))
         {
@@ -111,13 +133,21 @@ public class CustomersService : ICustomersService
             IsActive = true
         };
 
-        db.Households.Add(household);
-        await db.SaveChangesAsync(ct);
+        await using (var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct))
+        {
+            db.Households.Add(household);
+            await db.SaveChangesAsync(ct);
+            await _audit.AppendChangeAsync(db, AuditActions.HouseholdCreate, "Household", household.HouseholdId, null, HouseholdSnapshot(household), ct);
+            await db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
+        }
+
         return OperationResult.Ok();
     }
 
     public async Task<OperationResult> DeleteHouseholdAsync(int householdId, CancellationToken ct = default)
     {
+        await DemandAsync("Household", ct, householdId.ToString());
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var h = await db.Households.FirstOrDefaultAsync(x => x.HouseholdId == householdId, ct);
         if (h == null)
@@ -127,19 +157,36 @@ public class CustomersService : ICustomersService
 
         // Chuyển các khách hàng thuộc căn hộ này sang khách vãng lai
         var customers = await db.Customers.Where(c => c.HouseholdId == householdId).ToListAsync(ct);
-        foreach (var c in customers)
+        var oldSnapshot = new
         {
-            c.HouseholdId = null;
-            c.Type = CustomerType.External;
+            h.ApartmentCode,
+            h.MaxVehicles,
+            h.Notes,
+            h.IsActive,
+            DetachedCustomerIds = customers.Select(c => c.CustomerId).ToArray()
+        };
+
+        await using (var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct))
+        {
+            foreach (var c in customers)
+            {
+                c.HouseholdId = null;
+                c.Type = CustomerType.External;
+            }
+
+            db.Households.Remove(h);
+            await db.SaveChangesAsync(ct);
+            await _audit.AppendChangeAsync(db, AuditActions.HouseholdDelete, "Household", householdId, oldSnapshot, null, ct);
+            await db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
         }
 
-        db.Households.Remove(h);
-        await db.SaveChangesAsync(ct);
         return OperationResult.Ok();
     }
 
     public async Task<OperationResult> AddCustomerAsync(CreateCustomerRequest request, CancellationToken ct = default)
     {
+        await DemandAsync("Customer", ct);
         var name = request.FullName?.Trim();
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -186,21 +233,35 @@ public class CustomersService : ICustomersService
             CreatedAt = DateTime.UtcNow
         };
 
-        db.Customers.Add(customer);
-        await db.SaveChangesAsync(ct);
-
-        if (!string.IsNullOrEmpty(normPlate))
+        await using (var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct))
         {
-            var vehicle = new Vehicle
-            {
-                LicensePlate = normPlate,
-                VehicleTypeId = request.InitialVehicleTypeId ?? 1,
-                OwnerCustomerId = customer.CustomerId,
-                CreatedAt = DateTime.UtcNow,
-                IsActive = true
-            };
-            db.Vehicles.Add(vehicle);
+            db.Customers.Add(customer);
             await db.SaveChangesAsync(ct);
+
+            Vehicle? vehicle = null;
+            if (!string.IsNullOrEmpty(normPlate))
+            {
+                vehicle = new Vehicle
+                {
+                    LicensePlate = normPlate,
+                    VehicleTypeId = request.InitialVehicleTypeId ?? 1,
+                    OwnerCustomerId = customer.CustomerId,
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true
+                };
+                db.Vehicles.Add(vehicle);
+                await db.SaveChangesAsync(ct);
+            }
+
+            await _audit.AppendChangeAsync(db, AuditActions.CustomerCreate, "Customer", customer.CustomerId, null, new
+            {
+                customer.FullName,
+                customer.HouseholdId,
+                Type = customer.Type.ToString(),
+                InitialVehicle = vehicle == null ? null : new { vehicle.VehicleId, vehicle.LicensePlate, vehicle.VehicleTypeId }
+            }, ct);
+            await db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
         }
 
         return OperationResult.Ok();
@@ -208,6 +269,7 @@ public class CustomersService : ICustomersService
 
     public async Task<OperationResult> DeleteCustomerAsync(int customerId, CancellationToken ct = default)
     {
+        await DemandAsync("Customer", ct, customerId.ToString());
         try
         {
             await using var db = await _dbFactory.CreateDbContextAsync(ct);
@@ -243,9 +305,29 @@ public class CustomersService : ICustomersService
                 v.IsActive = false;
             }
 
-            db.Customers.Remove(c);
-            await db.SaveChangesAsync(ct);
+            var oldSnapshot = new
+            {
+                c.FullName,
+                c.HouseholdId,
+                Type = c.Type.ToString(),
+                DeactivatedVehicleIds = vehicles.Select(v => v.VehicleId).ToArray(),
+                UnlinkedSessionCount = sessions.Count
+            };
+
+            await using (var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct))
+            {
+                db.Customers.Remove(c);
+                await db.SaveChangesAsync(ct);
+                await _audit.AppendChangeAsync(db, AuditActions.CustomerDelete, "Customer", customerId, oldSnapshot, null, ct);
+                await db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+            }
+
             return OperationResult.Ok();
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -256,6 +338,7 @@ public class CustomersService : ICustomersService
 
     public async Task<OperationResult> AddBlacklistAsync(string plate, string reason, string? notes, int? customerId, CancellationToken ct = default)
     {
+        await DemandAsync("BlacklistedVehicle", ct);
         var cleanPlate = _vehiclesService.NormalizePlate(plate);
         if (string.IsNullOrEmpty(cleanPlate))
         {
@@ -276,14 +359,20 @@ public class CustomersService : ICustomersService
             }
 
             // Kích hoạt lại xe đã từng bị cấm
-            existing.IsActive = true;
-            existing.Reason = reason;
-            existing.Notes = notes;
-            existing.CustomerId = customerId;
-            existing.CreatedAt = DateTime.UtcNow;
-            await db.SaveChangesAsync(ct);
+            var oldSnapshot = BlacklistSnapshot(existing);
+            await using (var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct))
+            {
+                existing.IsActive = true;
+                existing.Reason = reason;
+                existing.Notes = notes;
+                existing.CustomerId = customerId;
+                existing.CreatedAt = DateTime.UtcNow;
+                await db.SaveChangesAsync(ct);
+                await _audit.AppendChangeAsync(db, AuditActions.BlacklistAdd, "BlacklistedVehicle", existing.BlacklistId, oldSnapshot, BlacklistSnapshot(existing), ct);
+                await db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+            }
 
-            await LogAuditLineAsync("BlacklistReactivate", $"Plate={cleanPlate}, Reason={reason}");
             return OperationResult.Ok();
         }
 
@@ -297,15 +386,21 @@ public class CustomersService : ICustomersService
             IsActive = true
         };
 
-        db.BlacklistedVehicles.Add(item);
-        await db.SaveChangesAsync(ct);
+        await using (var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct))
+        {
+            db.BlacklistedVehicles.Add(item);
+            await db.SaveChangesAsync(ct);
+            await _audit.AppendChangeAsync(db, AuditActions.BlacklistAdd, "BlacklistedVehicle", item.BlacklistId, null, BlacklistSnapshot(item), ct);
+            await db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
+        }
 
-        await LogAuditLineAsync("BlacklistAdd", $"Plate={cleanPlate}, Reason={reason}, Notes={notes}");
         return OperationResult.Ok();
     }
 
     public async Task<OperationResult> ToggleBlacklistAsync(int blacklistId, CancellationToken ct = default)
     {
+        await DemandAsync("BlacklistedVehicle", ct, blacklistId.ToString());
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var b = await db.BlacklistedVehicles.FirstOrDefaultAsync(x => x.BlacklistId == blacklistId, ct);
         if (b == null)
@@ -313,16 +408,22 @@ public class CustomersService : ICustomersService
             return OperationResult.Fail(OperationError.NotFound, AppText.Get("Msg_Common_NotFound"));
         }
 
-        b.IsActive = !b.IsActive;
-        await db.SaveChangesAsync(ct);
+        var oldSnapshot = BlacklistSnapshot(b);
+        await using (var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct))
+        {
+            b.IsActive = !b.IsActive;
+            await db.SaveChangesAsync(ct);
+            await _audit.AppendChangeAsync(db, AuditActions.BlacklistToggle, "BlacklistedVehicle", blacklistId, oldSnapshot, BlacklistSnapshot(b), ct);
+            await db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
+        }
 
-        var action = b.IsActive ? "BlacklistEnable" : "BlacklistDisable";
-        await LogAuditLineAsync(action, $"Plate={b.LicensePlate}, IsActive={b.IsActive}");
         return OperationResult.Ok();
     }
 
     public async Task<OperationResult> DeleteBlacklistAsync(int blacklistId, CancellationToken ct = default)
     {
+        await DemandAsync("BlacklistedVehicle", ct, blacklistId.ToString());
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
         var b = await db.BlacklistedVehicles.FirstOrDefaultAsync(x => x.BlacklistId == blacklistId, ct);
         if (b == null)
@@ -331,22 +432,16 @@ public class CustomersService : ICustomersService
         }
 
         // Xóa mềm: đánh dấu IsActive = false
-        b.IsActive = false;
-        await db.SaveChangesAsync(ct);
+        var oldSnapshot = BlacklistSnapshot(b);
+        await using (var tx = await _audit.BeginAuditedTransactionAsync(db, IsolationLevel.ReadCommitted, ct))
+        {
+            b.IsActive = false;
+            await db.SaveChangesAsync(ct);
+            await _audit.AppendChangeAsync(db, AuditActions.BlacklistDelete, "BlacklistedVehicle", blacklistId, oldSnapshot, BlacklistSnapshot(b), ct);
+            await db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
+        }
 
-        await LogAuditLineAsync("BlacklistSoftDelete", $"Plate={b.LicensePlate}");
         return OperationResult.Ok();
-    }
-
-    private static async Task LogAuditLineAsync(string action, string details)
-    {
-        try
-        {
-            var logLine = $"{{\"timestamp\":\"{DateTime.UtcNow:O}\",\"action\":\"{action}\",\"details\":\"{details}\"}}\n";
-            await File.AppendAllTextAsync("gate_audit_log.jsonl", logLine);
-        }
-        catch
-        {
-        }
     }
 }
