@@ -4,6 +4,7 @@ using SmartPS.Constants;
 using SmartPS.Models.Audit;
 using SmartPS.Services.Authorization;
 using SmartPS.Services.Common;
+using SmartPS.Services.Localization;
 using SmartPS.Services.Pricing;
 
 namespace SmartPS.Tests.Integration;
@@ -222,7 +223,109 @@ public class PricingServiceTests : IClassFixture<SqlServerDatabaseFixture>
         var first = config.Rules[0];
 
         Assert.True((await pricing.SavePoliciesAsync(WithRule(config, first.RuleId, r => r with { GracePeriodMinutes = 0 }))).Success);
+        config = await pricing.LoadPoliciesAsync(); // tải lại: cấu hình cũ đã lỗi thời sau lần lưu đầu
         Assert.True((await pricing.SavePoliciesAsync(WithRule(config, first.RuleId, r => r with { GracePeriodMinutes = 120 }))).Success);
         Assert.Equal(120, (await pricing.LoadPoliciesAsync()).Rules.First(r => r.RuleId == first.RuleId).GracePeriodMinutes);
+    }
+
+    private async Task<long> VersionCountAsync(int vehicleTypeId)
+    {
+        await using var ctx = _db.CreateContext();
+        return await ctx.PricingPolicyVersions.LongCountAsync(v => v.VehicleTypeId == vehicleTypeId);
+    }
+
+    [Fact]
+    public async Task Stale_save_that_only_changes_another_vehicle_type_keeps_the_other_users_change()
+    {
+        _db.RequireAvailable();
+        var (spA, pricingA) = await ServiceAsync("Manager");
+        var (spB, pricingB) = await ServiceAsync("Manager");
+        using var scopeA = spA;
+        using var scopeB = spB;
+        var configA = await pricingA.LoadPoliciesAsync();
+        var configB = await pricingB.LoadPoliciesAsync();
+        var motor = configA.Rules[0];
+        var car = configA.Rules[1];
+        var newGrace = motor.GracePeriodMinutes == 30 ? 31 : 30;
+
+        Assert.True((await pricingA.SavePoliciesAsync(WithRule(configA, motor.RuleId, r => r with { GracePeriodMinutes = newGrace }))).Success);
+        var motorVersions = await VersionCountAsync(motor.VehicleTypeId);
+        var carVersions = await VersionCountAsync(car.VehicleTypeId);
+        var idBefore = await AuditDb.MaxIdAsync(_db.Factory);
+
+        var result = await pricingB.SavePoliciesAsync(WithRule(configB, car.RuleId, r => r with { Block4hPrice = r.Block4hPrice + 1000m }));
+
+        Assert.True(result.Success, result.Message);
+        await using var ctx = _db.CreateContext();
+        Assert.Equal(newGrace, (await ctx.PricingRules.AsNoTracking().SingleAsync(r => r.RuleId == motor.RuleId)).GracePeriodMinutes);
+        Assert.Equal(car.Block4hPrice + 1000m, (await ctx.PricingRules.AsNoTracking().SingleAsync(r => r.RuleId == car.RuleId)).Block4hPrice);
+        Assert.Equal(motorVersions, await VersionCountAsync(motor.VehicleTypeId));
+        Assert.Equal(carVersions + 1, await VersionCountAsync(car.VehicleTypeId));
+        var row = Assert.Single(await AuditDb.RowsAfterAsync(_db.Factory, idBefore, AuditActions.PricingUpdated));
+        var oldRules = AuditDb.Details(row).GetProperty("old").GetProperty("rules");
+        Assert.Equal(1, oldRules.GetArrayLength());
+        Assert.Equal(car.VehicleTypeId, oldRules[0].GetProperty("vehicleTypeId").GetInt32());
+    }
+
+    [Fact]
+    public async Task Stale_save_that_changes_a_vehicle_type_already_changed_by_someone_else_is_a_conflict_and_writes_nothing()
+    {
+        _db.RequireAvailable();
+        var (spA, pricingA) = await ServiceAsync("Manager");
+        var (spB, pricingB) = await ServiceAsync("Manager");
+        using var scopeA = spA;
+        using var scopeB = spB;
+        var configA = await pricingA.LoadPoliciesAsync();
+        var configB = await pricingB.LoadPoliciesAsync();
+        var motor = configA.Rules[0];
+        var car = configA.Rules[1];
+        var newGrace = motor.GracePeriodMinutes == 30 ? 31 : 30;
+
+        Assert.True((await pricingA.SavePoliciesAsync(WithRule(configA, motor.RuleId, r => r with { GracePeriodMinutes = newGrace }))).Success);
+        var versionsBefore = await VersionCountAsync();
+        var idBefore = await AuditDb.MaxIdAsync(_db.Factory);
+
+        var edited = WithRule(WithRule(configB, motor.RuleId, r => r with { Block4hPrice = r.Block4hPrice + 1000m }),
+            car.RuleId, r => r with { Block4hPrice = r.Block4hPrice + 2000m });
+        var result = await pricingB.SavePoliciesAsync(edited);
+
+        Assert.False(result.Success);
+        Assert.Equal(OperationError.Validation, result.Error);
+        Assert.Equal(AppText.Get("Msg_Price_Conflict", motor.VehicleTypeName), result.Message);
+        await using var ctx = _db.CreateContext();
+        var motorNow = await ctx.PricingRules.AsNoTracking().SingleAsync(r => r.RuleId == motor.RuleId);
+        Assert.Equal(newGrace, motorNow.GracePeriodMinutes);
+        Assert.Equal(motor.Block4hPrice, motorNow.Block4hPrice);
+        Assert.Equal(car.Block4hPrice, (await ctx.PricingRules.AsNoTracking().SingleAsync(r => r.RuleId == car.RuleId)).Block4hPrice);
+        Assert.Equal(versionsBefore, await VersionCountAsync());
+        Assert.Empty(await AuditDb.RowsAfterAsync(_db.Factory, idBefore, AuditActions.PricingUpdated));
+    }
+
+    [Fact]
+    public async Task Stale_unchanged_save_does_not_overwrite_max_vehicles_and_writes_nothing()
+    {
+        _db.RequireAvailable();
+        var (spA, pricingA) = await ServiceAsync("Manager");
+        var (spB, pricingB) = await ServiceAsync("Manager");
+        using var scopeA = spA;
+        using var scopeB = spB;
+        var configA = await pricingA.LoadPoliciesAsync();
+        var configB = await pricingB.LoadPoliciesAsync();
+        var newMax = configA.DefaultMaxVehiclesPerHousehold + 1;
+        Assert.True((await pricingA.SavePoliciesAsync(configA with { DefaultMaxVehiclesPerHousehold = newMax })).Success);
+        var versionsBefore = await VersionCountAsync();
+        var idBefore = await AuditDb.MaxIdAsync(_db.Factory);
+
+        var result = await pricingB.SavePoliciesAsync(configB);
+
+        Assert.True(result.Success, result.Message);
+        Assert.Equal(newMax, (await pricingA.LoadPoliciesAsync()).DefaultMaxVehiclesPerHousehold);
+        Assert.Equal(versionsBefore, await VersionCountAsync());
+        Assert.Empty(await AuditDb.RowsAfterAsync(_db.Factory, idBefore, AuditActions.PricingUpdated));
+
+        var conflict = await pricingB.SavePoliciesAsync(configB with { DefaultMaxVehiclesPerHousehold = newMax + 5 });
+        Assert.Equal(OperationError.Validation, conflict.Error);
+        Assert.Equal(AppText.Get("Msg_Price_ConflictMaxVehicles"), conflict.Message);
+        Assert.Equal(newMax, (await pricingA.LoadPoliciesAsync()).DefaultMaxVehiclesPerHousehold);
     }
 }

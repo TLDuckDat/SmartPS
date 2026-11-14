@@ -1301,6 +1301,8 @@
     <sys:String x:Key="Msg_Price_MustBePositive">Giá vé lượt và vé tháng của '{0}' phải lớn hơn 0đ!</sys:String>
     <sys:String x:Key="Msg_Price_GraceRange">Thời gian ân hạn của '{0}' phải từ 0 đến {1} phút!</sys:String>
     <sys:String x:Key="Msg_Price_NotANumber">Giá trị nhập vào phải là số hợp lệ!</sys:String>
+    <sys:String x:Key="Msg_Price_Conflict">Biểu phí của '{0}' đã được người khác thay đổi sau khi bạn tải. Vui lòng tải lại rồi chỉnh sửa lại!</sys:String>
+    <sys:String x:Key="Msg_Price_ConflictMaxVehicles">Số xe tối đa mỗi hộ đã được người khác thay đổi sau khi bạn tải. Vui lòng tải lại rồi chỉnh sửa lại!</sys:String>
     <sys:String x:Key="Msg_Price_RuleNotFound">Không tìm thấy biểu phí của '{0}'. Vui lòng tải lại.</sys:String>
     <sys:String x:Key="Msg_Price_Saved">Lưu thay đổi thành công!</sys:String>
     <sys:String x:Key="Msg_Price_SaveError">Lỗi lưu cấu hình biểu phí: {0}</sys:String>

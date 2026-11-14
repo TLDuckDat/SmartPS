@@ -17,10 +17,21 @@ public sealed record PricingRuleData
     public decimal OvernightSurcharge { get; init; }
     public decimal OverQuotaDailyPrice { get; init; }
     public string? Description { get; init; }
+
+    /// <summary>
+    /// Dấu hiệu giá trị hiện hành của loại xe lúc tải (kiểm tra đồng thời lạc quan). Khi lưu: giá trị người dùng gửi
+    /// trùng dấu hiệu này nghĩa là không đổi (bỏ qua); khác dấu hiệu mà CSDL đã khác dấu hiệu là xung đột. Null thì so với CSDL.
+    /// </summary>
+    public string? LoadedStamp { get; init; }
+
+    /// <summary>Dấu hiệu theo các giá trị cấu hình của bản ghi này.</summary>
+    public string ValuesStamp() => string.Join('|', Block4hPrice, DailyPrice, Monthly1Price, Monthly3Price, Monthly6Price,
+        GracePeriodMinutes, OvernightSurcharge, OverQuotaDailyPrice);
 }
 
 /// <summary>Toàn bộ cấu hình trên màn Bảng giá: bảng giá từng loại xe và số xe tối đa mỗi hộ.</summary>
-public sealed record PricingConfiguration(IReadOnlyList<PricingRuleData> Rules, int DefaultMaxVehiclesPerHousehold);
+/// <param name="LoadedDefaultMaxVehicles">Số xe tối đa lúc tải, dùng cho kiểm tra đồng thời; null thì so với CSDL.</param>
+public sealed record PricingConfiguration(IReadOnlyList<PricingRuleData> Rules, int DefaultMaxVehiclesPerHousehold, int? LoadedDefaultMaxVehicles = null);
 
 public interface IPricingService
 {
@@ -33,7 +44,9 @@ public interface IPricingService
     /// <summary>
     /// Lưu bảng giá (quyền Pricing.Manage). Kiểm tra dữ liệu ở service; mỗi loại xe có thay đổi tạo thêm một
     /// PricingPolicyVersions và ghi PRICING_UPDATED (giá trị cũ/mới) trong cùng giao dịch với việc lưu.
-    /// Không có gì thay đổi thì không tạo phiên bản và không ghi nhật ký.
+    /// Không có gì thay đổi thì không tạo phiên bản và không ghi nhật ký. Kiểm tra đồng thời lạc quan: loại xe người dùng
+    /// không đổi so với lúc tải thì bỏ qua (không ghi đè thay đổi của người khác); loại xe (hoặc số xe tối đa) người dùng đổi
+    /// mà CSDL đã bị người khác đổi từ lúc tải thì trả OperationError.Validation kèm thông báo xung đột (yêu cầu tải lại) và KHÔNG ghi gì (tất cả hoặc không gì).
     /// </summary>
     Task<OperationResult> SavePoliciesAsync(PricingConfiguration configuration, CancellationToken cancellationToken = default);
 }

@@ -43,6 +43,7 @@ public class PricingViewModel : ValidatableViewModelBase
         }
     }
 
+    private int? _loadedMaxVehicles;
     private string? _rawMaxText;
     private bool _fromText;
 
@@ -155,13 +156,15 @@ public class PricingViewModel : ValidatableViewModelBase
                     GracePeriodMinutes = rule.GracePeriodMinutes,
                     OvernightSurcharge = rule.OvernightSurcharge,
                     OverQuotaDailyPrice = rule.OverQuotaDailyPrice,
-                    Description = rule.Description ?? string.Empty
+                    Description = rule.Description ?? string.Empty,
+                    LoadedStamp = rule.LoadedStamp
                 };
                 item.ValidateAll();
                 PricingRules.Add(item);
             }
 
             DefaultMaxVehicles = configuration.DefaultMaxVehiclesPerHousehold;
+            _loadedMaxVehicles = configuration.LoadedDefaultMaxVehicles;
             ValidateMaxVehicles();
             SelectedRule = PricingRules.FirstOrDefault();
             OnPropertyChanged(nameof(CanEdit));
@@ -208,9 +211,11 @@ public class PricingViewModel : ValidatableViewModelBase
                     GracePeriodMinutes = vm.GracePeriodMinutes,
                     OvernightSurcharge = vm.OvernightSurcharge,
                     OverQuotaDailyPrice = vm.OverQuotaDailyPrice,
-                    Description = vm.Description
+                    Description = vm.Description,
+                    LoadedStamp = vm.LoadedStamp
                 }).ToList(),
-                DefaultMaxVehicles);
+                DefaultMaxVehicles,
+                _loadedMaxVehicles);
 
             var result = await _pricingService.SavePoliciesAsync(configuration);
             if (result.Success)

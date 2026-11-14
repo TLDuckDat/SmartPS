@@ -257,6 +257,9 @@ public class PricingRuleItemViewModel : ValidatableViewModelBase
 
     public string Description { get; set; } = string.Empty;
 
+    /// <summary>Dấu hiệu giá trị lúc tải, gửi lại khi lưu để kiểm tra đồng thời.</summary>
+    public string? LoadedStamp { get; set; }
+
     /// <summary>Xe máy và ô tô: giá lượt (4 giờ, ngày) và vé tháng 1 tháng phải lớn hơn 0.</summary>
     public bool RequiresPositivePrices
         => VehicleTypeName.Contains("máy", StringComparison.OrdinalIgnoreCase)

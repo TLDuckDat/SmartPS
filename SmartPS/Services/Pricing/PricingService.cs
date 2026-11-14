@@ -39,7 +39,10 @@ public sealed class PricingService : IPricingService
             .Select(s => (int?)s.DefaultMaxVehiclesPerHousehold)
             .FirstOrDefaultAsync(cancellationToken) ?? new ParkingSettings().DefaultMaxVehiclesPerHousehold;
 
-        return new PricingConfiguration(rules.Select(ToData).ToList(), maxVehicles);
+        return new PricingConfiguration(
+            rules.Select(r => { var d = ToData(r); return d with { LoadedStamp = d.ValuesStamp() }; }).ToList(),
+            maxVehicles,
+            maxVehicles);
     }
 
     public async Task<OperationResult> SavePoliciesAsync(PricingConfiguration configuration, CancellationToken cancellationToken = default)
@@ -67,7 +70,7 @@ public sealed class PricingService : IPricingService
                 return OperationResult.Fail(OperationError.Validation, invalid);
             }
 
-            await using (var transaction = await _audit.BeginAuditedTransactionAsync(db, System.Data.IsolationLevel.ReadCommitted, cancellationToken))
+            await using (var transaction = await _audit.BeginAuditedTransactionAsync(db, System.Data.IsolationLevel.RepeatableRead, cancellationToken))
             {
 
                 var rules = await db.PricingRules.Include(r => r.VehicleType).ToListAsync(cancellationToken);
@@ -80,6 +83,8 @@ public sealed class PricingService : IPricingService
                 var actorId = _guard.CurrentUserId;
                 var now = DateTime.UtcNow;
 
+                // Lượt kiểm tra trước khi ghi: không tồn tại hoặc xung đột thì không ghi gì.
+                var toApply = new List<(PricingRule Rule, PricingRuleData Input)>();
                 foreach (var input in configuration.Rules)
                 {
                     var rule = rules.FirstOrDefault(r => r.RuleId == input.RuleId);
@@ -88,11 +93,45 @@ public sealed class PricingService : IPricingService
                         return OperationResult.Fail(OperationError.NotFound, AppText.Get("Msg_Price_RuleNotFound", input.VehicleTypeName));
                     }
 
-                    var before = ToData(rule);
-                    if (SameValues(before, input))
+                    var current = ToData(rule);
+                    if (SameValues(current, input))
                     {
                         continue;
                     }
+
+                    if (input.LoadedStamp is not null)
+                    {
+                        if (input.ValuesStamp() == input.LoadedStamp)
+                        {
+                            continue; // người dùng không đổi loại xe này: giữ nguyên giá trị hiện hành trong CSDL
+                        }
+
+                        if (current.ValuesStamp() != input.LoadedStamp)
+                        {
+                            return OperationResult.Fail(OperationError.Validation,
+                                AppText.Get("Msg_Price_Conflict", types.TryGetValue(rule.VehicleTypeId, out var n) ? n : input.VehicleTypeName));
+                        }
+                    }
+
+                    toApply.Add((rule, input));
+                }
+
+                var maxChanged = configuration.DefaultMaxVehiclesPerHousehold != oldMax;
+                if (maxChanged && configuration.LoadedDefaultMaxVehicles is { } loadedMax)
+                {
+                    if (configuration.DefaultMaxVehiclesPerHousehold == loadedMax)
+                    {
+                        maxChanged = false;
+                    }
+                    else if (oldMax != loadedMax)
+                    {
+                        return OperationResult.Fail(OperationError.Validation, AppText.Get("Msg_Price_ConflictMaxVehicles"));
+                    }
+                }
+
+                foreach (var (rule, input) in toApply)
+                {
+                    var before = ToData(rule);
 
                     rule.Block4hPrice = input.Block4hPrice;
                     rule.DailyPrice = input.DailyPrice;
@@ -129,7 +168,6 @@ public sealed class PricingService : IPricingService
                     newRules.Add(ToData(rule));
                 }
 
-                var maxChanged = configuration.DefaultMaxVehiclesPerHousehold != oldMax;
                 if (newVersions.Count == 0 && !maxChanged)
                 {
                     return OperationResult.Ok();
