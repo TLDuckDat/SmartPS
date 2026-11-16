@@ -61,6 +61,9 @@ public partial class App : Application
         var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? DbConnectionHelper.DefaultConnectionString;
 
+        // Chuỗi kết nối cho code ADO.NET thuần (không qua EF Core)
+        services.AddSingleton(new DatabaseConnectionInfo(connectionString));
+
         // Cấu hình SQL Server (LocalDB mặc định)
         services.AddDbContextFactory<SmartPsDbContext>(options =>
         {

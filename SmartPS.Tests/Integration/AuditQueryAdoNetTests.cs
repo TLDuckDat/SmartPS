@@ -273,6 +273,11 @@ public class AuditQueryAdoNetTests : IClassFixture<SqlServerDatabaseFixture>
         Assert.DoesNotContain("IQueryable", code);
         Assert.DoesNotContain(".ToListAsync", code);
 
+        // No EF Core at all in the real code: not even a DbContext to read the connection string.
+        Assert.DoesNotContain("Microsoft.EntityFrameworkCore", code);
+        Assert.DoesNotContain("DbContext", code);
+        Assert.Contains("DatabaseConnectionInfo", code);
+
         // SQL text is a constant: no user value is concatenated or interpolated into it.
         Assert.DoesNotContain("$\"\"\"", code);
         Assert.DoesNotContain("string.Format", code);

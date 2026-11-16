@@ -1,7 +1,6 @@
 using System.Data;
 using System.Text;
 using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
 using SmartPS.Constants;
 using SmartPS.Data;
 using SmartPS.Models.Audit;
@@ -19,7 +18,8 @@ namespace SmartPS.Services.Audit;
 ///    Vì vậy phải tự làm hai việc mà EF Core làm ngầm: gắn DateTimeKind.Utc cho cột datetime2 và đổi chuỗi Outcome sang enum.
 ///  - Phân trang bằng OFFSET ... FETCH NEXT (EF Core sinh đúng câu này cho Skip/Take); đếm tổng bằng một lệnh COUNT(*) riêng.
 ///  - Chỉ đọc: không có UPDATE/DELETE (bảng còn có trigger chặn sửa/xoá, xem AuditLogConfiguration).
-/// EF Core vẫn được dùng ở những chỗ khác của hệ thống; ở đây chỉ mượn DbContext để lấy chuỗi kết nối, không chạy truy vấn EF nào.
+/// Chuỗi kết nối nhận từ DatabaseConnectionInfo (đăng ký trong DI), nên lớp này không tạo context nào của EF Core.
+/// EF Core vẫn được dùng ở những chỗ khác của hệ thống (ghi nhật ký, xác minh chuỗi băm, các màn khác).
 /// </summary>
 public sealed class AuditQueryService : IAuditQueryService
 {
@@ -27,12 +27,13 @@ public sealed class AuditQueryService : IAuditQueryService
         "[AuditLogId], [OccurredAtUtc], [UserId], [Username], [RoleName], [Action], [EntityType], [EntityId], " +
         "[Outcome], [Details], [MachineName], [PrevHash], [Hash]";
 
-    private readonly IDbContextFactory<SmartPsDbContext> _contextFactory;
+    private readonly string _connectionString;
     private readonly IAuthorizationGuard _guard;
 
-    public AuditQueryService(IDbContextFactory<SmartPsDbContext> contextFactory, IAuthorizationGuard guard)
+    public AuditQueryService(DatabaseConnectionInfo connectionInfo, IAuthorizationGuard guard)
     {
-        _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
+        ArgumentNullException.ThrowIfNull(connectionInfo);
+        _connectionString = connectionInfo.ConnectionString;
         _guard = guard ?? throw new ArgumentNullException(nameof(guard));
     }
 
@@ -44,8 +45,6 @@ public sealed class AuditQueryService : IAuditQueryService
 
         var pageSize = Math.Clamp(filter.PageSize, 1, AuditQueryFilter.MaxPageSize);
         var pageIndex = Math.Max(0, filter.PageIndex);
-
-        var connectionString = await GetConnectionStringAsync(cancellationToken);
 
         // 1. Ghép điều kiện WHERE: mỗi điều kiện là một đoạn SQL cố định + một tham số.
         var conditions = new List<string>();
@@ -95,7 +94,7 @@ public sealed class AuditQueryService : IAuditQueryService
         var where = conditions.Count == 0 ? string.Empty : " WHERE " + string.Join(" AND ", conditions);
 
         // 2. Chạy hai lệnh trên cùng một kết nối: đếm tổng rồi lấy đúng một trang.
-        await using var connection = new SqlConnection(connectionString);
+        await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
 
         int total;
@@ -156,14 +155,6 @@ public sealed class AuditQueryService : IAuditQueryService
         }
 
         return new AuditPage(items, total, pageIndex, pageSize);
-    }
-
-    /// <summary>Lấy chuỗi kết nối đang dùng của ứng dụng. Không chạy truy vấn EF Core nào.</summary>
-    private async Task<string> GetConnectionStringAsync(CancellationToken cancellationToken)
-    {
-        await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken);
-        return db.Database.GetConnectionString()
-               ?? throw new InvalidOperationException("The audit database connection string is not configured.");
     }
 
     /// <summary>Mỗi SqlCommand cần tham số riêng của nó (một SqlParameter không thể thuộc hai lệnh).</summary>
