@@ -601,6 +601,7 @@
 
     <!-- デスクトップ形式のメインウィンドウ: メニュー、ツールバー、タブ、ステータスバー -->
     <sys:String x:Key="Str_MainMenu_System">システム(_S)</sys:String>
+    <sys:String x:Key="Str_MainMenu_Profile">アカウント情報</sys:String>
     <sys:String x:Key="Str_MainMenu_Operations">業務(_O)</sys:String>
     <sys:String x:Key="Str_MainMenu_Catalog">マスタ(_C)</sys:String>
     <sys:String x:Key="Str_MainMenu_Reports">レポート・統計(_R)</sys:String>
@@ -616,6 +617,35 @@
     <sys:String x:Key="Str_MainMenu_About">バージョン情報</sys:String>
     <sys:String x:Key="Str_Status_User">ユーザー:</sys:String>
     <sys:String x:Key="Str_Status_Screen">画面:</sys:String>
+    <sys:String x:Key="Str_Profile_WindowTitle">アカウント情報</sys:String>
+    <sys:String x:Key="Str_Profile_HeaderTitle">個人プロフィール</sys:String>
+    <sys:String x:Key="Str_Profile_HeaderSubtitle">連絡先とアカウントのセキュリティを更新します</sys:String>
+    <sys:String x:Key="Str_Profile_UsernameLabel">ユーザー名</sys:String>
+    <sys:String x:Key="Str_Profile_FullNameLabel">氏名 (*)</sys:String>
+    <sys:String x:Key="Str_Profile_PhoneLabel">電話番号</sys:String>
+    <sys:String x:Key="Str_Profile_EmailLabel">メール</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordSection">パスワード変更</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordHint">変更しない場合は空欄にしてください。変更には現在のパスワードが必要です。</sys:String>
+    <sys:String x:Key="Str_Profile_CurrentPasswordLabel">現在のパスワード</sys:String>
+    <sys:String x:Key="Str_Profile_NewPasswordLabel">新しいパスワード</sys:String>
+    <sys:String x:Key="Str_Profile_ConfirmPasswordLabel">新しいパスワードの確認</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordStrengthNone">未入力</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordStrengthWeak">弱い</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordStrengthMedium">普通</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordStrengthStrong">強い</sys:String>
+    <sys:String x:Key="Msg_Profile_NotAuthenticated">ユーザーがログインしていません。</sys:String>
+    <sys:String x:Key="Msg_Profile_RequiredFullName">氏名を入力してください。</sys:String>
+    <sys:String x:Key="Msg_Profile_FullNameTooLong">氏名は100文字以内にしてください。</sys:String>
+    <sys:String x:Key="Msg_Profile_InvalidPhone">電話番号が正しくありません。</sys:String>
+    <sys:String x:Key="Msg_Profile_InvalidEmail">メールアドレスが正しくありません。</sys:String>
+    <sys:String x:Key="Msg_Profile_CurrentPasswordRequired">現在のパスワードを入力してください。</sys:String>
+    <sys:String x:Key="Msg_Profile_NewPasswordRequired">新しいパスワードを入力してください。</sys:String>
+    <sys:String x:Key="Msg_Profile_PasswordTooShort">新しいパスワードは6文字以上にしてください。</sys:String>
+    <sys:String x:Key="Msg_Profile_PasswordMismatch">確認用パスワードが一致しません。</sys:String>
+    <sys:String x:Key="Msg_Profile_PasswordWeak">新しいパスワードが弱すぎます。</sys:String>
+    <sys:String x:Key="Msg_Profile_InvalidCurrentPassword">現在のパスワードが正しくありません。</sys:String>
+    <sys:String x:Key="Msg_Profile_NewPasswordSame">新しいパスワードは現在のものと異なる必要があります。</sys:String>
+    <sys:String x:Key="Msg_Profile_SaveError">プロフィールを保存できませんでした: {0}</sys:String>
     <sys:String x:Key="Str_Main_NoTabHint">メニューバーまたはツールバーから機能を選択してください。</sys:String>
     <sys:String x:Key="Msg_MainMenu_ExitConfirm">ログアウトしてアプリケーションを終了しますか？</sys:String>
     <sys:String x:Key="Msg_Help_Shortcuts">Ctrl+1 … Ctrl+9: モジュールを開く（各メニュー項目の横の番号）&#10;Ctrl+W / Ctrl+F4: 現在のタブを閉じる（タブの中クリックでも可）&#10;F5: 現在の画面を更新&#10;Ctrl+L: ログアウト&#10;Alt+F4: アプリケーションを終了&#10;F1: ショートカット一覧を表示&#10;Alt + 下線付きの文字: メニューを開く（Alt+S システム、Alt+O 業務、Alt+C マスタ、Alt+R レポート、Alt+A 管理、Alt+H ヘルプ）</sys:String>

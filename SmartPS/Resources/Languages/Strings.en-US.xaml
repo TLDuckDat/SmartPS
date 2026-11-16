@@ -601,6 +601,7 @@
 
     <!-- Desktop main window: Menu, ToolBar, TabControl, StatusBar -->
     <sys:String x:Key="Str_MainMenu_System">_System</sys:String>
+    <sys:String x:Key="Str_MainMenu_Profile">Account information</sys:String>
     <sys:String x:Key="Str_MainMenu_Operations">_Operations</sys:String>
     <sys:String x:Key="Str_MainMenu_Catalog">_Catalog</sys:String>
     <sys:String x:Key="Str_MainMenu_Reports">_Reports &amp; Statistics</sys:String>
@@ -616,6 +617,35 @@
     <sys:String x:Key="Str_MainMenu_About">About</sys:String>
     <sys:String x:Key="Str_Status_User">User:</sys:String>
     <sys:String x:Key="Str_Status_Screen">Screen:</sys:String>
+    <sys:String x:Key="Str_Profile_WindowTitle">Account information</sys:String>
+    <sys:String x:Key="Str_Profile_HeaderTitle">PERSONAL PROFILE</sys:String>
+    <sys:String x:Key="Str_Profile_HeaderSubtitle">Update your contact information and account security</sys:String>
+    <sys:String x:Key="Str_Profile_UsernameLabel">Username</sys:String>
+    <sys:String x:Key="Str_Profile_FullNameLabel">Full name (*)</sys:String>
+    <sys:String x:Key="Str_Profile_PhoneLabel">Phone number</sys:String>
+    <sys:String x:Key="Str_Profile_EmailLabel">Email</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordSection">CHANGE PASSWORD</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordHint">Leave blank to keep the current password. Changing it requires the current password.</sys:String>
+    <sys:String x:Key="Str_Profile_CurrentPasswordLabel">Current password</sys:String>
+    <sys:String x:Key="Str_Profile_NewPasswordLabel">New password</sys:String>
+    <sys:String x:Key="Str_Profile_ConfirmPasswordLabel">Confirm new password</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordStrengthNone">Not entered</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordStrengthWeak">Weak</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordStrengthMedium">Medium</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordStrengthStrong">Strong</sys:String>
+    <sys:String x:Key="Msg_Profile_NotAuthenticated">No user is signed in.</sys:String>
+    <sys:String x:Key="Msg_Profile_RequiredFullName">Please enter your full name.</sys:String>
+    <sys:String x:Key="Msg_Profile_FullNameTooLong">Full name cannot exceed 100 characters.</sys:String>
+    <sys:String x:Key="Msg_Profile_InvalidPhone">The phone number is invalid.</sys:String>
+    <sys:String x:Key="Msg_Profile_InvalidEmail">The email address is invalid.</sys:String>
+    <sys:String x:Key="Msg_Profile_CurrentPasswordRequired">Please enter the current password.</sys:String>
+    <sys:String x:Key="Msg_Profile_NewPasswordRequired">Please enter a new password.</sys:String>
+    <sys:String x:Key="Msg_Profile_PasswordTooShort">The new password must be at least 6 characters.</sys:String>
+    <sys:String x:Key="Msg_Profile_PasswordMismatch">The password confirmation does not match.</sys:String>
+    <sys:String x:Key="Msg_Profile_PasswordWeak">The new password is too weak.</sys:String>
+    <sys:String x:Key="Msg_Profile_InvalidCurrentPassword">The current password is incorrect.</sys:String>
+    <sys:String x:Key="Msg_Profile_NewPasswordSame">The new password must differ from the current password.</sys:String>
+    <sys:String x:Key="Msg_Profile_SaveError">Could not save the profile: {0}</sys:String>
     <sys:String x:Key="Str_Main_NoTabHint">Choose a function from the menu bar or the toolbar to get started.</sys:String>
     <sys:String x:Key="Msg_MainMenu_ExitConfirm">Log out and exit the application?</sys:String>
     <sys:String x:Key="Msg_Help_Shortcuts">Ctrl+1 … Ctrl+9: open a module (number shown next to each menu item)&#10;Ctrl+W or Ctrl+F4: close the current tab (or middle-click the tab)&#10;F5: refresh the current screen&#10;Ctrl+L: log out&#10;Alt+F4: exit the application&#10;F1: show keyboard shortcuts&#10;Alt + underlined letter: open a menu (Alt+S System, Alt+O Operations, Alt+C Catalog, Alt+R Reports, Alt+A Administration, Alt+H Help)</sys:String>

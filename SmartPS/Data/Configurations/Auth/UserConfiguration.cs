@@ -24,6 +24,12 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
                .HasMaxLength(100)
                .IsRequired();
 
+        builder.Property(x => x.PhoneNumber)
+               .HasMaxLength(20);
+
+        builder.Property(x => x.Email)
+               .HasMaxLength(100);
+
         builder.Property(x => x.IsActive)
                .HasDefaultValue(true);
 

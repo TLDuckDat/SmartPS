@@ -153,6 +153,20 @@ public class DialogService : IDialogService
         }));
     }
 
+    public Task<bool> ShowUserProfileDialogAsync()
+    {
+        return Task.FromResult(InvokeOnUIThread(() =>
+        {
+            var profileViewModel = new UserProfileViewModel(_authService, this, _localizationService);
+            var dialog = new UserProfileDialog(profileViewModel)
+            {
+                Owner = GetActiveWindow()
+            };
+
+            return dialog.ShowDialog() == true;
+        }));
+    }
+
     public string? ShowOpenFileDialog(string filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp|All Files|*.*", string? title = null, string? initialDirectory = null)
     {
         return InvokeOnUIThread(() =>

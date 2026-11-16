@@ -28,6 +28,7 @@ public sealed class FakeAuthService : IAuthService
     public Task<List<Role>> GetRolesAsync() => throw new NotImplementedException();
     public Task<List<User>> GetUsersAsync() => throw new NotImplementedException();
     public Task<bool> UpdateUserAsync(UpdateUserRequest request) => throw new NotImplementedException();
+    public Task<bool> UpdateOwnProfileAsync(UpdateOwnProfileRequest request, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     public Task<bool> DeleteUserAsync(int userId) => throw new NotImplementedException();
 
     public Task LogoutAsync(CancellationToken cancellationToken = default)

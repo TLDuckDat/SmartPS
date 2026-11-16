@@ -20,5 +20,7 @@ public sealed class FakeDialogService : IDialogService
 
     public Task<bool> ShowEditUserDialogAsync(User user, IEnumerable<Role> availableRoles) => Task.FromResult(false);
 
+    public Task<bool> ShowUserProfileDialogAsync() => Task.FromResult(false);
+
     public string? ShowOpenFileDialog(string filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp|All Files|*.*", string? title = null, string? initialDirectory = null) => null;
 }

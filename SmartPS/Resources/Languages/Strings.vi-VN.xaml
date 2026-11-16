@@ -601,6 +601,7 @@
 
     <!-- Cửa sổ chính kiểu desktop: Menu, ToolBar, TabControl, StatusBar -->
     <sys:String x:Key="Str_MainMenu_System">_Hệ thống</sys:String>
+    <sys:String x:Key="Str_MainMenu_Profile">Thông tin tài khoản</sys:String>
     <sys:String x:Key="Str_MainMenu_Operations">_Nghiệp vụ</sys:String>
     <sys:String x:Key="Str_MainMenu_Catalog">_Danh mục</sys:String>
     <sys:String x:Key="Str_MainMenu_Reports">_Báo cáo &amp; thống kê</sys:String>
@@ -616,6 +617,35 @@
     <sys:String x:Key="Str_MainMenu_About">Giới thiệu</sys:String>
     <sys:String x:Key="Str_Status_User">Người dùng:</sys:String>
     <sys:String x:Key="Str_Status_Screen">Màn hình:</sys:String>
+    <sys:String x:Key="Str_Profile_WindowTitle">Thông tin tài khoản</sys:String>
+    <sys:String x:Key="Str_Profile_HeaderTitle">HỒ SƠ CÁ NHÂN</sys:String>
+    <sys:String x:Key="Str_Profile_HeaderSubtitle">Cập nhật thông tin liên hệ và bảo mật tài khoản</sys:String>
+    <sys:String x:Key="Str_Profile_UsernameLabel">Tên đăng nhập</sys:String>
+    <sys:String x:Key="Str_Profile_FullNameLabel">Họ và tên (*)</sys:String>
+    <sys:String x:Key="Str_Profile_PhoneLabel">Số điện thoại</sys:String>
+    <sys:String x:Key="Str_Profile_EmailLabel">Email</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordSection">ĐỔI MẬT KHẨU</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordHint">Để trống nếu không muốn đổi mật khẩu. Khi đổi, cần nhập mật khẩu hiện tại.</sys:String>
+    <sys:String x:Key="Str_Profile_CurrentPasswordLabel">Mật khẩu hiện tại</sys:String>
+    <sys:String x:Key="Str_Profile_NewPasswordLabel">Mật khẩu mới</sys:String>
+    <sys:String x:Key="Str_Profile_ConfirmPasswordLabel">Nhập lại mật khẩu mới</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordStrengthNone">Chưa nhập</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordStrengthWeak">Yếu</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordStrengthMedium">Trung bình</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordStrengthStrong">Mạnh</sys:String>
+    <sys:String x:Key="Msg_Profile_NotAuthenticated">Chưa có người dùng đăng nhập.</sys:String>
+    <sys:String x:Key="Msg_Profile_RequiredFullName">Vui lòng nhập họ và tên.</sys:String>
+    <sys:String x:Key="Msg_Profile_FullNameTooLong">Họ và tên không được vượt quá 100 ký tự.</sys:String>
+    <sys:String x:Key="Msg_Profile_InvalidPhone">Số điện thoại không hợp lệ.</sys:String>
+    <sys:String x:Key="Msg_Profile_InvalidEmail">Email không hợp lệ.</sys:String>
+    <sys:String x:Key="Msg_Profile_CurrentPasswordRequired">Vui lòng nhập mật khẩu hiện tại.</sys:String>
+    <sys:String x:Key="Msg_Profile_NewPasswordRequired">Vui lòng nhập mật khẩu mới.</sys:String>
+    <sys:String x:Key="Msg_Profile_PasswordTooShort">Mật khẩu mới phải có ít nhất 6 ký tự.</sys:String>
+    <sys:String x:Key="Msg_Profile_PasswordMismatch">Mật khẩu xác nhận không khớp.</sys:String>
+    <sys:String x:Key="Msg_Profile_PasswordWeak">Mật khẩu mới còn quá yếu.</sys:String>
+    <sys:String x:Key="Msg_Profile_InvalidCurrentPassword">Mật khẩu hiện tại không chính xác.</sys:String>
+    <sys:String x:Key="Msg_Profile_NewPasswordSame">Mật khẩu mới phải khác mật khẩu hiện tại.</sys:String>
+    <sys:String x:Key="Msg_Profile_SaveError">Không thể lưu hồ sơ: {0}</sys:String>
     <sys:String x:Key="Str_Main_NoTabHint">Chọn chức năng trên thanh menu hoặc thanh công cụ để bắt đầu.</sys:String>
     <sys:String x:Key="Msg_MainMenu_ExitConfirm">Bạn có chắc muốn đăng xuất và thoát chương trình?</sys:String>
     <sys:String x:Key="Msg_Help_Shortcuts">Ctrl+1 … Ctrl+9: mở nhanh phân hệ (số ghi cạnh từng mục menu)&#10;Ctrl+W hoặc Ctrl+F4: đóng thẻ đang mở (nhấn chuột giữa vào thẻ cũng được)&#10;F5: làm mới dữ liệu màn hình hiện tại&#10;Ctrl+L: đăng xuất&#10;Alt+F4: thoát chương trình&#10;F1: xem bảng phím tắt&#10;Alt + chữ gạch chân: mở menu (Alt+H Hệ thống, Alt+N Nghiệp vụ, Alt+D Danh mục, Alt+B Báo cáo, Alt+Q Quản trị, Alt+G Trợ giúp)</sys:String>

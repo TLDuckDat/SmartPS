@@ -284,6 +284,8 @@
                             <MenuItem Header="{DynamicResource Str_Lang_JA}" IsCheckable="False" IsChecked="{Binding IsLanguageJa, Mode=OneWay}"
                                       Command="{Binding SetLanguageCommand}" CommandParameter="ja-JP"/>
                         </MenuItem>
+                        <MenuItem Header="{DynamicResource Str_MainMenu_Profile}"
+                                  Command="{Binding ShowProfileCommand}"/>
                         <Separator/>
                         <MenuItem Header="{DynamicResource Str_MainMenu_Refresh}" InputGestureText="F5" Command="{Binding RefreshCommand}"/>
                         <MenuItem Header="{DynamicResource Str_MainMenu_CloseTab}" InputGestureText="Ctrl+W" Command="{Binding CloseTabCommand}"/>
