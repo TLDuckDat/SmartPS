@@ -1,6 +1,7 @@
 using SmartPS.Models.GateControl;
 using SmartPS.Models.Ocr;
 using SmartPS.Models.Parking;
+using SmartPS.DTOs.Parking;
 using SmartPS.Services.Audio;
 using SmartPS.Services.GateControl;
 using SmartPS.Services.OcrLisencePlate;
@@ -207,6 +208,7 @@ public class GateCheckInWarningMessageTests
         public Task<List<ParkingSession>> GetActiveSessionsAsync(CancellationToken cancellationToken = default) => Task.FromResult(new List<ParkingSession>());
         public Task<List<ParkingSlot>> GetAllSlotsAsync(CancellationToken cancellationToken = default) => Task.FromResult(new List<ParkingSlot>());
         public Task<List<ParkingSession>> GetAllSessionsHistoryAsync(CancellationToken cancellationToken = default) => Task.FromResult(new List<ParkingSession>());
+        public Task<List<ParkingSession>> GetSessionsHistoryAsync(ParkingSessionHistoryFilterRequest filter, CancellationToken cancellationToken = default) => Task.FromResult(new List<ParkingSession>());
         public event EventHandler<ParkingSession>? SessionCompleted { add { } remove { } }
         public void NotifySessionCompleted(ParkingSession session) { }
     }

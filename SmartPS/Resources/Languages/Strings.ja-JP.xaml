@@ -868,9 +868,14 @@
     <sys:String x:Key="Str_Common_StatusLower">状態</sys:String>
     <sys:String x:Key="Str_Common_Refresh">🔄 更新</sys:String>
     <sys:String x:Key="Str_Tx_Title">💳 電子取引履歴（VietQR / PayOS）</sys:String>
+    <sys:String x:Key="Str_Tx_MyTitle">自分の取引</sys:String>
+    <sys:String x:Key="Str_Tx_MySubtitle">自分が処理したシフト、駐車セッション、取引の履歴</sys:String>
     <sys:String x:Key="Str_Tx_Subtitle">料金台帳：現金と VietQR 支払いをリアルタイムに照合</sys:String>
     <sys:String x:Key="Str_Tx_Refresh">取引を更新</sys:String>
     <sys:String x:Key="Str_Tx_ResetFilters">フィルターをリセット</sys:String>
+    <sys:String x:Key="Str_Tx_FromDate">開始日</sys:String>
+    <sys:String x:Key="Str_Tx_ToDate">終了日</sys:String>
+    <sys:String x:Key="Str_Tx_ApplyDateFilter">日付を適用</sys:String>
     <sys:String x:Key="Str_Tx_KpiSessions">総セッション数</sys:String>
     <sys:String x:Key="Str_Tx_KpiRevenue">料金合計</sys:String>
     <sys:String x:Key="Str_Tx_KpiCash">現金</sys:String>
@@ -927,6 +932,8 @@
     <sys:String x:Key="Str_Tx_StatusPaid">✔ 支払済み</sys:String>
     <sys:String x:Key="Str_Tx_StatusFailed">✕ 失敗</sys:String>
     <sys:String x:Key="Str_Tx_StatusParked">🚗 駐車中</sys:String>
+    <sys:String x:Key="Str_Tx_StatusActive">進行中</sys:String>
+    <sys:String x:Key="Str_Tx_StatusCompleted">完了</sys:String>
     <sys:String x:Key="Str_Tx_StatusCancelled">🚫 取消済み</sys:String>
     <sys:String x:Key="Str_Inc_Title">紛失チケット・判読不能ナンバー・長時間駐車・不審事案などの記録と対応</sys:String>
     <sys:String x:Key="Str_Inc_ListTitle">駐車場インシデント一覧</sys:String>

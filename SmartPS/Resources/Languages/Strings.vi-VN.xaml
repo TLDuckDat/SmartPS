@@ -868,9 +868,14 @@
     <sys:String x:Key="Str_Common_StatusLower">Trạng thái</sys:String>
     <sys:String x:Key="Str_Common_Refresh">🔄 Làm mới</sys:String>
     <sys:String x:Key="Str_Tx_Title">💳 Lịch Sử Giao Dịch Điện Tử (VietQR / PayOS)</sys:String>
+    <sys:String x:Key="Str_Tx_MyTitle">Giao dịch của tôi</sys:String>
+    <sys:String x:Key="Str_Tx_MySubtitle">Lịch sử ca, lượt xe và giao dịch do chính bạn xử lý</sys:String>
     <sys:String x:Key="Str_Tx_Subtitle">Sổ cái kế toán thu phí, đối soát luồng tiền mặt và thanh toán mã VietQR tự động theo thời gian thực</sys:String>
     <sys:String x:Key="Str_Tx_Refresh">Cập Nhật Giao Dịch</sys:String>
     <sys:String x:Key="Str_Tx_ResetFilters">Đặt Lại Bộ Lọc</sys:String>
+    <sys:String x:Key="Str_Tx_FromDate">Từ ngày</sys:String>
+    <sys:String x:Key="Str_Tx_ToDate">Đến ngày</sys:String>
+    <sys:String x:Key="Str_Tx_ApplyDateFilter">Áp dụng ngày</sys:String>
     <sys:String x:Key="Str_Tx_KpiSessions">TỔNG LƯỢT PHIÊN</sys:String>
     <sys:String x:Key="Str_Tx_KpiRevenue">TỔNG THU CƯỚC</sys:String>
     <sys:String x:Key="Str_Tx_KpiCash">TIỀN MẶT (CASH)</sys:String>
@@ -927,6 +932,8 @@
     <sys:String x:Key="Str_Tx_StatusPaid">✔ Đã thanh toán</sys:String>
     <sys:String x:Key="Str_Tx_StatusFailed">✕ Thất bại</sys:String>
     <sys:String x:Key="Str_Tx_StatusParked">🚗 Đang đỗ</sys:String>
+    <sys:String x:Key="Str_Tx_StatusActive">Đang hoạt động</sys:String>
+    <sys:String x:Key="Str_Tx_StatusCompleted">Đã hoàn tất</sys:String>
     <sys:String x:Key="Str_Tx_StatusCancelled">🚫 Đã hủy</sys:String>
     <sys:String x:Key="Str_Inc_Title">Ghi nhận và xử lý sự cố bất thường: Mất thẻ vé, biển số mờ, xe đỗ quá giờ hoặc nghi vấn an ninh</sys:String>
     <sys:String x:Key="Str_Inc_ListTitle">DANH SÁCH BIÊN BẢN SỰ CỐ BÃI ĐỖ XE</sys:String>

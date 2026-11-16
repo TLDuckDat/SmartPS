@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SmartPS.Constants;
 using SmartPS.Data;
+using SmartPS.DTOs.Payment;
 using SmartPS.Models.Audit;
 using SmartPS.Models.Parking;
 using SmartPS.Models.Payment;
@@ -1053,16 +1054,31 @@ public class PaymentService : IPaymentService
         };
     }
 
-    public async Task<List<PaymentHistoryItem>> GetPaymentHistoryAsync(CancellationToken cancellationToken = default)
+    public async Task<List<PaymentHistoryItem>> GetPaymentHistoryAsync(
+        PaymentHistoryFilterRequest? filter = null,
+        CancellationToken cancellationToken = default)
     {
+        filter ??= new PaymentHistoryFilterRequest();
         await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
-        var rows = await db.Payments
+        var query = db.Payments
             .AsNoTracking()
             .Include(p => p.Session)
             .Include(p => p.Transactions)
                 .ThenInclude(t => t.Attempts)
+            .AsQueryable();
+
+        if (filter.CheckoutUserId.HasValue)
+            query = query.Where(p => p.CheckoutUserId == filter.CheckoutUserId.Value);
+        if (filter.FromUtc.HasValue)
+            query = query.Where(p => p.CreatedAt >= filter.FromUtc.Value);
+        if (filter.ToUtc.HasValue)
+            query = query.Where(p => p.CreatedAt < filter.ToUtc.Value);
+        if (filter.Status.HasValue)
+            query = query.Where(p => p.Status == filter.Status.Value);
+
+        var rows = await query
             .OrderByDescending(p => p.CreatedAt)
-            .Take(200)
+            .Take(Math.Clamp(filter.Limit, 1, 2000))
             .ToListAsync(cancellationToken);
 
         return rows.Select(ToHistoryItem).ToList();

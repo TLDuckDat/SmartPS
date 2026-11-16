@@ -868,9 +868,14 @@
     <sys:String x:Key="Str_Common_StatusLower">Status</sys:String>
     <sys:String x:Key="Str_Common_Refresh">🔄 Refresh</sys:String>
     <sys:String x:Key="Str_Tx_Title">💳 Electronic Transactions (VietQR / PayOS)</sys:String>
+    <sys:String x:Key="Str_Tx_MyTitle">My transactions</sys:String>
+    <sys:String x:Key="Str_Tx_MySubtitle">Shifts, parking sessions and transactions handled by you</sys:String>
     <sys:String x:Key="Str_Tx_Subtitle">Fee ledger with real-time reconciliation of cash and VietQR payments</sys:String>
     <sys:String x:Key="Str_Tx_Refresh">Refresh transactions</sys:String>
     <sys:String x:Key="Str_Tx_ResetFilters">Reset filters</sys:String>
+    <sys:String x:Key="Str_Tx_FromDate">From date</sys:String>
+    <sys:String x:Key="Str_Tx_ToDate">To date</sys:String>
+    <sys:String x:Key="Str_Tx_ApplyDateFilter">Apply dates</sys:String>
     <sys:String x:Key="Str_Tx_KpiSessions">TOTAL SESSIONS</sys:String>
     <sys:String x:Key="Str_Tx_KpiRevenue">TOTAL FEES</sys:String>
     <sys:String x:Key="Str_Tx_KpiCash">CASH</sys:String>
@@ -927,6 +932,8 @@
     <sys:String x:Key="Str_Tx_StatusPaid">✔ Paid</sys:String>
     <sys:String x:Key="Str_Tx_StatusFailed">✕ Failed</sys:String>
     <sys:String x:Key="Str_Tx_StatusParked">🚗 Parked</sys:String>
+    <sys:String x:Key="Str_Tx_StatusActive">Active</sys:String>
+    <sys:String x:Key="Str_Tx_StatusCompleted">Completed</sys:String>
     <sys:String x:Key="Str_Tx_StatusCancelled">🚫 Cancelled</sys:String>
     <sys:String x:Key="Str_Inc_Title">Record and handle incidents: lost tickets, unreadable plates, overstays or security concerns</sys:String>
     <sys:String x:Key="Str_Inc_ListTitle">PARKING INCIDENT REPORTS</sys:String>

@@ -26,9 +26,9 @@
                         <StackPanel Grid.Column="0">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <TextBlock Text="💳" FontSize="20" Margin="0,0,8,0"/>
-                                <TextBlock Text="{DynamicResource Str_Menu_Transactions}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <TextBlock Text="{DynamicResource Str_Tx_MyTitle}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                             </StackPanel>
-                            <TextBlock Text="{DynamicResource Str_Tx_Subtitle}" 
+                            <TextBlock Text="{DynamicResource Str_Tx_MySubtitle}"
                                        FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
                         </StackPanel>
 
@@ -123,6 +123,10 @@
                         Padding="16"
                         Margin="0,0,0,20">
                     <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="320"/>
                             <ColumnDefinition Width="14"/>
@@ -159,9 +163,11 @@
                                   Height="36"
                                   VerticalContentAlignment="Center">
                             <ComboBoxItem Tag="All" Content="{DynamicResource Str_Common_All}" IsSelected="True"/>
-                            <ComboBoxItem Tag="Paid" Content="{DynamicResource Str_Tx_Paid}"/>
+                            <ComboBoxItem Tag="Active" Content="{DynamicResource Str_Tx_StatusActive}"/>
+                            <ComboBoxItem Tag="Completed" Content="{DynamicResource Str_Tx_StatusCompleted}"/>
                             <ComboBoxItem Tag="Pending" Content="{DynamicResource Str_Tx_PendingPayment}"/>
-                            <ComboBoxItem Tag="Parked" Content="{DynamicResource Str_Tx_Parked}"/>
+                            <ComboBoxItem Tag="Locked" Content="{DynamicResource Str_Shifts_StatusLocked}"/>
+                            <ComboBoxItem Tag="Reviewed" Content="{DynamicResource Str_Shifts_StatusReviewed}"/>
                         </ComboBox>
 
                         <!-- Lọc Phương thức thanh toán -->
@@ -194,6 +200,21 @@
                                 </ControlTemplate>
                             </Button.Template>
                         </Button>
+
+                        <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="7" Orientation="Horizontal" Margin="0,12,0,0">
+                            <TextBlock Text="{DynamicResource Str_Tx_FromDate}" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,8,0"/>
+                            <DatePicker SelectedDate="{Binding FromDate, Mode=TwoWay}" Width="150" Height="34"/>
+                            <TextBlock Text="{DynamicResource Str_Tx_ToDate}" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Margin="18,0,8,0"/>
+                            <DatePicker SelectedDate="{Binding ToDate, Mode=TwoWay}" Width="150" Height="34"/>
+                            <Button Content="{DynamicResource Str_Tx_ApplyDateFilter}"
+                                    Command="{Binding ApplyDateFilterCommand}"
+                                    Height="34"
+                                    Padding="14,0"
+                                    Margin="18,0,0,0"
+                                    Background="#2563EB"
+                                    Foreground="White"
+                                    BorderThickness="0"/>
+                        </StackPanel>
                     </Grid>
                 </Border>
 
@@ -204,6 +225,21 @@
                         CornerRadius="6"
                         Padding="20">
                     <TabControl SelectedIndex="{Binding SelectedTabIndex}" BorderThickness="0" Background="Transparent">
+                        <TabItem Header="{DynamicResource Str_Shifts_HistoryTab}" FontSize="13" FontWeight="Bold" Padding="16,8">
+                            <DataGrid ItemsSource="{Binding FilteredShifts}" AutoGenerateColumns="False"
+                                      IsReadOnly="True" CanUserAddRows="False" HeadersVisibility="Column"
+                                      GridLinesVisibility="Horizontal" BorderThickness="0">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_ShiftCode}" Binding="{Binding ShiftCode}" Width="130"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_OpenedAt}" Binding="{Binding OpenedAtLocal, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}}" Width="155"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_ClosedAt}" Binding="{Binding ClosedAtLocal, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}, TargetNullValue='--'}" Width="155"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Expected}" Binding="{Binding ExpectedCashFormatted}" Width="120"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Actual}" Binding="{Binding ActualCashFormatted}" Width="120"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Difference}" Binding="{Binding DifferenceFormatted}" Width="120"/>
+                                    <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Status}" Binding="{Binding StatusText}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </TabItem>
                         
                         <!-- TAB 1: Giao Dịch Điện Tử VietQR / PayOS -->
                         <TabItem Header="{DynamicResource Str_Tx_Title}" FontSize="13" FontWeight="Bold" Padding="16,8">
