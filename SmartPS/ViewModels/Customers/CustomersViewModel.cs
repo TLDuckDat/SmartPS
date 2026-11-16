@@ -7,6 +7,7 @@ using SmartPS.Models.Parking;
 using SmartPS.Data;
 using Microsoft.EntityFrameworkCore;
 using SmartPS.Services.Dialog;
+using SmartPS.Services.Customers;
 using SmartPS.Views.Customers;
 using System.Windows;
 using SmartPS.Services.Localization;
@@ -17,6 +18,7 @@ public class CustomersViewModel : ViewModelBase
 {
     private readonly IDbContextFactory<SmartPsDbContext> _dbFactory;
     private readonly IDialogService _dialogService;
+    private readonly ICustomerImportService _customerImportService;
     private readonly List<CustomerItemViewModel> _allCustomers = new();
     private readonly List<Household> _allHouseholds = new();
     private readonly List<MonthlyTicket> _allTickets = new();
@@ -101,6 +103,7 @@ public class CustomersViewModel : ViewModelBase
     public AsyncRelayCommand AddHouseholdCommand { get; }
     public AsyncRelayCommand AddCustomerCommand { get; }
     public AsyncRelayCommand AddVehicleCommand { get; }
+    public AsyncRelayCommand ImportCustomersCommand { get; }
     public AsyncRelayCommand AddTicketCommand { get; }
     public AsyncRelayCommand AddBlacklistCommand { get; }
 
@@ -115,16 +118,21 @@ public class CustomersViewModel : ViewModelBase
     public AsyncRelayCommand ToggleBlacklistCommand { get; }
     public AsyncRelayCommand DeleteBlacklistCommand { get; }
 
-    public CustomersViewModel(IDbContextFactory<SmartPsDbContext> dbFactory, IDialogService dialogService)
+    public CustomersViewModel(
+        IDbContextFactory<SmartPsDbContext> dbFactory,
+        IDialogService dialogService,
+        ICustomerImportService customerImportService)
     {
         _dbFactory = dbFactory;
         _dialogService = dialogService;
+        _customerImportService = customerImportService;
         AppText.Changed += OnLanguageChanged;
         RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
         
         AddHouseholdCommand = new AsyncRelayCommand(AddHouseholdAsync);
         AddCustomerCommand = new AsyncRelayCommand(AddCustomerAsync);
         AddVehicleCommand = new AsyncRelayCommand(AddVehicleAsync);
+        ImportCustomersCommand = new AsyncRelayCommand(ImportCustomersAsync);
         AddTicketCommand = new AsyncRelayCommand(AddTicketAsync);
         AddBlacklistCommand = new AsyncRelayCommand(AddBlacklistAsync);
 
@@ -488,6 +496,28 @@ public class CustomersViewModel : ViewModelBase
             }
         } catch (Exception ex) {
             _dialogService.ShowError(AppText.Get("Msg_Common_ErrorDetail", ex.Message));
+        }
+    }
+
+    private async Task ImportCustomersAsync()
+    {
+        var viewModel = new CustomerImportViewModel(_customerImportService, _dialogService);
+        var dialog = new CustomerImportDialog(viewModel)
+        {
+            Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(x => x.IsActive)
+                    ?? Application.Current.MainWindow
+        };
+
+        if (dialog.ShowDialog() == true && viewModel.SaveResult != null)
+        {
+            await LoadDataAsync();
+            var result = viewModel.SaveResult;
+            _dialogService.ShowSuccess(AppText.Get(
+                "Msg_Customers_ImportSuccess",
+                result.CreatedHouseholds,
+                result.CreatedCustomers,
+                result.CreatedVehicles,
+                result.SkippedVehicles));
         }
     }
 
