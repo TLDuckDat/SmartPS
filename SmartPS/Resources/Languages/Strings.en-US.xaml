@@ -573,6 +573,12 @@
     <sys:String x:Key="Str_Rpt_Xlsx_Truncated">The session detail sheet holds only {0} of {1} rows (export limit).</sys:String>
     <sys:String x:Key="Str_Rpt_Xlsx_TopPlates">Top 10 most frequent plates</sys:String>
     <sys:String x:Key="Str_Rpt_SaveDialogTitle">Save Excel report</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_Preparing">Preparing export...</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_LoadingData">Loading data...</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_WritingWorkbook">Writing Excel file...</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_Finalizing">Finalizing file...</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_Completed">Completed</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_Cancel">Cancel export</sys:String>
     <sys:String x:Key="Str_Rpt_SaveDialogFilter">Excel Workbook (*.xlsx)|*.xlsx</sys:String>
     <sys:String x:Key="Msg_Rpt_LoadError">Could not load the report. Check the database connection and try again.</sys:String>
     <sys:String x:Key="Msg_Rpt_InvalidRange">Invalid date range: the start date must not be after the end date.</sys:String>
@@ -581,6 +587,7 @@
     <sys:String x:Key="Msg_Rpt_ExportFileLocked">The file cannot be written because another program (for example Excel) has it open. Close it and try again.</sys:String>
     <sys:String x:Key="Msg_Rpt_ExportError">Could not export the report. Check the save location and try again.</sys:String>
     <sys:String x:Key="Msg_Rpt_ExportAuditNotWritten">The report was exported but the audit entry could not be written.</sys:String>
+    <sys:String x:Key="Msg_Rpt_ExportCancelled">Report export was canceled.</sys:String>
 
     <!-- OVERVIEW -->
     <sys:String x:Key="Str_Ov_ParkedByVehicleType">Parked vehicles by type</sys:String>

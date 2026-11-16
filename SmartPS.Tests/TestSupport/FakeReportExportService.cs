@@ -16,7 +16,11 @@ public sealed class FakeReportExportService : IReportExportService
 
     public string GetDefaultFileName(ReportDateRange range) => ReportFileNames.Default(range);
 
-    public Task<ReportExportResult> ExportAsync(ReportFilter filter, string filePath, CancellationToken cancellationToken = default)
+    public Task<ReportExportResult> ExportAsync(
+        ReportFilter filter,
+        string filePath,
+        CancellationToken cancellationToken = default,
+        IProgress<ReportExportProgress>? progress = null)
     {
         Exports.Add((filter, filePath));
         ExportReceived.TrySetResult((filter, filePath));

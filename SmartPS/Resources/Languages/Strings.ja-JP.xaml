@@ -573,6 +573,12 @@
     <sys:String x:Key="Str_Rpt_Xlsx_Truncated">セッション明細は出力上限のため {1} 行中 {0} 行のみです。</sys:String>
     <sys:String x:Key="Str_Rpt_Xlsx_TopPlates">利用回数の多いナンバー上位10</sys:String>
     <sys:String x:Key="Str_Rpt_SaveDialogTitle">Excelレポートを保存</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_Preparing">出力を準備中...</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_LoadingData">データを読み込み中...</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_WritingWorkbook">Excelファイルを書き込み中...</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_Finalizing">ファイルを完了中...</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_Completed">完了</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_Cancel">出力をキャンセル</sys:String>
     <sys:String x:Key="Str_Rpt_SaveDialogFilter">Excel ブック (*.xlsx)|*.xlsx</sys:String>
     <sys:String x:Key="Msg_Rpt_LoadError">レポートを読み込めませんでした。データベース接続を確認して再試行してください。</sys:String>
     <sys:String x:Key="Msg_Rpt_InvalidRange">日付範囲が無効です。開始日は終了日以前にしてください。</sys:String>
@@ -581,6 +587,7 @@
     <sys:String x:Key="Msg_Rpt_ExportFileLocked">ファイルが他のプログラム（Excelなど）で開かれているため書き込めません。閉じてから再試行してください。</sys:String>
     <sys:String x:Key="Msg_Rpt_ExportError">レポートを出力できませんでした。保存先を確認して再試行してください。</sys:String>
     <sys:String x:Key="Msg_Rpt_ExportAuditNotWritten">レポートは出力されましたが、監査ログを書き込めませんでした。</sys:String>
+    <sys:String x:Key="Msg_Rpt_ExportCancelled">レポート出力をキャンセルしました。</sys:String>
 
     <!-- OVERVIEW -->
     <sys:String x:Key="Str_Ov_ParkedByVehicleType">車両タイプ別の駐車中台数</sys:String>

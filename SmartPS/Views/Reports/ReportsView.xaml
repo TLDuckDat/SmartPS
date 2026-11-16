@@ -68,11 +68,60 @@
                             <TextBlock Text="{DynamicResource Str_Rpt_Subtitle}" FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding RefreshCommand}" Height="36" Padding="14,0" Margin="0,0,10,0"
-                                    Content="{DynamicResource Str_Rpt_Refresh}"/>
-                            <Button Style="{StaticResource PrimaryButtonStyle}" Command="{Binding ExportCommand}" Height="36" Padding="14,0"
-                                    Content="{DynamicResource Str_Rpt_Export}"
-                                    ToolTip="{Binding ExportToolTip}" ToolTipService.ShowOnDisabled="True"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding RefreshCommand}" Height="36" Padding="14,0" Margin="0,0,10,0"
+                                        Content="{DynamicResource Str_Rpt_Refresh}"/>
+                                <Button Style="{StaticResource PrimaryButtonStyle}" Command="{Binding ExportCommand}" Height="36" Padding="14,0"
+                                        Content="{DynamicResource Str_Rpt_Export}"
+                                        ToolTip="{Binding ExportToolTip}" ToolTipService.ShowOnDisabled="True"/>
+                            </StackPanel>
+                            <Border Visibility="{Binding IsExporting, Converter={StaticResource BoolToVisConverter}}"
+                                    Background="#EFF6FF"
+                                    BorderBrush="#BFDBFE"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    Padding="10,6"
+                                    Margin="10,0,0,0"
+                                    Width="260">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid Grid.Row="0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding ExportProgressText, Mode=OneWay}"
+                                                   FontSize="11"
+                                                   Foreground="#1D4ED8"
+                                                   VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding ExportProgress, Mode=OneWay, StringFormat={}{0}%}"
+                                                   FontSize="11"
+                                                   FontWeight="Bold"
+                                                   Foreground="#1D4ED8"/>
+                                    </Grid>
+                                    <Grid Grid.Row="1" Margin="0,6,0,0">
+                                        <ProgressBar Value="{Binding ExportProgress, Mode=OneWay}"
+                                                     Minimum="0"
+                                                     Maximum="100"
+                                                     Height="7"
+                                                     VerticalAlignment="Center"
+                                                     Margin="0,0,8,0"/>
+                                        <Button Content="{DynamicResource Str_Rpt_Export_Cancel}"
+                                                Command="{Binding CancelExportCommand}"
+                                                HorizontalAlignment="Right"
+                                                Height="24"
+                                                Padding="8,0"
+                                                Background="White"
+                                                Foreground="#1D4ED8"
+                                                BorderBrush="#93C5FD"
+                                                BorderThickness="1"/>
+                                    </Grid>
+                                </Grid>
+                            </Border>
                         </StackPanel>
                     </Grid>
                 </Border>

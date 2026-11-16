@@ -573,6 +573,12 @@
     <sys:String x:Key="Str_Rpt_Xlsx_Truncated">Chi tiết lượt gửi chỉ gồm {0} trên tổng {1} dòng (giới hạn xuất).</sys:String>
     <sys:String x:Key="Str_Rpt_Xlsx_TopPlates">Top 10 biển số gửi nhiều nhất</sys:String>
     <sys:String x:Key="Str_Rpt_SaveDialogTitle">Lưu báo cáo Excel</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_Preparing">Đang chuẩn bị xuất...</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_LoadingData">Đang tải dữ liệu...</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_WritingWorkbook">Đang ghi file Excel...</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_Finalizing">Đang hoàn tất file...</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_Completed">Đã hoàn tất</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_Cancel">Hủy xuất</sys:String>
     <sys:String x:Key="Str_Rpt_SaveDialogFilter">Excel Workbook (*.xlsx)|*.xlsx</sys:String>
     <sys:String x:Key="Msg_Rpt_LoadError">Không thể tải báo cáo. Vui lòng kiểm tra kết nối cơ sở dữ liệu và thử lại.</sys:String>
     <sys:String x:Key="Msg_Rpt_InvalidRange">Khoảng ngày không hợp lệ: ngày bắt đầu phải trước hoặc bằng ngày kết thúc.</sys:String>
@@ -581,6 +587,7 @@
     <sys:String x:Key="Msg_Rpt_ExportFileLocked">Không thể ghi file vì đang được mở bởi chương trình khác (ví dụ Excel). Hãy đóng file rồi thử lại.</sys:String>
     <sys:String x:Key="Msg_Rpt_ExportError">Không thể xuất báo cáo. Vui lòng kiểm tra đường dẫn lưu và thử lại.</sys:String>
     <sys:String x:Key="Msg_Rpt_ExportAuditNotWritten">Đã xuất báo cáo nhưng chưa ghi được nhật ký kiểm toán.</sys:String>
+    <sys:String x:Key="Msg_Rpt_ExportCancelled">Đã hủy xuất báo cáo.</sys:String>
 
     <!-- OVERVIEW -->
     <sys:String x:Key="Str_Ov_ParkedByVehicleType">Xe đang gửi theo loại</sys:String>

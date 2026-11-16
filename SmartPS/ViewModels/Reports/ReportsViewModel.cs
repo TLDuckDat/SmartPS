@@ -48,6 +48,9 @@ public class ReportsViewModel : ViewModelBase
 
     private bool _isLoading;
     private bool _isExporting;
+    private CancellationTokenSource? _exportCts;
+    private int _exportProgress;
+    private ReportExportPhase _exportPhase = ReportExportPhase.Preparing;
     private string? _errorMessage;
     private string _rangeDisplay = string.Empty;
     private string _previousRangeDisplay = string.Empty;
@@ -110,6 +113,7 @@ public class ReportsViewModel : ViewModelBase
 
         RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
         ExportCommand = new AsyncRelayCommand(ExportAsync, () => CanExport);
+        CancelExportCommand = new RelayCommand(() => _exportCts?.Cancel(), () => IsExporting);
 
         _localization.LanguageChanged += OnLanguageChanged;
     }
@@ -247,9 +251,25 @@ public class ReportsViewModel : ViewModelBase
             {
                 OnPropertyChanged(nameof(CanExport));
                 ExportCommand?.RaiseCanExecuteChanged();
+                CancelExportCommand?.RaiseCanExecuteChanged();
             }
         }
     }
+
+    public int ExportProgress
+    {
+        get => _exportProgress;
+        private set => SetProperty(ref _exportProgress, value);
+    }
+
+    public string ExportProgressText => _exportPhase switch
+    {
+        ReportExportPhase.LoadingData => L(ReportTextKeys.ExportLoadingData),
+        ReportExportPhase.WritingWorkbook => L(ReportTextKeys.ExportWritingWorkbook),
+        ReportExportPhase.Finalizing => L(ReportTextKeys.ExportFinalizing),
+        ReportExportPhase.Completed => L(ReportTextKeys.ExportCompleted),
+        _ => L(ReportTextKeys.ExportPreparing)
+    };
 
     public string? ErrorMessage
     {
@@ -365,6 +385,7 @@ public class ReportsViewModel : ViewModelBase
     public AsyncRelayCommand RefreshCommand { get; }
 
     public AsyncRelayCommand ExportCommand { get; }
+    public RelayCommand CancelExportCommand { get; }
 
     // ---- loading ---------------------------------------------------------------------------------------------------
 
@@ -752,10 +773,23 @@ public class ReportsViewModel : ViewModelBase
             return;
         }
 
+        using var exportCts = new CancellationTokenSource();
+        _exportCts = exportCts;
+        ExportProgress = 0;
+        _exportPhase = ReportExportPhase.Preparing;
+        OnPropertyChanged(nameof(ExportProgressText));
+
+        var progress = new Progress<ReportExportProgress>(value =>
+        {
+            ExportProgress = Math.Clamp(value.Percent, 0, 100);
+            _exportPhase = value.Phase;
+            OnPropertyChanged(nameof(ExportProgressText));
+        });
+
         try
         {
             IsExporting = true;
-            var export = await _exportService.ExportAsync(filter, path);
+            var export = await _exportService.ExportAsync(filter, path, exportCts.Token, progress);
             switch (export.Status)
             {
                 case ReportExportStatus.Success when !export.AuditWritten:
@@ -781,6 +815,10 @@ public class ReportsViewModel : ViewModelBase
         {
             _dialogService.ShowError(L("Msg_Auth_PermissionDenied"));
         }
+        catch (OperationCanceledException) when (exportCts.IsCancellationRequested)
+        {
+            _dialogService.ShowInfo(L(ReportTextKeys.MsgExportCancelled));
+        }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ReportsViewModel] export failed: {ex.Message}");
@@ -788,6 +826,7 @@ public class ReportsViewModel : ViewModelBase
         }
         finally
         {
+            _exportCts = null;
             IsExporting = false;
         }
     }
