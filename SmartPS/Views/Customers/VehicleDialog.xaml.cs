@@ -1,122 +1,54 @@
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Windows;
 using SmartPS.Models.Parking;
-using System.Collections.Generic;
-using System.Linq;
-using System;
-using SmartPS.Services.Localization;
+using SmartPS.ViewModels.Customers;
 
-namespace SmartPS.Views.Customers
+namespace SmartPS.Views.Customers;
+
+public partial class VehicleDialog : Window
 {
-    public partial class VehicleDialog : Window
+    public VehicleDialogViewModel ViewModel { get; }
+
+    public string FinalLicensePlate => Regex.Replace(ViewModel.LicensePlate?.Trim() ?? string.Empty, @"[^a-zA-Z0-9]", "").ToUpperInvariant();
+    public int FinalSelectedVehicleType => ViewModel.SelectedVehicleType?.VehicleTypeId ?? 1;
+    public int FinalSelectedCustomerId => ViewModel.SelectedCustomer?.CustomerId ?? 0;
+
+    public VehicleDialog(VehicleDialogViewModel viewModel)
     {
-        private List<Customer> _customers;
-        private List<VehicleType> _vehicleTypes;
+        InitializeComponent();
+        ViewModel = viewModel;
+        DataContext = ViewModel;
 
-        public string FinalLicensePlate { get; private set; } = string.Empty;
-        public int FinalSelectedVehicleType { get; private set; }
-        public int FinalSelectedCustomerId { get; private set; }
-
-        public VehicleDialog(List<Customer> customers, List<VehicleType>? vehicleTypes = null, int? preselectedCustomerId = null)
+        ViewModel.RequestClose += result =>
         {
-            InitializeComponent();
-            _customers = customers;
-            _vehicleTypes = vehicleTypes ?? new List<VehicleType>();
-
-            cboCustomer.ItemsSource = _customers;
-            cboCustomer.DisplayMemberPath = "FullName";
-
-            if (preselectedCustomerId.HasValue)
-            {
-                var match = _customers.FirstOrDefault(x => x.CustomerId == preselectedCustomerId.Value);
-                if (match != null)
-                {
-                    cboCustomer.SelectedItem = match;
-                }
-            }
-            if (cboCustomer.SelectedIndex == -1 && _customers.Count > 0)
-            {
-                cboCustomer.SelectedIndex = 0;
-            }
-
-            if (_vehicleTypes.Count > 0)
-            {
-                cboType.ItemsSource = _vehicleTypes;
-                cboType.DisplayMemberPath = "TypeName";
-                cboType.SelectedValuePath = "VehicleTypeId";
-                cboType.SelectedIndex = 0;
-            }
-            else
-            {
-                cboType.ItemsSource = new[]
-                {
-                    new { TypeName = "Xe máy", VehicleTypeId = 1 },
-                    new { TypeName = "Xe ô tô", VehicleTypeId = 2 },
-                    new { TypeName = "Xe đạp / Xe điện", VehicleTypeId = 3 }
-                };
-                cboType.DisplayMemberPath = "TypeName";
-                cboType.SelectedValuePath = "VehicleTypeId";
-                cboType.SelectedIndex = 0;
-            }
-        }
-
-        private void BtnSave_Click(object sender, RoutedEventArgs e)
-        {
-            var licensePlate = System.Text.RegularExpressions.Regex.Replace(txtPlate.Text.Trim(), @"[^a-zA-Z0-9]", "").ToUpperInvariant();
-            if (string.IsNullOrEmpty(licensePlate)) 
-            { 
-                MessageBox.Show(AppText.Get("Msg_Customers_DlgPlateInvalid"), AppText.Get("Str_Dialog_Title_Info"), MessageBoxButton.OK, MessageBoxImage.Warning); 
-                return; 
-            }
-            if (licensePlate.Length > 20)
-            {
-                MessageBox.Show(AppText.Get("Msg_Customers_DlgPlateTooLong"), AppText.Get("Str_Dialog_Title_Info"), MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            int customerId = 0;
-            if (cboCustomer.SelectedItem is Customer c) 
-            {
-                customerId = c.CustomerId;
-            }
-            else
-            {
-                var text = cboCustomer.Text?.Trim();
-                if (!string.IsNullOrEmpty(text))
-                {
-                    var match = _customers.FirstOrDefault(x => string.Equals(x.FullName, text, StringComparison.OrdinalIgnoreCase));
-                    if (match != null) customerId = match.CustomerId;
-                }
-            }
-
-            if (customerId == 0) 
-            { 
-                MessageBox.Show(AppText.Get("Msg_Customers_DlgChooseOwner"), AppText.Get("Str_Dialog_Title_Info"), MessageBoxButton.OK, MessageBoxImage.Warning); 
-                return; 
-            }
-
-            int vtId = 1;
-            if (cboType.SelectedValue is int idVal)
-            {
-                vtId = idVal;
-            }
-            else if (cboType.SelectedItem is VehicleType vt)
-            {
-                vtId = vt.VehicleTypeId;
-            }
-
-            // Extract values before closing
-            FinalLicensePlate = licensePlate;
-            FinalSelectedVehicleType = vtId;
-            FinalSelectedCustomerId = customerId;
-
-            DialogResult = true;
+            DialogResult = result;
             Close();
-        }
+        };
+    }
 
-        private void BtnCancel_Click(object sender, RoutedEventArgs e) 
-        { 
-            DialogResult = false; 
-            Close(); 
+    public VehicleDialog(List<Customer> customers, List<VehicleType>? vehicleTypes = null, int? preselectedCustomerId = null)
+        : this(new VehicleDialogViewModel(customers, vehicleTypes, preselectedCustomerId))
+    {
+    }
+
+    private void BtnSave_Click(object sender, RoutedEventArgs e)
+    {
+        if (!ViewModel.Validate())
+        {
+            if (!string.IsNullOrEmpty(ViewModel.ErrorMessage))
+            {
+                MessageBox.Show(ViewModel.ErrorMessage, "SmartPS", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            return;
         }
+        DialogResult = true;
+        Close();
+    }
+
+    private void BtnCancel_Click(object sender, RoutedEventArgs e)
+    {
+        DialogResult = false;
+        Close();
     }
 }

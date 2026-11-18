@@ -1,168 +1,92 @@
+using System.Collections.Generic;
 using System.Windows;
 using SmartPS.Models.Parking;
-using System.Collections.Generic;
-using System.Linq;
-using System;
-using SmartPS.Services.Localization;
+using SmartPS.ViewModels.Customers;
 
-namespace SmartPS.Views.Customers
+namespace SmartPS.Views.Customers;
+
+public partial class IssueTicketDialog : Window
 {
-    public partial class IssueTicketDialog : Window
+    public IssueTicketDialogViewModel ViewModel { get; }
+
+    public int FinalSelectedCustomerId => ViewModel.SelectedCustomer?.CustomerId ?? 0;
+    public int FinalSelectedVehicleId => ViewModel.SelectedVehicle?.VehicleId ?? 0;
+    public int FinalDurationMonths => ViewModel.DurationMonths;
+    public decimal FinalPrice => ViewModel.EstimatedFeePreview;
+    public PaymentMethod FinalPaymentMethod => ViewModel.SelectedPaymentMethod;
+
+    public IssueTicketDialog(IssueTicketDialogViewModel viewModel)
     {
-        private List<Vehicle> _allVehicles;
-        private List<Customer> _customers;
-        private List<PricingRule> _pricingRules;
+        InitializeComponent();
+        ViewModel = viewModel;
+        DataContext = ViewModel;
 
-        public int FinalSelectedCustomerId { get; private set; }
-        public int FinalSelectedVehicleId { get; private set; }
-        public int FinalDurationMonths { get; private set; }
-        public decimal FinalPrice { get; private set; }
-        public PaymentMethod FinalPaymentMethod { get; private set; } = PaymentMethod.Cash;
-
-        public IssueTicketDialog(List<Customer> customers, List<Vehicle> vehicles, List<PricingRule>? pricingRules = null, int? preselectedCustomerId = null)
+        ViewModel.RequestClose += result =>
         {
-            InitializeComponent();
-            _allVehicles = vehicles;
-            _customers = customers;
-            _pricingRules = pricingRules ?? new List<PricingRule>();
-            
-            cboCustomer.ItemsSource = _customers;
-            cboCustomer.DisplayMemberPath = "FullName";
-
-            if (preselectedCustomerId.HasValue)
-            {
-                var match = _customers.FirstOrDefault(x => x.CustomerId == preselectedCustomerId.Value);
-                if (match != null) cboCustomer.SelectedItem = match;
-            }
-
-            UpdatePricePreview();
-        }
-
-        private void CboCustomer_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-        {
-            if (cboCustomer.SelectedItem is Customer c)
-            {
-                var userVehicles = _allVehicles.Where(v => v.OwnerCustomerId == c.CustomerId).ToList();
-                cboVehicle.ItemsSource = userVehicles;
-                cboVehicle.DisplayMemberPath = "LicensePlate";
-                if (userVehicles.Count > 0)
-                {
-                    cboVehicle.SelectedIndex = 0;
-                }
-            }
-            UpdatePricePreview();
-        }
-
-        private void CboVehicle_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-        {
-            UpdatePricePreview();
-        }
-
-        private void CboDuration_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-        {
-            UpdatePricePreview();
-        }
-
-        private int GetCurrentDurationMonths()
-        {
-            return cboDuration.SelectedIndex switch
-            {
-                0 => 1,
-                1 => 3,
-                2 => 6,
-                _ => 1
-            };
-        }
-
-        private Vehicle? GetCurrentSelectedVehicle()
-        {
-            if (cboVehicle.SelectedItem is Vehicle v) return v;
-            var text = cboVehicle.Text?.Trim();
-            if (!string.IsNullOrEmpty(text))
-            {
-                var items = cboVehicle.ItemsSource as List<Vehicle>;
-                return items?.FirstOrDefault(x => string.Equals(x.LicensePlate, text, StringComparison.OrdinalIgnoreCase));
-            }
-            return null;
-        }
-
-        private void UpdatePricePreview()
-        {
-            if (txtPricePreview == null) return;
-
-            var v = GetCurrentSelectedVehicle();
-            int dur = GetCurrentDurationMonths();
-
-            if (v != null)
-            {
-                var rule = _pricingRules.FirstOrDefault(r => r.VehicleTypeId == v.VehicleTypeId);
-                if (rule != null)
-                {
-                    decimal price = dur switch
-                    {
-                        1 => rule.Monthly1Price,
-                        3 => rule.Monthly3Price,
-                        6 => rule.Monthly6Price,
-                        _ => rule.Monthly1Price * dur
-                    };
-                    FinalPrice = price;
-                    txtPricePreview.Text = $"{price:N0} VNĐ";
-                    return;
-                }
-            }
-
-            FinalPrice = 0;
-            txtPricePreview.Text = AppText.Get("Str_Customers_DlgNoVehicle");
-        }
-
-        private void BtnSave_Click(object sender, RoutedEventArgs e)
-        {
-            int customerId = 0;
-            if (cboCustomer.SelectedItem is Customer c) 
-            {
-                customerId = c.CustomerId;
-            }
-            else
-            {
-                var text = cboCustomer.Text?.Trim();
-                if (!string.IsNullOrEmpty(text))
-                {
-                    var match = _customers.FirstOrDefault(x => string.Equals(x.FullName, text, StringComparison.OrdinalIgnoreCase));
-                    if (match != null) customerId = match.CustomerId;
-                }
-            }
-
-            var vehicle = GetCurrentSelectedVehicle();
-            int vehicleId = vehicle?.VehicleId ?? 0;
-
-            if (customerId == 0) { MessageBox.Show(AppText.Get("Msg_Customers_DlgNoCustomer"), AppText.Get("Str_Dialog_Title_Info"), MessageBoxButton.OK, MessageBoxImage.Warning); return; }
-            if (vehicle == null || vehicleId == 0) { MessageBox.Show(AppText.Get("Msg_Customers_DlgNoVehicleSelected"), AppText.Get("Str_Dialog_Title_Info"), MessageBoxButton.OK, MessageBoxImage.Warning); return; }
-
-            if (vehicle.OwnerCustomerId != customerId)
-            {
-                MessageBox.Show(AppText.Get("Msg_Customers_DlgVehicleNotOwned"), AppText.Get("Str_Customers_DlgValidationTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            FinalSelectedCustomerId = customerId;
-            FinalSelectedVehicleId = vehicleId;
-            FinalDurationMonths = GetCurrentDurationMonths();
-            FinalPaymentMethod = cboPaymentMethod.SelectedIndex switch
-            {
-                1 => PaymentMethod.VietQR,
-                2 => PaymentMethod.Card,
-                _ => PaymentMethod.Cash
-            };
-            UpdatePricePreview();
-
-            DialogResult = true;
+            DialogResult = result;
             Close();
-        }
+        };
 
-        private void BtnCancel_Click(object sender, RoutedEventArgs e) 
-        { 
-            DialogResult = false; 
-            Close(); 
+        // Đồng bộ thời hạn ban đầu
+        cboDuration.SelectedIndex = ViewModel.DurationMonths switch
+        {
+            3 => 1,
+            6 => 2,
+            _ => 0
+        };
+
+        cboPaymentMethod.SelectedIndex = ViewModel.SelectedPaymentMethod switch
+        {
+            PaymentMethod.VietQR => 1,
+            PaymentMethod.Card => 2,
+            _ => 0
+        };
+    }
+
+    public IssueTicketDialog(List<Customer> customers, List<Vehicle> vehicles, List<PricingRule>? pricingRules = null, int? preselectedCustomerId = null)
+        : this(new IssueTicketDialogViewModel(customers, vehicles, pricingRules, preselectedCustomerId))
+    {
+    }
+
+    private void CboDuration_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (ViewModel == null) return;
+        ViewModel.DurationMonths = cboDuration.SelectedIndex switch
+        {
+            1 => 3,
+            2 => 6,
+            _ => 1
+        };
+    }
+
+    private void CboPaymentMethod_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (ViewModel == null) return;
+        ViewModel.SelectedPaymentMethod = cboPaymentMethod.SelectedIndex switch
+        {
+            1 => PaymentMethod.VietQR,
+            2 => PaymentMethod.Card,
+            _ => PaymentMethod.Cash
+        };
+    }
+
+    private void BtnSave_Click(object sender, RoutedEventArgs e)
+    {
+        if (!ViewModel.Validate())
+        {
+            if (!string.IsNullOrEmpty(ViewModel.ErrorMessage))
+            {
+                MessageBox.Show(ViewModel.ErrorMessage, "SmartPS", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            return;
         }
+        DialogResult = true;
+        Close();
+    }
+
+    private void BtnCancel_Click(object sender, RoutedEventArgs e)
+    {
+        DialogResult = false;
+        Close();
     }
 }

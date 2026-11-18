@@ -1,34 +1,46 @@
-using System;
 using System.Windows;
-using SmartPS.Models.Parking;
-using System.Collections.Generic;
-using SmartPS.Services.Localization;
+using SmartPS.ViewModels.Customers;
 
-namespace SmartPS.Views.Customers
+namespace SmartPS.Views.Customers;
+
+public partial class HouseholdDialog : Window
 {
-    public partial class HouseholdDialog : Window
+    public HouseholdDialogViewModel ViewModel { get; }
+
+    public HouseholdDialog(HouseholdDialogViewModel? viewModel = null)
     {
-        public HouseholdDialog()
-        {
-            InitializeComponent();
-        }
+        InitializeComponent();
+        ViewModel = viewModel ?? new HouseholdDialogViewModel();
+        DataContext = ViewModel;
 
-        public string ApartmentCode => txtApartmentCode.Text.Trim();
-        public int MaxVehicles => int.TryParse(txtMaxVehicles.Text, out int m) ? m : 2;
-        public string Notes => txtNotes.Text.Trim();
-
-        private void BtnSave_Click(object sender, RoutedEventArgs e)
+        ViewModel.RequestClose += result =>
         {
-            if (string.IsNullOrEmpty(ApartmentCode)) { MessageBox.Show(AppText.Get("Msg_Customers_DlgAptRequired")); return; }
-            if (MaxVehicles < 1) { MessageBox.Show(AppText.Get("Msg_Customers_DlgAptMaxVehicles"), AppText.Get("Str_Dialog_Title_Info"), MessageBoxButton.OK, MessageBoxImage.Warning); return; }
-            DialogResult = true;
+            DialogResult = result;
             Close();
-        }
+        };
+    }
 
-        private void BtnCancel_Click(object sender, RoutedEventArgs e)
+    public string ApartmentCode => ViewModel.ApartmentCode;
+    public int? MaxVehicles => ViewModel.MaxVehicles;
+    public string Notes => ViewModel.Notes ?? string.Empty;
+
+    private void BtnSave_Click(object sender, RoutedEventArgs e)
+    {
+        if (!ViewModel.Validate())
         {
-            DialogResult = false;
-            Close();
+            if (!string.IsNullOrEmpty(ViewModel.ErrorMessage))
+            {
+                MessageBox.Show(ViewModel.ErrorMessage, "SmartPS", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            return;
         }
+        DialogResult = true;
+        Close();
+    }
+
+    private void BtnCancel_Click(object sender, RoutedEventArgs e)
+    {
+        DialogResult = false;
+        Close();
     }
 }
