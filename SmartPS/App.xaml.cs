@@ -1,6 +1,8 @@
 using System.IO;
 using LiveChartsCore.SkiaSharpView;
 using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -32,9 +34,84 @@ public partial class App : Application
 {
     public static IServiceProvider ServiceProvider { get; private set; } = null!;
 
+    private static ImageSource? _cachedWindowIcon;
+
+    private static ImageSource? GetOrCreateWindowIcon()
+    {
+        if (_cachedWindowIcon != null)
+            return _cachedWindowIcon;
+
+        try
+        {
+            if (Current?.TryFindResource("Illust_CapybaraLogo") is DrawingImage drawingImage && drawingImage.Drawing != null)
+            {
+                const int size = 64;
+                var visual = new DrawingVisual();
+                using (var dc = visual.RenderOpen())
+                {
+                    dc.DrawImage(drawingImage, new Rect(0, 0, size, size));
+                }
+                var rtb = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
+                rtb.Render(visual);
+                rtb.Freeze();
+                var frame = BitmapFrame.Create(rtb);
+                frame.Freeze();
+                _cachedWindowIcon = frame;
+            }
+        }
+        catch
+        {
+            // Ignore icon rendering errors in headless test environments
+        }
+
+        return _cachedWindowIcon;
+    }
+
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Xử lý lỗi toàn cục: lỗi không được bắt ở đâu khác được ghi log và không làm ứng dụng văng
+        DispatcherUnhandledException += (_, args) =>
+        {
+            SmartPS.Services.Logging.ErrorLog.Error("UI", args.Exception);
+            args.Handled = true;
+            try
+            {
+                MessageBox.Show(
+                    "Đã xảy ra lỗi không mong muốn. Chi tiết đã được ghi vào thư mục logs cạnh ứng dụng. Bạn có thể tiếp tục sử dụng.",
+                    "SmartPS",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+            catch
+            {
+                // Không có cửa sổ để hiển thị thông báo (ví dụ đang tắt) thì chỉ giữ việc ghi log
+            }
+        };
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        {
+            SmartPS.Services.Logging.ErrorLog.Error(
+                "Domain",
+                args.ExceptionObject as Exception,
+                args.ExceptionObject?.ToString());
+        };
+        System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            SmartPS.Services.Logging.ErrorLog.Error("Task", args.Exception);
+            args.SetObserved();
+        };
+
+        EventManager.RegisterClassHandler(
+            typeof(Window),
+            FrameworkElement.LoadedEvent,
+            new RoutedEventHandler((sender, _) =>
+            {
+                if (sender is Window w && w.Icon == null)
+                {
+                    w.Icon = GetOrCreateWindowIcon();
+                }
+            }));
 
         // Biểu đồ LiveCharts2: Skia + giao diện sáng; Segoe UI để hiển thị đúng tiếng Việt/Nhật
         LiveChartsCore.LiveCharts.Configure(config => config
