@@ -100,3 +100,4 @@ SmartPS/Services/OcrLisencePlate/*/
 
 # Tài liệu .md chỉ dùng nội bộ, không đưa lên GitHub
 *.md
+!README.md
