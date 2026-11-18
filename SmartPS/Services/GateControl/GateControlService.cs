@@ -557,9 +557,12 @@ public class GateControlService : IGateControlService
         var vehicleTypeId = request.VehicleTypeId > 0 ? request.VehicleTypeId : (ticket?.VehicleTypeId ?? owner?.VehicleTypeId ?? 1);
         var activeOwner = owner is { OwnerIsActive: true, OwnerCustomerId: not null } ? owner : null;
 
+        // Bộ đếm chỉ duy nhất trong một lần chạy và bắt đầu lại sau mỗi lần mở ứng dụng,
+        // nên thêm một đoạn ngẫu nhiên để mã vé không trùng với mã đã cấp ở lần chạy trước
+        var issuedAtUtc = DateTime.UtcNow;
         var ticketCode = isMonthly
             ? ticket!.TicketCode
-            : $"TK-{DateTime.UtcNow:yyyyMMdd}-{Interlocked.Increment(ref _sessionSequence)}";
+            : $"TK-{issuedAtUtc:yyyyMMdd}-{Interlocked.Increment(ref _sessionSequence)}-{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}";
 
         // Lưu trữ an toàn vĩnh viễn tệp ảnh chụp khi xe vào (trước giao dịch có khoá nhật ký)
         var archivedImagePath = await _imageStorageService.ArchiveCaptureAsync(request.ImagePath, "CheckIn", cleanPlate);
