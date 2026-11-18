@@ -19,9 +19,9 @@
     <Window.Resources>
         <!-- Nút Phụ (Hủy bỏ / Không) -->
         <Style x:Key="DialogSecondaryButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#FFFFFF"/>
-            <Setter Property="Foreground" Value="#334155"/>
-            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource InputBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontSize" Value="12.5"/>
             <Setter Property="FontWeight" Value="Medium"/>
@@ -37,17 +37,17 @@
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 Padding="{TemplateBinding Padding}"
-                                CornerRadius="4">
+                                CornerRadius="6">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#F8FAFC"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="#94A3B8"/>
-                                <Setter Property="Foreground" Value="#0F172A"/>
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource SurfaceMutedBrush}"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource InputHoverBorderBrush}"/>
+                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#F1F5F9"/>
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource SurfaceStrongBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -71,7 +71,7 @@
                         <Border x:Name="border"
                                 Background="{TemplateBinding Background}"
                                 Padding="{TemplateBinding Padding}"
-                                CornerRadius="4">
+                                CornerRadius="6">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -105,13 +105,18 @@
             <Border Grid.Column="0"
                     x:Name="IconBadgeBorder"
                     Width="38" Height="38"
-                    CornerRadius="4"
+                    CornerRadius="8"
                     BorderThickness="1"
                     VerticalAlignment="Top"
                     Margin="0,2,14,0">
                 <Path x:Name="IconPath"
                       Width="18" Height="18"
                       Stretch="Uniform"
+                      Fill="Transparent"
+                      StrokeThickness="2"
+                      StrokeStartLineCap="Round"
+                      StrokeEndLineCap="Round"
+                      StrokeLineJoin="Round"
                       HorizontalAlignment="Center"
                       VerticalAlignment="Center"/>
             </Border>
@@ -139,7 +144,7 @@
 
         <!-- ROW 1: FOOTER (Thanh nút bấm) -->
         <Border Grid.Row="1"
-                Background="#F8FAFC"
+                Background="{StaticResource SurfaceMutedBrush}"
                 BorderBrush="{StaticResource DividerBrush}"
                 BorderThickness="0,1,0,0"
                 Padding="16,10">

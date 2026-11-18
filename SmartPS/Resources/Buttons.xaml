@@ -6,23 +6,23 @@
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Width" Value="46"/>
+        <Setter Property="Width" Value="44"/>
         <Setter Property="Height" Value="32"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Focusable" Value="False"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="btnBorder" Background="{TemplateBinding Background}" CornerRadius="4">
+                    <Border x:Name="btnBorder" Background="{TemplateBinding Background}" CornerRadius="6">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="btnBorder" Property="Background" Value="#E2E8F0"/>
+                            <Setter TargetName="btnBorder" Property="Background" Value="{StaticResource SurfaceStrongBrush}"/>
                             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="btnBorder" Property="Background" Value="#CBD5E1"/>
+                            <Setter TargetName="btnBorder" Property="Background" Value="{StaticResource WindowBorderBrush}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -30,21 +30,21 @@
         </Setter>
     </Style>
 
-    <!-- Style chuẩn mực cho nút Đóng cửa sổ (Close) - Hover đỏ chuyên nghiệp -->
+    <!-- Style chuẩn mực cho nút Đóng cửa sổ (Close) - Hover đỏ san hô chuyên nghiệp -->
     <Style x:Key="CloseControlBtnStyle" TargetType="Button" BasedOn="{StaticResource WindowControlBtnStyle}">
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="#EF4444"/>
+                <Setter Property="Background" Value="#C93B4B"/>
                 <Setter Property="Foreground" Value="#FFFFFF"/>
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
-                <Setter Property="Background" Value="#DC2626"/>
+                <Setter Property="Background" Value="#A82F3E"/>
                 <Setter Property="Foreground" Value="#FFFFFF"/>
             </Trigger>
         </Style.Triggers>
     </Style>
 
-    <!-- Style cho nút Hành động Chính (Primary Flat Button) - Chiều cao 36px chuẩn Desktop, Bo góc 4px -->
+    <!-- Style cho nút Hành động Chính (Primary Flat Button) - Cam San Hô, Bo góc 6px -->
     <Style x:Key="PrimaryButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="{StaticResource PrimaryButtonBrush}"/>
         <Setter Property="Foreground" Value="#FFFFFF"/>
@@ -61,7 +61,7 @@
                     <Border x:Name="border"
                             Background="{TemplateBinding Background}"
                             Padding="{TemplateBinding Padding}"
-                            CornerRadius="4">
+                            CornerRadius="6">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -72,8 +72,8 @@
                             <Setter TargetName="border" Property="Background" Value="{StaticResource PrimaryButtonPressedBrush}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="border" Property="Background" Value="#CBD5E1"/>
-                            <Setter Property="Foreground" Value="#94A3B8"/>
+                            <Setter TargetName="border" Property="Background" Value="#E6D2C6"/>
+                            <Setter Property="Foreground" Value="#968298"/>
                             <Setter Property="Cursor" Value="Arrow"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -82,9 +82,9 @@
         </Setter>
     </Style>
 
-    <!-- Style cho nút Phụ (Secondary Flat Button) - Chiều cao 36px chuẩn Desktop, Bo góc 4px -->
+    <!-- Style cho nút Phụ (Secondary Flat Button) - Kem ngà ấm, Bo góc 6px -->
     <Style x:Key="SecondaryButtonStyle" TargetType="Button">
-        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
         <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource InputBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
@@ -102,17 +102,17 @@
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             Padding="{TemplateBinding Padding}"
-                            CornerRadius="4">
+                            CornerRadius="6">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#F8FAFC"/>
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource SurfaceMutedBrush}"/>
                             <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource InputHoverBorderBrush}"/>
                             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#F1F5F9"/>
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource SurfaceStrongBrush}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="border" Property="Opacity" Value="0.5"/>
@@ -124,16 +124,54 @@
         </Setter>
     </Style>
 
-    <!-- Style cho nút chọn ngôn ngữ (Language Switcher) -->
+    <!-- Style cho nút Nguy hiểm / Xóa (Danger Flat Button) - Đỏ San Hô, Bo góc 6px -->
+    <Style x:Key="DangerButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="#C93B4B"/>
+        <Setter Property="Foreground" Value="#FFFFFF"/>
+        <Setter Property="FontSize" Value="12.5"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Height" Value="36"/>
+        <Setter Property="Padding" Value="14,0"/>
+        <Setter Property="Margin" Value="4,0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}"
+                            CornerRadius="6">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#A82F3E"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#8F2533"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="border" Property="Background" Value="#E6D2C6"/>
+                            <Setter Property="Foreground" Value="#968298"/>
+                            <Setter Property="Cursor" Value="Arrow"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Style cho nút chọn ngôn ngữ (Language Switcher - Bo tròn kiểu pill giống hddat-portfolio) -->
     <Style x:Key="LangButtonStyle" TargetType="Button">
-        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
         <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource AppBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="FontSize" Value="11"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Height" Value="24"/>
-        <Setter Property="Padding" Value="7,0"/>
+        <Setter Property="Height" Value="26"/>
+        <Setter Property="Padding" Value="9,0"/>
         <Setter Property="Margin" Value="2,0"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Focusable" Value="False"/>
@@ -145,7 +183,7 @@
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             Padding="{TemplateBinding Padding}"
-                            CornerRadius="3">
+                            CornerRadius="13">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -155,7 +193,7 @@
                             <Setter Property="Foreground" Value="{StaticResource TextBrandBrush}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#E0F2FE"/>
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource SurfaceStrongBrush}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

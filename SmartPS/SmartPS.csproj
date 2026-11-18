@@ -23,6 +23,8 @@
     <None Update="seed_data.sql">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <Resource Include="Resources\Fonts\*.ttf" />
+    <Resource Include="Resources\Images\*.svg" />
   </ItemGroup>
 
   <ItemGroup>

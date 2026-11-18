@@ -23,8 +23,8 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="👥" FontSize="20" Margin="0,0,8,0"/>
-                            <TextBlock Text="{DynamicResource Str_Menu_Customers}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <Image Source="{StaticResource Illust_Customers}" Width="34" Height="34" Stretch="Uniform" Margin="0,0,10,0"/>
+                            <TextBlock Text="{DynamicResource Str_Menu_Customers}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                         </StackPanel>
                         <TextBlock Text="{DynamicResource Str_Customers_Subtitle}" 
                                    FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
@@ -33,23 +33,11 @@
                     <!-- Nút bấm Làm mới dữ liệu -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <Button Command="{Binding ImportCustomersCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Content="{DynamicResource Str_Customers_Import}"
                                 Height="36" Padding="14,0"
                                 Margin="0,0,8,0"
-                                Background="#0F766E"
-                                BorderThickness="0"
-                                Cursor="Hand">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
-                                        <TextBlock Text="{DynamicResource Str_Customers_Import}"
-                                                   FontSize="12"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="White"
-                                                   VerticalAlignment="Center"/>
-                                    </Border>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
+                                Cursor="Hand"/>
                         <Button Command="{Binding RefreshCommand}"
                                 Height="36" Padding="14,0"
                                 Background="{StaticResource PrimaryButtonBrush}"
@@ -57,9 +45,9 @@
                                 Cursor="Hand">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="🔄" FontSize="12" Margin="0,0,6,0"/>
+                                            <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Refresh}" Width="13" Height="13" Stroke="White" Margin="0,0,6,0"/>
                                             <TextBlock Text="{DynamicResource Str_Customers_RefreshList}" FontSize="12" FontWeight="SemiBold" Foreground="White"/>
                                         </StackPanel>
                                     </Border>
@@ -86,8 +74,8 @@
                 <Border Grid.Column="0" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="{DynamicResource Str_Customers_KpiTotal}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                            <TextBlock Text="👥" FontSize="16" HorizontalAlignment="Right"/>
+                            <TextBlock Text="{DynamicResource Str_Customers_KpiTotal}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                            <Image Source="{StaticResource Illust_Customers}" Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Right"/>
                         </Grid>
                         <TextBlock FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}" Margin="0,8,0,2"><Run Text="{Binding TotalCustomers, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_ProfilesSuffix}"/></TextBlock>
                         <TextBlock Text="{DynamicResource Str_Customers_KpiTotalSub}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
@@ -98,11 +86,11 @@
                 <Border Grid.Column="2" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="{DynamicResource Str_Customers_KpiActivePasses}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                            <TextBlock Text="🎟" FontSize="16" HorizontalAlignment="Right"/>
+                            <TextBlock Text="{DynamicResource Str_Customers_KpiActivePasses}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                            <Image Source="{StaticResource Illust_Pricing}" Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Right"/>
                         </Grid>
-                        <TextBlock FontSize="24" FontWeight="Bold" Foreground="#15803D" Margin="0,8,0,2"><Run Text="{Binding ActiveTicketsCount, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_PassesSuffix}"/></TextBlock>
-                        <TextBlock Text="{DynamicResource Str_Customers_KpiActivePassesSub}" FontSize="11.5" Foreground="#16A34A"/>
+                        <TextBlock FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,8,0,2"><Run Text="{Binding ActiveTicketsCount, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_PassesSuffix}"/></TextBlock>
+                        <TextBlock Text="{DynamicResource Str_Customers_KpiActivePassesSub}" FontSize="11.5" Foreground="#168A5B"/>
                     </StackPanel>
                 </Border>
 
@@ -110,10 +98,10 @@
                 <Border Grid.Column="4" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="{DynamicResource Str_Customers_KpiExpiring}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                            <TextBlock Text="⏰" FontSize="16" HorizontalAlignment="Right"/>
+                            <TextBlock Text="{DynamicResource Str_Customers_KpiExpiring}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                            <Image Source="{StaticResource Illust_Shifts}" Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Right"/>
                         </Grid>
-                        <TextBlock FontSize="24" FontWeight="Bold" Foreground="#D97706" Margin="0,8,0,2"><Run Text="{Binding ExpiringSoonCount, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_PassesSuffix}"/></TextBlock>
+                        <TextBlock FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,8,0,2"><Run Text="{Binding ExpiringSoonCount, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_PassesSuffix}"/></TextBlock>
                         <TextBlock Text="{DynamicResource Str_Customers_KpiExpiringSub}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
                     </StackPanel>
                 </Border>
@@ -122,10 +110,10 @@
                 <Border Grid.Column="6" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="{DynamicResource Str_Customers_KpiRevenue}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                            <TextBlock Text="💵" FontSize="16" HorizontalAlignment="Right"/>
+                            <TextBlock Text="{DynamicResource Str_Customers_KpiRevenue}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                            <Image Source="{StaticResource Illust_Transactions}" Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Right"/>
                         </Grid>
-                        <TextBlock Text="{Binding MonthlyRevenueTotalFormatted}" FontSize="22" FontWeight="Bold" Foreground="#7C3AED" Margin="0,8,0,2"/>
+                        <TextBlock Text="{Binding MonthlyRevenueTotalFormatted}" FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,8,0,2"/>
                         <TextBlock Text="{DynamicResource Str_Customers_KpiRevenueSub}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
                     </StackPanel>
                 </Border>
@@ -149,13 +137,13 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
-                                <Border Grid.Column="0" Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Height="36">
+                                <Border Grid.Column="0" Background="{StaticResource SurfaceMutedBrush}" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="6" Height="36">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="32"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="🔍" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        <Path Grid.Column="0" Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Search}" Width="14" Height="14" Stroke="{StaticResource TextDimBrush}"/>
                                         <TextBox Grid.Column="1"
                                                  Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}"
                                                  BorderThickness="0"
@@ -188,9 +176,9 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="{DynamicResource Str_Customers_CustomersTitle}" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                        <Button Content="{DynamicResource Str_Customers_AddCustomer}" Command="{Binding AddCustomerCommand}" Padding="10,5" Margin="0,0,10,0" Background="#10B981" Foreground="White" BorderThickness="0"/>
-                                        <Button Content="{DynamicResource Str_Customers_AddVehicle}" Command="{Binding AddVehicleCommand}" Padding="10,5" Margin="0,0,10,0" Background="#3B82F6" Foreground="White" BorderThickness="0"/>
-                                        <Button Content="{DynamicResource Str_Common_Delete}" Command="{Binding DeleteCustomerCommand}" Padding="10,5" Background="#EF4444" Foreground="White" BorderThickness="0" ToolTip="{DynamicResource Str_Customers_DeleteCustomerTip}"/>
+                                        <Button Content="{DynamicResource Str_Customers_AddCustomer}" Command="{Binding AddCustomerCommand}" Style="{StaticResource PrimaryButtonStyle}" Height="32" Padding="12,0" FontSize="12" Margin="0,0,8,0"/>
+                                        <Button Content="{DynamicResource Str_Customers_AddVehicle}" Command="{Binding AddVehicleCommand}" Style="{StaticResource SecondaryButtonStyle}" Height="32" Padding="12,0" FontSize="12" Margin="0,0,8,0"/>
+                                        <Button Content="{DynamicResource Str_Common_Delete}" Command="{Binding DeleteCustomerCommand}" Style="{StaticResource DangerButtonStyle}" Height="32" Padding="12,0" FontSize="12" ToolTip="{DynamicResource Str_Customers_DeleteCustomerTip}"/>
                                     </StackPanel>
                                 </Grid>
 
@@ -365,26 +353,26 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="{DynamicResource Str_Customers_HouseholdsTitle}" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                    <Button Content="{DynamicResource Str_Customers_AddHousehold}" Command="{Binding AddHouseholdCommand}" Padding="10,5" Margin="0,0,10,0" Background="#10B981" Foreground="White" BorderThickness="0"/>
-                                    <Button Content="{DynamicResource Str_Common_Delete}" Command="{Binding DeleteHouseholdCommand}" Padding="10,5" Background="#EF4444" Foreground="White" BorderThickness="0" ToolTip="{DynamicResource Str_Customers_DeleteHouseholdTip}"/>
+                                    <Button Content="{DynamicResource Str_Customers_AddHousehold}" Command="{Binding AddHouseholdCommand}" Style="{StaticResource PrimaryButtonStyle}" Height="32" Padding="12,0" FontSize="12" Margin="0,0,8,0"/>
+                                    <Button Content="{DynamicResource Str_Common_Delete}" Command="{Binding DeleteHouseholdCommand}" Style="{StaticResource DangerButtonStyle}" Height="32" Padding="12,0" FontSize="12" ToolTip="{DynamicResource Str_Customers_DeleteHouseholdTip}"/>
                                 </StackPanel>
                             </Grid>
 
                             <!-- Thanh Tìm Kiếm & Sắp Xếp Hộ Gia Đình -->
-                            <Border Background="#F8FAFC" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="4" Padding="12,10" Margin="0,0,0,14">
+                            <Border Background="{StaticResource SurfaceMutedBrush}" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="6" Padding="12,10" Margin="0,0,0,14">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="320"/>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <Border Grid.Column="0" Background="White" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Height="34">
+                                    <Border Grid.Column="0" Background="White" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="6" Height="34">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="30"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" Text="🔍" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                            <Path Grid.Column="0" Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Search}" Width="13" Height="13" Stroke="{StaticResource TextDimBrush}"/>
                                             <TextBox Grid.Column="1" Text="{Binding HouseholdSearchKeyword, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center" FontSize="12.5" Foreground="{StaticResource TextPrimaryBrush}" Padding="0,0,6,0"/>
                                         </Grid>
                                     </Border>
@@ -418,16 +406,16 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="{DynamicResource Str_Customers_PassesTitle}" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                    <Button Content="{DynamicResource Str_Customers_IssuePass}" Command="{Binding AddTicketCommand}" Padding="10,5" Margin="0,0,10,0" Background="#8B5CF6" Foreground="White" BorderThickness="0"/>
-                                    <Button Content="Đổi Biển Số" Command="{Binding ChangePlateCommand}" CommandParameter="{Binding SelectedTicket}" Padding="10,5" Margin="0,0,10,0" Background="#0D9488" Foreground="White" BorderThickness="0" ToolTip="Đổi phương tiện / biển số cho vé tháng đang chọn"/>
-                                    <Button Content="{DynamicResource Str_Customers_LockToggle}" Command="{Binding ToggleTicketCommand}" Padding="10,5" Margin="0,0,10,0" Background="#F59E0B" Foreground="White" BorderThickness="0" ToolTip="{DynamicResource Str_Customers_LockToggleTip}"/>
-                                    <Button Content="{DynamicResource Str_Customers_Renew}" Command="{Binding RenewTicketCommand}" Padding="10,5" Margin="0,0,10,0" Background="#3B82F6" Foreground="White" BorderThickness="0" ToolTip="{DynamicResource Str_Customers_RenewTip}"/>
-                                    <Button Content="{DynamicResource Str_Customers_DeletePass}" Command="{Binding DeleteTicketCommand}" Padding="10,5" Background="#EF4444" Foreground="White" BorderThickness="0" ToolTip="{DynamicResource Str_Customers_DeletePassTip}"/>
+                                    <Button Content="{DynamicResource Str_Customers_IssuePass}" Command="{Binding AddTicketCommand}" Style="{StaticResource PrimaryButtonStyle}" Height="32" Padding="12,0" FontSize="12" Margin="0,0,8,0"/>
+                                    <Button Content="Đổi Biển Số" Command="{Binding ChangePlateCommand}" CommandParameter="{Binding SelectedTicket}" Style="{StaticResource SecondaryButtonStyle}" Height="32" Padding="12,0" FontSize="12" Margin="0,0,8,0" ToolTip="Đổi phương tiện / biển số cho vé tháng đang chọn"/>
+                                    <Button Content="{DynamicResource Str_Customers_LockToggle}" Command="{Binding ToggleTicketCommand}" Style="{StaticResource SecondaryButtonStyle}" Height="32" Padding="12,0" FontSize="12" Margin="0,0,8,0" ToolTip="{DynamicResource Str_Customers_LockToggleTip}"/>
+                                    <Button Content="{DynamicResource Str_Customers_Renew}" Command="{Binding RenewTicketCommand}" Style="{StaticResource SecondaryButtonStyle}" Height="32" Padding="12,0" FontSize="12" Margin="0,0,8,0" ToolTip="{DynamicResource Str_Customers_RenewTip}"/>
+                                    <Button Content="{DynamicResource Str_Customers_DeletePass}" Command="{Binding DeleteTicketCommand}" Style="{StaticResource DangerButtonStyle}" Height="32" Padding="12,0" FontSize="12" ToolTip="{DynamicResource Str_Customers_DeletePassTip}"/>
                                 </StackPanel>
                             </Grid>
 
                             <!-- Thanh Tìm Kiếm & Sắp Xếp Vé Tháng -->
-                            <Border Background="#F8FAFC" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="4" Padding="12,10" Margin="0,0,0,14">
+                            <Border Background="{StaticResource SurfaceMutedBrush}" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="6" Padding="12,10" Margin="0,0,0,14">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="320"/>
@@ -435,13 +423,13 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <Border Grid.Column="0" Background="White" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Height="34">
+                                    <Border Grid.Column="0" Background="White" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="6" Height="34">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="30"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" Text="🔍" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                            <Path Grid.Column="0" Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Search}" Width="13" Height="13" Stroke="{StaticResource TextDimBrush}"/>
                                             <TextBox Grid.Column="1" Text="{Binding TicketSearchKeyword, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center" FontSize="12.5" Foreground="{StaticResource TextPrimaryBrush}" Padding="0,0,6,0"/>
                                         </Grid>
                                     </Border>
@@ -567,7 +555,7 @@
                             </DataGrid>
 
                             <!-- BẢNG LỊCH SỬ THAY ĐỔI CỦA VÉ ĐANG CHỌN -->
-                            <Border Background="#F8FAFC" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="6" Padding="14,10" Margin="0,16,0,0">
+                            <Border Background="{StaticResource SurfaceMutedBrush}" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="6" Padding="14,10" Margin="0,16,0,0">
                                 <StackPanel>
                                     <Grid Margin="0,0,0,8">
                                         <Grid.ColumnDefinitions>
@@ -575,8 +563,9 @@
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="📋 Lịch Sử Thay Đổi Của Vé:" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                                            <TextBlock Text="{Binding SelectedTicket.TicketCode, TargetNullValue='(Chưa chọn vé)'}" FontSize="13" FontWeight="Bold" Foreground="#2563EB" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                            <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_AuditLog}" Width="15" Height="15" Stroke="#E8735A" Margin="0,0,7,0"/>
+                                            <TextBlock Text="Lịch Sử Thay Đổi Của Vé:" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding SelectedTicket.TicketCode, TargetNullValue='(Chưa chọn vé)'}" FontSize="13" FontWeight="Bold" Foreground="#E8735A" Margin="8,0,0,0" VerticalAlignment="Center"/>
                                             <TextBlock Text="{Binding SelectedTicket.RegisteredLicensePlate, StringFormat=' - {0}'}" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                                         </StackPanel>
                                         <TextBlock Grid.Column="1" Text="Đang tải dữ liệu..." Foreground="#64748B" FontSize="11.5" FontStyle="Italic" VerticalAlignment="Center">
@@ -648,7 +637,7 @@
                             </Grid>
 
                             <!-- Thanh Tìm Kiếm Blacklist -->
-                            <Border Background="#F8FAFC" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="4" Padding="12,10" Margin="0,0,0,14">
+                            <Border Background="{StaticResource SurfaceMutedBrush}" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="6" Padding="12,10" Margin="0,0,0,14">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="360"/>

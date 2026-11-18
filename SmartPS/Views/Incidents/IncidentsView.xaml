@@ -66,8 +66,8 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="⚠️" FontSize="20" Margin="0,0,8,0"/>
-                            <TextBlock Text="{DynamicResource Str_Menu_Incidents}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <Image Source="{StaticResource Illust_Incidents}" Width="34" Height="34" Stretch="Uniform" Margin="0,0,10,0"/>
+                            <TextBlock Text="{DynamicResource Str_Menu_Incidents}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                         </StackPanel>
                         <TextBlock Text="{DynamicResource Str_Inc_Title}"
                                    FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
@@ -105,8 +105,8 @@
                 <Border Grid.Column="0" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="18">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="{DynamicResource Str_Inc_KpiTotal}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                            <TextBlock Text="⚠️" FontSize="16" HorizontalAlignment="Right"/>
+                            <TextBlock Text="{DynamicResource Str_Inc_KpiTotal}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                            <Image Source="{StaticResource Illust_Incidents}" Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Right"/>
                         </Grid>
                         <TextBlock FontSize="26" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}" Margin="0,8,0,2"><Run Text="{Binding TotalIncidents, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_CasesSuffix}"/></TextBlock>
                         <TextBlock Text="{DynamicResource Str_Inc_KpiTotalSub}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
@@ -117,11 +117,11 @@
                 <Border Grid.Column="2" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="18">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="{DynamicResource Str_Inc_KpiOpen}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                            <TextBlock Text="⏳" FontSize="16" HorizontalAlignment="Right"/>
+                            <TextBlock Text="{DynamicResource Str_Inc_KpiOpen}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                            <Image Source="{StaticResource Illust_Shifts}" Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Right"/>
                         </Grid>
-                        <TextBlock FontSize="26" FontWeight="Bold" Foreground="#B91C1C" Margin="0,8,0,2"><Run Text="{Binding PendingIncidents, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_CasesShortSuffix}"/></TextBlock>
-                        <TextBlock Text="{DynamicResource Str_Inc_KpiOpenSub}" FontSize="11.5" Foreground="#B91C1C"/>
+                        <TextBlock FontSize="26" FontWeight="Bold" Foreground="#C93B4B" Margin="0,8,0,2"><Run Text="{Binding PendingIncidents, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_CasesShortSuffix}"/></TextBlock>
+                        <TextBlock Text="{DynamicResource Str_Inc_KpiOpenSub}" FontSize="11.5" Foreground="#C93B4B"/>
                     </StackPanel>
                 </Border>
 
@@ -129,11 +129,11 @@
                 <Border Grid.Column="4" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="18">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="{DynamicResource Str_Inc_KpiResolved}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                            <TextBlock Text="✅" FontSize="16" HorizontalAlignment="Right"/>
+                            <TextBlock Text="{DynamicResource Str_Inc_KpiResolved}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                            <Image Source="{StaticResource Illust_RolePermissions}" Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Right"/>
                         </Grid>
-                        <TextBlock FontSize="26" FontWeight="Bold" Foreground="#15803D" Margin="0,8,0,2"><Run Text="{Binding ResolvedIncidents, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_CasesShortSuffix}"/></TextBlock>
-                        <TextBlock Text="{DynamicResource Str_Inc_KpiResolvedSub}" FontSize="11.5" Foreground="#16A34A"/>
+                        <TextBlock FontSize="26" FontWeight="Bold" Foreground="#168A5B" Margin="0,8,0,2"><Run Text="{Binding ResolvedIncidents, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_CasesShortSuffix}"/></TextBlock>
+                        <TextBlock Text="{DynamicResource Str_Inc_KpiResolvedSub}" FontSize="11.5" Foreground="#168A5B"/>
                     </StackPanel>
                 </Border>
             </Grid>
@@ -145,7 +145,7 @@
                     CornerRadius="6"
                     Padding="20"
                     Margin="0,0,0,20"
-                    Visibility="{Binding IsReportFormOpen, Converter={StaticResource BoolToVisConverter}}">
+                    Visibility="{Binding IsReportFormOpen, Converter={StaticResource BoolToVisConverter}, FallbackValue=Collapsed}">
                 <StackPanel>
                     <TextBlock Text="{DynamicResource Str_Inc_NewTitle}" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,14"/>
                     <Grid>
@@ -179,16 +179,16 @@
 
             <!-- 3b. Khung xử lý biên bản đang chọn -->
             <Border Background="{StaticResource CardBackgroundBrush}"
-                    BorderBrush="#0284C7"
+                    BorderBrush="#8E4479"
                     BorderThickness="1"
                     CornerRadius="6"
                     Padding="20"
                     Margin="0,0,0,20"
-                    Visibility="{Binding IsResolvePanelOpen, Converter={StaticResource BoolToVisConverter}}">
+                    Visibility="{Binding IsResolvePanelOpen, Converter={StaticResource BoolToVisConverter}, FallbackValue=Collapsed}">
                 <StackPanel>
                     <TextBlock FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,6">
                         <Run Text="{DynamicResource Str_Inc_ResolveTitle}"/>
-                        <Run Text="{Binding ResolvingIncident.IncidentCode, Mode=OneWay}" Foreground="#0284C7"/>
+                        <Run Text="{Binding ResolvingIncident.IncidentCode, Mode=OneWay}" Foreground="#8E4479"/>
                     </TextBlock>
                     <TextBlock FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,14">
                         <Run Text="{Binding ResolvingIncident.IncidentType, Mode=OneWay}" FontWeight="SemiBold"/>
@@ -224,13 +224,13 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Height="36">
+                    <Border Grid.Column="0" Background="{StaticResource SurfaceMutedBrush}" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="6" Height="36">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="32"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="🔍" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <Path Grid.Column="0" Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Search}" Width="14" Height="14" Stroke="{StaticResource TextDimBrush}"/>
                             <TextBox Grid.Column="1"
                                      Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}"
                                      ToolTip="{DynamicResource Str_Inc_SearchTip}"

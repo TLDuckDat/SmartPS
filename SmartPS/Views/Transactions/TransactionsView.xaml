@@ -23,8 +23,8 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="💳" FontSize="20" Margin="0,0,8,0"/>
-                                <TextBlock Text="{DynamicResource Str_Tx_MyTitle}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <Image Source="{StaticResource Illust_Transactions}" Width="34" Height="34" Stretch="Uniform" Margin="0,0,10,0"/>
+                                <TextBlock Text="{DynamicResource Str_Tx_MyTitle}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                             </StackPanel>
                             <TextBlock Text="{DynamicResource Str_Tx_MySubtitle}"
                                        FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
@@ -38,9 +38,9 @@
                                     Cursor="Hand">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                <TextBlock Text="🔄" FontSize="12" Margin="0,0,6,0"/>
+                                                <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Refresh}" Width="13" Height="13" Stroke="White" Margin="0,0,6,0"/>
                                                 <TextBlock Text="{DynamicResource Str_Tx_Refresh}" FontSize="12" FontWeight="SemiBold" Foreground="White"/>
                                             </StackPanel>
                                         </Border>
@@ -65,10 +65,10 @@
                     <Border Grid.Column="0" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                         <StackPanel>
                             <Grid>
-                                <TextBlock Text="{DynamicResource Str_Tx_KpiRevenue}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                                <TextBlock Text="💰" FontSize="16" HorizontalAlignment="Right"/>
+                                <TextBlock Text="{DynamicResource Str_Tx_KpiRevenue}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                                <Image Source="{StaticResource Illust_Pricing}" Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Right"/>
                             </Grid>
-                            <TextBlock Text="{Binding TotalRevenueFormatted}" FontSize="24" FontWeight="Bold" Foreground="#7C3AED" Margin="0,8,0,2"/>
+                            <TextBlock Text="{Binding TotalRevenueFormatted}" FontSize="24" FontWeight="Bold" Foreground="#8E4479" Margin="0,8,0,2"/>
                             <TextBlock FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"><Run Text="{DynamicResource Str_Tx_FromCompletedPrefix}"/><Run Text="{Binding CompletedTransactions, Mode=OneWay}"/><Run Text="{DynamicResource Str_Tx_FromCompletedSuffix}"/></TextBlock>
                         </StackPanel>
                     </Border>
@@ -76,21 +76,21 @@
                     <Border Grid.Column="2" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                         <StackPanel>
                             <Grid>
-                                <TextBlock Text="{DynamicResource Str_Tx_KpiCash}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                                <TextBlock Text="💵" FontSize="16" HorizontalAlignment="Right"/>
+                                <TextBlock Text="{DynamicResource Str_Tx_KpiCash}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                                <Image Source="{StaticResource Illust_Transactions}" Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Right"/>
                             </Grid>
-                            <TextBlock Text="{Binding CashRevenueFormatted}" FontSize="24" FontWeight="Bold" Foreground="#15803D" Margin="0,8,0,2"/>
-                            <TextBlock Text="{DynamicResource Str_Tx_KpiCashSub}" FontSize="11.5" Foreground="#16A34A"/>
+                            <TextBlock Text="{Binding CashRevenueFormatted}" FontSize="24" FontWeight="Bold" Foreground="#168A5B" Margin="0,8,0,2"/>
+                            <TextBlock Text="{DynamicResource Str_Tx_KpiCashSub}" FontSize="11.5" Foreground="#168A5B"/>
                         </StackPanel>
                     </Border>
                     <!-- KPI 3: Thu Chuyển khoản VietQR -->
                     <Border Grid.Column="4" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                         <StackPanel>
                             <Grid>
-                                <TextBlock Text="{DynamicResource Str_Tx_KpiVietQr}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                                <TextBlock Text="📱" FontSize="16" HorizontalAlignment="Right"/>
+                                <TextBlock Text="{DynamicResource Str_Tx_KpiVietQr}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                                <Image Source="{StaticResource Illust_Reports}" Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Right"/>
                             </Grid>
-                            <TextBlock Text="{Binding VietQrRevenueFormatted}" FontSize="24" FontWeight="Bold" Foreground="#0284C7" Margin="0,8,0,2"/>
+                            <TextBlock Text="{Binding VietQrRevenueFormatted}" FontSize="24" FontWeight="Bold" Foreground="#C85A8A" Margin="0,8,0,2"/>
                             <TextBlock FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"><Run Text="{Binding PaidElectronicPayments, Mode=OneWay}"/><Run Text="{DynamicResource Str_Tx_PaidVietQrSuffix}"/></TextBlock>
                         </StackPanel>
                     </Border>
@@ -98,8 +98,8 @@
                     <Border Grid.Column="6" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                         <StackPanel>
                             <Grid>
-                                <TextBlock Text="{DynamicResource Str_Tx_KpiSessions}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                                <TextBlock Text="📑" FontSize="16" HorizontalAlignment="Right"/>
+                                <TextBlock Text="{DynamicResource Str_Tx_KpiSessions}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                                <Image Source="{StaticResource Illust_Car}" Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Right"/>
                             </Grid>
                             <TextBlock FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}" Margin="0,8,0,2"><Run Text="{Binding TotalTransactions, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_VisitsSuffix}"/></TextBlock>
                             <TextBlock FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"><Run Text="{DynamicResource Str_Tx_ParkedNowPrefix}"/><Run Text="{Binding ActiveTransactions, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_VehicleSuffix}"/></TextBlock>
@@ -115,13 +115,13 @@
                         Margin="0,0,0,20">
                     <WrapPanel Orientation="Horizontal">
                         <!-- Tìm kiếm từ khóa -->
-                        <Border Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Height="36" Width="220" Margin="0,0,10,8">
+                        <Border Background="{StaticResource SurfaceMutedBrush}" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="6" Height="36" Width="220" Margin="0,0,10,8">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="32"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="🔍" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                <Path Grid.Column="0" Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Search}" Width="14" Height="14" Stroke="{StaticResource TextDimBrush}"/>
                                 <TextBox Grid.Column="1"
                                          Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}"
                                          BorderThickness="0"
@@ -177,15 +177,15 @@
                         <Button Command="{Binding ClearFilterCommand}"
                                 Height="36" Padding="14,0"
                                 Margin="0,0,10,8"
-                                Background="#F1F5F9"
+                                Background="{StaticResource SurfaceMutedBrush}"
                                 BorderBrush="{StaticResource AppBorderBrush}"
                                 BorderThickness="1"
                                 Cursor="Hand">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="✕" FontSize="11" Margin="0,0,6,0" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                            <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Close}" Width="10" Height="10" Stroke="{StaticResource TextSecondaryBrush}" Margin="0,0,6,0"/>
                                             <TextBlock Text="{DynamicResource Str_Tx_ResetFilters}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
                                         </StackPanel>
                                     </Border>
@@ -200,12 +200,10 @@
                             <DatePicker SelectedDate="{Binding ToDate, Mode=TwoWay}" Width="150" Height="34"/>
                             <Button Content="{DynamicResource Str_Tx_ApplyDateFilter}"
                                     Command="{Binding ApplyDateFilterCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
                                     Height="34"
                                     Padding="14,0"
-                                    Margin="18,0,0,0"
-                                    Background="#2563EB"
-                                    Foreground="White"
-                                    BorderThickness="0"/>
+                                    Margin="18,0,0,0"/>
                         </StackPanel>
                     </WrapPanel>
                 </Border>
@@ -416,7 +414,7 @@
                                                                 <ControlTemplate TargetType="Button">
                                                                     <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="3" Padding="{TemplateBinding Padding}">
                                                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                                            <TextBlock Text="🔍" FontSize="10" Margin="0,0,4,0"/>
+                                                                            <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Search}" Width="11" Height="11" Stroke="{StaticResource TextPrimaryBrush}" Margin="0,0,4,0"/>
                                                                             <TextBlock Text="{DynamicResource Str_Common_Details}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                                                                         </StackPanel>
                                                                     </Border>
@@ -642,7 +640,7 @@
         </ScrollViewer>
         <!-- 5. Modal Chi Tiết Giao Dịch & Kiểm Toán (Payment Details & Audit Log Modal) -->
         <Grid Background="#66000000"
-              Visibility="{Binding IsPaymentDetailsOpen, Converter={StaticResource BoolToVisConverter}}"
+              Visibility="{Binding IsPaymentDetailsOpen, Converter={StaticResource BoolToVisConverter}, FallbackValue=Collapsed}"
               HorizontalAlignment="Stretch"
               VerticalAlignment="Stretch">
             <Border Background="{StaticResource CardBackgroundBrush}"
@@ -665,7 +663,7 @@
                     <Grid Grid.Row="0" Margin="0,0,0,16">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="🔍" FontSize="18" Margin="0,0,8,0"/>
+                                <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Search}" Width="17" Height="17" Stroke="#E8735A" Margin="0,0,8,0"/>
                                 <TextBlock Text="{DynamicResource Str_Tx_DetailTitle}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                             </StackPanel>
                             <TextBlock Text="{DynamicResource Str_Tx_DetailSubtitle}" 
@@ -678,7 +676,7 @@
                                 BorderThickness="0"
                                 Cursor="Hand"
                                 Padding="8,4">
-                            <TextBlock Text="✕" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Close}" Width="15" Height="15" Stroke="{StaticResource TextSecondaryBrush}"/>
                         </Button>
                     </Grid>
                     <!-- Modal Body -->
@@ -751,8 +749,8 @@
                                             <TextBlock Text="{DynamicResource Str_Tx_CreatedAndPaid}" FontSize="11" Foreground="{StaticResource TextDimBrush}"/>
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="{Binding SelectedPaymentDetails.Payment.CreatedAt, Converter={StaticResource UtcToVietnamTimeConverter}}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                                <TextBlock Text=" ➔ " FontSize="12" Foreground="{StaticResource TextDimBrush}"/>
-                                                <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="#15803D">
+                                                <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_ArrowRight}" Width="12" Height="12" Stroke="{StaticResource TextDimBrush}" Margin="6,0"/>
+                                                <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="#168A5B">
                                                     <TextBlock.Style>
                                                         <Style TargetType="TextBlock">
                                                             <Setter Property="Text" Value="{Binding SelectedPaymentDetails.Payment.PaidAt, Converter={StaticResource UtcToVietnamTimeConverter}}"/>

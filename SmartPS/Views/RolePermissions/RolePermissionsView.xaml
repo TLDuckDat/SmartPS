@@ -26,7 +26,10 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock Text="{DynamicResource Str_RolePerm_Title}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Image Source="{StaticResource Illust_RolePermissions}" Width="32" Height="32" Stretch="Uniform" Margin="0,0,10,0"/>
+                        <TextBlock Text="{DynamicResource Str_RolePerm_Title}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                    </StackPanel>
                     <TextBlock Text="{DynamicResource Str_RolePerm_Subtitle}" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
                     <!-- Chỉ có Role.View: hiển thị chế độ chỉ đọc -->
                     <Border Margin="0,8,0,0" Padding="10,6" CornerRadius="4"

@@ -2,61 +2,94 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- ========================================================================= -->
-    <!-- HỆ THỐNG MÀU SẮC CHUẨN WINDOWS LOB DESKTOP: PHẲNG, TƯƠNG PHẢN CAO, SẮC NÉT  -->
+    <!-- FONT CHỮ & HỆ THỐNG MÀU SẮC SHIBA SUNSET (HDDAT-PORTFOLIO)                -->
+    <!-- Phong cách: Warm Daylight (#FFF6EA) + Twilight Sunset (#1D1840 / #E8735A) -->
     <!-- ========================================================================= -->
 
-    <!-- Nền Ứng dụng & Thẻ -->
-    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#F1F5F9"/>
-    <SolidColorBrush x:Key="WindowBorderBrush" Color="#CBD5E1"/>
-    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="BannerBackgroundBrush" Color="#1E293B"/>
+    <!-- Font Chữ -->
+    <FontFamily x:Key="AppFontFamily">pack://application:,,,/SmartPS;component/Resources/Fonts/#Be Vietnam Pro, pack://application:,,,/Resources/Fonts/#Be Vietnam Pro, Segoe UI, Segoe UI Emoji, Segoe UI Symbol</FontFamily>
+    <FontFamily x:Key="ScriptFontFamily">pack://application:,,,/SmartPS;component/Resources/Fonts/#Dancing Script, pack://application:,,,/Resources/Fonts/#Dancing Script, Segoe Script</FontFamily>
+    <FontFamily x:Key="MonoFontFamily">Consolas, Cascadia Mono</FontFamily>
 
-    <!-- Ô Nhập Liệu (Chuẩn Windows Form: Nền trắng, viền rõ nét, focus dứt khoát) -->
+    <!-- Nền Ứng dụng & Thẻ (Warm Daylight) -->
+    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#FFF6EA"/>
+    <SolidColorBrush x:Key="SurfaceMutedBrush" Color="#FDF2E4"/>
+    <SolidColorBrush x:Key="SurfaceStrongBrush" Color="#F6E6D4"/>
+    <SolidColorBrush x:Key="WindowBorderBrush" Color="#DFC7B9"/>
+    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FFFDF9"/>
+    <SolidColorBrush x:Key="BannerBackgroundBrush" Color="#1D1840"/>
+
+    <!-- Ô Nhập Liệu -->
     <SolidColorBrush x:Key="InputBackgroundBrush" Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="InputFocusedBackgroundBrush" Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="InputBorderBrush" Color="#CBD5E1"/>
-    <SolidColorBrush x:Key="InputHoverBorderBrush" Color="#94A3B8"/>
-    <SolidColorBrush x:Key="InputFocusedBorderBrush" Color="#1D4ED8"/>
+    <SolidColorBrush x:Key="InputFocusedBackgroundBrush" Color="#FFFDFB"/>
+    <SolidColorBrush x:Key="InputBorderBrush" Color="#DFC7B9"/>
+    <SolidColorBrush x:Key="InputHoverBorderBrush" Color="#C89D89"/>
+    <SolidColorBrush x:Key="InputFocusedBorderBrush" Color="#E8735A"/>
 
-    <!-- Chữ & Kiểu hiển thị (Đậm đà, sắc nét, dễ đọc trên màn hình máy tính) -->
-    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#0F172A"/>
-    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#334155"/>
-    <SolidColorBrush x:Key="TextMutedBrush" Color="#475569"/>
-    <SolidColorBrush x:Key="TextDimBrush" Color="#64748B"/>
-    <SolidColorBrush x:Key="TextLightBrush" Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="TextCaretBrush" Color="#1D4ED8"/>
-    <SolidColorBrush x:Key="TextBrandBrush" Color="#1D4ED8"/>
+    <!-- Chữ & Kiểu hiển thị (Tím than trầm #3A2A3C tương phản cao, dịu mắt) -->
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#3A2A3C"/>
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#564258"/>
+    <SolidColorBrush x:Key="TextMutedBrush" Color="#7A667C"/>
+    <SolidColorBrush x:Key="TextDimBrush" Color="#968298"/>
+    <SolidColorBrush x:Key="TextLightBrush" Color="#FFF4EA"/>
+    <SolidColorBrush x:Key="TextCaretBrush" Color="#E8735A"/>
+    <SolidColorBrush x:Key="TextBrandBrush" Color="#E8735A"/>
 
-    <!-- Viền Phân Cách (Sắc nét 1px, phân chia bố cục rõ ràng) -->
-    <SolidColorBrush x:Key="AppBorderBrush" Color="#CBD5E1"/>
-    <SolidColorBrush x:Key="DividerBrush" Color="#E2E8F0"/>
+    <!-- Viền Phân Cách -->
+    <SolidColorBrush x:Key="AppBorderBrush" Color="#E6D2C6"/>
+    <SolidColorBrush x:Key="DividerBrush" Color="#EFE0D6"/>
 
-    <!-- Nút Bấm Chính: Màu phẳng Corporate Blue (Không dùng gradient) -->
-    <SolidColorBrush x:Key="PrimaryButtonBrush" Color="#1D4ED8"/>
-    <SolidColorBrush x:Key="PrimaryButtonHoverBrush" Color="#1E40AF"/>
-    <SolidColorBrush x:Key="PrimaryButtonPressedBrush" Color="#172554"/>
-    <SolidColorBrush x:Key="PrimaryButtonGradientBrush" Color="#1D4ED8"/>
+    <!-- Nút Bấm Chính: Cam San Hô (Terracotta Coral) -->
+    <SolidColorBrush x:Key="PrimaryButtonBrush" Color="#E8735A"/>
+    <SolidColorBrush x:Key="PrimaryButtonHoverBrush" Color="#D65F46"/>
+    <SolidColorBrush x:Key="PrimaryButtonPressedBrush" Color="#B84B34"/>
+    <SolidColorBrush x:Key="PrimaryButtonGradientBrush" Color="#E8735A"/>
+
+    <!-- Màu Nhấn Phụ (Hoàng hôn: Vàng mật ong, Tím hoàng hôn, Hồng san hô) -->
+    <SolidColorBrush x:Key="AccentSecondaryBrush" Color="#D9821E"/>
+    <SolidColorBrush x:Key="AccentPurpleBrush" Color="#8E4479"/>
+    <SolidColorBrush x:Key="AccentPurpleBgBrush" Color="#F6EBF3"/>
+    <SolidColorBrush x:Key="AccentTealBrush" Color="#C85A8A"/>
+    <SolidColorBrush x:Key="AccentTealBgBrush" Color="#FCEEF4"/>
 
     <!-- Trạng Thái Lỗi / Cảnh Báo -->
-    <SolidColorBrush x:Key="ErrorBackgroundBrush" Color="#FEE2E2"/>
-    <SolidColorBrush x:Key="ErrorBorderBrush" Color="#FCA5A5"/>
-    <SolidColorBrush x:Key="ErrorTextBrush" Color="#B91C1C"/>
+    <SolidColorBrush x:Key="ErrorBackgroundBrush" Color="#FDE8E8"/>
+    <SolidColorBrush x:Key="ErrorBorderBrush" Color="#F5B4B4"/>
+    <SolidColorBrush x:Key="ErrorTextBrush" Color="#C93B4B"/>
 
-    <SolidColorBrush x:Key="WarningBackgroundBrush" Color="#FEF3C7"/>
-    <SolidColorBrush x:Key="WarningBorderBrush" Color="#FDE68A"/>
-    <SolidColorBrush x:Key="WarningTextBrush" Color="#B45309"/>
+    <SolidColorBrush x:Key="WarningBackgroundBrush" Color="#FFF3D6"/>
+    <SolidColorBrush x:Key="WarningBorderBrush" Color="#FCD98B"/>
+    <SolidColorBrush x:Key="WarningTextBrush" Color="#B86B14"/>
 
     <!-- Trạng Thái Thành Công / Tiến Trình -->
-    <SolidColorBrush x:Key="SuccessBackgroundBrush" Color="#DCFCE7"/>
-    <SolidColorBrush x:Key="SuccessBorderBrush" Color="#86EFAC"/>
-    <SolidColorBrush x:Key="SuccessTextBrush" Color="#15803D"/>
+    <SolidColorBrush x:Key="SuccessBackgroundBrush" Color="#E6F9F0"/>
+    <SolidColorBrush x:Key="SuccessBorderBrush" Color="#9AE6C1"/>
+    <SolidColorBrush x:Key="SuccessTextBrush" Color="#168A5B"/>
 
-    <SolidColorBrush x:Key="ProgressTrackBrush" Color="#E2E8F0"/>
-    <SolidColorBrush x:Key="ProgressIndicatorBrush" Color="#1D4ED8"/>
+    <SolidColorBrush x:Key="ProgressTrackBrush" Color="#F2E2D4"/>
+    <SolidColorBrush x:Key="ProgressIndicatorBrush" Color="#E8735A"/>
 
-    <!-- Banner & Huy hiệu đơn sắc -->
-    <SolidColorBrush x:Key="BannerGradientBrush" Color="#1E293B"/>
-    <SolidColorBrush x:Key="IceBadgeBackgroundBrush" Color="#EFF6FF"/>
-    <SolidColorBrush x:Key="IceBadgeBorderBrush" Color="#BFDBFE"/>
+    <!-- Banner Hoàng Hôn & Dải chuyển sắc -->
+    <LinearGradientBrush x:Key="BannerGradientBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#1B1640" Offset="0"/>
+        <GradientStop Color="#3F2862" Offset="0.35"/>
+        <GradientStop Color="#6A3A72" Offset="0.72"/>
+        <GradientStop Color="#2A1E3C" Offset="1"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="AccentGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#F0A63A" Offset="0"/>
+        <GradientStop Color="#E8735A" Offset="1"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="SunsetBadgeGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FFC46A" Offset="0"/>
+        <GradientStop Color="#FF9A76" Offset="0.5"/>
+        <GradientStop Color="#C85A8A" Offset="1"/>
+    </LinearGradientBrush>
+
+    <!-- Huy hiệu cam đào nhạt -->
+    <SolidColorBrush x:Key="IceBadgeBackgroundBrush" Color="#FFF0E8"/>
+    <SolidColorBrush x:Key="IceBadgeBorderBrush" Color="#F7C8B4"/>
 
 </ResourceDictionary>

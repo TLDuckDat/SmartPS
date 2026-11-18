@@ -7,6 +7,14 @@
              mc:Ignorable="d"
              d:DesignHeight="950" d:DesignWidth="1200">
 
+    <UserControl.Resources>
+        <!-- Nền banner điều khiển: nâu espresso ấm, hợp với nút coral và chữ kem của bảng cổng -->
+        <LinearGradientBrush x:Key="GateControlBannerBrush" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#4A2A22" Offset="0"/>
+            <GradientStop Color="#7A3F33" Offset="1"/>
+        </LinearGradientBrush>
+    </UserControl.Resources>
+
     <Grid Background="{StaticResource AppBackgroundBrush}">
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="Transparent">
         <Grid Margin="20,16">
@@ -33,18 +41,20 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Column="0">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Image Source="{StaticResource Illust_GateControl}" Width="38" Height="38" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <StackPanel>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="{DynamicResource Str_Menu_GateControl}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                             <Border BorderThickness="1" CornerRadius="4" Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
                                 <Border.Style>
                                     <Style TargetType="Border">
-                                        <Setter Property="Background" Value="#FEF2F2"/>
-                                        <Setter Property="BorderBrush" Value="#FECACA"/>
+                                        <Setter Property="Background" Value="#FDE8E8"/>
+                                        <Setter Property="BorderBrush" Value="#F5B4B4"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsOcrEngineAvailable}" Value="True">
-                                                <Setter Property="Background" Value="#EFF6FF"/>
-                                                <Setter Property="BorderBrush" Value="#BFDBFE"/>
+                                                <Setter Property="Background" Value="#FFF0E8"/>
+                                                <Setter Property="BorderBrush" Value="#F7C8B4"/>
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
@@ -53,10 +63,10 @@
                                     <Border Width="6" Height="6" CornerRadius="3" VerticalAlignment="Center" Margin="0,0,5,0">
                                         <Border.Style>
                                             <Style TargetType="Border">
-                                                <Setter Property="Background" Value="#DC2626"/>
+                                                <Setter Property="Background" Value="#C93B4B"/>
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsOcrEngineAvailable}" Value="True">
-                                                        <Setter Property="Background" Value="#16A34A"/>
+                                                        <Setter Property="Background" Value="#168A5B"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -65,10 +75,10 @@
                                     <TextBlock Text="{Binding OcrEngineStatusText}" FontSize="11" FontWeight="SemiBold">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
-                                                <Setter Property="Foreground" Value="#B91C1C"/>
+                                                <Setter Property="Foreground" Value="#C93B4B"/>
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsOcrEngineAvailable}" Value="True">
-                                                        <Setter Property="Foreground" Value="#1D4ED8"/>
+                                                        <Setter Property="Foreground" Value="#E8735A"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -79,11 +89,12 @@
                         </StackPanel>
                         <TextBlock Text="{DynamicResource Str_GateUi_Subtitle}"
                                    FontSize="12" Foreground="{StaticResource TextDimBrush}" Margin="0,3,0,0"/>
+                        </StackPanel>
                     </StackPanel>
 
                     <!-- Thống kê nhanh & Làm mới -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Border Background="#F1F5F9" CornerRadius="4" Padding="12,6" Margin="0,0,10,0">
+                        <Border Background="{StaticResource SurfaceMutedBrush}" CornerRadius="6" Padding="12,6" Margin="0,0,10,0">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="{DynamicResource Str_GateUi_ParkedNow}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
                                 <TextBlock Text="{Binding ActiveSessions.Count}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}"/>
@@ -94,6 +105,7 @@
                                 Height="32" Padding="10,0"
                                 Command="{Binding RefreshActiveSessionsCommand}">
                             <StackPanel Orientation="Horizontal">
+                                <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Refresh}" Width="12" Height="12" Stroke="{StaticResource TextSecondaryBrush}" Margin="0,0,6,0"/>
                                 <TextBlock Text="{DynamicResource Str_GateUi_RefreshLot}" FontSize="11.5"/>
                             </StackPanel>
                         </Button>
@@ -105,9 +117,9 @@
             <!-- ROW 1: THANH ĐIỀU KHIỂN TỰ ĐỘNG HÓA (AUTO GATE) -->
             <!-- ============================================== -->
             <Border Grid.Row="1"
-                    Background="#0F172A"
-                    CornerRadius="6"
-                    BorderBrush="#1E293B"
+                    CornerRadius="8"
+                    Background="{StaticResource GateControlBannerBrush}"
+                    BorderBrush="#7A4A3A"
                     BorderThickness="1"
                     Padding="16,12"
                     Margin="0,0,0,16">
@@ -123,13 +135,13 @@
                         <!-- Nút Toggle Chế độ Tự Động -->
                         <Button Command="{Binding ToggleAutoModeCommand}"
                                 Cursor="Hand" BorderThickness="0" Background="Transparent">
-                            <Border CornerRadius="4" Padding="12,7"
-                                    Background="{Binding AutoModeBadgeBackground}"
-                                    BorderBrush="{Binding AutoModeBadgeBorder}"
+                            <Border CornerRadius="6" Padding="12,7"
+                                    Background="{Binding AutoModeBadgeBackground, FallbackValue=#28204D}"
+                                    BorderBrush="{Binding AutoModeBadgeBorder, FallbackValue=#FFC46A}"
                                     BorderThickness="1">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="⚡" FontSize="14" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="{Binding AutoModeStatusText}" FontSize="12" FontWeight="Bold" Foreground="{Binding AutoModeBadgeForeground}" VerticalAlignment="Center"/>
+                                    <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Bolt}" Width="14" Height="14" Stroke="{Binding AutoModeBadgeForeground, FallbackValue=#FFC46A}" Margin="0,0,6,0"/>
+                                    <TextBlock Text="{Binding AutoModeStatusText, FallbackValue='TỰ ĐỘNG HÓA: TẮT'}" FontSize="12" FontWeight="Bold" Foreground="{Binding AutoModeBadgeForeground, FallbackValue=#FFC46A}" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Border>
                         </Button>
@@ -137,7 +149,7 @@
                         <!-- Tùy chọn: Tự động cho ra cả xe vãng lai -->
                         <CheckBox Content="{DynamicResource Str_GateUi_AutoExitVisitors}"
                                   IsChecked="{Binding IsAutoCheckoutAllVehicles}"
-                                  Foreground="#CBD5E1" FontSize="12"
+                                  Foreground="#FFF4EA" FontSize="12"
                                   VerticalAlignment="Center" Margin="16,0,0,0"/>
                     </StackPanel>
 
@@ -149,20 +161,21 @@
                                 Style="{StaticResource SecondaryButtonStyle}"
                                 ToolTip="{DynamicResource Str_GateUi_CameraWatchTip}">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding CameraWatcherStatusText}" FontSize="12" FontWeight="SemiBold"/>
+                                <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_VideoCamera}" Width="14" Height="14" Stroke="{StaticResource TextSecondaryBrush}" Margin="0,0,6,0"/>
+                                <TextBlock Text="{Binding CameraWatcherStatusText, FallbackValue='Giám sát Camera: Đã dừng'}" FontSize="12" FontWeight="SemiBold"/>
                             </StackPanel>
                         </Button>
 
                         <!-- Nút Chạy Mô Phỏng Tự Động (Auto Demo) -->
                         <Button Command="{Binding RunAutoSimulationCommand}"
                                 Cursor="Hand" Height="34" Padding="14,0"
-                                Background="#1D4ED8" BorderThickness="0">
+                                Background="{StaticResource PrimaryButtonBrush}" BorderThickness="0">
                             <Button.Style>
                                 <Style TargetType="Button">
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="Button">
-                                                <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
                                                     <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
                                                 </Border>
                                             </ControlTemplate>
@@ -170,13 +183,13 @@
                                     </Setter>
                                     <Style.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="#2563EB"/>
+                                            <Setter Property="Background" Value="{StaticResource PrimaryButtonHoverBrush}"/>
                                         </Trigger>
                                     </Style.Triggers>
                                 </Style>
                             </Button.Style>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="🎬" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_PlayDemo}" Width="12" Height="12" Stroke="#FFFFFF" Margin="0,0,6,0"/>
                                 <TextBlock Text="{DynamicResource Str_GateUi_RunDemo}" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
@@ -212,11 +225,11 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Border Background="#1D4ED8" Width="10" Height="10" CornerRadius="2" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <Border Background="#E8735A" Width="10" Height="10" CornerRadius="2" Margin="0,0,8,0" VerticalAlignment="Center"/>
                                     <TextBlock Text="{DynamicResource Str_GateUi_InLaneTitle}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                                 </StackPanel>
                                 <TextBlock Text="{DynamicResource Str_GateUi_InLaneSub}"
-                                           FontSize="11" Foreground="#16A34A" FontWeight="SemiBold" Margin="18,2,0,0"/>
+                                           FontSize="11" Foreground="#168A5B" FontWeight="SemiBold" Margin="18,2,0,0"/>
                             </StackPanel>
 
                             <!-- Badge Trạng thái Barrier Vào -->
@@ -252,7 +265,7 @@
                         </Grid>
 
                         <!-- Khung Camera / Ảnh Xe Vào -->
-                        <Border Height="230" Background="#0F172A" CornerRadius="6" ClipToBounds="True" Margin="0,0,0,12">
+                        <Border Height="230" Background="#1D1840" CornerRadius="8" ClipToBounds="True" Margin="0,0,0,12">
                             <Grid>
                                 <!-- Ảnh xe vào -->
                                 <Image Source="{Binding InAnnotatedImagePath, Converter={StaticResource ImagePathConverter}}"
@@ -284,25 +297,25 @@
                                             </Style.Triggers>
                                         </Style>
                                     </StackPanel.Style>
-                                    <TextBlock Text="📹" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,6"/>
-                                    <TextBlock Text="{DynamicResource Str_GateUi_InCameraTitle}" FontSize="12" Foreground="#94A3B8" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="{DynamicResource Str_GateUi_InCameraHint}" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                                    <Image Source="{StaticResource Illust_CameraScene}" Width="88" Height="66" Stretch="Uniform" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_InCameraTitle}" FontSize="12" Foreground="#C8B6CC" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_InCameraHint}" FontSize="11" Foreground="#968298" HorizontalAlignment="Center" Margin="0,2,0,0"/>
                                 </StackPanel>
 
                                 <!-- Overlay thông số OCR bên góc trên -->
-                                <Border Background="#CC0F172A" CornerRadius="4" Padding="8,4" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8">
+                                <Border Background="#CC1D1840" CornerRadius="6" Padding="8,4" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{DynamicResource Str_GateUi_Ocr}" FontSize="10.5" Foreground="#94A3B8"/>
-                                        <TextBlock Text="{Binding InConfidenceFormatted}" FontSize="10.5" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,8,0"/>
-                                        <TextBlock Text="{DynamicResource Str_GateUi_Time}" FontSize="10.5" Foreground="#94A3B8"/>
-                                        <TextBlock Text="{Binding InProcessingTimeMs, StringFormat={}{0:0.0}ms}" FontSize="10.5" FontWeight="Bold" Foreground="#4ADE80"/>
+                                        <TextBlock Text="{DynamicResource Str_GateUi_Ocr}" FontSize="10.5" Foreground="#C8B6CC"/>
+                                        <TextBlock Text="{Binding InConfidenceFormatted}" FontSize="10.5" FontWeight="Bold" Foreground="#FFC46A" Margin="0,0,8,0"/>
+                                        <TextBlock Text="{DynamicResource Str_GateUi_Time}" FontSize="10.5" Foreground="#C8B6CC"/>
+                                        <TextBlock Text="{Binding InProcessingTimeMs, StringFormat={}{0:0.0}ms}" FontSize="10.5" FontWeight="Bold" Foreground="#3DDC84"/>
                                     </StackPanel>
                                 </Border>
                             </Grid>
                         </Border>
 
                         <!-- Thẻ Nhận Diện Biển Số Làn Vào -->
-                        <Border Background="#F8FAFC" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+                        <Border Background="{StaticResource SurfaceMutedBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="130"/>
@@ -310,10 +323,10 @@
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Crop biển số xe phóng to -->
-                                <Border Grid.Column="0" Height="68" Background="#E2E8F0" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4" Margin="0,0,12,0" ClipToBounds="True">
+                                <Border Grid.Column="0" Height="68" Background="{StaticResource SurfaceStrongBrush}" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Margin="0,0,12,0" ClipToBounds="True">
                                     <Grid>
                                         <Image Source="{Binding InCropImagePath, Converter={StaticResource ImagePathConverter}}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        <TextBlock Text="{DynamicResource Str_GateUi_PlateRegion}" FontSize="10" Foreground="#94A3B8" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Text="{DynamicResource Str_GateUi_PlateRegion}" FontSize="10" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Center" VerticalAlignment="Center">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -332,11 +345,11 @@
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                     <TextBlock Text="{DynamicResource Str_GateUi_InPlateTitle}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextDimBrush}"/>
                                     <TextBox Text="{Binding InPlateText, UpdateSourceTrigger=PropertyChanged}"
-                                             FontSize="20" FontWeight="Bold" Foreground="#1E293B"
-                                             Background="#FEF08A" BorderBrush="#FACC15" BorderThickness="2"
+                                             FontSize="20" FontWeight="Bold" Foreground="#3A2A3C"
+                                             Background="#FFF3D6" BorderBrush="#F0A63A" BorderThickness="2"
                                              Height="38" Padding="10,2" Margin="0,4,0,4"
                                              VerticalContentAlignment="Center" CharacterCasing="Upper"/>
-                                    <TextBlock Text="{Binding InCustomerBadge}" FontSize="11" FontWeight="SemiBold" Foreground="#1D4ED8"/>
+                                    <TextBlock Text="{Binding InCustomerBadge}" FontSize="11" FontWeight="SemiBold" Foreground="#E8735A"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -395,8 +408,8 @@
                             <!-- Ô đỗ đề xuất -->
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="{DynamicResource Str_GateUi_SuggestedSlot}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                <Border Height="34" Background="#F1F5F9" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,0">
-                                    <TextBlock Text="{Binding InSuggestedSlotCode}" FontSize="13" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
+                                <Border Height="34" Background="{StaticResource SurfaceMutedBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,0">
+                                    <TextBlock Text="{Binding InSuggestedSlotCode}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                                 </Border>
                             </StackPanel>
                         </Grid>
@@ -499,7 +512,7 @@
                         </Grid>
 
                         <!-- Khung Camera / Ảnh Xe Ra -->
-                        <Border Height="230" Background="#0F172A" CornerRadius="6" ClipToBounds="True" Margin="0,0,0,12">
+                        <Border Height="230" Background="#1D1840" CornerRadius="8" ClipToBounds="True" Margin="0,0,0,12">
                             <Grid>
                                 <!-- Ảnh xe ra -->
                                 <Image Source="{Binding OutAnnotatedImagePath, Converter={StaticResource ImagePathConverter}}"
@@ -531,25 +544,25 @@
                                             </Style.Triggers>
                                         </Style>
                                     </StackPanel.Style>
-                                    <TextBlock Text="📹" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,6"/>
-                                    <TextBlock Text="{DynamicResource Str_GateUi_OutCameraTitle}" FontSize="12" Foreground="#94A3B8" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="{DynamicResource Str_GateUi_OutCameraHint}" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                                    <Image Source="{StaticResource Illust_CameraScene}" Width="88" Height="66" Stretch="Uniform" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_OutCameraTitle}" FontSize="12" Foreground="#C8B6CC" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="{DynamicResource Str_GateUi_OutCameraHint}" FontSize="11" Foreground="#968298" HorizontalAlignment="Center" Margin="0,2,0,0"/>
                                 </StackPanel>
 
                                 <!-- Overlay thông số OCR bên góc trên -->
-                                <Border Background="#CC0F172A" CornerRadius="4" Padding="8,4" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8">
+                                <Border Background="#CC1D1840" CornerRadius="6" Padding="8,4" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{DynamicResource Str_GateUi_Ocr}" FontSize="10.5" Foreground="#94A3B8"/>
-                                        <TextBlock Text="{Binding OutConfidenceFormatted}" FontSize="10.5" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,8,0"/>
-                                        <TextBlock Text="{DynamicResource Str_GateUi_Time}" FontSize="10.5" Foreground="#94A3B8"/>
-                                        <TextBlock Text="{Binding OutProcessingTimeMs, StringFormat={}{0:0.0}ms}" FontSize="10.5" FontWeight="Bold" Foreground="#4ADE80"/>
+                                        <TextBlock Text="{DynamicResource Str_GateUi_Ocr}" FontSize="10.5" Foreground="#C8B6CC"/>
+                                        <TextBlock Text="{Binding OutConfidenceFormatted}" FontSize="10.5" FontWeight="Bold" Foreground="#FFC46A" Margin="0,0,8,0"/>
+                                        <TextBlock Text="{DynamicResource Str_GateUi_Time}" FontSize="10.5" Foreground="#C8B6CC"/>
+                                        <TextBlock Text="{Binding OutProcessingTimeMs, StringFormat={}{0:0.0}ms}" FontSize="10.5" FontWeight="Bold" Foreground="#3DDC84"/>
                                     </StackPanel>
                                 </Border>
                             </Grid>
                         </Border>
 
                         <!-- Thẻ Nhận Diện Biển Số Làn Ra & So Khớp -->
-                        <Border Background="#F8FAFC" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+                        <Border Background="{StaticResource SurfaceMutedBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="130"/>
@@ -557,10 +570,10 @@
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Crop biển số xe ra -->
-                                <Border Grid.Column="0" Height="68" Background="#E2E8F0" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4" Margin="0,0,12,0" ClipToBounds="True">
+                                <Border Grid.Column="0" Height="68" Background="{StaticResource SurfaceStrongBrush}" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Margin="0,0,12,0" ClipToBounds="True">
                                     <Grid>
                                         <Image Source="{Binding OutCropImagePath, Converter={StaticResource ImagePathConverter}}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        <TextBlock Text="{DynamicResource Str_GateUi_PlateRegion}" FontSize="10" Foreground="#94A3B8" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Text="{DynamicResource Str_GateUi_PlateRegion}" FontSize="10" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Center" VerticalAlignment="Center">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -579,8 +592,8 @@
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                     <TextBlock Text="{DynamicResource Str_GateUi_OutPlateTitle}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextDimBrush}"/>
                                     <TextBox Text="{Binding OutPlateText, UpdateSourceTrigger=PropertyChanged}"
-                                             FontSize="20" FontWeight="Bold" Foreground="#1E293B"
-                                             Background="#FEF08A" BorderBrush="#FACC15" BorderThickness="2"
+                                             FontSize="20" FontWeight="Bold" Foreground="#3A2A3C"
+                                             Background="#FFF3D6" BorderBrush="#F0A63A" BorderThickness="2"
                                              Height="38" Padding="10,2" Margin="0,4,0,4"
                                              VerticalContentAlignment="Center" CharacterCasing="Upper"/>
                                     <TextBlock Text="{Binding PlateMatchStatusText}" FontSize="11.5" FontWeight="Bold">
@@ -595,7 +608,7 @@
                         </Border>
 
                         <!-- Thẻ Đối Chiếu Ảnh Vào vs Ra & Cước Phí -->
-                        <Border Background="#F1F5F9" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,14">
+                        <Border Background="{StaticResource SurfaceMutedBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,14">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -608,10 +621,10 @@
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Ảnh xe lúc vào để đối soát -->
-                                <Border Grid.Column="0" Height="68" Background="#E2E8F0" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4" Margin="0,0,12,0" ClipToBounds="True">
+                                <Border Grid.Column="0" Height="68" Background="{StaticResource SurfaceStrongBrush}" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Margin="0,0,12,0" ClipToBounds="True">
                                     <Grid>
                                         <Image Source="{Binding MatchedSession.CheckInImagePath, Converter={StaticResource ImagePathConverter}}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        <TextBlock Text="{DynamicResource Str_GateUi_EntryPhoto}" FontSize="9.5" Foreground="#64748B" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Text="{DynamicResource Str_GateUi_EntryPhoto}" FontSize="9.5" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Center" VerticalAlignment="Center">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -678,7 +691,7 @@
 
                             <Button Grid.Column="2" Style="{StaticResource PrimaryButtonStyle}"
                                     Height="36" Margin="0"
-                                    Background="#16A34A"
+                                    Background="#168A5B"
                                     Command="{Binding ConfirmCheckOutCommand}">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="{DynamicResource Str_GateUi_ChargeAndOpen}" FontSize="12" FontWeight="Bold"/>
@@ -710,7 +723,7 @@
 
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="{DynamicResource Str_GateUi_ParkedListTitle}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                            <Border Background="#F1F5F9" CornerRadius="10" Padding="8,2" Margin="10,0,0,0">
+                            <Border Background="{StaticResource SurfaceMutedBrush}" CornerRadius="10" Padding="8,2" Margin="10,0,0,0">
                                 <TextBlock FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}">
                                     <Run Text="{Binding ActiveSessions.Count, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_VehicleSuffix}"/>
                                 </TextBlock>
@@ -804,7 +817,7 @@
                                         <Setter Property="VerticalAlignment" Value="Center"/>
                                         <Setter Property="Margin" Value="10,0"/>
                                         <Setter Property="FontWeight" Value="SemiBold"/>
-                                        <Setter Property="Foreground" Value="#0284C7"/>
+                                        <Setter Property="Foreground" Value="#E8735A"/>
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
@@ -814,16 +827,16 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
-                                            <Border CornerRadius="3" Padding="6,2">
+                                            <Border CornerRadius="4" Padding="6,2">
                                                 <Border.Style>
                                                     <Style TargetType="Border">
-                                                        <Setter Property="Background" Value="#F1F5F9"/>
+                                                        <Setter Property="Background" Value="#FDF2E4"/>
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding IsMonthlyPass}" Value="True">
-                                                                <Setter Property="Background" Value="#DCFCE7"/>
+                                                                <Setter Property="Background" Value="#E6F9F0"/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding CustomerType}" Value="Resident">
-                                                                <Setter Property="Background" Value="#DBEAFE"/>
+                                                                <Setter Property="Background" Value="#FFF0E8"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -832,15 +845,15 @@
                                                     <TextBlock.Style>
                                                         <Style TargetType="TextBlock">
                                                             <Setter Property="Text" Value="{DynamicResource Str_GateUi_Visitor}"/>
-                                                            <Setter Property="Foreground" Value="#64748B"/>
+                                                            <Setter Property="Foreground" Value="#7A667C"/>
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding IsMonthlyPass}" Value="True">
                                                                     <Setter Property="Text" Value="{DynamicResource Str_GateUi_MonthlyPass}"/>
-                                                                    <Setter Property="Foreground" Value="#15803D"/>
+                                                                    <Setter Property="Foreground" Value="#168A5B"/>
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding CustomerType}" Value="Resident">
                                                                     <Setter Property="Text" Value="{DynamicResource Str_GateUi_Resident}"/>
-                                                                    <Setter Property="Foreground" Value="#1D4ED8"/>
+                                                                    <Setter Property="Foreground" Value="#E8735A"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -900,8 +913,8 @@
 
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Background="#EFF6FF" CornerRadius="10" Padding="8,6" Margin="0,0,12,0">
-                                <TextBlock Text="📱" FontSize="20"/>
+                            <Border Background="{StaticResource IceBadgeBackgroundBrush}" CornerRadius="10" Padding="8,7" Margin="0,0,12,0">
+                                <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_QrCode}" Width="20" Height="20" Stroke="#E8735A"/>
                             </Border>
                             <StackPanel>
                                 <TextBlock Text="{DynamicResource Str_GateUi_QrTitle}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
@@ -911,10 +924,10 @@
                     </StackPanel>
 
                     <!-- Biển số xe nổi bật -->
-                    <Border Grid.Column="1" Background="#FEF3C7" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="8" Padding="14,6" Margin="0,0,14,0" VerticalAlignment="Center">
+                    <Border Grid.Column="1" Background="#FFF3D6" BorderBrush="#FCD98B" BorderThickness="1" CornerRadius="8" Padding="14,6" Margin="0,0,14,0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="Xe: " FontSize="12.5" FontWeight="SemiBold" Foreground="#92400E"/>
-                            <TextBlock Text="{Binding MatchedSession.LicensePlate}" FontSize="17" FontWeight="Bold" Foreground="#78350F"/>
+                            <TextBlock Text="Xe: " FontSize="12.5" FontWeight="SemiBold" Foreground="#B86B14"/>
+                            <TextBlock Text="{Binding MatchedSession.LicensePlate}" FontSize="17" FontWeight="Bold" Foreground="#3A2A3C"/>
                         </StackPanel>
                     </Border>
 
@@ -922,7 +935,7 @@
                     <Button Grid.Column="2" Command="{Binding CancelVietQrPaymentCommand}"
                             Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="8,4"
                             VerticalAlignment="Center">
-                        <TextBlock Text="✕" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
+                        <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Close}" Width="16" Height="16" Stroke="{StaticResource TextDimBrush}"/>
                     </Button>
                 </Grid>
 
@@ -935,12 +948,12 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Cột Trái: Thẻ mã QR Code lớn, sắc nét -->
-                    <Border Grid.Column="0" Background="#F8FAFC" BorderBrush="#E2E8F0"
+                    <Border Grid.Column="0" Background="{StaticResource SurfaceMutedBrush}" BorderBrush="{StaticResource DividerBrush}"
                             BorderThickness="1" CornerRadius="14" Padding="18,16">
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                             <!-- Badge mạng thanh toán -->
-                            <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="6" Padding="12,5" Margin="0,0,0,12" HorizontalAlignment="Center">
-                                <TextBlock Text="{DynamicResource Str_GateUi_QrNetwork}" FontSize="11.5" FontWeight="Bold" Foreground="#1D4ED8"/>
+                            <Border Background="{StaticResource IceBadgeBackgroundBrush}" BorderBrush="{StaticResource IceBadgeBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12,5" Margin="0,0,0,12" HorizontalAlignment="Center">
+                                <TextBlock Text="{DynamicResource Str_GateUi_QrNetwork}" FontSize="11.5" FontWeight="Bold" Foreground="#E8735A"/>
                             </Border>
 
                             <Border Width="270" Height="270" Background="White" CornerRadius="10"
@@ -960,7 +973,7 @@
                                                 </Style.Triggers>
                                             </Style>
                                         </StackPanel.Style>
-                                        <TextBlock Text="⏳" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                        <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Hourglass}" Width="34" Height="34" Stroke="#E8735A" Margin="0,0,0,8"/>
                                         <TextBlock Text="{DynamicResource Str_GateUi_QrCreating}" FontSize="13" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Grid>
@@ -1025,10 +1038,10 @@
                                         <Grid Margin="0,0,0,4">
                                             <TextBlock Text="{DynamicResource Str_GateUi_QrContent}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                                <TextBlock Text="{Binding VietQrDescription}" FontSize="13.5" FontWeight="Bold" FontFamily="Consolas" Foreground="#1D4ED8" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                <TextBlock Text="{Binding VietQrDescription}" FontSize="13.5" FontWeight="Bold" FontFamily="Consolas" Foreground="#E8735A" VerticalAlignment="Center" Margin="0,0,10,0"/>
                                                 <Button Command="{Binding CopyDescriptionCommand}"
-                                                        Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" Padding="8,3" Cursor="Hand">
-                                                    <TextBlock Text="{DynamicResource Str_GateUi_QrCopy}" FontSize="11" Foreground="#1D4ED8" FontWeight="SemiBold"/>
+                                                        Background="{StaticResource IceBadgeBackgroundBrush}" BorderBrush="{StaticResource IceBadgeBorderBrush}" BorderThickness="1" Padding="8,3" Cursor="Hand">
+                                                    <TextBlock Text="{DynamicResource Str_GateUi_QrCopy}" FontSize="11" Foreground="#E8735A" FontWeight="SemiBold"/>
                                                 </Button>
                                             </StackPanel>
                                         </Grid>
@@ -1036,9 +1049,9 @@
                                 </Border>
 
                                 <!-- Badge Trạng Thái Chờ -->
-                                <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="8" Padding="14,10">
+                                <Border Background="{StaticResource IceBadgeBackgroundBrush}" BorderBrush="{StaticResource IceBadgeBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14,10">
                                     <StackPanel HorizontalAlignment="Center">
-                                        <TextBlock Text="{Binding VietQrStatusText}" FontSize="12.5" FontWeight="SemiBold" Foreground="#1D4ED8" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding VietQrStatusText}" FontSize="12.5" FontWeight="SemiBold" Foreground="#E8735A" HorizontalAlignment="Center"/>
                                         <TextBlock Text="{DynamicResource Str_GateUi_QrWaitingScanDetail}" FontSize="11" FontStyle="Italic" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Center" Margin="0,3,0,0"/>
                                     </StackPanel>
                                 </Border>
@@ -1050,8 +1063,8 @@
                                 Visibility="{Binding IsVietQrPaidSuccess, Converter={StaticResource BoolToVisConverter}}">
                             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                                 <!-- Vòng tròn tích xanh lớn -->
-                                <Border Width="64" Height="64" CornerRadius="32" Background="#22C55E" HorizontalAlignment="Center" Margin="0,0,0,14">
-                                    <TextBlock Text="✓" FontSize="36" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Border Width="64" Height="64" CornerRadius="32" Background="#168A5B" HorizontalAlignment="Center" Margin="0,0,0,14">
+                                    <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Check}" Width="30" Height="30" Stroke="White" StrokeThickness="2.8"/>
                                 </Border>
 
                                 <TextBlock Text="{DynamicResource Str_GateUi_QrSuccessTitle}" FontSize="22" FontWeight="Bold" Foreground="#15803D" HorizontalAlignment="Center"/>
@@ -1078,10 +1091,10 @@
 
                                 <!-- Nút to Hoàn tất & Cho xe tiếp theo -->
                                 <Button Command="{Binding CompletePaymentCommand}"
-                                        Background="#16A34A" Foreground="White" BorderThickness="0"
+                                        Background="#168A5B" Foreground="White" BorderThickness="0"
                                         Height="48" Width="380" Cursor="Hand" HorizontalAlignment="Center">
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="✓" FontSize="18" FontWeight="Bold" Margin="0,0,8,0"/>
+                                        <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Check}" Width="16" Height="16" Stroke="White" StrokeThickness="2.2" Margin="0,0,8,0"/>
                                         <TextBlock Text="{DynamicResource Str_GateUi_QrCompleteBtn}" FontSize="15" FontWeight="Bold"/>
                                     </StackPanel>
                                 </Button>
@@ -1104,10 +1117,10 @@
 
                     <!-- Nút Xác nhận đã nhận tiền -->
                     <Button Grid.Column="1" Command="{Binding ConfirmPaymentReceivedCommand}"
-                            Background="#16A34A" Foreground="White" BorderThickness="0"
+                            Background="#168A5B" Foreground="White" BorderThickness="0"
                             Height="40" Padding="16,0" Margin="0,0,10,0" Cursor="Hand">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="✓" FontSize="14" FontWeight="Bold" Margin="0,0,6,0"/>
+                            <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Check}" Width="14" Height="14" Stroke="White" StrokeThickness="2.2" Margin="0,0,6,0"/>
                             <TextBlock Text="{DynamicResource Str_GateUi_QrConfirmReceived}" FontSize="12.5" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Button>
@@ -1115,14 +1128,14 @@
                     <Button Grid.Column="2" Command="{Binding RefreshVietQrStatusCommand}"
                             Style="{StaticResource SecondaryButtonStyle}" Height="40" Padding="14,0" Margin="0,0,10,0">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="🔄" FontSize="12" Margin="0,0,6,0"/>
+                            <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Refresh}" Width="13" Height="13" Stroke="{StaticResource TextSecondaryBrush}" Margin="0,0,6,0"/>
                             <TextBlock Text="{DynamicResource Str_GateUi_QrCheck}" FontSize="12.5" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Button>
 
                     <Button Grid.Column="3" Command="{Binding CancelVietQrPaymentCommand}"
-                            Background="#F1F5F9" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1"
-                            Height="40" Padding="18,0" Cursor="Hand">
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Height="40" Padding="18,0" Margin="0">
                         <TextBlock Text="{DynamicResource Str_GateUi_QrCancel}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
                     </Button>
                 </Grid>

@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:commonx="clr-namespace:SmartPS.Views.Common"
              mc:Ignorable="d"
              d:DesignHeight="900" d:DesignWidth="1100">
 
@@ -102,12 +103,16 @@
 
                                 <!-- Hàng đáy: Loại xe -->
                                 <Grid Grid.Row="2">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding VehicleIcon}" FontSize="10.5" Foreground="{StaticResource TextDimBrush}" Margin="0,0,4,0"/>
-                                        <TextBlock Text="{Binding VehicleTypeName}" FontSize="10.5" Foreground="{StaticResource TextDimBrush}"/>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Image Width="18" Height="18" Stretch="Uniform" Margin="0,0,5,0"
+                                               Source="{Binding VehicleTypeId, Converter={StaticResource VehicleIllustrationConverter}, ConverterParameter=Illust_Car}"/>
+                                        <TextBlock Text="{Binding VehicleTypeName}" FontSize="10.5" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
                                     </StackPanel>
-                                    <TextBlock Text="🏠" FontSize="11" HorizontalAlignment="Right"
-                                               Visibility="{Binding IsResidentSession, Converter={StaticResource BoolToVisConverter}}"/>
+                                    <Path Style="{StaticResource CustomSvgIconStyle}"
+                                          Data="{StaticResource Icon_ResidentHome}"
+                                          Width="13" Height="13" Stroke="#8E4479" StrokeThickness="1.7"
+                                          HorizontalAlignment="Right"
+                                          Visibility="{Binding IsResidentSession, Converter={StaticResource BoolToVisConverter}}"/>
                                 </Grid>
                             </Grid>
                         </Border>
@@ -134,8 +139,8 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="🗺" FontSize="20" Margin="0,0,8,0"/>
-                            <TextBlock Text="{DynamicResource Str_Menu_ParkingMap}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <Image Source="{StaticResource Illust_ParkingMap}" Width="34" Height="34" Stretch="Uniform" Margin="0,0,10,0"/>
+                            <TextBlock Text="{DynamicResource Str_Menu_ParkingMap}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                         </StackPanel>
                         <TextBlock Text="{DynamicResource Str_MapUi_Subtitle}" 
                                    FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
@@ -150,9 +155,9 @@
                                 Cursor="Hand">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="🔄" FontSize="12" Margin="0,0,6,0"/>
+                                            <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Refresh}" Width="13" Height="13" Stroke="White" Margin="0,0,6,0"/>
                                             <TextBlock Text="{DynamicResource Str_MapUi_Refresh}" FontSize="12" FontWeight="SemiBold" Foreground="White"/>
                                         </StackPanel>
                                     </Border>
@@ -179,8 +184,8 @@
                 <Border Grid.Column="0" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="{DynamicResource Str_MapUi_KpiCapacity}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                            <TextBlock Text="🅿" FontSize="16" HorizontalAlignment="Right"/>
+                            <TextBlock Text="{DynamicResource Str_MapUi_KpiCapacity}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                            <Image Source="{StaticResource Illust_ParkingMap}" Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Right"/>
                         </Grid>
                         <TextBlock FontSize="26" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,8,0,2"><Run Text="{Binding TotalSlots, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_SlotsSuffix}"/></TextBlock>
                         <TextBlock Text="{Binding ZonesSummary}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
@@ -191,11 +196,11 @@
                 <Border Grid.Column="2" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="{DynamicResource Str_MapUi_KpiFree}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                            <TextBlock Text="🟢" FontSize="14" HorizontalAlignment="Right"/>
+                            <TextBlock Text="{DynamicResource Str_MapUi_KpiFree}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                            <Image Source="{StaticResource Illust_Overview}" Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Right"/>
                         </Grid>
-                        <TextBlock FontSize="26" FontWeight="Bold" Foreground="#15803D" Margin="0,8,0,2"><Run Text="{Binding AvailableSlots, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_PositionsSuffix}"/></TextBlock>
-                        <TextBlock Text="{Binding MaintenanceText}" FontSize="11.5" Foreground="#B45309"/>
+                        <TextBlock FontSize="26" FontWeight="Bold" Foreground="#168A5B" Margin="0,8,0,2"><Run Text="{Binding AvailableSlots, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_PositionsSuffix}"/></TextBlock>
+                        <TextBlock Text="{Binding MaintenanceText}" FontSize="11.5" Foreground="#B86B14"/>
                     </StackPanel>
                 </Border>
 
@@ -203,10 +208,10 @@
                 <Border Grid.Column="4" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="{DynamicResource Str_MapUi_KpiOccupied}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                            <TextBlock Text="🔴" FontSize="14" HorizontalAlignment="Right"/>
+                            <TextBlock Text="{DynamicResource Str_MapUi_KpiOccupied}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                            <Image Source="{StaticResource Illust_Car}" Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Right"/>
                         </Grid>
-                        <TextBlock FontSize="26" FontWeight="Bold" Foreground="#B91C1C" Margin="0,8,0,2"><Run Text="{Binding OccupiedSlots, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_VehicleSuffix}"/></TextBlock>
+                        <TextBlock FontSize="26" FontWeight="Bold" Foreground="#C93B4B" Margin="0,8,0,2"><Run Text="{Binding OccupiedSlots, Mode=OneWay}"/><Run Text="{DynamicResource Str_Unit_VehicleSuffix}"/></TextBlock>
                         <TextBlock Text="{DynamicResource Str_MapUi_KpiOccupiedSub}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
                     </StackPanel>
                 </Border>
@@ -215,11 +220,11 @@
                 <Border Grid.Column="6" Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="{DynamicResource Str_MapUi_KpiRate}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
-                            <TextBlock Text="📊" FontSize="16" HorizontalAlignment="Right"/>
+                            <TextBlock Text="{DynamicResource Str_MapUi_KpiRate}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                            <Image Source="{StaticResource Illust_Reports}" Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Right"/>
                         </Grid>
-                        <TextBlock Text="{Binding OccupancyRateFormatted}" FontSize="26" FontWeight="Bold" Foreground="#0284C7" Margin="0,8,0,6"/>
-                        <ProgressBar Value="{Binding OccupancyRate}" Maximum="100" Height="6" Background="#E2E8F0" Foreground="#0284C7" BorderThickness="0"/>
+                        <TextBlock Text="{Binding OccupancyRateFormatted}" FontSize="26" FontWeight="Bold" Foreground="#D9821E" Margin="0,8,0,6"/>
+                        <ProgressBar Value="{Binding OccupancyRate}" Maximum="100" Height="6" Background="{StaticResource ProgressTrackBrush}" Foreground="#D9821E" BorderThickness="0"/>
                     </StackPanel>
                 </Border>
             </Grid>
@@ -239,13 +244,13 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Hộp tìm kiếm biển số / mã ô -->
-                    <Border Grid.Column="0" Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Height="36">
+                    <Border Grid.Column="0" Background="{StaticResource SurfaceMutedBrush}" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="6" Height="36">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="32"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="🔍" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <Path Grid.Column="0" Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Search}" Width="14" Height="14" Stroke="{StaticResource TextDimBrush}"/>
                             <TextBox Grid.Column="1"
                                      Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}"
                                      BorderThickness="0"
@@ -294,18 +299,18 @@
 
                                     <!-- Tên khu, nhãn đối tượng, số chỗ trống -->
                                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="🅿" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_ParkingSign}" Width="16" Height="16" Stroke="#E8735A" Margin="0,0,8,0"/>
                                         <TextBlock Text="{Binding ZoneName}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                                        <Border CornerRadius="3" Padding="8,2" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <Border CornerRadius="4" Padding="8,2" Margin="12,0,0,0" VerticalAlignment="Center">
                                             <Border.Style>
                                                 <Style TargetType="Border">
-                                                    <Setter Property="Background" Value="#E2E8F0"/>
+                                                    <Setter Property="Background" Value="{StaticResource SurfaceStrongBrush}"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsResidentOnly}" Value="True">
-                                                            <Setter Property="Background" Value="#DCFCE7"/>
+                                                            <Setter Property="Background" Value="#E6F9F0"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding IsVisitorOnly}" Value="True">
-                                                            <Setter Property="Background" Value="#DBEAFE"/>
+                                                            <Setter Property="Background" Value="#FFF0E8"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -313,7 +318,7 @@
                                             <TextBlock Text="{Binding AudienceText}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
                                         </Border>
                                         <TextBlock Text="{Binding SummaryText}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="12,0,0,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="{Binding MaintenanceText}" FontSize="12" FontWeight="SemiBold" Foreground="#B45309" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding MaintenanceText}" FontSize="12" FontWeight="SemiBold" Foreground="#B86B14" Margin="12,0,0,0" VerticalAlignment="Center"/>
                                     </StackPanel>
 
                                     <!-- Đổi đối tượng của khu (cần Parking.Configure) -->
@@ -330,7 +335,8 @@
                                 <ItemsControl ItemsSource="{Binding Slots}" ItemTemplate="{StaticResource SlotCardTemplate}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
-                                            <WrapPanel ItemWidth="194" ItemHeight="112" Margin="0"/>
+                                            <WrapPanel ItemWidth="194" ItemHeight="112" Margin="0"
+                                                       commonx:WrapPanelFill.MinItemWidth="194"/>
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
                                 </ItemsControl>
@@ -350,7 +356,7 @@
                 <StackPanel>
                     <Grid Margin="0,0,0,14">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="🔍" FontSize="16" Margin="0,0,8,0"/>
+                            <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Search}" Width="16" Height="16" Stroke="#E8735A" Margin="0,0,8,0"/>
                             <TextBlock Text="{DynamicResource Str_MapUi_DetailTitle}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
@@ -368,7 +374,7 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Cột 1: Thông tin phân khu & loại ô -->
-                        <Border Grid.Column="0" Background="#F8FAFC" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="4" Padding="14">
+                        <Border Grid.Column="0" Background="{StaticResource SurfaceMutedBrush}" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="6" Padding="14">
                             <StackPanel>
                                 <TextBlock Text="{DynamicResource Str_MapUi_ZoneAndVehicle}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" Margin="0,0,0,6"/>
                                 <TextBlock Text="{Binding ZoneName}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,2"/>
@@ -377,7 +383,7 @@
                         </Border>
 
                         <!-- Cột 2: Trạng thái & Biển số -->
-                        <Border Grid.Column="2" Background="#F8FAFC" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="4" Padding="14">
+                        <Border Grid.Column="2" Background="{StaticResource SurfaceMutedBrush}" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="6" Padding="14">
                             <StackPanel>
                                 <TextBlock Text="{DynamicResource Str_MapUi_CurrentState}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" Margin="0,0,0,6"/>
                                 <TextBlock Text="{Binding StatusBadgeText}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource PrimaryButtonBrush}" Margin="0,0,0,2"/>
@@ -386,7 +392,7 @@
                         </Border>
 
                         <!-- Cột 3: Phiên đỗ & Thời gian -->
-                        <Border Grid.Column="4" Background="#F8FAFC" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="4" Padding="14">
+                        <Border Grid.Column="4" Background="{StaticResource SurfaceMutedBrush}" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="6" Padding="14">
                             <StackPanel>
                                 <TextBlock Text="{DynamicResource Str_MapUi_SessionAndTime}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" Margin="0,0,0,6"/>
                                 <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,2"><Run Text="{DynamicResource Str_MapUi_TicketPrefix}"/><Run Text="{Binding TicketCode, Mode=OneWay, TargetNullValue='--'}"/></TextBlock>

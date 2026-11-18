@@ -23,8 +23,8 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="🏷️" FontSize="20" Margin="0,0,8,0"/>
-                            <TextBlock Text="{DynamicResource Str_Menu_Pricing}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <Image Source="{StaticResource Illust_Pricing}" Width="34" Height="34" Stretch="Uniform" Margin="0,0,10,0"/>
+                            <TextBlock Text="{DynamicResource Str_Menu_Pricing}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                         </StackPanel>
                         <TextBlock Text="{DynamicResource Str_PriceUi_Subtitle}" 
                                    FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
@@ -50,7 +50,10 @@
                             <StackPanel>
                                 <Grid Margin="0,0,0,12">
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding VehicleIcon}" FontSize="24" Margin="0,0,8,0"/>
+                                        <Border Background="{StaticResource IceBadgeBackgroundBrush}" BorderBrush="{StaticResource IceBadgeBorderBrush}" BorderThickness="1" CornerRadius="10" Width="44" Height="44" Padding="4" Margin="0,0,12,0">
+                                            <Image Stretch="Uniform"
+                                                   Source="{Binding VehicleIcon, Converter={StaticResource VehicleIllustrationConverter}, ConverterParameter=Illust_Truck}"/>
+                                        </Border>
                                         <TextBlock Text="{Binding VehicleTypeName}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Grid>

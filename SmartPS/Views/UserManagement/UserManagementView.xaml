@@ -9,14 +9,31 @@
 
     <Grid Background="{StaticResource AppBackgroundBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/> <!-- Row 0: 4 Thẻ Thống Kê KPI -->
-            <RowDefinition Height="*"/>    <!-- Row 1: Danh Sách Tài Khoản & Panel Tạo Tài Khoản -->
+            <RowDefinition Height="Auto"/> <!-- Row 0: Header Phân hệ -->
+            <RowDefinition Height="Auto"/> <!-- Row 1: 4 Thẻ Thống Kê KPI -->
+            <RowDefinition Height="*"/>    <!-- Row 2: Danh Sách Tài Khoản & Panel Tạo Tài Khoản -->
         </Grid.RowDefinitions>
 
         <!-- ============================================== -->
-        <!-- ROW 0: 4 THẺ THỐNG KÊ (KPI) PHẲNG CHUẨN LOB   -->
+        <!-- ROW 0: HEADER PHÂN HỆ QUẢN LÝ NGƯỜI DÙNG       -->
         <!-- ============================================== -->
-        <Grid Grid.Row="0" Margin="16,14,16,12">
+        <Border Grid.Row="0" Margin="16,14,16,0" Padding="20,14"
+                Background="{StaticResource CardBackgroundBrush}"
+                BorderBrush="{StaticResource AppBorderBrush}"
+                BorderThickness="1" CornerRadius="6">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Image Source="{StaticResource Illust_UserManagement}" Width="34" Height="34" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{DynamicResource Str_Menu_UserManagement}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{DynamicResource Str_Dash_TableSubtitle}" FontSize="12" Foreground="{StaticResource TextDimBrush}" Margin="0,2,0,0"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- ============================================== -->
+        <!-- ROW 1: 4 THẺ THỐNG KÊ (KPI) PHẲNG CHUẨN LOB   -->
+        <!-- ============================================== -->
+        <Grid Grid.Row="1" Margin="16,12,16,12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1*"/>
                 <ColumnDefinition Width="1*"/>
@@ -30,13 +47,15 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="4"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Grid.Column="0" Background="{StaticResource PrimaryButtonBrush}" CornerRadius="4,0,0,4"/>
-                    <StackPanel Grid.Column="1" Margin="14,12,14,12">
+                    <StackPanel Grid.Column="1" Margin="14,12,8,12">
                         <TextBlock Text="{DynamicResource Str_Dash_Kpi_Total}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
                         <TextBlock Text="{Binding TotalUsers}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,2"/>
                         <TextBlock Text="{DynamicResource Str_Dash_Kpi_TotalSub}" FontSize="11.5" Foreground="{StaticResource TextDimBrush}"/>
                     </StackPanel>
+                    <Image Grid.Column="2" Source="{StaticResource Illust_UserManagement}" Width="30" Height="30" Stretch="Uniform" VerticalAlignment="Top" Margin="0,12,14,0"/>
                 </Grid>
             </Border>
 
@@ -46,13 +65,15 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="4"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Grid.Column="0" Background="{StaticResource ErrorTextBrush}" CornerRadius="4,0,0,4"/>
-                    <StackPanel Grid.Column="1" Margin="14,12,14,12">
+                    <StackPanel Grid.Column="1" Margin="14,12,8,12">
                         <TextBlock Text="{DynamicResource Str_Dash_Kpi_Admin}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
                         <TextBlock Text="{Binding AdminCount}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,2"/>
                         <TextBlock Text="{DynamicResource Str_Dash_Kpi_AdminSub}" FontSize="11.5" Foreground="{StaticResource TextDimBrush}"/>
                     </StackPanel>
+                    <Image Grid.Column="2" Source="{StaticResource Illust_RolePermissions}" Width="30" Height="30" Stretch="Uniform" VerticalAlignment="Top" Margin="0,12,14,0"/>
                 </Grid>
             </Border>
 
@@ -62,13 +83,15 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="4"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Grid.Column="0" Background="{StaticResource WarningTextBrush}" CornerRadius="4,0,0,4"/>
-                    <StackPanel Grid.Column="1" Margin="14,12,14,12">
+                    <StackPanel Grid.Column="1" Margin="14,12,8,12">
                         <TextBlock Text="{DynamicResource Str_Dash_Kpi_Manager}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
                         <TextBlock Text="{Binding ManagerCount}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,2"/>
                         <TextBlock Text="{DynamicResource Str_Dash_Kpi_ManagerSub}" FontSize="11.5" Foreground="{StaticResource TextDimBrush}"/>
                     </StackPanel>
+                    <Image Grid.Column="2" Source="{StaticResource Illust_Customers}" Width="30" Height="30" Stretch="Uniform" VerticalAlignment="Top" Margin="0,12,14,0"/>
                 </Grid>
             </Border>
 
@@ -78,21 +101,23 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="4"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Grid.Column="0" Background="{StaticResource SuccessTextBrush}" CornerRadius="4,0,0,4"/>
-                    <StackPanel Grid.Column="1" Margin="14,12,14,12">
+                    <StackPanel Grid.Column="1" Margin="14,12,8,12">
                         <TextBlock Text="{DynamicResource Str_Dash_Kpi_Staff}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
                         <TextBlock Text="{Binding StaffCount}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,2"/>
                         <TextBlock Text="{DynamicResource Str_Dash_Kpi_StaffSub}" FontSize="11.5" Foreground="{StaticResource TextDimBrush}"/>
                     </StackPanel>
+                    <Image Grid.Column="2" Source="{StaticResource Illust_Shifts}" Width="30" Height="30" Stretch="Uniform" VerticalAlignment="Top" Margin="0,12,14,0"/>
                 </Grid>
             </Border>
         </Grid>
 
         <!-- ============================================== -->
-        <!-- ROW 1: BẢNG TÀI KHOẢN & FORM TẠO TÀI KHOẢN      -->
+        <!-- ROW 2: BẢNG TÀI KHOẢN & FORM TẠO TÀI KHOẢN      -->
         <!-- ============================================== -->
-        <Grid Grid.Row="1" Margin="16,0,16,16">
+        <Grid Grid.Row="2" Margin="16,0,16,16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" MinWidth="450"/>
                 <ColumnDefinition Width="Auto"/>
@@ -143,12 +168,10 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <Path Grid.Column="0"
-                                      Data="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                                      Style="{StaticResource CustomSvgIconStyle}"
+                                      Data="{StaticResource Icon_Search}"
                                       Width="13" Height="13"
-                                      Stretch="Uniform"
-                                      Fill="{StaticResource TextMutedBrush}"
-                                      HorizontalAlignment="Center"
-                                      VerticalAlignment="Center"/>
+                                      Stroke="{StaticResource TextMutedBrush}"/>
                                 <TextBox Grid.Column="1"
                                          x:Name="SearchTextBox"
                                          Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
@@ -193,7 +216,7 @@
                                     Height="32" Padding="12,0" Margin="8,0,0,0"
                                     Command="{Binding ToggleCreatePanelCommand}">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Path Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" Width="12" Height="12" Stretch="Uniform" Fill="#FFFFFF" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Plus}" Width="12" Height="12" Stroke="#FFFFFF" StrokeThickness="2" Margin="0,0,6,0"/>
                                     <TextBlock Text="{DynamicResource Str_Dash_Btn_AddUser}" FontSize="11.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
@@ -287,7 +310,7 @@
                                 <Setter Property="FontSize" Value="12"/>
                                 <Style.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#F8FAFC"/>
+                                        <Setter Property="Background" Value="{StaticResource SurfaceMutedBrush}"/>
                                     </Trigger>
                                     <Trigger Property="IsSelected" Value="True">
                                         <Setter Property="Background" Value="{StaticResource IceBadgeBackgroundBrush}"/>
@@ -340,7 +363,7 @@
                             <!-- Cột Vai Trò (Canh giữa) -->
                             <DataGridTextColumn Header=""
                                                 Binding="{Binding Role.RoleName, Converter={StaticResource RoleLocalizedConverter}}"
-                                                Width="120"
+                                                Width="*" MinWidth="170"
                                                 HeaderStyle="{StaticResource CenterHeaderStyle}"
                                                 ElementStyle="{StaticResource CenterTextStyle}">
                                 <DataGridTextColumn.HeaderTemplate>
@@ -470,7 +493,7 @@
                                     Padding="0"
                                     Command="{Binding ToggleCreatePanelCommand}"
                                     ToolTip="{DynamicResource Str_Tooltip_ClosePanel}">
-                                <TextBlock Text="✕" FontSize="11" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Close}" Width="10" Height="10" Stroke="{StaticResource TextMutedBrush}"/>
                             </Button>
                         </Grid>
 

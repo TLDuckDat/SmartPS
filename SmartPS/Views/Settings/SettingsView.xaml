@@ -60,7 +60,10 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
-                        <TextBlock Text="{DynamicResource Str_Menu_Settings}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Image Source="{StaticResource Illust_Settings}" Width="34" Height="34" Stretch="Uniform" Margin="0,0,10,0"/>
+                            <TextBlock Text="{DynamicResource Str_Menu_Settings}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                        </StackPanel>
                         <TextBlock Text="{DynamicResource Str_SetUi_Subtitle}" FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
                     <Button Grid.Column="1" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Center" Margin="16,0,0,0"

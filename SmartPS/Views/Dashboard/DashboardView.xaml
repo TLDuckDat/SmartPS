@@ -98,17 +98,18 @@
             <vAudit:AuditLogView/>
         </DataTemplate>
 
-        <!-- Biểu tượng của mục menu (x:Shared=False: mỗi mục một bản riêng) -->
-        <Path x:Key="NavMenuIcon" x:Shared="False"
-              Data="{Binding IconData}" Width="14" Height="14" Stretch="Uniform"
-              Fill="{StaticResource TextSecondaryBrush}"/>
+        <!-- Hình minh họa SVG nhiều lớp của mục menu (x:Shared=False: mỗi mục một bản riêng) -->
+        <Image x:Key="NavMenuIcon" x:Shared="False"
+               Style="{StaticResource NavModuleIllustrationStyle}"
+               Width="18" Height="18" Stretch="Uniform"
+               RenderOptions.BitmapScalingMode="HighQuality"/>
 
         <!-- Mục menu của một phân hệ: ẩn khi không có quyền, hiện phím tắt Ctrl+n -->
         <Style x:Key="NavMenuItemStyle" TargetType="MenuItem">
             <Setter Property="Header" Value="{Binding Title}"/>
             <Setter Property="Command" Value="{Binding OpenCommand}"/>
             <Setter Property="InputGestureText" Value="{Binding ShortcutText}"/>
-            <Setter Property="Icon" Value="{StaticResource NavMenuIcon}"/>
+            <Setter Property="Icon" Value="{DynamicResource NavMenuIcon}"/>
             <Setter Property="Visibility" Value="{Binding IsVisible, Converter={StaticResource BoolToVisConverter}}"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
@@ -122,7 +123,12 @@
             <Setter Property="Width" Value="16"/>
             <Setter Property="Height" Value="16"/>
             <Setter Property="Stretch" Value="Uniform"/>
-            <Setter Property="Fill" Value="{StaticResource TextMutedBrush}"/>
+            <Setter Property="Fill" Value="Transparent"/>
+            <Setter Property="Stroke" Value="{StaticResource TextSecondaryBrush}"/>
+            <Setter Property="StrokeThickness" Value="1.75"/>
+            <Setter Property="StrokeStartLineCap" Value="Round"/>
+            <Setter Property="StrokeEndLineCap" Value="Round"/>
+            <Setter Property="StrokeLineJoin" Value="Round"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
@@ -168,10 +174,10 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#F1F5F9"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource SurfaceMutedBrush}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#E2E8F0"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource SurfaceStrongBrush}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="Bd" Property="Opacity" Value="0.45"/>
@@ -195,7 +201,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#E2E8F0"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource SurfaceStrongBrush}"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter TargetName="Bd" Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
@@ -222,7 +228,10 @@
                             </Grid.RowDefinitions>
                             <!-- Dải thẻ nền xám; thẻ đang chọn đè 1px lên viền vùng nội dung -->
                             <Border Background="{StaticResource AppBackgroundBrush}" Padding="10,8,10,0" Panel.ZIndex="1">
-                                <TabPanel x:Name="HeaderPanel" IsItemsHost="True" Margin="0,0,0,-1"/>
+                                <!-- Một dòng duy nhất: thẻ tràn sang phải thì cuộn ngang, không xuống dòng -->
+                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Focusable="False">
+                                    <TabPanel x:Name="HeaderPanel" IsItemsHost="True" Margin="0,0,0,-1"/>
+                                </ScrollViewer>
                             </Border>
                             <Border Grid.Row="1" Background="{StaticResource CardBackgroundBrush}"
                                     BorderBrush="{StaticResource DividerBrush}" BorderThickness="0,1,0,0">
@@ -244,12 +253,17 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Bd" Background="Transparent" CornerRadius="4">
-                            <Path Width="8" Height="8" Stretch="Uniform" Fill="{StaticResource TextDimBrush}"
-                                  Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                            <Path Width="8" Height="8" Stretch="Uniform"
+                                  Fill="Transparent"
+                                  Stroke="{StaticResource TextDimBrush}"
+                                  StrokeThickness="1.8"
+                                  StrokeStartLineCap="Round"
+                                  StrokeEndLineCap="Round"
+                                  Data="{StaticResource Icon_Close}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#CBD5E1"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource SurfaceStrongBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -264,9 +278,10 @@
         <!--    trái: menu chữ + nút điều hướng nghiệp vụ; phải: thao tác hệ thống -->
         <!-- ============================================================ -->
         <Border DockPanel.Dock="Top" Background="{StaticResource CardBackgroundBrush}"
-                BorderBrush="{StaticResource DividerBrush}" BorderThickness="0,0,0,1" Padding="6,4">
+                BorderBrush="{StaticResource DividerBrush}" BorderThickness="0,0,0,1" Padding="10,4">
             <Grid>
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
@@ -274,7 +289,13 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <Menu Grid.Column="0" Background="Transparent" VerticalAlignment="Center" FontSize="12.5">
+                <!-- Logo hoạt hình Capybara & Tên dự án -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="2,0,10,0">
+                    <Image Source="{StaticResource Illust_CapybaraLogo}" Width="28" Height="28" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                    <TextBlock Text="SmartPS" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextBrandBrush}" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <Menu Grid.Column="1" Background="Transparent" VerticalAlignment="Center" FontSize="12.5">
                     <MenuItem Header="{DynamicResource Str_MainMenu_System}">
                         <MenuItem Header="{DynamicResource Str_MainMenu_Language}">
                             <MenuItem Header="{DynamicResource Str_Lang_VI}" IsCheckable="False" IsChecked="{Binding IsLanguageVi, Mode=OneWay}"
@@ -318,14 +339,14 @@
                     </MenuItem>
                 </Menu>
 
-                <!-- Vạch ngăn giữa menu chữ và nút điều hướng -->
-                <Border Grid.Column="1" Width="1" Height="22" Margin="8,0" Background="{StaticResource DividerBrush}" VerticalAlignment="Center"/>
+                <!-- Vạch ngăn giữa menu chữ và thanh minh họa phân hệ -->
+                <Border Grid.Column="2" Width="1" Height="22" Margin="8,0" Background="{StaticResource DividerBrush}" VerticalAlignment="Center"/>
 
-                <!-- Nút điều hướng nghiệp vụ (chỉ icon; tên và phím tắt nằm trong tooltip), ẩn theo quyền -->
-                <ToolBar Grid.Column="2" Style="{StaticResource FlatToolBarStyle}" ItemsSource="{Binding ToolbarItems}">
+                <!-- Thanh truy cập nhanh các phân hệ bằng hình minh họa SVG tự vẽ nhiều màu -->
+                <ToolBar Grid.Column="3" Style="{StaticResource FlatToolBarStyle}" ItemsSource="{Binding ToolbarItems}">
                     <ToolBar.ItemTemplate>
                         <DataTemplate>
-                            <Button Style="{StaticResource FlatToolButtonStyle}" Padding="9,7"
+                            <Button Style="{StaticResource FlatToolButtonStyle}" Padding="7,5"
                                     Command="{Binding OpenCommand}"
                                     Visibility="{Binding IsVisible, Converter={StaticResource BoolToVisConverter}}">
                                 <Button.ToolTip>
@@ -334,33 +355,17 @@
                                         <Run Text="{Binding ShortcutText, Mode=OneWay}" Foreground="{StaticResource TextDimBrush}"/>
                                     </TextBlock>
                                 </Button.ToolTip>
-                                <Path Data="{Binding IconData}" Style="{StaticResource ToolbarIconStyle}"/>
+                                <Image Style="{StaticResource NavModuleIllustrationStyle}" Width="20" Height="20" Stretch="Uniform" VerticalAlignment="Center"/>
                             </Button>
                         </DataTemplate>
                     </ToolBar.ItemTemplate>
                 </ToolBar>
 
-                <!-- Thao tác hệ thống, tách hẳn sang phải -->
-                <ToolBar Grid.Column="4" Style="{StaticResource FlatToolBarStyle}">
-                    <Button Style="{StaticResource FlatToolButtonStyle}" Command="{Binding RefreshCommand}" ToolTip="{DynamicResource Str_Tooltip_Refresh}">
-                        <StackPanel Orientation="Horizontal">
-                            <Path Style="{StaticResource ToolbarIconStyle}"
-                                  Data="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-                            <TextBlock Text="{DynamicResource Str_Dash_Btn_Refresh}" Style="{StaticResource ToolLabelStyle}"/>
-                        </StackPanel>
-                    </Button>
-                    <Button Style="{StaticResource FlatToolButtonStyle}" Command="{Binding CloseTabCommand}" ToolTip="Ctrl+W">
-                        <StackPanel Orientation="Horizontal">
-                            <Path Style="{StaticResource ToolbarIconStyle}"
-                                  Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                            <TextBlock Text="{DynamicResource Str_MainMenu_CloseTab}" Style="{StaticResource ToolLabelStyle}"/>
-                        </StackPanel>
-                    </Button>
-                    <Border Width="1" Height="22" Margin="6,0" Background="{StaticResource DividerBrush}" VerticalAlignment="Center"/>
+                <!-- Thao tác đăng xuất bên phải (đã lược bỏ Làm mới và Đóng thẻ vì đã có trong Hệ thống + phím tắt F5/Ctrl+W) -->
+                <ToolBar Grid.Column="5" Style="{StaticResource FlatToolBarStyle}">
                     <Button Style="{StaticResource FlatToolButtonStyle}" Command="{Binding LogoutCommand}" ToolTip="{DynamicResource Str_Tooltip_Logout}">
                         <StackPanel Orientation="Horizontal">
-                            <Path Style="{StaticResource ToolbarIconStyle}" Fill="{StaticResource ErrorTextBrush}"
-                                  Data="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.1 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/>
+                            <Path Style="{StaticResource ToolbarIconStyle}" Stroke="{StaticResource ErrorTextBrush}" Data="{StaticResource Icon_Logout}"/>
                             <TextBlock Text="{DynamicResource Str_Dash_Btn_Logout}" Style="{StaticResource ToolLabelStyle}"/>
                         </StackPanel>
                     </Button>
@@ -371,7 +376,7 @@
         <!-- ============================================== -->
         <!-- 2. THANH TRẠNG THÁI (StatusStrip): chữ nhạt, không tranh chấp với nội dung -->
         <!-- ============================================== -->
-        <StatusBar DockPanel.Dock="Bottom" Background="#F8FAFC" Foreground="{StaticResource TextDimBrush}"
+        <StatusBar DockPanel.Dock="Bottom" Background="{StaticResource SurfaceMutedBrush}" Foreground="{StaticResource TextDimBrush}"
                    BorderBrush="{StaticResource DividerBrush}" BorderThickness="0,1,0,0" FontSize="11.5" Padding="6,1">
             <StatusBar.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -424,8 +429,8 @@
                                               Command="{Binding DataContext.CloseTabCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                               CommandParameter="{Binding}"/>
                             </StackPanel.InputBindings>
-                            <Path Data="{Binding Item.IconData}" Width="13" Height="13" Stretch="Uniform"
-                                  Fill="{StaticResource TextBrandBrush}" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                            <Image Style="{StaticResource TabModuleIllustrationStyle}" Width="16" Height="16" Stretch="Uniform"
+                                   Margin="0,0,7,0" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding Item.Title}" VerticalAlignment="Center"/>
                             <Button Style="{StaticResource TabCloseButtonStyle}"
                                     ToolTip="{DynamicResource Str_MainMenu_CloseTab}"
@@ -443,11 +448,15 @@
                 </TabControl.ContentTemplate>
             </TabControl>
 
-            <!-- Chưa mở thẻ nào -->
-            <TextBlock Text="{DynamicResource Str_Main_NoTabHint}"
-                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                       FontSize="14" Foreground="{StaticResource TextDimBrush}"
-                       Visibility="{Binding HasOpenTabs, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+            <!-- Chưa mở thẻ nào: hiển thị mascot hoạt hình Capybara -->
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Visibility="{Binding HasOpenTabs, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                <Image Source="{StaticResource Illust_CapybaraLogo}" Width="112" Height="112" Stretch="Uniform"
+                       HorizontalAlignment="Center" Margin="0,0,0,14" Opacity="0.92"/>
+                <TextBlock Text="{DynamicResource Str_Main_NoTabHint}"
+                           HorizontalAlignment="Center"
+                           FontSize="14" FontWeight="Medium" Foreground="{StaticResource TextDimBrush}"/>
+            </StackPanel>
         </Grid>
     </DockPanel>
 </Window>

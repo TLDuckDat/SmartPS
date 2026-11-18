@@ -46,12 +46,12 @@ public partial class NotificationDialog : Window
 {
     public NotificationResult Result { get; private set; } = NotificationResult.Cancel;
 
-    // Bộ Vector SVG Icon sắc nét chuẩn độ phân giải cao
-    private const string IconDataCheckmark = "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z";
-    private const string IconDataInfo = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z";
-    private const string IconDataWarning = "M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z";
-    private const string IconDataError = "M12 2C6.47 2 2 6.48 2 12s4.47 10 10 10 10-4.48 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z";
-    private const string IconDataQuestion = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z";
+    // Bộ Vector SVG Icon tự vẽ nét mảnh (đồng bộ với Resources/Icons.xaml)
+    private const string IconDataCheckmark = "M4.5,12.5 L9.5,17.5 L19.5,6.5";
+    private const string IconDataInfo = "M12,21 A9,9 0 1,0 12,3 A9,9 0 1,0 12,21 Z M12,16 V11.5 M12,8.2 H12.01";
+    private const string IconDataWarning = "M10.3,4.8 L3.4,17 A2,2 0 0,0 5.1,20 H18.9 A2,2 0 0,0 20.6,17 L13.7,4.8 A2,2 0 0,0 10.3,4.8 Z M12,9.5 V13.5 M12,16.8 H12.01";
+    private const string IconDataError = "M12,21 A9,9 0 1,0 12,3 A9,9 0 1,0 12,21 Z M9.2,9.2 L14.8,14.8 M14.8,9.2 L9.2,14.8";
+    private const string IconDataQuestion = "M12,21 A9,9 0 1,0 12,3 A9,9 0 1,0 12,21 Z M9.8,9.2 A2.4,2.4 0 0,1 14.4,10.2 C14.4,11.8 12,12.2 12,14 M12,17.2 H12.01";
 
     private readonly NotificationButtons _buttons;
 
@@ -90,37 +90,37 @@ public partial class NotificationDialog : Window
         switch (type)
         {
             case NotificationType.Success:
-                IconBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(0xDC, 0xFC, 0xE7));
-                IconBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0x86, 0xEF, 0xAC));
+                IconBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(0xE6, 0xF9, 0xF0));
+                IconBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0x9A, 0xE6, 0xC1));
                 IconPath.Data = Geometry.Parse(IconDataCheckmark);
-                IconPath.Fill = new SolidColorBrush(Color.FromRgb(0x15, 0x80, 0x3D));
-                PrimaryButton.Background = new SolidColorBrush(Color.FromRgb(0x15, 0x80, 0x3D));
+                IconPath.Stroke = new SolidColorBrush(Color.FromRgb(0x16, 0x8A, 0x5B));
+                PrimaryButton.Background = new SolidColorBrush(Color.FromRgb(0x16, 0x8A, 0x5B));
                 break;
 
             case NotificationType.Warning:
-                IconBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(0xFE, 0xF3, 0xC7));
-                IconBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0xFD, 0xE6, 0x8A));
+                IconBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(0xFF, 0xF3, 0xD6));
+                IconBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0xFC, 0xD9, 0x8B));
                 IconPath.Data = Geometry.Parse(IconDataWarning);
-                IconPath.Fill = new SolidColorBrush(Color.FromRgb(0xB4, 0x53, 0x09));
-                PrimaryButton.Background = new SolidColorBrush(Color.FromRgb(0xB4, 0x53, 0x09));
+                IconPath.Stroke = new SolidColorBrush(Color.FromRgb(0xB8, 0x6B, 0x14));
+                PrimaryButton.Background = new SolidColorBrush(Color.FromRgb(0xB8, 0x6B, 0x14));
                 break;
 
             case NotificationType.Error:
-                IconBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(0xFE, 0xE2, 0xE2));
-                IconBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0xFC, 0xA5, 0xA5));
+                IconBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(0xFD, 0xE8, 0xE8));
+                IconBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0xF5, 0xB4, 0xB4));
                 IconPath.Data = Geometry.Parse(IconDataError);
-                IconPath.Fill = new SolidColorBrush(Color.FromRgb(0xB9, 0x1C, 0x1C));
-                PrimaryButton.Background = new SolidColorBrush(Color.FromRgb(0xB9, 0x1C, 0x1C));
+                IconPath.Stroke = new SolidColorBrush(Color.FromRgb(0xC9, 0x3B, 0x4B));
+                PrimaryButton.Background = new SolidColorBrush(Color.FromRgb(0xC9, 0x3B, 0x4B));
                 break;
 
             case NotificationType.Question:
             case NotificationType.Information:
             default:
-                IconBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(0xEF, 0xF6, 0xFF));
-                IconBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0xBF, 0xDB, 0xFE));
+                IconBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(0xFF, 0xF0, 0xE8));
+                IconBadgeBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0xF7, 0xC8, 0xB4));
                 IconPath.Data = Geometry.Parse(type == NotificationType.Question ? IconDataQuestion : IconDataInfo);
-                IconPath.Fill = new SolidColorBrush(Color.FromRgb(0x1D, 0x4E, 0xD8));
-                PrimaryButton.Background = new SolidColorBrush(Color.FromRgb(0x1D, 0x4E, 0xD8));
+                IconPath.Stroke = new SolidColorBrush(Color.FromRgb(0xE8, 0x73, 0x5A));
+                PrimaryButton.Background = new SolidColorBrush(Color.FromRgb(0xE8, 0x73, 0x5A));
                 break;
         }
     }

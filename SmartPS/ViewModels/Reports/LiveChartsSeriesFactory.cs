@@ -15,29 +15,29 @@ public static class LiveChartsSeriesFactory
 
     private static readonly Dictionary<string, SKColor> SeriesColors = new(StringComparer.Ordinal)
     {
-        [ReportTextKeys.SeriesCash] = SKColor.Parse("#15803D"),
-        [ReportTextKeys.SeriesVietQr] = SKColor.Parse("#1D4ED8"),
-        [ReportTextKeys.SeriesCard] = SKColor.Parse("#7C3AED"),
-        [ReportTextKeys.SeriesNetRevenue] = SKColor.Parse("#D97706"),
-        [ReportTextKeys.SeriesCheckIns] = SKColor.Parse("#1D4ED8"),
-        [ReportTextKeys.SeriesCheckOuts] = SKColor.Parse("#D97706"),
-        [ReportTextKeys.SeriesAvgCheckIns] = SKColor.Parse("#1D4ED8"),
-        [ReportTextKeys.SeriesAvgCheckOuts] = SKColor.Parse("#D97706"),
-        [ReportTextKeys.SeriesOccupied] = SKColor.Parse("#0284C7"),
-        [ReportTextKeys.SeriesAvailable] = SKColor.Parse("#E2E8F0"),
-        [ReportTextKeys.GroupResident] = SKColor.Parse("#0284C7"),
-        [ReportTextKeys.GroupMonthlyPass] = SKColor.Parse("#7C3AED"),
-        [ReportTextKeys.GroupVisitor] = SKColor.Parse("#D97706")
+        [ReportTextKeys.SeriesCash] = SKColor.Parse("#168A5B"),
+        [ReportTextKeys.SeriesVietQr] = SKColor.Parse("#E8735A"),
+        [ReportTextKeys.SeriesCard] = SKColor.Parse("#8E4479"),
+        [ReportTextKeys.SeriesNetRevenue] = SKColor.Parse("#F0A63A"),
+        [ReportTextKeys.SeriesCheckIns] = SKColor.Parse("#E8735A"),
+        [ReportTextKeys.SeriesCheckOuts] = SKColor.Parse("#8E4479"),
+        [ReportTextKeys.SeriesAvgCheckIns] = SKColor.Parse("#E8735A"),
+        [ReportTextKeys.SeriesAvgCheckOuts] = SKColor.Parse("#F0A63A"),
+        [ReportTextKeys.SeriesOccupied] = SKColor.Parse("#D9647A"),
+        [ReportTextKeys.SeriesAvailable] = SKColor.Parse("#F2E2D4"),
+        [ReportTextKeys.GroupResident] = SKColor.Parse("#8E4479"),
+        [ReportTextKeys.GroupMonthlyPass] = SKColor.Parse("#168A5B"),
+        [ReportTextKeys.GroupVisitor] = SKColor.Parse("#E8735A")
     };
 
     private static readonly SKColor[] Palette =
     {
-        SKColor.Parse("#1D4ED8"), SKColor.Parse("#15803D"), SKColor.Parse("#D97706"), SKColor.Parse("#7C3AED"),
-        SKColor.Parse("#0284C7"), SKColor.Parse("#BE123C"), SKColor.Parse("#0F766E"), SKColor.Parse("#64748B")
+        SKColor.Parse("#E8735A"), SKColor.Parse("#F0A63A"), SKColor.Parse("#8E4479"), SKColor.Parse("#168A5B"),
+        SKColor.Parse("#D9647A"), SKColor.Parse("#3F2862"), SKColor.Parse("#C93B4B"), SKColor.Parse("#7A667C")
     };
 
-    private static readonly SKColor LabelColor = SKColor.Parse("#334155");
-    private static readonly SKColor GridColor = SKColor.Parse("#E2E8F0");
+    private static readonly SKColor LabelColor = SKColor.Parse("#564258");
+    private static readonly SKColor GridColor = SKColor.Parse("#EFE0D6");
 
     public static ISeries[] CreateCartesian(CartesianChartData data, Func<string, string> localize)
     {
@@ -158,6 +158,51 @@ public static class LiveChartsSeriesFactory
 
         return series;
     }
+
+    /// <summary>Cột "xe đang gửi theo loại" trên Tổng quan; số liệu lấy từ CSDL (không cố định).</summary>
+    public static ISeries[] CreateParkedByVehicleType(IReadOnlyList<SmartPS.Models.Reports.VehicleTypeCount> items, string seriesName)
+    {
+        if (items.Count == 0) return Array.Empty<ISeries>();
+
+        return new ISeries[]
+        {
+            new ColumnSeries<int>
+            {
+                Name = seriesName,
+                Values = items.Select(i => i.Count).ToArray(),
+                Fill = new SolidColorPaint(Palette[0]),
+                Stroke = null,
+                MaxBarWidth = 56,
+                DataLabelsPaint = new SolidColorPaint(LabelColor),
+                DataLabelsSize = AxisTextSize,
+                DataLabelsPosition = LiveChartsCore.Measure.DataLabelsPosition.Top
+            }
+        };
+    }
+
+    public static Axis[] CreateParkedCategoryAxes(IReadOnlyList<SmartPS.Models.Reports.VehicleTypeCount> items) => new[]
+    {
+        new Axis
+        {
+            Labels = items.Select(i => i.Name).ToArray(),
+            LabelsPaint = new SolidColorPaint(LabelColor),
+            TextSize = AxisTextSize,
+            SeparatorsPaint = null
+        }
+    };
+
+    public static Axis[] CreateParkedValueAxes() => new[]
+    {
+        new Axis
+        {
+            MinLimit = 0,
+            MinStep = 1,
+            Labeler = value => Math.Round(value).ToString("0", System.Globalization.CultureInfo.InvariantCulture),
+            LabelsPaint = new SolidColorPaint(LabelColor),
+            TextSize = AxisTextSize,
+            SeparatorsPaint = new SolidColorPaint(GridColor) { StrokeThickness = 1 }
+        }
+    };
 
     private static SKColor ColorFor(string nameKey, int index)
         => SeriesColors.TryGetValue(nameKey, out var color) ? color : Palette[index % Palette.Length];

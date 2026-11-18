@@ -2,14 +2,14 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- ========================================================================= -->
-    <!-- BẢNG DỮ LIỆU PHẲNG: tiêu đề cột nền xám nhạt, không kẻ dọc, dòng cao thoáng -->
+    <!-- BẢNG DỮ LIỆU PHẲNG SHIBA SUNSET: tiêu đề kem ấm, không kẻ dọc, dòng thoáng -->
     <!-- Dùng: Style="{StaticResource ModernDataGridStyle}"                         -->
     <!-- ========================================================================= -->
 
-    <SolidColorBrush x:Key="TableHeaderBackgroundBrush" Color="#F8FAFC"/>
-    <SolidColorBrush x:Key="TableHeaderTextBrush" Color="#64748B"/>
-    <SolidColorBrush x:Key="TableRowHoverBrush" Color="#F8FAFC"/>
-    <SolidColorBrush x:Key="TableRowSelectedBrush" Color="#EFF6FF"/>
+    <SolidColorBrush x:Key="TableHeaderBackgroundBrush" Color="#FDF2E4"/>
+    <SolidColorBrush x:Key="TableHeaderTextBrush" Color="#7A667C"/>
+    <SolidColorBrush x:Key="TableRowHoverBrush" Color="#FFF8F0"/>
+    <SolidColorBrush x:Key="TableRowSelectedBrush" Color="#FFF0E8"/>
 
     <!-- Vùng kéo đổi độ rộng cột: vô hình nhưng vẫn kéo được -->
     <Style x:Key="ModernColumnGripperStyle" TargetType="Thumb">
@@ -43,8 +43,9 @@
                             <StackPanel Orientation="Horizontal" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                         HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}">
                                 <ContentPresenter RecognizesAccessKey="False"/>
-                                <Path x:Name="SortArrow" Visibility="Collapsed" Margin="6,0,0,0" Width="7" Height="4" Stretch="Fill"
-                                      Fill="{TemplateBinding Foreground}" VerticalAlignment="Center" Data="M0,0 L1,0 0.5,1z"/>
+                                <Path x:Name="SortArrow" Visibility="Collapsed" Margin="6,0,0,0" Width="8" Height="5" Stretch="Uniform"
+                                      Stroke="{TemplateBinding Foreground}" StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                      VerticalAlignment="Center" Data="M1,1 L5,5 L9,1"/>
                             </StackPanel>
                         </Border>
                         <Thumb x:Name="PART_LeftHeaderGripper" HorizontalAlignment="Left" Style="{StaticResource ModernColumnGripperStyle}"/>
@@ -101,18 +102,22 @@
         <Setter Property="CanUserResizeRows" Value="False"/>
         <Setter Property="HeadersVisibility" Value="Column"/>
         <Setter Property="RowHeaderWidth" Value="0"/>
-        <Setter Property="RowHeight" Value="44"/>
+        <Setter Property="RowHeight" Value="42"/>
         <Setter Property="ColumnHeaderHeight" Value="38"/>
         <Setter Property="GridLinesVisibility" Value="Horizontal"/>
         <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource DividerBrush}"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="RowBackground" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontSize" Value="12.5"/>
         <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
         <Setter Property="ColumnHeaderStyle" Value="{StaticResource ModernDataGridColumnHeaderStyle}"/>
         <Setter Property="RowStyle" Value="{StaticResource ModernDataGridRowStyle}"/>
         <Setter Property="CellStyle" Value="{StaticResource ModernDataGridCellStyle}"/>
     </Style>
+
+    <!-- Mặc định áp dụng thiết kế Shiba Sunset cho toàn bộ DataGrid trong ứng dụng -->
+    <Style TargetType="{x:Type DataGrid}" BasedOn="{StaticResource ModernDataGridStyle}"/>
+    <Style TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource ModernDataGridColumnHeaderStyle}"/>
 
 </ResourceDictionary>

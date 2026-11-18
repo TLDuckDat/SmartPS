@@ -55,7 +55,7 @@ public sealed class ReportPdfWriter
                         row.RelativeItem().Column(c =>
                         {
                             c.Item().Text(_labels[ReportTextKeys.XlsxTitle])
-                                .FontSize(14).Bold().FontColor("#1E3A8A");
+                                .FontSize(14).Bold().FontColor("#3F2862");
                             c.Item().PaddingTop(2).Text($"{_labels[ReportTextKeys.XlsxGeneratedAt]}: {vnNow}  |  {_labels[ReportTextKeys.XlsxPeriod]}: {periodText}")
                                 .FontSize(8.5f).FontColor(Colors.Grey.Darken1);
                             c.Item().PaddingTop(2).Text(filterInfo)
@@ -63,7 +63,7 @@ public sealed class ReportPdfWriter
                         });
                     });
 
-                    col.Item().PaddingVertical(6).LineHorizontal(1).LineColor("#E2E8F0");
+                    col.Item().PaddingVertical(6).LineHorizontal(1).LineColor("#EFE0D6");
                 });
 
                 page.Content().Column(col =>
@@ -81,14 +81,14 @@ public sealed class ReportPdfWriter
                     // 2. Daily breakdown table if exists
                     if (result.Daily.Count > 0)
                     {
-                        col.Item().PaddingTop(10).Text(_labels[ReportTextKeys.TabDaily]).FontSize(10f).Bold().FontColor("#1E3A8A");
+                        col.Item().PaddingTop(10).Text(_labels[ReportTextKeys.TabDaily]).FontSize(10f).Bold().FontColor("#3F2862");
                         col.Item().PaddingTop(3).Element(e => ComposeDailyTable(e, result.Daily));
                     }
 
                     // 3. Vehicle types breakdown table if exists
                     if (result.VehicleTypes.Count > 0)
                     {
-                        col.Item().PaddingTop(10).Text(_labels[ReportTextKeys.TabVehicleTypes]).FontSize(10f).Bold().FontColor("#1E3A8A");
+                        col.Item().PaddingTop(10).Text(_labels[ReportTextKeys.TabVehicleTypes]).FontSize(10f).Bold().FontColor("#3F2862");
                         col.Item().PaddingTop(3).Element(e => ComposeVehicleTypesTable(e, result.VehicleTypes));
                     }
 
@@ -98,7 +98,7 @@ public sealed class ReportPdfWriter
                         col.Item().PaddingTop(10).Row(r =>
                         {
                             r.RelativeItem().Text($"{_labels[ReportTextKeys.XlsxTitle]} - {_labels[ReportSheetNames.Sessions]}")
-                                .FontSize(10f).Bold().FontColor("#1E3A8A");
+                                .FontSize(10f).Bold().FontColor("#3F2862");
                             r.AutoItem().Text($"Tổng cộng: {sessions.Rows.Count:N0} lượt").FontSize(8.5f).FontColor(Colors.Grey.Darken1);
                         });
                         col.Item().PaddingTop(3).Element(e => ComposeSessionsTable(e, sessions.Rows));
@@ -107,7 +107,7 @@ public sealed class ReportPdfWriter
 
                 page.Footer().Column(col =>
                 {
-                    col.Item().PaddingTop(6).LineHorizontal(1).LineColor("#E2E8F0");
+                    col.Item().PaddingTop(6).LineHorizontal(1).LineColor("#EFE0D6");
                     col.Item().PaddingTop(3).Row(row =>
                     {
                         row.RelativeItem().Text("Hệ thống quản lý bãi đỗ xe thông minh SmartPS").FontSize(8).FontColor(Colors.Grey.Medium);
@@ -143,10 +143,10 @@ public sealed class ReportPdfWriter
 
     private static void ComposeKpiCard(IContainer container, string title, string value)
     {
-        container.Border(1).BorderColor("#E2E8F0").Background("#F8FAFC").Padding(6).Column(col =>
+        container.Border(1).BorderColor("#E6D2C6").Background("#FFF6EA").Padding(6).Column(col =>
         {
-            col.Item().Text(title).FontSize(7.5f).FontColor(Colors.Grey.Darken1);
-            col.Item().PaddingTop(2).Text(value).FontSize(11).Bold().FontColor("#0F172A");
+            col.Item().Text(title).FontSize(7.5f).FontColor("#7A667C");
+            col.Item().PaddingTop(2).Text(value).FontSize(11).Bold().FontColor("#3A2A3C");
         });
     }
 
@@ -183,7 +183,7 @@ public sealed class ReportPdfWriter
             int idx = 0;
             foreach (var d in daily)
             {
-                var bg = idx++ % 2 == 1 ? "#F8FAFC" : "#FFFFFF";
+                var bg = idx++ % 2 == 1 ? "#FFF6EA" : "#FFFFFF";
                 table.Cell().Element(c => DataCellStyle(c, bg)).Text(d.DayVn.ToString(DateFormat, CultureInfo.InvariantCulture));
                 table.Cell().Element(c => DataCellStyle(c, bg)).AlignRight().Text(d.CheckIns.ToString("N0", CultureInfo.InvariantCulture));
                 table.Cell().Element(c => DataCellStyle(c, bg)).AlignRight().Text(d.CheckOuts.ToString("N0", CultureInfo.InvariantCulture));
@@ -222,7 +222,7 @@ public sealed class ReportPdfWriter
             int idx = 0;
             foreach (var v in vehicleTypes)
             {
-                var bg = idx++ % 2 == 1 ? "#F8FAFC" : "#FFFFFF";
+                var bg = idx++ % 2 == 1 ? "#FFF6EA" : "#FFFFFF";
                 table.Cell().Element(c => DataCellStyle(c, bg)).Text(v.VehicleTypeName);
                 table.Cell().Element(c => DataCellStyle(c, bg)).AlignRight().Text(v.CheckIns.ToString("N0", CultureInfo.InvariantCulture));
                 table.Cell().Element(c => DataCellStyle(c, bg)).AlignRight().Text(v.CheckOuts.ToString("N0", CultureInfo.InvariantCulture));
@@ -277,7 +277,7 @@ public sealed class ReportPdfWriter
             int idx = 0;
             foreach (var r in rows)
             {
-                var bg = idx++ % 2 == 1 ? "#F8FAFC" : "#FFFFFF";
+                var bg = idx++ % 2 == 1 ? "#FFF6EA" : "#FFFFFF";
                 var grp = groupLabels.TryGetValue(r.CustomerGroup, out var gl) ? gl : r.CustomerGroup.ToString();
                 var checkIn = AuditTime.ToVietnamTime(r.CheckInUtc).ToString(DateTimeFormat, CultureInfo.InvariantCulture);
                 var checkOut = r.CheckOutUtc.HasValue ? AuditTime.ToVietnamTime(r.CheckOutUtc.Value).ToString(DateTimeFormat, CultureInfo.InvariantCulture) : "-";
@@ -304,8 +304,8 @@ public sealed class ReportPdfWriter
     private static IContainer HeaderCellStyle(IContainer container)
     {
         return container
-            .Border(1).BorderColor("#CBD5E1")
-            .Background("#F1F5F9")
+            .Border(1).BorderColor("#DFC7B9")
+            .Background("#FDF2E4")
             .PaddingVertical(4)
             .PaddingHorizontal(4)
             .AlignMiddle();
@@ -314,7 +314,7 @@ public sealed class ReportPdfWriter
     private static IContainer DataCellStyle(IContainer container, string bgColor)
     {
         return container
-            .Border(1).BorderColor("#E2E8F0")
+            .Border(1).BorderColor("#EFE0D6")
             .Background(bgColor)
             .PaddingVertical(3)
             .PaddingHorizontal(4)

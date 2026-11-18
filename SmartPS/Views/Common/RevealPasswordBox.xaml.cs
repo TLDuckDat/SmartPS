@@ -10,8 +10,8 @@ namespace SmartPS.Views.Common;
 /// </summary>
 public partial class RevealPasswordBox : UserControl
 {
-    private const string IconDataEye = "M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z";
-    private const string IconDataEyeOff = "M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.44-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z";
+    private const string IconDataEye = "M2,12 C4.2,7.5 7.8,5 12,5 C16.2,5 19.8,7.5 22,12 C19.8,16.5 16.2,19 12,19 C7.8,19 4.2,16.5 2,12 Z M12,15 A3,3 0 1,0 12,9 A3,3 0 1,0 12,15 Z";
+    private const string IconDataEyeOff = "M3,3 L21,21 M10.6,10.6 A2,2 0 0,0 13.4,13.4 M9.9,5.2 C10.6,5.1 11.3,5 12,5 C16.2,5 19.8,7.5 22,12 C21.1,13.8 19.9,15.3 18.4,16.5 M6.2,6.2 C4.4,7.5 3,9.5 2,12 C4.2,16.5 7.8,19 12,19 C13.8,19 15.5,18.5 17,17.7";
 
     private bool _isUpdating;
     private bool _isRevealed;
@@ -41,7 +41,7 @@ public partial class RevealPasswordBox : UserControl
     }
 
     public static readonly DependencyProperty InputBorderBrushProperty =
-        DependencyProperty.Register(nameof(InputBorderBrush), typeof(Brush), typeof(RevealPasswordBox), new PropertyMetadata(new SolidColorBrush(Color.FromRgb(0xCB, 0xD5, 0xE1))));
+        DependencyProperty.Register(nameof(InputBorderBrush), typeof(Brush), typeof(RevealPasswordBox), new PropertyMetadata(new SolidColorBrush(Color.FromRgb(0xDF, 0xC7, 0xB9))));
 
     public Brush InputBorderBrush
     {
@@ -50,7 +50,7 @@ public partial class RevealPasswordBox : UserControl
     }
 
     public static readonly DependencyProperty InputFocusedBorderBrushProperty =
-        DependencyProperty.Register(nameof(InputFocusedBorderBrush), typeof(Brush), typeof(RevealPasswordBox), new PropertyMetadata(new SolidColorBrush(Color.FromRgb(0x1D, 0x4E, 0xD8))));
+        DependencyProperty.Register(nameof(InputFocusedBorderBrush), typeof(Brush), typeof(RevealPasswordBox), new PropertyMetadata(new SolidColorBrush(Color.FromRgb(0xE8, 0x73, 0x5A))));
 
     public Brush InputFocusedBorderBrush
     {
@@ -59,7 +59,7 @@ public partial class RevealPasswordBox : UserControl
     }
 
     public static readonly DependencyProperty InputForegroundProperty =
-        DependencyProperty.Register(nameof(InputForeground), typeof(Brush), typeof(RevealPasswordBox), new PropertyMetadata(new SolidColorBrush(Color.FromRgb(0x0F, 0x17, 0x2A))));
+        DependencyProperty.Register(nameof(InputForeground), typeof(Brush), typeof(RevealPasswordBox), new PropertyMetadata(new SolidColorBrush(Color.FromRgb(0x3A, 0x2A, 0x3C))));
 
     public Brush InputForeground
     {
@@ -210,13 +210,13 @@ public partial class RevealPasswordBox : UserControl
         if (_isRevealed)
         {
             EyeIconPath.Data = Geometry.Parse(IconDataEyeOff);
-            EyeIconPath.Fill = new SolidColorBrush(Color.FromRgb(0x02, 0x84, 0xC7)); // Active highlight
+            EyeIconPath.Stroke = new SolidColorBrush(Color.FromRgb(0xE8, 0x73, 0x5A)); // Active coral highlight
             EyeToggleButton.SetResourceReference(ToolTipProperty, "Str_Password_Hide");
         }
         else
         {
             EyeIconPath.Data = Geometry.Parse(IconDataEye);
-            EyeIconPath.Fill = new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)); // Neutral muted
+            EyeIconPath.Stroke = new SolidColorBrush(Color.FromRgb(0x7A, 0x66, 0x7C)); // Neutral warm muted
             EyeToggleButton.SetResourceReference(ToolTipProperty, "Str_Password_Show");
         }
     }

@@ -855,16 +855,21 @@ public class ReportsViewModel : ViewModelBase
             var labels = ReportWorkbookLabels.Resolve(_localization);
             var writer = new ReportPdfWriter(labels);
             var doc = writer.CreateDocument(result, sessions);
+            // Chủ sở hữu là cửa sổ đang hoạt động trước khi tạo cửa sổ xem trước (MainWindow có thể trỏ tới chính nó)
+            var owner = System.Windows.Application.Current?.Windows
+                .OfType<System.Windows.Window>()
+                .FirstOrDefault(w => w.IsVisible && w.IsActive);
             var previewWindow = new SmartPS.Views.Reports.ReportPreviewWindow(
                 doc,
                 filter,
                 _exportService,
                 _dialogService,
                 _localization,
-                _fileDialogService)
+                _fileDialogService);
+            if (owner != null && !ReferenceEquals(owner, previewWindow))
             {
-                Owner = System.Windows.Application.Current?.MainWindow
-            };
+                previewWindow.Owner = owner;
+            }
             previewWindow.ShowDialog();
         }
         catch (PermissionDeniedException)

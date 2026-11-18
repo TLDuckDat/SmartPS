@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using Microsoft.Extensions.DependencyInjection;
 using SmartPS.Models.Auth;
 using SmartPS.ViewModels.Auth;
@@ -25,10 +26,14 @@ public partial class LoginView : Window
 
         Loaded += (_, _) => UsernameInput.Focus();
 
-        // Tự động cập nhật ký tự nút Phóng to khi trạng thái cửa sổ thay đổi
+        // Tự động cập nhật icon Phóng to / Khôi phục khi trạng thái cửa sổ thay đổi
         StateChanged += (_, _) =>
         {
-            MaximizeButton.Content = WindowState == WindowState.Maximized ? "[=]" : "[ ]";
+            var iconKey = WindowState == WindowState.Maximized ? "Icon_WinRestore" : "Icon_WinMaximize";
+            if (TryFindResource(iconKey) is Geometry geo)
+            {
+                MaximizeIcon.Data = geo;
+            }
         };
 
         CommandBindings.Add(new CommandBinding(SystemCommands.CloseWindowCommand, (_, _) => SystemCommands.CloseWindow(this)));

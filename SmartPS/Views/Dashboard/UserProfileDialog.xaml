@@ -9,7 +9,7 @@
         WindowStyle="SingleBorderWindow"
         ShowInTaskbar="False"
         ResizeMode="NoResize"
-        Background="#FFFFFF">
+        Background="{StaticResource CardBackgroundBrush}">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -18,19 +18,22 @@
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0"
-                Background="#F8FAFC"
-                BorderBrush="#E2E8F0"
+                Background="{StaticResource SurfaceMutedBrush}"
+                BorderBrush="{StaticResource DividerBrush}"
                 BorderThickness="0,0,0,1"
                 Padding="20,16">
-            <StackPanel>
-                <TextBlock Text="{DynamicResource Str_Profile_HeaderTitle}"
-                           FontSize="14"
-                           FontWeight="Bold"
-                           Foreground="#0F172A"/>
-                <TextBlock Text="{DynamicResource Str_Profile_HeaderSubtitle}"
-                           FontSize="12"
-                           Foreground="#64748B"
-                           Margin="0,3,0,0"/>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Image Source="{StaticResource Illust_UserManagement}" Width="34" Height="34" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{DynamicResource Str_Profile_HeaderTitle}"
+                               FontSize="14"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{DynamicResource Str_Profile_HeaderSubtitle}"
+                               FontSize="12"
+                               Foreground="{StaticResource TextDimBrush}"
+                               Margin="0,3,0,0"/>
+                </StackPanel>
             </StackPanel>
         </Border>
 
@@ -39,7 +42,7 @@
                 <TextBlock Text="{DynamicResource Str_Profile_UsernameLabel}"
                            FontSize="12"
                            FontWeight="SemiBold"
-                           Foreground="#475569"
+                           Foreground="{StaticResource TextSecondaryBrush}"
                            Margin="0,0,0,5"/>
                 <TextBox Text="{Binding Username, Mode=OneWay}"
                          IsReadOnly="True"
@@ -49,7 +52,7 @@
                 <TextBlock Text="{DynamicResource Str_Profile_FullNameLabel}"
                            FontSize="12"
                            FontWeight="SemiBold"
-                           Foreground="#0F172A"
+                           Foreground="{StaticResource TextPrimaryBrush}"
                            Margin="0,0,0,5"/>
                 <TextBox Text="{Binding FullName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource ModernTextBoxStyle}"
@@ -65,7 +68,7 @@
                         <TextBlock Text="{DynamicResource Str_Profile_PhoneLabel}"
                                    FontSize="12"
                                    FontWeight="SemiBold"
-                                   Foreground="#0F172A"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
                                    Margin="0,0,0,5"/>
                         <TextBox Text="{Binding PhoneNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource ModernTextBoxStyle}"/>
@@ -74,50 +77,50 @@
                         <TextBlock Text="{DynamicResource Str_Profile_EmailLabel}"
                                    FontSize="12"
                                    FontWeight="SemiBold"
-                                   Foreground="#0F172A"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
                                    Margin="0,0,0,5"/>
                         <TextBox Text="{Binding Email, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource ModernTextBoxStyle}"/>
                     </StackPanel>
                 </Grid>
 
-                <Border Background="#F8FAFC"
-                        BorderBrush="#E2E8F0"
+                <Border Background="{StaticResource SurfaceMutedBrush}"
+                        BorderBrush="{StaticResource DividerBrush}"
                         BorderThickness="1"
-                        CornerRadius="4"
+                        CornerRadius="6"
                         Padding="14,12"
                         Margin="0,4,0,0">
                     <StackPanel>
                         <TextBlock Text="{DynamicResource Str_Profile_PasswordSection}"
                                    FontSize="12.5"
                                    FontWeight="Bold"
-                                   Foreground="#0F172A"/>
+                                   Foreground="{StaticResource TextPrimaryBrush}"/>
                         <TextBlock Text="{DynamicResource Str_Profile_PasswordHint}"
                                    FontSize="11.5"
-                                   Foreground="#64748B"
+                                   Foreground="{StaticResource TextDimBrush}"
                                    TextWrapping="Wrap"
                                    Margin="0,2,0,10"/>
 
                         <TextBlock Text="{DynamicResource Str_Profile_CurrentPasswordLabel}"
                                    FontSize="11.5"
                                    FontWeight="SemiBold"
-                                   Foreground="#475569"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
                                    Margin="0,0,0,4"/>
                         <common:RevealPasswordBox Password="{Binding CurrentPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                   InputHeight="36"
-                                                  InputBackground="#FFFFFF"
-                                                  InputBorderBrush="#CBD5E1"
+                                                  InputBackground="{StaticResource InputBackgroundBrush}"
+                                                  InputBorderBrush="{StaticResource InputBorderBrush}"
                                                   Margin="0,0,0,10"/>
 
                         <TextBlock Text="{DynamicResource Str_Profile_NewPasswordLabel}"
                                    FontSize="11.5"
                                    FontWeight="SemiBold"
-                                   Foreground="#475569"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
                                    Margin="0,0,0,4"/>
                         <common:RevealPasswordBox Password="{Binding NewPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                   InputHeight="36"
-                                                  InputBackground="#FFFFFF"
-                                                  InputBorderBrush="#CBD5E1"
+                                                  InputBackground="{StaticResource InputBackgroundBrush}"
+                                                  InputBorderBrush="{StaticResource InputBorderBrush}"
                                                   Margin="0,0,0,6"/>
 
                         <Grid Margin="0,0,0,10">
@@ -134,7 +137,7 @@
                             <TextBlock Grid.Column="1"
                                        Text="{Binding PasswordStrengthText, Mode=OneWay}"
                                        FontSize="11.5"
-                                       Foreground="#64748B"
+                                       Foreground="{StaticResource TextDimBrush}"
                                        Margin="10,0,0,0"
                                        VerticalAlignment="Center"/>
                         </Grid>
@@ -142,20 +145,20 @@
                         <TextBlock Text="{DynamicResource Str_Profile_ConfirmPasswordLabel}"
                                    FontSize="11.5"
                                    FontWeight="SemiBold"
-                                   Foreground="#475569"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
                                    Margin="0,0,0,4"/>
                         <common:RevealPasswordBox Password="{Binding ConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                   InputHeight="36"
-                                                  InputBackground="#FFFFFF"
-                                                  InputBorderBrush="#CBD5E1"/>
+                                                  InputBackground="{StaticResource InputBackgroundBrush}"
+                                                  InputBorderBrush="{StaticResource InputBorderBrush}"/>
                     </StackPanel>
                 </Border>
             </StackPanel>
         </ScrollViewer>
 
         <Border Grid.Row="2"
-                Background="#F8FAFC"
-                BorderBrush="#E2E8F0"
+                Background="{StaticResource SurfaceMutedBrush}"
+                BorderBrush="{StaticResource DividerBrush}"
                 BorderThickness="0,1,0,0"
                 Padding="16,12">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">

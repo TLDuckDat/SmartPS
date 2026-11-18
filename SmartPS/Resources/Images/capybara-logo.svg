@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <defs>
+    <!-- Nền hoàng hôn ấm áp (Shiba Sunset palette) -->
+    <linearGradient id="bgSunset" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1B1640"/>
+      <stop offset="0.45" stop-color="#3F2862"/>
+      <stop offset="0.8" stop-color="#8E4479"/>
+      <stop offset="1" stop-color="#E8735A"/>
+    </linearGradient>
+    <linearGradient id="ringGold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFE0A0"/>
+      <stop offset="0.5" stop-color="#FF9A76"/>
+      <stop offset="1" stop-color="#C85A8A"/>
+    </linearGradient>
+    <!-- Bộ lông nâu ấm của Capybara -->
+    <linearGradient id="capyFur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#D98B52"/>
+      <stop offset="0.55" stop-color="#B86B35"/>
+      <stop offset="1" stop-color="#8F4D20"/>
+    </linearGradient>
+    <linearGradient id="capySnout" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9E5727"/>
+      <stop offset="1" stop-color="#6E3815"/>
+    </linearGradient>
+    <linearGradient id="capyCream" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFF6EA"/>
+      <stop offset="1" stop-color="#EED4BC"/>
+    </linearGradient>
+    <!-- Quả quýt Yuzu vàng cam trên đầu -->
+    <radialGradient id="yuzuFruit" cx="0.38" cy="0.35" r="0.7">
+      <stop offset="0" stop-color="#FFE596"/>
+      <stop offset="0.55" stop-color="#FFA940"/>
+      <stop offset="1" stop-color="#E86825"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Huy hiệu nền bo tròn -->
+  <rect x="8" y="8" width="224" height="224" rx="52" fill="url(#bgSunset)" stroke="url(#ringGold)" stroke-width="5"/>
+  <!-- Vầng mặt trời hoàng hôn phía sau -->
+  <circle cx="120" cy="112" r="74" fill="#FFC46A" opacity="0.16"/>
+  <circle cx="176" cy="56" r="18" fill="#FFE0A0" opacity="0.85"/>
+
+  <!-- Thanh chắn Barrier bãi xe thông minh phía sau -->
+  <g transform="rotate(-14 120 155)">
+    <rect x="26" y="138" width="188" height="14" rx="7" fill="#FFF4EA" stroke="#3A1F45" stroke-width="2.5"/>
+    <path d="M50,138 L66,138 L56,152 L40,152 Z M88,138 L104,138 L94,152 L78,152 Z M126,138 L142,138 L132,152 L116,152 Z M164,138 L180,138 L170,152 L154,152 Z" fill="#E8735A"/>
+  </g>
+
+  <!-- Hai tai tròn nhỏ đặc trưng của Capybara -->
+  <ellipse cx="74" cy="78" rx="14" ry="17" transform="rotate(-24 74 78)" fill="#7A3E18" stroke="#4A220B" stroke-width="2.5"/>
+  <ellipse cx="75" cy="79" rx="7.5" ry="10" transform="rotate(-24 75 79)" fill="#E89484"/>
+  <ellipse cx="154" cy="78" rx="14" ry="17" transform="rotate(24 154 78)" fill="#7A3E18" stroke="#4A220B" stroke-width="2.5"/>
+  <ellipse cx="153" cy="79" rx="7.5" ry="10" transform="rotate(24 153 79)" fill="#E89484"/>
+
+  <!-- Thân & Vai Capybara -->
+  <path d="M52,216 C52,166 74,146 116,146 C158,146 180,166 180,216 Z" fill="url(#capyFur)" stroke="#4A220B" stroke-width="3"/>
+  <!-- Bụng kem ấm -->
+  <path d="M84,216 C84,180 96,166 116,166 C136,166 148,180 148,216 Z" fill="url(#capyCream)"/>
+
+  <!-- Khăn quàng đỏ cam SmartPS -->
+  <path d="M70,152 C88,164 144,164 162,152 C166,164 158,176 144,178 C124,182 106,182 86,178 C72,176 66,164 70,152 Z" fill="#C93B4B" stroke="#4A220B" stroke-width="2.5"/>
+  <path d="M132,168 L148,204 L126,200 Z" fill="#E8735A" stroke="#4A220B" stroke-width="2.2" stroke-linejoin="round"/>
+
+  <!-- Đầu Capybara bầu bĩnh hiền lành -->
+  <path d="M58,118 C56,82 78,66 114,66 C152,66 174,82 172,118 C170,148 150,160 114,160 C78,160 60,148 58,118 Z" fill="url(#capyFur)" stroke="#4A220B" stroke-width="3"/>
+
+  <!-- Mảng mõm to tròn đặc trưng của Capybara -->
+  <rect x="86" y="100" width="68" height="48" rx="22" fill="url(#capySnout)" stroke="#4A220B" stroke-width="2.5"/>
+  <!-- Điểm sáng trên sống mũi -->
+  <ellipse cx="120" cy="107" rx="18" ry="5" fill="#C97D48" opacity="0.55"/>
+
+  <!-- Hai lỗ mũi hạt đậu & miệng chữ Y điềm tĩnh -->
+  <ellipse cx="106" cy="116" rx="4.5" ry="3.2" transform="rotate(-15 106 116)" fill="#2B1406"/>
+  <ellipse cx="134" cy="116" rx="4.5" ry="3.2" transform="rotate(15 134 116)" fill="#2B1406"/>
+  <path d="M120,121 V133 M109,135 Q120,141 131,135" fill="none" stroke="#2B1406" stroke-width="2.8" stroke-linecap="round"/>
+
+  <!-- Đôi mắt lim dim thư giãn & long lanh -->
+  <circle cx="80" cy="104" r="6" fill="#241208"/>
+  <circle cx="82" cy="102" r="2.2" fill="#FFFFFF"/>
+  <path d="M71,97 Q80,93 88,98" fill="none" stroke="#4A220B" stroke-width="2.4" stroke-linecap="round"/>
+
+  <circle cx="152" cy="104" r="6" fill="#241208"/>
+  <circle cx="154" cy="102" r="2.2" fill="#FFFFFF"/>
+  <path d="M144,98 Q152,93 161,97" fill="none" stroke="#4A220B" stroke-width="2.4" stroke-linecap="round"/>
+
+  <!-- Hai má hồng phấn -->
+  <ellipse cx="72" cy="118" rx="8" ry="4.5" fill="#FF857A" opacity="0.55"/>
+  <ellipse cx="158" cy="118" rx="8" ry="4.5" fill="#FF857A" opacity="0.55"/>
+
+  <!-- Quả quýt Yuzu đội trên đỉnh đầu Capybara -->
+  <ellipse cx="114" cy="67" rx="16" ry="3.5" fill="#4A220B" opacity="0.25"/>
+  <ellipse cx="114" cy="54" rx="16" ry="13.5" fill="url(#yuzuFruit)" stroke="#4A220B" stroke-width="2.4"/>
+  <path d="M114,41 C118,32 130,32 132,40 C125,44 118,43 114,41 Z" fill="#3DDC84" stroke="#168A5B" stroke-width="1.8" stroke-linejoin="round"/>
+  <circle cx="108" cy="50" r="2.2" fill="#FFF9E6" opacity="0.8"/>
+
+  <!-- Biển hiệu chữ P (Smart Parking) bên góc phải -->
+  <g transform="translate(154, 152)">
+    <rect x="0" y="0" width="54" height="54" rx="14" fill="#FFC46A" stroke="#3A1F45" stroke-width="3"/>
+    <rect x="5" y="5" width="44" height="44" rx="10" fill="#1D1840"/>
+    <path d="M20,38 V16 H29 A6.5,6.5 0 0,1 29,29 H20" fill="none" stroke="#FFC46A" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

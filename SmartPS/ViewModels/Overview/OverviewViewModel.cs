@@ -1,8 +1,11 @@
 using System.Collections.ObjectModel;
+using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
 using SmartPS.Models.Parking;
 using SmartPS.Models.Reports;
 using SmartPS.Services.Localization;
 using SmartPS.Services.Reports;
+using SmartPS.ViewModels.Reports;
 
 namespace SmartPS.ViewModels.Overview;
 
@@ -130,6 +133,16 @@ public class OverviewViewModel : ViewModelBase
 
     public ObservableCollection<VehicleTypeCount> ParkedByVehicleType { get; } = new();
 
+    // Biểu đồ cột "xe đang gửi theo loại" (LiveCharts2), cập nhật mỗi lần nạp dữ liệu
+    private ISeries[] _parkedSeries = Array.Empty<ISeries>();
+    public ISeries[] ParkedSeries { get => _parkedSeries; private set => SetProperty(ref _parkedSeries, value); }
+
+    private Axis[] _parkedXAxes = Array.Empty<Axis>();
+    public Axis[] ParkedXAxes { get => _parkedXAxes; private set => SetProperty(ref _parkedXAxes, value); }
+
+    private Axis[] _parkedYAxes = Array.Empty<Axis>();
+    public Axis[] ParkedYAxes { get => _parkedYAxes; private set => SetProperty(ref _parkedYAxes, value); }
+
     public ObservableCollection<ParkingSession> RecentSessions { get; } = new();
 
     // Hiện trạng thái trống thay cho khung/bảng rỗng
@@ -173,6 +186,13 @@ public class OverviewViewModel : ViewModelBase
             {
                 ParkedByVehicleType.Add(item);
             }
+
+            // Biểu đồ cột dựng từ đúng số liệu vừa nạp từ CSDL
+            var parkedItems = ParkedByVehicleType.ToList();
+            ParkedSeries = LiveChartsSeriesFactory.CreateParkedByVehicleType(
+                parkedItems, _localization.GetString("Str_Ov_ParkedByVehicleType"));
+            ParkedXAxes = parkedItems.Count == 0 ? Array.Empty<Axis>() : LiveChartsSeriesFactory.CreateParkedCategoryAxes(parkedItems);
+            ParkedYAxes = parkedItems.Count == 0 ? Array.Empty<Axis>() : LiveChartsSeriesFactory.CreateParkedValueAxes();
 
             RecentSessions.Clear();
             foreach (var session in recent)

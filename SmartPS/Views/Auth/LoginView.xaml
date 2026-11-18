@@ -31,7 +31,7 @@
             BorderThickness="1"
             Margin="6">
         <Border.Effect>
-            <DropShadowEffect BlurRadius="20" Color="#64748B" Opacity="0.16" ShadowDepth="3"/>
+            <DropShadowEffect BlurRadius="24" Color="#785046" Opacity="0.16" ShadowDepth="4"/>
         </Border.Effect>
 
         <!-- Grid chính của toàn bộ cửa sổ -->
@@ -52,8 +52,9 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Tiêu đề chữ sạch sẽ bên trái -->
+                <!-- Logo hoạt hình Capybara & Tiêu đề thương hiệu bên trái -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                    <Image Source="{StaticResource Illust_CapybaraLogo}" Width="24" Height="24" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <TextBlock Text="{DynamicResource Str_App_Title}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextBrandBrush}" VerticalAlignment="Center"/>
                     <TextBlock Text="|" FontSize="11" Foreground="{StaticResource AppBorderBrush}" Margin="8,0" VerticalAlignment="Center"/>
                     <TextBlock Text="{DynamicResource Str_App_Subtitle}" FontSize="12" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center"/>
@@ -61,23 +62,38 @@
 
                 <!-- Các nút tác vụ bên phải: Đổi ngôn ngữ & Điều khiển cửa sổ -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,5,8,0" VerticalAlignment="Center">
-                    <!-- Nút đổi ngôn ngữ (VI | EN | JA) -->
+                    <!-- Nút đổi ngôn ngữ (VI | EN | JA) với icon quả địa cầu SVG tự vẽ -->
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0" WindowChrome.IsHitTestVisibleInChrome="True">
-                        <Button Content="🇻🇳 VI" Command="{Binding SetLanguageCommand}" CommandParameter="vi-VN" Style="{StaticResource LangButtonStyle}" ToolTip="{DynamicResource Str_Lang_VI}"/>
-                        <Button Content="🇬🇧 EN" Command="{Binding SetLanguageCommand}" CommandParameter="en-US" Style="{StaticResource LangButtonStyle}" ToolTip="{DynamicResource Str_Lang_EN}"/>
-                        <Button Content="🇯🇵 JA" Command="{Binding SetLanguageCommand}" CommandParameter="ja-JP" Style="{StaticResource LangButtonStyle}" ToolTip="{DynamicResource Str_Lang_JA}"/>
+                        <Button Command="{Binding SetLanguageCommand}" CommandParameter="vi-VN" Style="{StaticResource LangButtonStyle}" ToolTip="{DynamicResource Str_Lang_VI}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Style="{StaticResource ButtonSvgIconStyle}" Data="{StaticResource Icon_Globe}" Width="12" Height="12" StrokeThickness="1.6" Margin="0,0,4,0"/>
+                                <TextBlock Text="VI" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding SetLanguageCommand}" CommandParameter="en-US" Style="{StaticResource LangButtonStyle}" ToolTip="{DynamicResource Str_Lang_EN}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Style="{StaticResource ButtonSvgIconStyle}" Data="{StaticResource Icon_Globe}" Width="12" Height="12" StrokeThickness="1.6" Margin="0,0,4,0"/>
+                                <TextBlock Text="EN" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding SetLanguageCommand}" CommandParameter="ja-JP" Style="{StaticResource LangButtonStyle}" ToolTip="{DynamicResource Str_Lang_JA}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Style="{StaticResource ButtonSvgIconStyle}" Data="{StaticResource Icon_Globe}" Width="12" Height="12" StrokeThickness="1.6" Margin="0,0,4,0"/>
+                                <TextBlock Text="JA" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
 
                     <!-- Các nút điều khiển cửa sổ chuẩn vector (Thu nhỏ, Phóng to/Khôi phục, Đóng) -->
                     <StackPanel Orientation="Horizontal" WindowChrome.IsHitTestVisibleInChrome="True">
                         <Button Style="{StaticResource WindowControlBtnStyle}" Command="{x:Static SystemCommands.MinimizeWindowCommand}" ToolTip="{DynamicResource Str_Window_Minimize}">
-                            <Path Data="M0 5h10v1.2H0z" Width="10" Height="10" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                            <Path Style="{StaticResource ButtonSvgIconStyle}" Data="{StaticResource Icon_WinMinimize}" Width="10" Height="10" StrokeThickness="1.8"/>
                         </Button>
                         <Button x:Name="MaximizeButton" Style="{StaticResource WindowControlBtnStyle}" Command="{x:Static SystemCommands.MaximizeWindowCommand}" ToolTip="{DynamicResource Str_Window_Maximize}">
-                            <Path x:Name="MaximizeIcon" Data="M1 1h8v8H1V1zm1 1.2v5.6h6V2.2H2z" Width="10" Height="10" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                            <Path x:Name="MaximizeIcon" Style="{StaticResource ButtonSvgIconStyle}" Data="{StaticResource Icon_WinMaximize}" Width="10" Height="10" StrokeThickness="1.6"/>
                         </Button>
                         <Button Style="{StaticResource CloseControlBtnStyle}" Command="{x:Static SystemCommands.CloseWindowCommand}" ToolTip="{DynamicResource Str_Window_Close}">
-                            <Path Data="M1.2 0.2L5 4l3.8-3.8 1 1L6 5l3.8 3.8-1 1L5 6l-3.8 3.8-1-1L4 5 0.2 1.2z" Width="10" Height="10" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                            <Path Style="{StaticResource ButtonSvgIconStyle}" Data="{StaticResource Icon_Close}" Width="10" Height="10" StrokeThickness="1.8"/>
                         </Button>
                     </StackPanel>
                 </StackPanel>
@@ -95,13 +111,13 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- ========================================== -->
-                <!-- CỘT 1: BRANDING BANNER (MIDNIGHT SLATE)     -->
+                <!-- CỘT 1: BRANDING BANNER (SHIBA SUNSET)      -->
                 <!-- ========================================== -->
                 <Border Grid.Column="0"
                         Margin="14,4,7,14"
                         CornerRadius="12"
                         Background="{StaticResource BannerGradientBrush}"
-                        BorderBrush="#334155"
+                        BorderBrush="#4D3B6E"
                         BorderThickness="1">
 
                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -112,64 +128,67 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <!-- Header Thương hiệu -->
-                            <StackPanel Grid.Row="0" Margin="0,0,0,24">
-                                <Border Background="#1E293B"
-                                        BorderBrush="#38BDF8"
-                                        BorderThickness="1.5"
-                                        CornerRadius="10"
-                                        Width="48" Height="48"
+                            <!-- Header Thương hiệu với Mascot Hoạt Hình Capybara SVG -->
+                            <StackPanel Grid.Row="0" Margin="0,0,0,22">
+                                <Border Background="#28204D"
+                                        BorderBrush="{StaticResource SunsetBadgeGradientBrush}"
+                                        BorderThickness="1.8"
+                                        CornerRadius="18"
+                                        Width="86" Height="86"
+                                        Padding="4"
                                         HorizontalAlignment="Left"
                                         Margin="0,0,0,14">
-                                    <TextBlock Text="P" FontSize="24" FontWeight="Bold" Foreground="#38BDF8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <Image Source="{StaticResource Illust_CapybaraLogo}"
+                                           Stretch="Uniform"
+                                           RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Border>
-                                <TextBlock Text="{DynamicResource Str_Login_BrandTitle}" FontSize="25" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,0,0,2"/>
-                                <TextBlock Text="{DynamicResource Str_Login_BrandSub}" FontSize="15" FontWeight="SemiBold" Foreground="#38BDF8" Margin="0,0,0,6"/>
-                                <TextBlock Text="{DynamicResource Str_Login_BrandDesc}" FontSize="12.5" Foreground="#94A3B8" TextWrapping="Wrap"/>
+                                <TextBlock Text="{DynamicResource Str_Login_BrandTitle}" FontSize="25" FontWeight="Bold" Foreground="#FFF4EA" Margin="0,0,0,2"/>
+                                <TextBlock Text="{DynamicResource Str_Login_BrandSub}" FontSize="15" FontWeight="SemiBold" Foreground="#FF9A76" Margin="0,0,0,6"/>
+                                <TextBlock Text="{DynamicResource Str_Login_BrandDesc}" FontSize="12.5" Foreground="#C8B6CC" TextWrapping="Wrap"/>
                             </StackPanel>
 
-                            <!-- Danh sách tính năng (Bố trí đều đặn, số thứ tự 01, 02, 03) -->
-                            <StackPanel Grid.Row="1" VerticalAlignment="Center" Margin="0,10,0,20">
-                                <Grid Margin="0,0,0,20">
+                            <!-- Danh sách tính năng kèm hình minh họa SVG tự vẽ nhiều lớp -->
+                            <StackPanel Grid.Row="1" VerticalAlignment="Center" Margin="0,8,0,18">
+                                <Grid Margin="0,0,0,18">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="34"/>
+                                        <ColumnDefinition Width="42"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="01" FontSize="13" FontWeight="Bold" Foreground="#38BDF8" VerticalAlignment="Top" Margin="0,1,0,0"/>
+                                    <Image Grid.Column="0" Source="{StaticResource Illust_GateControl}" Width="30" Height="30" Stretch="Uniform" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,2,0,0"/>
                                     <StackPanel Grid.Column="1">
-                                        <TextBlock Text="{DynamicResource Str_Login_Feat1_Title}" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF"/>
-                                        <TextBlock Text="{DynamicResource Str_Login_Feat1_Desc}" FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{DynamicResource Str_Login_Feat1_Title}" FontSize="13" FontWeight="SemiBold" Foreground="#FFF4EA"/>
+                                        <TextBlock Text="{DynamicResource Str_Login_Feat1_Desc}" FontSize="12" Foreground="#C8B6CC" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                     </StackPanel>
                                 </Grid>
 
-                                <Grid Margin="0,0,0,20">
+                                <Grid Margin="0,0,0,18">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="34"/>
+                                        <ColumnDefinition Width="42"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="02" FontSize="13" FontWeight="Bold" Foreground="#38BDF8" VerticalAlignment="Top" Margin="0,1,0,0"/>
+                                    <Image Grid.Column="0" Source="{StaticResource Illust_ParkingMap}" Width="30" Height="30" Stretch="Uniform" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,2,0,0"/>
                                     <StackPanel Grid.Column="1">
-                                        <TextBlock Text="{DynamicResource Str_Login_Feat2_Title}" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF"/>
-                                        <TextBlock Text="{DynamicResource Str_Login_Feat2_Desc}" FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{DynamicResource Str_Login_Feat2_Title}" FontSize="13" FontWeight="SemiBold" Foreground="#FFF4EA"/>
+                                        <TextBlock Text="{DynamicResource Str_Login_Feat2_Desc}" FontSize="12" Foreground="#C8B6CC" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                     </StackPanel>
                                 </Grid>
 
                                 <Grid Margin="0,0,0,4">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="34"/>
+                                        <ColumnDefinition Width="42"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="03" FontSize="13" FontWeight="Bold" Foreground="#38BDF8" VerticalAlignment="Top" Margin="0,1,0,0"/>
+                                    <Image Grid.Column="0" Source="{StaticResource Illust_Transactions}" Width="30" Height="30" Stretch="Uniform" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,2,0,0"/>
                                     <StackPanel Grid.Column="1">
-                                        <TextBlock Text="{DynamicResource Str_Login_Feat3_Title}" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF"/>
-                                        <TextBlock Text="{DynamicResource Str_Login_Feat3_Desc}" FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{DynamicResource Str_Login_Feat3_Title}" FontSize="13" FontWeight="SemiBold" Foreground="#FFF4EA"/>
+                                        <TextBlock Text="{DynamicResource Str_Login_Feat3_Desc}" FontSize="12" Foreground="#C8B6CC" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
 
                             <!-- Footer nhỏ bên banner -->
                             <StackPanel Grid.Row="2">
-                                <TextBlock Text="{DynamicResource Str_Login_Version}" FontSize="11" Foreground="#64748B"/>
+                                <TextBlock Text="{DynamicResource Str_Login_Version}" FontSize="11" Foreground="#A592AE"/>
                             </StackPanel>
                         </Grid>
                     </ScrollViewer>
@@ -210,8 +229,8 @@
 
                                 <!-- Banner Cảnh Báo Mất Kết Nối Cơ Sở Dữ Liệu -->
                                 <Border Margin="0,14,0,0"
-                                        Background="#FEF2F2"
-                                        BorderBrush="#FECACA"
+                                        Background="{StaticResource ErrorBackgroundBrush}"
+                                        BorderBrush="{StaticResource ErrorBorderBrush}"
                                         BorderThickness="1"
                                         CornerRadius="6"
                                         Padding="12,10">
@@ -238,17 +257,17 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <Path Grid.Column="0"
-                                                  Data="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
+                                                  Style="{StaticResource CustomSvgIconStyle}"
+                                                  Data="{StaticResource Icon_Incidents}"
                                                   Width="15" Height="15"
-                                                  Fill="#DC2626"
-                                                  Stretch="Uniform"
+                                                  Stroke="{StaticResource ErrorTextBrush}"
                                                   VerticalAlignment="Top"
                                                   Margin="0,1,8,0"/>
                                             <TextBlock Grid.Column="1"
                                                        Text="{DynamicResource Str_Db_ConnectionBanner_Desc}"
                                                        FontSize="12"
                                                        FontWeight="SemiBold"
-                                                       Foreground="#B91C1C"
+                                                       Foreground="{StaticResource ErrorTextBrush}"
                                                        TextWrapping="Wrap"/>
                                         </Grid>
 
@@ -258,19 +277,19 @@
                                                 HorizontalAlignment="Left"
                                                 Height="28" Padding="12,0"
                                                 Background="#FFFFFF"
-                                                BorderBrush="#FCA5A5"
+                                                BorderBrush="{StaticResource ErrorBorderBrush}"
                                                 BorderThickness="1"
                                                 Command="{Binding RetryConnectionCommand}"
                                                 IsEnabled="{Binding CanInteract}"
                                                 Style="{StaticResource SecondaryButtonStyle}">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                <Path Data="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
-                                                      Width="11" Height="11"
-                                                      Fill="#B91C1C"
-                                                      Stretch="Uniform"
+                                                <Path Style="{StaticResource CustomSvgIconStyle}"
+                                                      Data="{StaticResource Icon_Refresh}"
+                                                      Width="12" Height="12"
+                                                      Stroke="{StaticResource ErrorTextBrush}"
                                                       Margin="0,0,6,0"/>
                                                 <TextBlock Text="{DynamicResource Str_Db_Btn_Retry}"
-                                                           FontSize="11" FontWeight="SemiBold" Foreground="#B91C1C"/>
+                                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource ErrorTextBrush}"/>
                                             </StackPanel>
                                         </Button>
                                     </Grid>
@@ -291,8 +310,8 @@
                                 <TextBlock Text="{DynamicResource Str_Login_PasswordLabel}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
                                 <common:RevealPasswordBox x:Name="PasswordInput"
                                                           Password="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                          InputHeight="42"
-                                                          InputCornerRadius="8"
+                                                          InputHeight="36"
+                                                          InputCornerRadius="6"
                                                           InputBackground="{StaticResource InputBackgroundBrush}"
                                                           InputBorderBrush="{StaticResource InputBorderBrush}"
                                                           InputFocusedBorderBrush="{StaticResource InputFocusedBorderBrush}"

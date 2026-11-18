@@ -62,9 +62,9 @@ public class GateControlViewModel : ViewModelBase
     }
 
     public string AutoModeStatusText => _localizationService.GetString(IsAutoModeEnabled ? "Str_GateUi_AutoOn" : "Str_GateUi_AutoOff");
-    public string AutoModeBadgeBackground => IsAutoModeEnabled ? "#DCFCE7" : "#F1F5F9";
-    public string AutoModeBadgeBorder => IsAutoModeEnabled ? "#86EFAC" : "#CBD5E1";
-    public string AutoModeBadgeForeground => IsAutoModeEnabled ? "#15803D" : "#64748B";
+    public string AutoModeBadgeBackground => IsAutoModeEnabled ? "#E6F9F0" : "#28204D";
+    public string AutoModeBadgeBorder => IsAutoModeEnabled ? "#9AE6C1" : "#4D3B6E";
+    public string AutoModeBadgeForeground => IsAutoModeEnabled ? "#168A5B" : "#C8B6CC";
 
     private bool _isAutoCheckoutAllVehicles = true;
     public bool IsAutoCheckoutAllVehicles
@@ -345,9 +345,9 @@ public class GateControlViewModel : ViewModelBase
 
     public string PlateMatchBadgeColor => IsPlateMatched switch
     {
-        true => "#16A34A",   // Green
-        false => "#DC2626",  // Red
-        _ => "#64748B"       // Slate Gray
+        true => "#168A5B",   // Emerald Green
+        false => "#C93B4B",  // Crimson Coral
+        _ => "#7A667C"       // Warm Plum Gray
     };
 
     private string _durationFormatted = "--:--";

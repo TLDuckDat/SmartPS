@@ -58,8 +58,8 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="📊" FontSize="20" Margin="0,0,8,0"/>
-                                <TextBlock Text="{DynamicResource Str_Rpt_Title}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <Image Source="{StaticResource Illust_Reports}" Width="34" Height="34" Stretch="Uniform" Margin="0,0,10,0"/>
+                                <TextBlock Text="{DynamicResource Str_Rpt_Title}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                             </StackPanel>
                             <TextBlock Text="{DynamicResource Str_Rpt_Subtitle}" FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,0"/>
                         </StackPanel>
@@ -70,16 +70,16 @@
                                 <Button Style="{StaticResource PrimaryButtonStyle}" Command="{Binding ExportCommand}" Height="36" Padding="16,0"
                                         ToolTip="{Binding ExportToolTip}" ToolTipService.ShowOnDisabled="True">
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="📄" FontSize="13" Margin="0,0,6,0"/>
+                                        <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Document}" Width="14" Height="14" Stroke="White" Margin="0,0,6,0"/>
                                         <TextBlock Text="{DynamicResource Str_Rpt_Export}" FontSize="12.5" FontWeight="SemiBold"/>
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
-                            <Border Visibility="{Binding IsExporting, Converter={StaticResource BoolToVisConverter}}"
-                                    Background="#EFF6FF"
-                                    BorderBrush="#BFDBFE"
+                            <Border Visibility="{Binding IsExporting, Converter={StaticResource BoolToVisConverter}, FallbackValue=Collapsed}"
+                                    Background="#FFF0E8"
+                                    BorderBrush="#F5B89E"
                                     BorderThickness="1"
-                                    CornerRadius="4"
+                                    CornerRadius="6"
                                     Padding="10,6"
                                     Margin="10,0,0,0"
                                     Width="260">
@@ -95,13 +95,13 @@
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Text="{Binding ExportProgressText, Mode=OneWay}"
                                                    FontSize="11"
-                                                   Foreground="#1D4ED8"
+                                                   Foreground="#E8735A"
                                                    VerticalAlignment="Center"/>
                                         <TextBlock Grid.Column="1"
                                                    Text="{Binding ExportProgress, Mode=OneWay, StringFormat={}{0}%}"
                                                    FontSize="11"
                                                    FontWeight="Bold"
-                                                   Foreground="#1D4ED8"/>
+                                                   Foreground="#E8735A"/>
                                     </Grid>
                                     <Grid Grid.Row="1" Margin="0,6,0,0">
                                         <ProgressBar Value="{Binding ExportProgress, Mode=OneWay}"
@@ -116,8 +116,8 @@
                                                 Height="24"
                                                 Padding="8,0"
                                                 Background="White"
-                                                Foreground="#1D4ED8"
-                                                BorderBrush="#93C5FD"
+                                                Foreground="#E8735A"
+                                                BorderBrush="#F5B89E"
                                                 BorderThickness="1"/>
                                     </Grid>
                                 </Grid>
@@ -177,7 +177,7 @@
                 <!-- 3. Thông báo lỗi (địa phương hóa) -->
                 <Border Background="{StaticResource ErrorBackgroundBrush}" BorderBrush="{StaticResource ErrorBorderBrush}" BorderThickness="1"
                         CornerRadius="6" Padding="14,10" Margin="0,0,0,14"
-                        Visibility="{Binding HasError, Converter={StaticResource BoolToVisConverter}}">
+                        Visibility="{Binding HasError, Converter={StaticResource BoolToVisConverter}, FallbackValue=Collapsed}">
                     <TextBlock Text="{Binding ErrorMessage}" FontSize="12.5" Foreground="{StaticResource ErrorTextBrush}" TextWrapping="Wrap"/>
                 </Border>
                 <!-- 4. Thẻ KPI (14 thẻ, so sánh kỳ trước) -->
@@ -434,7 +434,7 @@
             </StackPanel>
         </ScrollViewer>
         <!-- 7. Lớp phủ đang tải -->
-        <Border Background="#99FFFFFF" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisConverter}}">
+        <Border Background="#CCFFFDF9" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisConverter}, FallbackValue=Collapsed}">
             <TextBlock Text="{DynamicResource Str_Rpt_Loading}" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextBrandBrush}"
                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
         </Border>

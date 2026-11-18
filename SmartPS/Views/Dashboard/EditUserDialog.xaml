@@ -12,7 +12,7 @@
         WindowStyle="SingleBorderWindow"
         ShowInTaskbar="False"
         ResizeMode="NoResize"
-        Background="#FFFFFF">
+        Background="{StaticResource CardBackgroundBrush}">
 
     <Grid>
         <Grid.RowDefinitions>
@@ -23,19 +23,22 @@
 
         <!-- ROW 0: Header Section -->
         <Border Grid.Row="0"
-                Background="#F8FAFC"
-                BorderBrush="#E2E8F0"
+                Background="{StaticResource SurfaceMutedBrush}"
+                BorderBrush="{StaticResource DividerBrush}"
                 BorderThickness="0,0,0,1"
                 Padding="20,16">
-            <StackPanel>
-                <TextBlock Text="{DynamicResource Str_EditUser_HeaderTitle}"
-                           FontSize="14"
-                           FontWeight="Bold"
-                           Foreground="#0F172A"/>
-                <TextBlock Text="{DynamicResource Str_EditUser_HeaderSubtitle}"
-                           FontSize="12"
-                           Foreground="#64748B"
-                           Margin="0,3,0,0"/>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Image Source="{StaticResource Illust_UserManagement}" Width="34" Height="34" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{DynamicResource Str_EditUser_HeaderTitle}"
+                               FontSize="14"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{DynamicResource Str_EditUser_HeaderSubtitle}"
+                               FontSize="12"
+                               Foreground="{StaticResource TextDimBrush}"
+                               Margin="0,3,0,0"/>
+                </StackPanel>
             </StackPanel>
         </Border>
 
@@ -51,7 +54,7 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                        <TextBlock Text="{DynamicResource Str_EditUser_IdLabel}" FontSize="12" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,5"/>
+                        <TextBlock Text="{DynamicResource Str_EditUser_IdLabel}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5"/>
                         <TextBox x:Name="UserIdInput"
                                  Text="{Binding UserId, Mode=OneWay}"
                                  Style="{StaticResource ModernTextBoxStyle}"
@@ -60,7 +63,7 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                        <TextBlock Text="{DynamicResource Str_EditUser_UsernameLabel}" FontSize="12" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,5"/>
+                        <TextBlock Text="{DynamicResource Str_EditUser_UsernameLabel}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5"/>
                         <TextBox x:Name="UsernameInput"
                                  Text="{Binding Username, Mode=OneWay}"
                                  Style="{StaticResource ModernTextBoxStyle}"
@@ -71,7 +74,7 @@
 
                 <!-- Họ và tên -->
                 <StackPanel Margin="0,0,0,14">
-                    <TextBlock Text="{DynamicResource Str_EditUser_FullNameLabel}" FontSize="12" FontWeight="SemiBold" Foreground="#0F172A" Margin="0,0,0,5"/>
+                    <TextBlock Text="{DynamicResource Str_EditUser_FullNameLabel}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,5"/>
                     <TextBox x:Name="FullNameInput"
                              Text="{Binding FullName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource ModernTextBoxStyle}"/>
@@ -86,7 +89,7 @@
 
                     <!-- Vai trò -->
                     <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                        <TextBlock Text="{DynamicResource Str_EditUser_RoleLabel}" FontSize="12" FontWeight="SemiBold" Foreground="#0F172A" Margin="0,0,0,5"/>
+                        <TextBlock Text="{DynamicResource Str_EditUser_RoleLabel}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,5"/>
                         <ComboBox x:Name="RoleComboBox"
                                   ItemsSource="{Binding AvailableRoles}"
                                   SelectedItem="{Binding SelectedRole, Mode=TwoWay}"
@@ -94,8 +97,8 @@
                                   Height="36"
                                   FontSize="13"
                                   VerticalContentAlignment="Center"
-                                  Background="#FFFFFF"
-                                  BorderBrush="#CBD5E1">
+                                  Background="{StaticResource InputBackgroundBrush}"
+                                  BorderBrush="{StaticResource InputBorderBrush}">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding RoleName, Converter={StaticResource RoleLocalizedConverter}}"/>
@@ -106,14 +109,14 @@
 
                     <!-- Trạng thái -->
                     <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                        <TextBlock Text="{DynamicResource Str_EditUser_StatusLabel}" FontSize="12" FontWeight="SemiBold" Foreground="#0F172A" Margin="0,0,0,5"/>
+                        <TextBlock Text="{DynamicResource Str_EditUser_StatusLabel}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,5"/>
                         <ComboBox x:Name="StatusComboBox"
                                   SelectedIndex="{Binding StatusIndex, Mode=TwoWay}"
                                   Height="36"
                                   FontSize="13"
                                   VerticalContentAlignment="Center"
-                                  Background="#FFFFFF"
-                                  BorderBrush="#CBD5E1">
+                                  Background="{StaticResource InputBackgroundBrush}"
+                                  BorderBrush="{StaticResource InputBorderBrush}">
                             <ComboBoxItem Content="{DynamicResource Str_EditUser_StatusActive}"/>
                             <ComboBoxItem Content="{DynamicResource Str_EditUser_StatusLocked}"/>
                         </ComboBox>
@@ -121,44 +124,44 @@
                 </Grid>
 
                 <!-- Khung đổi mật khẩu mới (Tùy chọn) -->
-                <Border Background="#F8FAFC"
-                        BorderBrush="#E2E8F0"
+                <Border Background="{StaticResource SurfaceMutedBrush}"
+                        BorderBrush="{StaticResource DividerBrush}"
                         BorderThickness="1"
-                        CornerRadius="4"
+                        CornerRadius="6"
                         Padding="14,12"
                         Margin="0,4,0,0">
                     <StackPanel>
                         <TextBlock Text="{DynamicResource Str_EditUser_ChangePasswordSection}"
                                    FontSize="12.5"
                                    FontWeight="Bold"
-                                   Foreground="#0F172A"/>
+                                   Foreground="{StaticResource TextPrimaryBrush}"/>
                         <TextBlock Text="{DynamicResource Str_EditUser_ChangePasswordHint}"
                                    FontSize="11.5"
-                                   Foreground="#64748B"
+                                   Foreground="{StaticResource TextDimBrush}"
                                    Margin="0,2,0,10"/>
 
                         <!-- Mật khẩu mới (Có nút Ẩn/Hiện mật khẩu) -->
                         <StackPanel Margin="0,0,0,10">
-                            <TextBlock Text="{DynamicResource Str_EditUser_NewPasswordLabel}" FontSize="11.5" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,4"/>
+                            <TextBlock Text="{DynamicResource Str_EditUser_NewPasswordLabel}" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                             <common:RevealPasswordBox x:Name="NewPasswordInput"
                                                       Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}"
                                                       Password="{Binding NewPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                       InputHeight="36"
-                                                      InputCornerRadius="4"
-                                                      InputBackground="#FFFFFF"
-                                                      InputBorderBrush="#CBD5E1"/>
+                                                      InputCornerRadius="6"
+                                                      InputBackground="{StaticResource InputBackgroundBrush}"
+                                                      InputBorderBrush="{StaticResource InputBorderBrush}"/>
                         </StackPanel>
 
                         <!-- Xác nhận mật khẩu mới (Có nút Ẩn/Hiện mật khẩu) -->
                         <StackPanel>
-                            <TextBlock Text="{DynamicResource Str_EditUser_ConfirmNewPasswordLabel}" FontSize="11.5" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,4"/>
+                            <TextBlock Text="{DynamicResource Str_EditUser_ConfirmNewPasswordLabel}" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                             <common:RevealPasswordBox x:Name="ConfirmPasswordInput"
                                                       Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}"
                                                       Password="{Binding ConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                       InputHeight="36"
-                                                      InputCornerRadius="4"
-                                                      InputBackground="#FFFFFF"
-                                                      InputBorderBrush="#CBD5E1"/>
+                                                      InputCornerRadius="6"
+                                                      InputBackground="{StaticResource InputBackgroundBrush}"
+                                                      InputBorderBrush="{StaticResource InputBorderBrush}"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -168,8 +171,8 @@
 
         <!-- ROW 2: FOOTER ACTIONS -->
         <Border Grid.Row="2"
-                Background="#F8FAFC"
-                BorderBrush="#E2E8F0"
+                Background="{StaticResource SurfaceMutedBrush}"
+                BorderBrush="{StaticResource DividerBrush}"
                 BorderThickness="0,1,0,0"
                 Padding="16,12">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">

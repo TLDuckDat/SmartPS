@@ -6,12 +6,23 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Colors.xaml"/>
+                <ResourceDictionary Source="Resources/Icons.xaml"/>
                 <ResourceDictionary Source="Resources/Converters.xaml"/>
                 <ResourceDictionary Source="Resources/Inputs.xaml"/>
                 <ResourceDictionary Source="Resources/Buttons.xaml"/>
                 <ResourceDictionary Source="Resources/DataGrids.xaml"/>
                 <ResourceDictionary Source="Resources/Languages/Strings.vi-VN.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Font chữ mặc định toàn ứng dụng: Be Vietnam Pro -->
+            <Style TargetType="{x:Type Window}">
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
+                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            </Style>
+            <Style TargetType="{x:Type UserControl}">
+                <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
+                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -7,6 +7,7 @@
         MinHeight="500"
         MinWidth="800"
         WindowStartupLocation="CenterOwner"
+        Background="{StaticResource CardBackgroundBrush}"
         Closing="Window_Closing">
     <Grid Margin="18">
         <Grid.RowDefinitions>
@@ -31,32 +32,33 @@
                      Padding="8,0"
                      Margin="0,0,8,0"/>
             <Button Grid.Column="1"
+                    Style="{StaticResource SecondaryButtonStyle}"
                     Content="{DynamicResource Str_Customers_ImportChooseFile}"
                     Command="{Binding ChooseFileCommand}"
                     Height="34"
                     Padding="12,0"
                     Margin="0,0,8,0"/>
             <Button Grid.Column="2"
+                    Style="{StaticResource PrimaryButtonStyle}"
                     Content="{DynamicResource Str_Customers_ImportPreview}"
                     Command="{Binding PreviewCommand}"
                     Height="34"
                     Padding="12,0"
-                    Margin="0,0,8,0"
-                    Background="#2563EB"
-                    Foreground="White"
-                    BorderThickness="0"/>
+                    Margin="0,0,8,0"/>
             <Button Grid.Column="3"
+                    Style="{StaticResource SecondaryButtonStyle}"
                     Content="{DynamicResource Str_Common_Close}"
                     Click="BtnClose_Click"
                     Height="34"
-                    Padding="12,0"/>
+                    Padding="12,0"
+                    Margin="0"/>
         </Grid>
 
         <Border Grid.Row="1"
-                Background="#F8FAFC"
-                BorderBrush="#E2E8F0"
+                Background="{StaticResource SurfaceMutedBrush}"
+                BorderBrush="{StaticResource DividerBrush}"
                 BorderThickness="1"
-                CornerRadius="4"
+                CornerRadius="6"
                 Padding="10"
                 Margin="0,0,0,12">
             <Grid>
@@ -76,17 +78,17 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0"
                                Text="{Binding ProgressMessage}"
-                               Foreground="#475569"
+                               Foreground="{StaticResource TextSecondaryBrush}"
                                VerticalAlignment="Center"/>
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                         <TextBlock Text="{DynamicResource Str_Customers_ImportTotal}"/>
                         <TextBlock Text="{Binding TotalRows}" Margin="4,0,12,0" FontWeight="Bold"/>
-                        <TextBlock Text="{DynamicResource Str_Customers_ImportValid}" Foreground="#15803D"/>
-                        <TextBlock Text="{Binding ValidRows}" Margin="4,0,12,0" FontWeight="Bold" Foreground="#15803D"/>
-                        <TextBlock Text="{DynamicResource Str_Customers_ImportWarnings}" Foreground="#B45309"/>
-                        <TextBlock Text="{Binding WarningRows}" Margin="4,0,12,0" FontWeight="Bold" Foreground="#B45309"/>
-                        <TextBlock Text="{DynamicResource Str_Customers_ImportErrors}" Foreground="#B91C1C"/>
-                        <TextBlock Text="{Binding ErrorRows}" Margin="4,0,0,0" FontWeight="Bold" Foreground="#B91C1C"/>
+                        <TextBlock Text="{DynamicResource Str_Customers_ImportValid}" Foreground="#168A5B"/>
+                        <TextBlock Text="{Binding ValidRows}" Margin="4,0,12,0" FontWeight="Bold" Foreground="#168A5B"/>
+                        <TextBlock Text="{DynamicResource Str_Customers_ImportWarnings}" Foreground="#B86B14"/>
+                        <TextBlock Text="{Binding WarningRows}" Margin="4,0,12,0" FontWeight="Bold" Foreground="#B86B14"/>
+                        <TextBlock Text="{DynamicResource Str_Customers_ImportErrors}" Foreground="#C93B4B"/>
+                        <TextBlock Text="{Binding ErrorRows}" Margin="4,0,0,0" FontWeight="Bold" Foreground="#C93B4B"/>
                     </StackPanel>
                 </Grid>
             </Grid>
@@ -101,7 +103,7 @@
                   RowHeight="34"
                   HeadersVisibility="Column"
                   GridLinesVisibility="Horizontal"
-                  BorderBrush="#E2E8F0"
+                  BorderBrush="{StaticResource DividerBrush}"
                   BorderThickness="1"
                   Margin="0,0,0,12">
             <DataGrid.Columns>
