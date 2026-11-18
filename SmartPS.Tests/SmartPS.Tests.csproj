@@ -23,6 +23,8 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
     <PackageReference Include="QuestPDF" Version="2026.9.1" />
     <PackageReference Include="xunit.v3" Version="4.0.1" />
+    <!-- Bộ test giao diện WPF nằm ở SmartPS.UiTests (tiến trình riêng, vì nó tạo Application toàn cục). -->
+    <Compile Remove="Unit\AllViewsAndActorsXamlFlowTests.cs" />
     <!--
       The app gets EF Core 10.0.11 through Microsoft.EntityFrameworkCore.Tools (PrivateAssets=all), which does not flow
       to referencing projects; without this pin the test project resolves EF Core 10.0.4 from Npgsql and fails with CS1705.

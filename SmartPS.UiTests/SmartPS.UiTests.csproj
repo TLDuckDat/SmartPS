@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <OutputType>Exe</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <IsTestingPlatformApplication>false</IsTestingPlatformApplication>
+    <RootNamespace>SmartPS.Tests</RootNamespace>
+    <NoWarn>$(NoWarn);xUnit1051</NoWarn>
+  </PropertyGroup>
+
+  <!--
+    Bộ kiểm thử giao diện WPF. Chạy trong tiến trình riêng vì các view cần Application.Current (StaticResource);
+    Application toàn cục sẽ làm hỏng các test nghiệp vụ (ví dụ MockPaymentGateway, báo cáo) nếu chạy chung tiến trình.
+  -->
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="SmartPS.Tests.TestSupport" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\SmartPS.Tests\Unit\AllViewsAndActorsXamlFlowTests.cs" Link="AllViewsAndActorsXamlFlowTests.cs" />
+    <Compile Include="..\SmartPS.Tests\TestSupport\FakeAuditService.cs" Link="TestSupport\FakeAuditService.cs" />
+    <Compile Include="..\SmartPS.Tests\TestSupport\FakeAuthService.cs" Link="TestSupport\FakeAuthService.cs" />
+    <Compile Include="..\SmartPS.Tests\TestSupport\FakeDialogService.cs" Link="TestSupport\FakeDialogService.cs" />
+    <Compile Include="..\SmartPS.Tests\TestSupport\FakeLocalizationService.cs" Link="TestSupport\FakeLocalizationService.cs" />
+    <Compile Include="..\SmartPS.Tests\TestSupport\TestUsers.cs" Link="TestSupport\TestUsers.cs" />
+    <Compile Include="..\SmartPS.Tests\TestSupport\ReportResults.cs" Link="TestSupport\ReportResults.cs" />
+    <Compile Include="..\SmartPS.Tests\GlobalUsings.cs" Link="GlobalUsings.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageReference Include="xunit.v3" Version="4.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.11" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SmartPS\SmartPS.csproj" />
+  </ItemGroup>
+
+</Project>

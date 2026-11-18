@@ -10,3 +10,4 @@ using System.Windows;
 )]
 
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("SmartPS.Tests")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("SmartPS.UiTests")]
