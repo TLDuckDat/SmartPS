@@ -511,6 +511,9 @@ namespace SmartPS.Migrations
                         .HasColumnType("int")
                         .HasDefaultValue(1);
 
+                    b.Property<string>("FeeBreakdownJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsMonthlyPass")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -525,6 +528,9 @@ namespace SmartPS.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasDefaultValue(0);
+
+                    b.Property<int?>("PricingPolicyVersionId")
+                        .HasColumnType("int");
 
                     b.Property<int?>("SlotId")
                         .HasColumnType("int");
@@ -559,6 +565,8 @@ namespace SmartPS.Migrations
                     b.HasIndex("CustomerId");
 
                     b.HasIndex("LicensePlate");
+
+                    b.HasIndex("PricingPolicyVersionId");
 
                     b.HasIndex("Status");
 
@@ -708,6 +716,70 @@ namespace SmartPS.Migrations
                     b.ToTable("ParkingZones", (string)null);
                 });
 
+            modelBuilder.Entity("SmartPS.Models.Parking.PricingPolicyVersion", b =>
+                {
+                    b.Property<int>("VersionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("VersionId"));
+
+                    b.Property<decimal>("Block4hPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("BlockHours")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("DailyPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("GracePeriodMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Monthly1Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Monthly3Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Monthly6Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("OverQuotaDailyPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("OvernightSurcharge")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("VehicleTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("int");
+
+                    b.HasKey("VersionId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("VehicleTypeId", "VersionNumber")
+                        .IsUnique();
+
+                    b.ToTable("PricingPolicyVersions", (string)null);
+                });
+
             modelBuilder.Entity("SmartPS.Models.Parking.PricingRule", b =>
                 {
                     b.Property<int>("RuleId")
@@ -728,6 +800,9 @@ namespace SmartPS.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<int>("GracePeriodMinutes")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("Monthly1Price")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -737,6 +812,14 @@ namespace SmartPS.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("Monthly6Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("OverQuotaDailyPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("OvernightSurcharge")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
@@ -1326,6 +1409,11 @@ namespace SmartPS.Migrations
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("SmartPS.Models.Parking.PricingPolicyVersion", "PricingPolicyVersion")
+                        .WithMany()
+                        .HasForeignKey("PricingPolicyVersionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("SmartPS.Models.Parking.ParkingSlot", "Slot")
                         .WithMany("ParkingSessions")
                         .HasForeignKey("SlotId")
@@ -1340,6 +1428,8 @@ namespace SmartPS.Migrations
                     b.Navigation("CreatedByUser");
 
                     b.Navigation("Customer");
+
+                    b.Navigation("PricingPolicyVersion");
 
                     b.Navigation("Slot");
 
@@ -1370,6 +1460,24 @@ namespace SmartPS.Migrations
                         .WithMany()
                         .HasForeignKey("VehicleTypeId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("VehicleType");
+                });
+
+            modelBuilder.Entity("SmartPS.Models.Parking.PricingPolicyVersion", b =>
+                {
+                    b.HasOne("SmartPS.Models.Auth.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("SmartPS.Models.Parking.VehicleType", "VehicleType")
+                        .WithMany()
+                        .HasForeignKey("VehicleTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
 
                     b.Navigation("VehicleType");
                 });

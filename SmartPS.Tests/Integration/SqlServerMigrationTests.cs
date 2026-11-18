@@ -54,14 +54,15 @@ public class SqlServerMigrationTests : IClassFixture<SqlServerDatabaseFixture>
     // ---- chain shape ----------------------------------------------------------------------------------------------------
 
     [Fact]
-    public void Baseline_is_configure_then_initial_and_the_model_has_no_pending_changes()
+    public void Baseline_is_configure_then_initial_then_pricing_and_the_model_has_no_pending_changes()
     {
         using var ctx = SqlServerDatabaseFixture.CreateContext(SqlServerDatabaseFixture.DefaultConnectionString);
         var migrations = ctx.Database.GetMigrations().ToList();
 
-        Assert.Equal(2, migrations.Count);
+        Assert.Equal(3, migrations.Count);
         Assert.EndsWith("_ConfigureSqlServerDatabase", migrations[0], StringComparison.Ordinal);
         Assert.EndsWith("_InitialSqlServer", migrations[1], StringComparison.Ordinal);
+        Assert.EndsWith("_AddPricingPolicyAndSnapshot", migrations[2], StringComparison.Ordinal);
         Assert.False(ctx.Database.HasPendingModelChanges(), "dotnet ef migrations has-pending-model-changes must report none");
     }
 
@@ -242,6 +243,44 @@ public class SqlServerMigrationTests : IClassFixture<SqlServerDatabaseFixture>
             Assert.Empty(await ctx.Database.GetPendingMigrationsAsync());
             Assert.Equal(23, await ctx.Permissions.CountAsync());
         }
+    }
+
+    [Fact]
+    public async Task Pricing_migration_snapshots_existing_rules_as_version_1_and_keeps_old_sessions()
+    {
+        _db.RequireAvailable();
+        var cs = await _db.CreateSiblingDatabaseAsync("pricemig");
+        await using (var ctx = SqlServerDatabaseFixture.CreateContext(cs))
+        {
+            await DbInitializer.InitializeAsync(ctx);
+        }
+
+        string before;
+        await using (var ctx = SqlServerDatabaseFixture.CreateContext(cs))
+        {
+            before = ctx.Database.GetMigrations().ToList()[1];
+        }
+
+        // Dữ liệu ở dạng trước migration giá: sửa một bảng giá và có một phiên đã hoàn tất
+        await MigrateToAsync(cs, before);
+        await ExecAsync(cs, "UPDATE [PricingRules] SET [DailyPrice] = 12345 WHERE [VehicleTypeId] = (SELECT MIN([VehicleTypeId]) FROM [PricingRules])");
+        await ExecAsync(cs, """
+            INSERT INTO "ParkingSessions" ("TicketCode","LicensePlate","VehicleTypeId","CheckInTime","TotalFee","Status","PaymentMethod","IsMonthlyPass","CustomerType")
+            SELECT 'OLD-1','59A12345', MIN("VehicleTypeId"), SYSUTCDATETIME(), 7000, 1, 0, 0, 1 FROM "VehicleTypes";
+            """);
+
+        await MigrateToAsync(cs, null);
+
+        var rules = await CountAsync(cs, "SELECT COUNT(*) FROM [PricingRules]");
+        Assert.True(rules > 0);
+        Assert.Equal(rules, await CountAsync(cs, "SELECT COUNT(*) FROM [PricingPolicyVersions] WHERE [VersionNumber] = 1"));
+        Assert.Equal(0, await CountAsync(cs, """
+            SELECT COUNT(*) FROM [PricingRules] r JOIN [PricingPolicyVersions] v ON v.[VehicleTypeId] = r.[VehicleTypeId]
+            WHERE v.[Block4hPrice] <> r.[Block4hPrice] OR v.[DailyPrice] <> r.[DailyPrice] OR v.[OverQuotaDailyPrice] <> r.[DailyPrice]
+               OR r.[OverQuotaDailyPrice] <> r.[DailyPrice] OR r.[GracePeriodMinutes] <> 15 OR v.[GracePeriodMinutes] <> 15
+            """));
+        Assert.Equal(1, await CountAsync(cs, "SELECT COUNT(*) FROM [PricingPolicyVersions] WHERE [DailyPrice] = 12345"));
+        Assert.Equal(1, await CountAsync(cs, "SELECT COUNT(*) FROM [ParkingSessions] WHERE [TicketCode] = 'OLD-1' AND [TotalFee] = 7000 AND [PricingPolicyVersionId] IS NULL AND [FeeBreakdownJson] IS NULL"));
     }
 
     [Fact]

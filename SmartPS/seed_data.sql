@@ -122,8 +122,8 @@ ORDER BY v.Ord;
 -- Xe ô tô: 4h 25.000đ, ngày 100.000đ, tháng 1/3/6: 1.200.000/3.400.000/6.500.000đ
 -- Xe đạp / điện: 4h 2.000đ, ngày 10.000đ, tháng 1/3/6: 50.000/140.000/270.000đ
 -- -----------------------------------------------------------------------------------
-INSERT INTO [PricingRules] ([VehicleTypeId], [Block4hPrice], [DailyPrice], [Monthly1Price], [Monthly3Price], [Monthly6Price], [Description])
-SELECT t.[VehicleTypeId], v.Block4h, v.Daily, v.M1, v.M3, v.M6, v.Description
+INSERT INTO [PricingRules] ([VehicleTypeId], [Block4hPrice], [DailyPrice], [Monthly1Price], [Monthly3Price], [Monthly6Price], [Description], [OverQuotaDailyPrice])
+SELECT t.[VehicleTypeId], v.Block4h, v.Daily, v.M1, v.M3, v.M6, v.Description, v.Daily
 FROM (VALUES
     (1, N'Xe máy', 5000.00, 25000.00, 100000.00, 285000.00, 540000.00, N'Bảng giá gửi xe máy tiêu chuẩn'),
     (2, N'Xe ô tô', 25000.00, 100000.00, 1200000.00, 3400000.00, 6500000.00, N'Bảng giá gửi xe ô tô tiêu chuẩn'),
@@ -132,6 +132,15 @@ FROM (VALUES
 JOIN [VehicleTypes] t ON t.[TypeName] = v.TypeName
 WHERE NOT EXISTS (SELECT 1 FROM [PricingRules] pr WHERE pr.[VehicleTypeId] = t.[VehicleTypeId])
 ORDER BY v.Ord;
+
+-- Phiên bản 1 của bảng giá (bản chụp để đối chiếu giá đã dùng khi tính phí) cho loại xe chưa có phiên bản nào
+INSERT INTO [PricingPolicyVersions]
+    ([VehicleTypeId], [VersionNumber], [Block4hPrice], [DailyPrice], [Monthly1Price], [Monthly3Price], [Monthly6Price],
+     [GracePeriodMinutes], [OvernightSurcharge], [OverQuotaDailyPrice], [BlockHours], [CreatedAtUtc], [CreatedByUserId])
+SELECT pr.[VehicleTypeId], 1, pr.[Block4hPrice], pr.[DailyPrice], pr.[Monthly1Price], pr.[Monthly3Price], pr.[Monthly6Price],
+       pr.[GracePeriodMinutes], pr.[OvernightSurcharge], pr.[OverQuotaDailyPrice], 4, SYSUTCDATETIME(), NULL
+FROM [PricingRules] pr
+WHERE NOT EXISTS (SELECT 1 FROM [PricingPolicyVersions] pv WHERE pv.[VehicleTypeId] = pr.[VehicleTypeId]);
 
 -- -----------------------------------------------------------------------------------
 -- 8. KHU VỰC BÃI XE (ParkingZones)

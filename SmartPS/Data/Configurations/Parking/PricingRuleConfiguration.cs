@@ -27,6 +27,12 @@ public class PricingRuleConfiguration : IEntityTypeConfiguration<PricingRule>
         builder.Property(x => x.Monthly6Price)
                .HasPrecision(18, 2);
 
+        builder.Property(x => x.OvernightSurcharge)
+               .HasPrecision(18, 2);
+
+        builder.Property(x => x.OverQuotaDailyPrice)
+               .HasPrecision(18, 2);
+
         builder.HasIndex(x => x.VehicleTypeId)
                .IsUnique();
 

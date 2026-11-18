@@ -988,6 +988,14 @@
     <sys:String x:Key="Str_PriceUi_Monthly3">3-month plan:</sys:String>
     <sys:String x:Key="Str_PriceUi_Monthly6">6-month plan:</sys:String>
     <sys:String x:Key="Str_PriceUi_Save">SAVE CHANGES</sys:String>
+    <sys:String x:Key="Str_PriceUi_Extra">GRACE PERIOD AND SURCHARGES</sys:String>
+    <sys:String x:Key="Str_PriceUi_Grace">Grace period (minutes):</sys:String>
+    <sys:String x:Key="Str_PriceUi_Overnight">Overnight surcharge (each time 00:00 is crossed):</sys:String>
+    <sys:String x:Key="Str_PriceUi_OverQuota">Over-quota vehicle price (per 24h):</sys:String>
+    <sys:String x:Key="Str_PriceUi_Minutes">min</sys:String>
+    <sys:String x:Key="Str_PriceUi_MaxVehicles">Max vehicles per household:</sys:String>
+    <sys:String x:Key="Str_PriceUi_MaxVehiclesHint">From a household's (N+1)th vehicle on, the over-quota price applies</sys:String>
+    <sys:String x:Key="Str_PriceUi_SaveNoPermission">You do not have permission to edit pricing</sys:String>
     <!-- Localization: Units 3 -->
     <sys:String x:Key="Str_Unit_SlotsSuffix"> slots</sys:String>
     <sys:String x:Key="Str_Unit_PositionsSuffix"> spaces</sys:String>
@@ -1279,12 +1287,24 @@
     <sys:String x:Key="Str_Fee_Block4h">4-hour block ({0:N0} ₫)</sys:String>
     <sys:String x:Key="Str_Fee_OneDay">1-day package ({0:N0} ₫)</sys:String>
     <sys:String x:Key="Msg_Fee_Calculated">Fee calculated.</sys:String>
+    <sys:String x:Key="Str_Fee_Line_Grace">Free within the first {0} minutes (grace period).</sys:String>
+    <sys:String x:Key="Str_Fee_Line_MonthlyFree">Valid monthly pass: free for {0}.</sys:String>
+    <sys:String x:Key="Str_Fee_Line_Cycle">24h cycle #{0} ({1}): {2} blocks x {3:N0} = {4:N0}</sys:String>
+    <sys:String x:Key="Str_Fee_Line_CycleCapped">24h cycle #{0} ({1}): {2} blocks x {3:N0}, daily cap applied = {4:N0}</sys:String>
+    <sys:String x:Key="Str_Fee_Line_OverQuota">24h cycle #{0} ({1}): over-quota vehicle = {2:N0}</sys:String>
+    <sys:String x:Key="Str_Fee_Line_Overnight">Overnight surcharge: {0} time(s) x {1:N0} = {2:N0}</sys:String>
     <sys:String x:Key="Str_Fee_Detail">Parked for: {0}. Fee: {1} = {2:N0} ₫.</sys:String>
     <sys:String x:Key="Str_Price_UnknownType">Unknown</sys:String>
     <sys:String x:Key="Msg_Price_LoadError">Error loading the price list: {0}</sys:String>
     <sys:String x:Key="Msg_Price_MaxVehiclesMin">The default maximum vehicles per household must be at least 1!</sys:String>
     <sys:String x:Key="Msg_Price_NegativeValue">Prices for '{0}' cannot be negative!</sys:String>
     <sys:String x:Key="Msg_Price_MustBePositive">Per-visit and monthly prices for '{0}' must be greater than 0 ₫!</sys:String>
+    <sys:String x:Key="Msg_Price_GraceRange">The grace period of '{0}' must be between 0 and {1} minutes!</sys:String>
+    <sys:String x:Key="Msg_Price_NotANumber">The entered value must be a valid number!</sys:String>
+    <sys:String x:Key="Msg_Price_TooLarge">Pricing for '{0}' must not exceed {1:N0}!</sys:String>
+    <sys:String x:Key="Msg_Price_Conflict">The pricing for '{0}' was changed by someone else after you loaded it. Please reload and edit again!</sys:String>
+    <sys:String x:Key="Msg_Price_ConflictMaxVehicles">The maximum vehicles per household was changed by someone else after you loaded it. Please reload and edit again!</sys:String>
+    <sys:String x:Key="Msg_Price_RuleNotFound">Pricing for '{0}' was not found. Please reload.</sys:String>
     <sys:String x:Key="Msg_Price_Saved">Changes saved!</sys:String>
     <sys:String x:Key="Msg_Price_SaveError">Error saving the price list: {0}</sys:String>
     <sys:String x:Key="Msg_Ocr_EmptyPath">The image path must not be empty.</sys:String>

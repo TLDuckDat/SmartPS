@@ -90,6 +90,7 @@
                         <ComboBox x:Name="RoleComboBox"
                                   ItemsSource="{Binding AvailableRoles}"
                                   SelectedItem="{Binding SelectedRole, Mode=TwoWay}"
+                                  Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}"
                                   Height="36"
                                   FontSize="13"
                                   VerticalContentAlignment="Center"
@@ -140,6 +141,7 @@
                         <StackPanel Margin="0,0,0,10">
                             <TextBlock Text="{DynamicResource Str_EditUser_NewPasswordLabel}" FontSize="11.5" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,4"/>
                             <common:RevealPasswordBox x:Name="NewPasswordInput"
+                                                      Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}"
                                                       Password="{Binding NewPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                       InputHeight="36"
                                                       InputCornerRadius="4"
@@ -151,6 +153,7 @@
                         <StackPanel>
                             <TextBlock Text="{DynamicResource Str_EditUser_ConfirmNewPasswordLabel}" FontSize="11.5" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,4"/>
                             <common:RevealPasswordBox x:Name="ConfirmPasswordInput"
+                                                      Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}"
                                                       Password="{Binding ConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                       InputHeight="36"
                                                       InputCornerRadius="4"

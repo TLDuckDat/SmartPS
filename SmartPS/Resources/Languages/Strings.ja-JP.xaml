@@ -988,6 +988,14 @@
     <sys:String x:Key="Str_PriceUi_Monthly3">3か月プラン:</sys:String>
     <sys:String x:Key="Str_PriceUi_Monthly6">6か月プラン:</sys:String>
     <sys:String x:Key="Str_PriceUi_Save">変更を保存</sys:String>
+    <sys:String x:Key="Str_PriceUi_Extra">猶予時間と加算料金</sys:String>
+    <sys:String x:Key="Str_PriceUi_Grace">猶予時間（分）：</sys:String>
+    <sys:String x:Key="Str_PriceUi_Overnight">夜間加算（0:00をまたぐごと）：</sys:String>
+    <sys:String x:Key="Str_PriceUi_OverQuota">台数超過車両の料金（24時間ごと）：</sys:String>
+    <sys:String x:Key="Str_PriceUi_Minutes">分</sys:String>
+    <sys:String x:Key="Str_PriceUi_MaxVehicles">世帯あたりの最大台数：</sys:String>
+    <sys:String x:Key="Str_PriceUi_MaxVehiclesHint">世帯のN+1台目からは台数超過料金が適用されます</sys:String>
+    <sys:String x:Key="Str_PriceUi_SaveNoPermission">料金を編集する権限がありません</sys:String>
     <!-- Localization: Units 3 -->
     <sys:String x:Key="Str_Unit_SlotsSuffix"> 区画</sys:String>
     <sys:String x:Key="Str_Unit_PositionsSuffix"> 区画</sys:String>
@@ -1279,12 +1287,24 @@
     <sys:String x:Key="Str_Fee_Block4h">4時間枠（{0:N0} ₫）</sys:String>
     <sys:String x:Key="Str_Fee_OneDay">1日パック（{0:N0} ₫）</sys:String>
     <sys:String x:Key="Msg_Fee_Calculated">料金を計算しました。</sys:String>
+    <sys:String x:Key="Str_Fee_Line_Grace">最初の{0}分は無料（猶予時間）。</sys:String>
+    <sys:String x:Key="Str_Fee_Line_MonthlyFree">有効な月極券：{0}は無料。</sys:String>
+    <sys:String x:Key="Str_Fee_Line_Cycle">24時間サイクル #{0}（{1}）：{2}枠 x {3:N0} = {4:N0}</sys:String>
+    <sys:String x:Key="Str_Fee_Line_CycleCapped">24時間サイクル #{0}（{1}）：{2}枠 x {3:N0}、1日上限適用 = {4:N0}</sys:String>
+    <sys:String x:Key="Str_Fee_Line_OverQuota">24時間サイクル #{0}（{1}）：台数超過車両 = {2:N0}</sys:String>
+    <sys:String x:Key="Str_Fee_Line_Overnight">夜間加算：{0}回 x {1:N0} = {2:N0}</sys:String>
     <sys:String x:Key="Str_Fee_Detail">駐車時間: {0}。料金: {1} = {2:N0} ₫。</sys:String>
     <sys:String x:Key="Str_Price_UnknownType">不明</sys:String>
     <sys:String x:Key="Msg_Price_LoadError">料金表の読み込みエラー: {0}</sys:String>
     <sys:String x:Key="Msg_Price_MaxVehiclesMin">世帯あたりの既定の最大台数は 1 台以上にしてください！</sys:String>
     <sys:String x:Key="Msg_Price_NegativeValue">「{0}」の料金に負の値は設定できません！</sys:String>
     <sys:String x:Key="Msg_Price_MustBePositive">「{0}」の都度料金と定期料金は 0 ₫ より大きくしてください！</sys:String>
+    <sys:String x:Key="Msg_Price_GraceRange">「{0}」の猶予時間は0〜{1}分で指定してください。</sys:String>
+    <sys:String x:Key="Msg_Price_NotANumber">入力値は有効な数値にしてください！</sys:String>
+    <sys:String x:Key="Msg_Price_TooLarge">「{0}」の料金は {1:N0} を超えないようにしてください！</sys:String>
+    <sys:String x:Key="Msg_Price_Conflict">「{0}」の料金は、読み込み後に他のユーザーが変更しました。再読み込みしてからやり直してください！</sys:String>
+    <sys:String x:Key="Msg_Price_ConflictMaxVehicles">世帯あたりの最大台数は、読み込み後に他のユーザーが変更しました。再読み込みしてからやり直してください！</sys:String>
+    <sys:String x:Key="Msg_Price_RuleNotFound">「{0}」の料金設定が見つかりません。再読み込みしてください。</sys:String>
     <sys:String x:Key="Msg_Price_Saved">変更を保存しました！</sys:String>
     <sys:String x:Key="Msg_Price_SaveError">料金表の保存エラー: {0}</sys:String>
     <sys:String x:Key="Msg_Ocr_EmptyPath">画像パスを指定してください。</sys:String>

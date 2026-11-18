@@ -27,6 +27,7 @@ public static class AuditActions
     public const string IncidentReport = "INCIDENT_REPORT";
     public const string IncidentResolve = "INCIDENT_RESOLVE";
     public const string SettingsUpdate = "SETTINGS_UPDATE";
+    public const string PricingUpdated = "PRICING_UPDATED";
 
     public static IReadOnlyList<string> All { get; } = typeof(AuditActions)
         .GetFields(BindingFlags.Public | BindingFlags.Static)

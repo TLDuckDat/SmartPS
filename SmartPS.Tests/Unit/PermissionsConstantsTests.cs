@@ -74,7 +74,9 @@ public class PermissionsConstantsTests
             "GATE_BLACKLIST_BLOCKED", "ZONE_UPDATE",
             "REPORT_EXPORT",
             // Incidents and system settings
-            "INCIDENT_REPORT", "INCIDENT_RESOLVE", "SETTINGS_UPDATE"
+            "INCIDENT_REPORT", "INCIDENT_RESOLVE", "SETTINGS_UPDATE",
+            // Bảng giá (KAN-29b)
+            "PRICING_UPDATED"
         }, AuditActions.All);
     }
 

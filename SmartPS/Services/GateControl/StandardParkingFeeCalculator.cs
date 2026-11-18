@@ -1,90 +1,81 @@
+using System.Text.Json;
 using SmartPS.Models.Parking;
 using SmartPS.Services.Localization;
+using SmartPS.Services.Pricing;
 
 namespace SmartPS.Services.GateControl;
 
 /// <summary>
-/// Triển khai mặc định của IParkingFeeCalculator hỗ trợ vé tháng, biểu phí block + lũy tiến + phụ phí đêm + chiết khấu hạng khách hàng.
+/// Triển khai mặc định của IParkingFeeCalculator: uỷ quyền cho <see cref="IPricingEngine"/> và dựng kết quả tương thích
+/// (Duration, RawFee, TotalFee, IsMonthlyTicket, Message, FeeDetails) cho giao diện và cổng.
 /// </summary>
 public class StandardParkingFeeCalculator : IParkingFeeCalculator
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
+    private readonly IPricingEngine _engine;
+
+    public StandardParkingFeeCalculator() : this(new PricingEngine())
+    {
+    }
+
+    public StandardParkingFeeCalculator(IPricingEngine engine)
+    {
+        _engine = engine ?? throw new ArgumentNullException(nameof(engine));
+    }
+
     public ParkingFeeCalculationResult CalculateFee(ParkingSession session, PricingRule? pricingRule, DateTime checkOutTime)
     {
-        var duration = checkOutTime - session.CheckInTime;
-        if (duration.TotalSeconds < 0) duration = TimeSpan.FromSeconds(1);
+        var policy = pricingRule is null ? PricingPolicy.Default(session.VehicleTypeId) : PricingPolicy.FromRule(pricingRule);
+        // Phiên đã đánh dấu vé tháng mà không có hạn cụ thể: miễn phí toàn bộ lượt.
+        var pass = session.IsMonthlyPass
+            ? new MonthlyPassInfo(DateTime.MinValue, DateTime.MaxValue, MonthlyTicketStatus.Active)
+            : null;
+        return CalculateFee(session, policy, checkOutTime, pass, isOverQuota: false);
+    }
 
-        int days = (int)Math.Floor(duration.TotalDays);
-        int hours = duration.Hours;
-        int minutes = duration.Minutes;
-        
-        string durationStr = "";
-        if (days > 0) durationStr += AppText.Get("Str_Fee_Days", days);
-        if (hours > 0) durationStr += AppText.Get("Str_Fee_Hours", hours);
-        if (minutes > 0 || durationStr == "") durationStr += AppText.Get("Str_Fee_Minutes", minutes);
-
-        // 1. Vé tháng
-        if (session.IsMonthlyPass)
+    public ParkingFeeCalculationResult CalculateFee(ParkingSession session, PricingPolicy policy, DateTime checkOutTime,
+        MonthlyPassInfo? monthlyPass, bool isOverQuota)
+    {
+        var result = _engine.Calculate(new PricingRequest
         {
-            return new ParkingFeeCalculationResult
-            {
-                Duration = duration,
-                RawFee = 0,
-                TotalFee = 0,
-                IsMonthlyTicket = true,
-                Message = AppText.Get("Msg_Fee_MonthlyFree"),
-                FeeDetails = AppText.Get("Str_Fee_MonthlyDetail", durationStr.Trim())
-            };
-        }
+            LicensePlate = session.LicensePlate,
+            VehicleTypeId = session.VehicleTypeId,
+            EntryUtc = session.CheckInTime,
+            ExitUtc = checkOutTime,
+            CustomerType = session.CustomerType,
+            MonthlyPass = monthlyPass,
+            IsOverQuota = isOverQuota,
+            Policy = policy
+        });
 
-        // 2. Tính phí (không còn ân hạn 15 phút)
-        decimal block4hPrice = pricingRule?.Block4hPrice ?? (session.VehicleTypeId == 2 ? 25000 : 5000);
-        decimal dailyPrice = pricingRule?.DailyPrice ?? (session.VehicleTypeId == 2 ? 100000 : 25000);
-
-        decimal fee = 0;
-        string feeDetailCalc = "";
-
-        if (days > 0)
-        {
-            fee += days * dailyPrice;
-            feeDetailCalc += AppText.Get("Str_Fee_DaysPart", days, dailyPrice);
-            
-            double remainingHours = duration.TotalHours - (days * 24);
-            if (remainingHours > 0)
-            {
-                if (remainingHours <= 4)
-                {
-                    fee += block4hPrice;
-                    feeDetailCalc += AppText.Get("Str_Fee_ExtraBlock", remainingHours, block4hPrice);
-                }
-                else
-                {
-                    fee += dailyPrice;
-                    feeDetailCalc += AppText.Get("Str_Fee_ExtraDay", remainingHours, dailyPrice);
-                }
-            }
-        }
-        else
-        {
-            if (duration.TotalHours <= 4)
-            {
-                fee = block4hPrice;
-                feeDetailCalc = AppText.Get("Str_Fee_Block4h", block4hPrice);
-            }
-            else
-            {
-                fee = dailyPrice;
-                feeDetailCalc = AppText.Get("Str_Fee_OneDay", dailyPrice);
-            }
-        }
+        var durationText = PricingEngine.FormatDuration(result.Duration);
+        var details = result.IsMonthlyTicket
+            ? AppText.Get("Str_Fee_MonthlyDetail", durationText)
+            : AppText.Get("Str_Fee_Detail", durationText,
+                string.Join("; ", result.Lines.Select(l => l.Description)), result.RawFee);
 
         return new ParkingFeeCalculationResult
         {
-            Duration = duration,
-            RawFee = fee,
-            TotalFee = Math.Max(0, Math.Round(fee, 0)),
-            IsMonthlyTicket = false,
-            Message = AppText.Get("Msg_Fee_Calculated"),
-            FeeDetails = AppText.Get("Str_Fee_Detail", durationStr.Trim(), feeDetailCalc, fee)
+            Duration = result.Duration,
+            RawFee = result.RawFee,
+            TotalFee = result.Total,
+            IsMonthlyTicket = result.IsMonthlyTicket,
+            Message = AppText.Get(result.IsMonthlyTicket ? "Msg_Fee_MonthlyFree" : "Msg_Fee_Calculated"),
+            FeeDetails = details,
+            PolicyVersionId = result.PolicyVersionId,
+            FeeBreakdownJson = JsonSerializer.Serialize(new
+            {
+                policyVersionId = result.PolicyVersionId,
+                policyVersion = result.PolicyVersion,
+                total = result.Total,
+                isMonthlyTicket = result.IsMonthlyTicket,
+                lines = result.Lines.Select(l => new { code = l.Code, description = l.Description, amount = l.Amount })
+            }, JsonOptions)
         };
     }
 }

@@ -1,16 +1,18 @@
-using Microsoft.EntityFrameworkCore;
-using SmartPS.Data;
+using SmartPS.Constants;
+using SmartPS.Services.Authorization;
+using SmartPS.Services.Common;
 using SmartPS.Services.Dialog;
-using System.Collections.ObjectModel;
-using SmartPS.Models.Parking;
 using SmartPS.Services.Localization;
+using SmartPS.Services.Pricing;
+using System.Collections.ObjectModel;
 
 namespace SmartPS.ViewModels.Pricing;
 
-public class PricingViewModel : ViewModelBase
+public class PricingViewModel : ValidatableViewModelBase
 {
-    private readonly IDbContextFactory<SmartPsDbContext> _dbContextFactory;
+    private readonly IPricingService _pricingService;
     private readonly IDialogService _dialogService;
+    private readonly IPermissionService _permissionService;
 
     public ObservableCollection<PricingRuleItemViewModel> PricingRules { get; } = new();
 
@@ -21,58 +23,172 @@ public class PricingViewModel : ViewModelBase
         set => SetProperty(ref _selectedRule, value);
     }
 
-    private int _defaultMaxVehicles;
+    private int _defaultMaxVehicles = 1;
     public int DefaultMaxVehicles
     {
         get => _defaultMaxVehicles;
-        set => SetProperty(ref _defaultMaxVehicles, value);
+        set
+        {
+            if (SetProperty(ref _defaultMaxVehicles, value))
+            {
+                if (!_fromText)
+                {
+                    ResetMaxText();
+                }
+
+                ValidateMaxVehicles();
+            }
+        }
     }
+
+    private bool _maxParseError;
+    private int? _loadedMaxVehicles;
+    private string? _rawMaxText;
+    private bool _fromText;
+
+    /// <summary>Ô nhập số xe tối đa dạng chuỗi: để trống/gõ chữ tạo lỗi và khoá nút Lưu.</summary>
+    public string DefaultMaxVehiclesText
+    {
+        get => _rawMaxText ?? DefaultMaxVehicles.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        set
+        {
+            _rawMaxText = value ?? string.Empty;
+            if (!PricingRuleItemViewModel.TryParseInt(_rawMaxText, out var parsed))
+            {
+                _maxParseError = true;
+                SetErrors(nameof(DefaultMaxVehiclesText), new[] { AppText.Get("Msg_Price_NotANumber") });
+                return;
+            }
+
+            _maxParseError = false;
+            _fromText = true;
+            try
+            {
+                DefaultMaxVehicles = parsed;
+            }
+            finally
+            {
+                _fromText = false;
+            }
+        }
+    }
+
+    private bool _isBusy;
+    public bool IsBusy
+    {
+        get => _isBusy;
+        private set
+        {
+            if (SetProperty(ref _isBusy, value))
+            {
+                RefreshErrorState();
+            }
+        }
+    }
+
+    /// <summary>Người dùng có quyền Pricing.Manage: chỉ khi đó nút Lưu mới mở.</summary>
+    public bool CanEdit => _permissionService.HasPermission(Permissions.PricingManage);
+
+    /// <summary>Tooltip của nút Lưu khi bị khoá vì thiếu quyền; null khi được phép.</summary>
+    public string? SaveToolTip => CanEdit ? null : AppText.Get("Msg_Auth_PermissionDenied");
+
+    /// <summary>Còn lỗi ở số xe tối đa hoặc ở bất kỳ ô giá nào: khoá nút Lưu.</summary>
+    public bool HasAnyErrors => HasErrors || PricingRules.Any(r => r.HasErrors);
 
     public AsyncRelayCommand RefreshCommand { get; }
     public AsyncRelayCommand SaveCommand { get; }
 
-    public PricingViewModel(IDbContextFactory<SmartPsDbContext> dbContextFactory, IDialogService dialogService)
+    public PricingViewModel(IPricingService pricingService, IDialogService dialogService, IPermissionService permissionService)
     {
-        _dbContextFactory = dbContextFactory;
-        _dialogService = dialogService;
+        _pricingService = pricingService ?? throw new ArgumentNullException(nameof(pricingService));
+        _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
+        _permissionService = permissionService ?? throw new ArgumentNullException(nameof(permissionService));
 
         RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
-        SaveCommand = new AsyncRelayCommand(SaveDataAsync);
+        SaveCommand = new AsyncRelayCommand(SaveDataAsync, () => CanEdit && !IsBusy && !HasAnyErrors);
+        ErrorsChanged += (_, _) => RefreshErrorState();
+        PricingRules.CollectionChanged += (_, e) =>
+        {
+            if (e.NewItems is not null)
+            {
+                foreach (PricingRuleItemViewModel item in e.NewItems)
+                {
+                    item.ErrorsChanged += (_, _) => RefreshErrorState();
+                }
+            }
+
+            RefreshErrorState();
+        };
 
         _ = LoadDataAsync();
+    }
+
+    private void RefreshErrorState()
+    {
+        OnPropertyChanged(nameof(HasAnyErrors));
+        SaveCommand?.RaiseCanExecuteChanged();
+    }
+
+    private void ResetMaxText()
+    {
+        _rawMaxText = null;
+        _maxParseError = false;
+        ClearErrors(nameof(DefaultMaxVehiclesText));
+        OnPropertyChanged(nameof(DefaultMaxVehiclesText));
+    }
+
+    private void ValidateMaxVehicles()
+    {
+        var error = DefaultMaxVehicles < 1 ? AppText.Get("Msg_Price_MaxVehiclesMin") : null;
+        ValidateProperty(nameof(DefaultMaxVehicles), error);
+        if (!_maxParseError)
+        {
+            ValidateProperty(nameof(DefaultMaxVehiclesText), error);
+        }
     }
 
     public async Task LoadDataAsync()
     {
         try
         {
-            await using var db = await _dbContextFactory.CreateDbContextAsync();
-            var rules = await db.PricingRules.Include(x => x.VehicleType).OrderBy(x => x.RuleId).ToListAsync();
-            var settings = await db.ParkingSettings.FirstOrDefaultAsync();
+            var configuration = await _pricingService.LoadPoliciesAsync();
 
             PricingRules.Clear();
-            foreach (var rule in rules)
+            foreach (var rule in configuration.Rules)
             {
-                PricingRules.Add(new PricingRuleItemViewModel
+                var item = new PricingRuleItemViewModel
                 {
                     RuleId = rule.RuleId,
-                    VehicleTypeName = rule.VehicleType?.TypeName ?? AppText.Get("Str_Price_UnknownType"),
-                    VehicleIcon = GetIcon(rule.VehicleType?.TypeName),
+                    VehicleTypeId = rule.VehicleTypeId,
+                    VehicleTypeName = string.IsNullOrEmpty(rule.VehicleTypeName) ? AppText.Get("Str_Price_UnknownType") : rule.VehicleTypeName,
+                    VehicleIcon = GetIcon(rule.VehicleTypeName),
                     Block4hPrice = rule.Block4hPrice,
                     DailyPrice = rule.DailyPrice,
                     Monthly1Price = rule.Monthly1Price,
                     Monthly3Price = rule.Monthly3Price,
                     Monthly6Price = rule.Monthly6Price,
-                    Description = rule.Description ?? string.Empty
-                });
+                    GracePeriodMinutes = rule.GracePeriodMinutes,
+                    OvernightSurcharge = rule.OvernightSurcharge,
+                    OverQuotaDailyPrice = rule.OverQuotaDailyPrice,
+                    Description = rule.Description ?? string.Empty,
+                    LoadedStamp = rule.LoadedStamp
+                };
+                item.ValidateAll();
+                PricingRules.Add(item);
             }
 
-            if (settings != null)
-            {
-                DefaultMaxVehicles = settings.DefaultMaxVehiclesPerHousehold;
-            }
-
+            ResetMaxText();
+            DefaultMaxVehicles = configuration.DefaultMaxVehiclesPerHousehold;
+            _loadedMaxVehicles = configuration.LoadedDefaultMaxVehicles;
+            ValidateMaxVehicles();
             SelectedRule = PricingRules.FirstOrDefault();
+            OnPropertyChanged(nameof(CanEdit));
+            OnPropertyChanged(nameof(SaveToolTip));
+            RefreshErrorState();
+        }
+        catch (PermissionDeniedException)
+        {
+            _dialogService.ShowError(AppText.Get("Msg_Auth_PermissionDenied"));
         }
         catch (Exception ex)
         {
@@ -82,71 +198,71 @@ public class PricingViewModel : ViewModelBase
 
     public async Task SaveDataAsync()
     {
+        ValidateMaxVehicles();
+        foreach (var vm in PricingRules)
+        {
+            vm.ValidateAll();
+        }
+
+        if (!CanEdit || HasAnyErrors)
+        {
+            return;
+        }
+
         try
         {
-            // 1. Validate số xe tối đa mỗi hộ
-            if (DefaultMaxVehicles < 1)
-            {
-                _dialogService.ShowError(AppText.Get("Msg_Price_MaxVehiclesMin"));
-                return;
-            }
-
-            // 2. Validate biểu phí từng loại phương tiện
-            foreach (var vm in PricingRules)
-            {
-                if (vm.Block4hPrice < 0 || vm.DailyPrice < 0 || vm.Monthly1Price < 0 || vm.Monthly3Price < 0 || vm.Monthly6Price < 0)
+            IsBusy = true;
+            var configuration = new PricingConfiguration(
+                PricingRules.Select(vm => new PricingRuleData
                 {
-                    _dialogService.ShowError(AppText.Get("Msg_Price_NegativeValue", vm.VehicleTypeName));
-                    return;
-                }
+                    RuleId = vm.RuleId,
+                    VehicleTypeId = vm.VehicleTypeId,
+                    VehicleTypeName = vm.VehicleTypeName,
+                    Block4hPrice = vm.Block4hPrice,
+                    DailyPrice = vm.DailyPrice,
+                    Monthly1Price = vm.Monthly1Price,
+                    Monthly3Price = vm.Monthly3Price,
+                    Monthly6Price = vm.Monthly6Price,
+                    GracePeriodMinutes = vm.GracePeriodMinutes,
+                    OvernightSurcharge = vm.OvernightSurcharge,
+                    OverQuotaDailyPrice = vm.OverQuotaDailyPrice,
+                    Description = vm.Description,
+                    LoadedStamp = vm.LoadedStamp
+                }).ToList(),
+                DefaultMaxVehicles,
+                _loadedMaxVehicles);
 
-                // Với xe máy và ô tô, giá vé lượt và vé tháng không được bằng 0
-                if ((vm.VehicleTypeName.Contains("máy", StringComparison.OrdinalIgnoreCase) || vm.VehicleTypeName.Contains("ô tô", StringComparison.OrdinalIgnoreCase))
-                    && (vm.Block4hPrice <= 0 || vm.DailyPrice <= 0 || vm.Monthly1Price <= 0))
-                {
-                    _dialogService.ShowError(AppText.Get("Msg_Price_MustBePositive", vm.VehicleTypeName));
-                    return;
-                }
-            }
-
-            await using var db = await _dbContextFactory.CreateDbContextAsync();
-            
-            // Save pricing rules
-            foreach (var vm in PricingRules)
+            var result = await _pricingService.SavePoliciesAsync(configuration);
+            if (result.Success)
             {
-                var rule = await db.PricingRules.FindAsync(vm.RuleId);
-                if (rule != null)
-                {
-                    rule.Block4hPrice = vm.Block4hPrice;
-                    rule.DailyPrice = vm.DailyPrice;
-                    rule.Monthly1Price = vm.Monthly1Price;
-                    rule.Monthly3Price = vm.Monthly3Price;
-                    rule.Monthly6Price = vm.Monthly6Price;
-                }
+                _dialogService.ShowSuccess(AppText.Get("Msg_Price_Saved"));
+                // Tải lại để lấy dấu hiệu/giá trị hiện hành mới, lần lưu sau không xung đột giả với chính mình.
+                await LoadDataAsync();
             }
-
-            // Save parking settings
-            var settings = await db.ParkingSettings.FirstOrDefaultAsync();
-            if (settings == null)
+            else if (result.Error == OperationError.PermissionDenied)
             {
-                settings = new ParkingSettings { DefaultMaxVehiclesPerHousehold = DefaultMaxVehicles };
-                db.ParkingSettings.Add(settings);
+                _dialogService.ShowError(AppText.Get("Msg_Auth_PermissionDenied"));
+            }
+            else if (result.Error == OperationError.Validation || result.Error == OperationError.NotFound)
+            {
+                _dialogService.ShowWarning(result.Message);
             }
             else
             {
-                settings.DefaultMaxVehiclesPerHousehold = DefaultMaxVehicles;
+                _dialogService.ShowError(AppText.Get("Msg_Price_SaveError", result.Message));
             }
-
-            await db.SaveChangesAsync();
-            _dialogService.ShowWarning(AppText.Get("Msg_Price_Saved"));
         }
         catch (Exception ex)
         {
             _dialogService.ShowError(AppText.Get("Msg_Price_SaveError", ex.Message));
         }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
-    private string GetIcon(string? typeName)
+    private static string GetIcon(string? typeName)
     {
         if (string.IsNullOrEmpty(typeName)) return "❓";
         if (typeName.Contains("máy", StringComparison.OrdinalIgnoreCase)) return "🏍";

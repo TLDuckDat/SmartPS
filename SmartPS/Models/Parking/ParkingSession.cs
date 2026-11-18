@@ -23,6 +23,13 @@ public class ParkingSession
     public string? CheckOutImagePath { get; set; }
 
     public decimal TotalFee { get; set; }
+
+    /// <summary>Bản chụp bảng giá đã dùng để tính TotalFee khi xe ra; null với phiên chưa tính hoặc phiên cũ.</summary>
+    public int? PricingPolicyVersionId { get; set; }
+    public PricingPolicyVersion? PricingPolicyVersion { get; set; }
+
+    /// <summary>Chi tiết cước (JSON) lúc xe ra; giao dịch cũ không bao giờ tính lại.</summary>
+    public string? FeeBreakdownJson { get; set; }
     public SessionStatus Status { get; set; } = SessionStatus.Active;
     public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.Cash;
 

@@ -9,7 +9,7 @@ using SmartPS.Services.Localization;
 
 namespace SmartPS.ViewModels.Dashboard;
 
-public class EditUserViewModel : ViewModelBase
+public class EditUserViewModel : ValidatableViewModelBase
 {
     private readonly User _user;
     private readonly IAuthService _authService;
@@ -23,14 +23,26 @@ public class EditUserViewModel : ViewModelBase
     public string FullName
     {
         get => _fullName;
-        set => SetProperty(ref _fullName, value);
+        set
+        {
+            if (SetProperty(ref _fullName, value))
+            {
+                ValidateFullName();
+            }
+        }
     }
 
     private Role? _selectedRole;
     public Role? SelectedRole
     {
         get => _selectedRole;
-        set => SetProperty(ref _selectedRole, value);
+        set
+        {
+            if (SetProperty(ref _selectedRole, value))
+            {
+                ValidateRole();
+            }
+        }
     }
 
     public ObservableCollection<Role> AvailableRoles { get; } = new();
@@ -46,14 +58,26 @@ public class EditUserViewModel : ViewModelBase
     public string NewPassword
     {
         get => _newPassword;
-        set => SetProperty(ref _newPassword, value);
+        set
+        {
+            if (SetProperty(ref _newPassword, value))
+            {
+                ValidatePasswords();
+            }
+        }
     }
 
     private string _confirmPassword = string.Empty;
     public string ConfirmPassword
     {
         get => _confirmPassword;
-        set => SetProperty(ref _confirmPassword, value);
+        set
+        {
+            if (SetProperty(ref _confirmPassword, value))
+            {
+                ValidatePasswords();
+            }
+        }
     }
 
     private bool _isBusy;
@@ -103,7 +127,9 @@ public class EditUserViewModel : ViewModelBase
 
         _selectedRole = AvailableRoles.FirstOrDefault(r => r.RoleId == _user.RoleId);
 
-        SaveCommand = new AsyncRelayCommand(ExecuteSaveAsync, () => !IsBusy);
+        SaveCommand = new AsyncRelayCommand(ExecuteSaveAsync, () => !IsBusy && !HasErrors);
+        ErrorsChanged += (_, _) => SaveCommand.RaiseCanExecuteChanged();
+        ValidateAll();
         CancelCommand = new RelayCommand(() => RequestClose?.Invoke(false));
     }
 
@@ -111,34 +137,13 @@ public class EditUserViewModel : ViewModelBase
     {
         ErrorMessage = null;
 
-        var trimmedFullName = FullName?.Trim();
-        if (string.IsNullOrWhiteSpace(trimmedFullName))
+        ValidateAll();
+        if (HasErrors)
         {
-            SetError(_localizationService.GetString("Msg_EditUser_RequiredFullName"));
             return;
         }
 
-        if (SelectedRole is null)
-        {
-            SetError(_localizationService.GetString("Msg_EditUser_RequiredRole"));
-            return;
-        }
-
-        // Kiểm tra nếu admin nhập mật khẩu mới
-        if (!string.IsNullOrEmpty(NewPassword) || !string.IsNullOrEmpty(ConfirmPassword))
-        {
-            if (NewPassword.Length < 6)
-            {
-                SetError(_localizationService.GetString("Msg_EditUser_PasswordMinLength"));
-                return;
-            }
-
-            if (NewPassword != ConfirmPassword)
-            {
-                SetError(_localizationService.GetString("Msg_EditUser_PasswordMismatch"));
-                return;
-            }
-        }
+        var trimmedFullName = FullName.Trim();
 
         try
         {
@@ -148,7 +153,7 @@ public class EditUserViewModel : ViewModelBase
             {
                 UserId = _user.UserId,
                 FullName = trimmedFullName,
-                RoleId = SelectedRole.RoleId,
+                RoleId = SelectedRole!.RoleId,
                 IsActive = StatusIndex == 0,
                 NewPassword = string.IsNullOrWhiteSpace(NewPassword) ? null : NewPassword
             };
@@ -193,6 +198,31 @@ public class EditUserViewModel : ViewModelBase
         {
             IsBusy = false;
         }
+    }
+
+    private void ValidateAll()
+    {
+        ValidateFullName();
+        ValidateRole();
+        ValidatePasswords();
+    }
+
+    private void ValidateFullName()
+        => ValidateProperty(nameof(FullName),
+            string.IsNullOrWhiteSpace(FullName) ? AppText.Get("Msg_EditUser_RequiredFullName") : null);
+
+    private void ValidateRole()
+        => ValidateProperty(nameof(SelectedRole),
+            SelectedRole is null ? AppText.Get("Msg_EditUser_RequiredRole") : null);
+
+    /// <summary>Chỉ kiểm tra khi có nhập mật khẩu mới hoặc xác nhận: tối thiểu 6 ký tự và hai ô khớp nhau.</summary>
+    private void ValidatePasswords()
+    {
+        var entered = !string.IsNullOrEmpty(NewPassword) || !string.IsNullOrEmpty(ConfirmPassword);
+        ValidateProperty(nameof(NewPassword),
+            entered && NewPassword.Length < 6 ? AppText.Get("Msg_EditUser_PasswordMinLength") : null);
+        ValidateProperty(nameof(ConfirmPassword),
+            entered && NewPassword != ConfirmPassword ? AppText.Get("Msg_EditUser_PasswordMismatch") : null);
     }
 
     private void SetError(string message)
