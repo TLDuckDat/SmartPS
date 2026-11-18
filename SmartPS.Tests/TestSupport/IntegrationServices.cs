@@ -28,6 +28,7 @@ public static class IntegrationServices
         var services = new ServiceCollection();
 
         services.AddDbContextFactory<SmartPsDbContext>(options => options.UseSqlServer(fixture.ConnectionString));
+        services.AddSingleton(new DatabaseConnectionInfo(fixture.ConnectionString));
 
         services.AddSingleton<ICurrentUserContext, CurrentUserContext>();
         services.AddSingleton<IAuditService, AuditService>();
