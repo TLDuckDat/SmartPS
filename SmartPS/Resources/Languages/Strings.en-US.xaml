@@ -573,6 +573,12 @@
     <sys:String x:Key="Str_Rpt_Xlsx_Truncated">The session detail sheet holds only {0} of {1} rows (export limit).</sys:String>
     <sys:String x:Key="Str_Rpt_Xlsx_TopPlates">Top 10 most frequent plates</sys:String>
     <sys:String x:Key="Str_Rpt_SaveDialogTitle">Save Excel report</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_Preparing">Preparing export...</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_LoadingData">Loading data...</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_WritingWorkbook">Writing Excel file...</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_Finalizing">Finalizing file...</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_Completed">Completed</sys:String>
+    <sys:String x:Key="Str_Rpt_Export_Cancel">Cancel export</sys:String>
     <sys:String x:Key="Str_Rpt_SaveDialogFilter">Excel Workbook (*.xlsx)|*.xlsx</sys:String>
     <sys:String x:Key="Msg_Rpt_LoadError">Could not load the report. Check the database connection and try again.</sys:String>
     <sys:String x:Key="Msg_Rpt_InvalidRange">Invalid date range: the start date must not be after the end date.</sys:String>
@@ -581,6 +587,7 @@
     <sys:String x:Key="Msg_Rpt_ExportFileLocked">The file cannot be written because another program (for example Excel) has it open. Close it and try again.</sys:String>
     <sys:String x:Key="Msg_Rpt_ExportError">Could not export the report. Check the save location and try again.</sys:String>
     <sys:String x:Key="Msg_Rpt_ExportAuditNotWritten">The report was exported but the audit entry could not be written.</sys:String>
+    <sys:String x:Key="Msg_Rpt_ExportCancelled">Report export was canceled.</sys:String>
 
     <!-- OVERVIEW -->
     <sys:String x:Key="Str_Ov_ParkedByVehicleType">Parked vehicles by type</sys:String>
@@ -601,6 +608,7 @@
 
     <!-- Desktop main window: Menu, ToolBar, TabControl, StatusBar -->
     <sys:String x:Key="Str_MainMenu_System">_System</sys:String>
+    <sys:String x:Key="Str_MainMenu_Profile">Account information</sys:String>
     <sys:String x:Key="Str_MainMenu_Operations">_Operations</sys:String>
     <sys:String x:Key="Str_MainMenu_Catalog">_Catalog</sys:String>
     <sys:String x:Key="Str_MainMenu_Reports">_Reports &amp; Statistics</sys:String>
@@ -616,6 +624,35 @@
     <sys:String x:Key="Str_MainMenu_About">About</sys:String>
     <sys:String x:Key="Str_Status_User">User:</sys:String>
     <sys:String x:Key="Str_Status_Screen">Screen:</sys:String>
+    <sys:String x:Key="Str_Profile_WindowTitle">Account information</sys:String>
+    <sys:String x:Key="Str_Profile_HeaderTitle">PERSONAL PROFILE</sys:String>
+    <sys:String x:Key="Str_Profile_HeaderSubtitle">Update your contact information and account security</sys:String>
+    <sys:String x:Key="Str_Profile_UsernameLabel">Username</sys:String>
+    <sys:String x:Key="Str_Profile_FullNameLabel">Full name (*)</sys:String>
+    <sys:String x:Key="Str_Profile_PhoneLabel">Phone number</sys:String>
+    <sys:String x:Key="Str_Profile_EmailLabel">Email</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordSection">CHANGE PASSWORD</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordHint">Leave blank to keep the current password. Changing it requires the current password.</sys:String>
+    <sys:String x:Key="Str_Profile_CurrentPasswordLabel">Current password</sys:String>
+    <sys:String x:Key="Str_Profile_NewPasswordLabel">New password</sys:String>
+    <sys:String x:Key="Str_Profile_ConfirmPasswordLabel">Confirm new password</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordStrengthNone">Not entered</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordStrengthWeak">Weak</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordStrengthMedium">Medium</sys:String>
+    <sys:String x:Key="Str_Profile_PasswordStrengthStrong">Strong</sys:String>
+    <sys:String x:Key="Msg_Profile_NotAuthenticated">No user is signed in.</sys:String>
+    <sys:String x:Key="Msg_Profile_RequiredFullName">Please enter your full name.</sys:String>
+    <sys:String x:Key="Msg_Profile_FullNameTooLong">Full name cannot exceed 100 characters.</sys:String>
+    <sys:String x:Key="Msg_Profile_InvalidPhone">The phone number is invalid.</sys:String>
+    <sys:String x:Key="Msg_Profile_InvalidEmail">The email address is invalid.</sys:String>
+    <sys:String x:Key="Msg_Profile_CurrentPasswordRequired">Please enter the current password.</sys:String>
+    <sys:String x:Key="Msg_Profile_NewPasswordRequired">Please enter a new password.</sys:String>
+    <sys:String x:Key="Msg_Profile_PasswordTooShort">The new password must be at least 6 characters.</sys:String>
+    <sys:String x:Key="Msg_Profile_PasswordMismatch">The password confirmation does not match.</sys:String>
+    <sys:String x:Key="Msg_Profile_PasswordWeak">The new password is too weak.</sys:String>
+    <sys:String x:Key="Msg_Profile_InvalidCurrentPassword">The current password is incorrect.</sys:String>
+    <sys:String x:Key="Msg_Profile_NewPasswordSame">The new password must differ from the current password.</sys:String>
+    <sys:String x:Key="Msg_Profile_SaveError">Could not save the profile: {0}</sys:String>
     <sys:String x:Key="Str_Main_NoTabHint">Choose a function from the menu bar or the toolbar to get started.</sys:String>
     <sys:String x:Key="Msg_MainMenu_ExitConfirm">Log out and exit the application?</sys:String>
     <sys:String x:Key="Msg_Help_Shortcuts">Ctrl+1 … Ctrl+9: open a module (number shown next to each menu item)&#10;Ctrl+W or Ctrl+F4: close the current tab (or middle-click the tab)&#10;F5: refresh the current screen&#10;Ctrl+L: log out&#10;Alt+F4: exit the application&#10;F1: show keyboard shortcuts&#10;Alt + underlined letter: open a menu (Alt+S System, Alt+O Operations, Alt+C Catalog, Alt+R Reports, Alt+A Administration, Alt+H Help)</sys:String>
@@ -688,6 +725,27 @@
     <sys:String x:Key="Str_GateUi_QrCancel">✕ Cancel payment</sys:String>
     <sys:String x:Key="Str_Unit_VehicleSuffix"> vehicles</sys:String>
     <!-- Localization: Customers -->
+    <sys:String x:Key="Str_Customers_Import">Import residents</sys:String>
+    <sys:String x:Key="Str_Customers_ImportTitle">Import residents and vehicles</sys:String>
+    <sys:String x:Key="Str_Customers_ImportChooseFile">Choose file</sys:String>
+    <sys:String x:Key="Str_Customers_ImportPreview">Preview</sys:String>
+    <sys:String x:Key="Str_Customers_ImportCancel">Cancel task</sys:String>
+    <sys:String x:Key="Str_Customers_ImportSave">Save data</sys:String>
+    <sys:String x:Key="Str_Customers_ImportTotal">Total:</sys:String>
+    <sys:String x:Key="Str_Customers_ImportValid">Valid:</sys:String>
+    <sys:String x:Key="Str_Customers_ImportWarnings">Warnings:</sys:String>
+    <sys:String x:Key="Str_Customers_ImportErrors">Errors:</sys:String>
+    <sys:String x:Key="Str_Customers_ImportRow">Row</sys:String>
+    <sys:String x:Key="Str_Customers_ImportStatus">Status</sys:String>
+    <sys:String x:Key="Str_Customers_ImportStatusValid">Valid</sys:String>
+    <sys:String x:Key="Str_Customers_ImportStatusWarning">Warning</sys:String>
+    <sys:String x:Key="Str_Customers_ImportStatusError">Error</sys:String>
+    <sys:String x:Key="Str_Customers_ImportMessage">Details</sys:String>
+    <sys:String x:Key="Str_Customers_ImportStarting">Preparing...</sys:String>
+    <sys:String x:Key="Str_Customers_ImportReading">Reading file...</sys:String>
+    <sys:String x:Key="Str_Customers_ImportValidating">Validating data...</sys:String>
+    <sys:String x:Key="Str_Customers_ImportSaving">Saving data...</sys:String>
+    <sys:String x:Key="Str_Customers_ImportCompleted">Completed</sys:String>
     <sys:String x:Key="Str_Common_Cancel">Cancel</sys:String>
     <sys:String x:Key="Str_Common_Save">Save</sys:String>
     <sys:String x:Key="Str_Common_Delete">Delete</sys:String>
@@ -817,9 +875,14 @@
     <sys:String x:Key="Str_Common_StatusLower">Status</sys:String>
     <sys:String x:Key="Str_Common_Refresh">🔄 Refresh</sys:String>
     <sys:String x:Key="Str_Tx_Title">💳 Electronic Transactions (VietQR / PayOS)</sys:String>
+    <sys:String x:Key="Str_Tx_MyTitle">My transactions</sys:String>
+    <sys:String x:Key="Str_Tx_MySubtitle">Shifts, parking sessions and transactions handled by you</sys:String>
     <sys:String x:Key="Str_Tx_Subtitle">Fee ledger with real-time reconciliation of cash and VietQR payments</sys:String>
     <sys:String x:Key="Str_Tx_Refresh">Refresh transactions</sys:String>
     <sys:String x:Key="Str_Tx_ResetFilters">Reset filters</sys:String>
+    <sys:String x:Key="Str_Tx_FromDate">From date</sys:String>
+    <sys:String x:Key="Str_Tx_ToDate">To date</sys:String>
+    <sys:String x:Key="Str_Tx_ApplyDateFilter">Apply dates</sys:String>
     <sys:String x:Key="Str_Tx_KpiSessions">TOTAL SESSIONS</sys:String>
     <sys:String x:Key="Str_Tx_KpiRevenue">TOTAL FEES</sys:String>
     <sys:String x:Key="Str_Tx_KpiCash">CASH</sys:String>
@@ -876,6 +939,8 @@
     <sys:String x:Key="Str_Tx_StatusPaid">✔ Paid</sys:String>
     <sys:String x:Key="Str_Tx_StatusFailed">✕ Failed</sys:String>
     <sys:String x:Key="Str_Tx_StatusParked">🚗 Parked</sys:String>
+    <sys:String x:Key="Str_Tx_StatusActive">Active</sys:String>
+    <sys:String x:Key="Str_Tx_StatusCompleted">Completed</sys:String>
     <sys:String x:Key="Str_Tx_StatusCancelled">🚫 Cancelled</sys:String>
     <sys:String x:Key="Str_Inc_Title">Record and handle incidents: lost tickets, unreadable plates, overstays or security concerns</sys:String>
     <sys:String x:Key="Str_Inc_ListTitle">PARKING INCIDENT REPORTS</sys:String>
@@ -1010,6 +1075,30 @@
     <sys:String x:Key="Str_Ov_ShowingSuffix"> sessions</sys:String>
 
     <!-- Localization: CustomersViewModel -->
+    <sys:String x:Key="Msg_Customers_ImportFileNotFound">Import file was not found.</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportUnsupportedFile">Only CSV or XLSX files are supported.</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportNoSheet">The Excel file has no worksheet.</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportEmptyFile">The import file has no data.</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportMissingHeaders">Missing required columns: {0}</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportRequired">{0} is required.</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportTooLong">{0} cannot exceed {1} characters.</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportMaxInvalid">Maximum vehicles must be an integer from 1 to 20.</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportVehicleTypeMissing">Row {0}: vehicle type '{1}' was not found.</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportDuplicatePlate">Duplicate plate with row {0}.</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportCustomerConflict">Owner information conflicts with row {0}.</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportMaxConflict">Maximum vehicle count conflicts with row {0}.</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportExistingMaxConflict">The household already has a limit of {0} vehicles.</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportExistingCustomerConflict">The owner exists but the information does not match.</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportVehicleExists">The vehicle already exists and will be skipped.</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportPlateOwned">The plate belongs to another owner.</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportHouseholdLimit">The household vehicle limit ({0}) would be exceeded.</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportHasErrors">Resolve all error rows before saving.</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportConcurrentPlate">Row {0}: plate '{1}' was created by another operation.</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportConcurrentCustomer">Row {0}: the owner is already assigned to another household.</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportLimitChanged">Row {0}: household '{1}' now has a limit of {2} vehicles.</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportCanceled">The import task was canceled.</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportFailed">Import failed: {0}</sys:String>
+    <sys:String x:Key="Msg_Customers_ImportSuccess">Imported: {0} households, {1} owners, {2} new vehicles; skipped {3} existing vehicles.</sys:String>
     <sys:String x:Key="Msg_Common_ErrorDetail">Error: {0}</sys:String>
     <sys:String x:Key="Msg_Common_LoadError">Could not load data: {0}</sys:String>
     <sys:String x:Key="Msg_Common_SaveError">Could not save: {0}</sys:String>

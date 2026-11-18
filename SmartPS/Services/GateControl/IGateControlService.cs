@@ -1,5 +1,6 @@
 using SmartPS.Models.GateControl;
 using SmartPS.Models.Parking;
+using SmartPS.DTOs.Parking;
 
 namespace SmartPS.Services.GateControl;
 
@@ -18,6 +19,7 @@ public interface IGateControlService
     Task<List<ParkingSession>> GetActiveSessionsAsync(CancellationToken cancellationToken = default);
     Task<List<ParkingSlot>> GetAllSlotsAsync(CancellationToken cancellationToken = default);
     Task<List<ParkingSession>> GetAllSessionsHistoryAsync(CancellationToken cancellationToken = default);
+    Task<List<ParkingSession>> GetSessionsHistoryAsync(ParkingSessionHistoryFilterRequest filter, CancellationToken cancellationToken = default);
     event EventHandler<ParkingSession>? SessionCompleted;
     void NotifySessionCompleted(ParkingSession session);
 }

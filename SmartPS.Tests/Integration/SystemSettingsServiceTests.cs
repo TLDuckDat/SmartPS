@@ -71,7 +71,7 @@ public class SystemSettingsServiceTests : IClassFixture<SqlServerDatabaseFixture
         Assert.True(status.IsOnline, status.Error);
         Assert.Equal(0, status.PendingMigrations);
         Assert.True(status.AppliedMigrations > 0);
-        Assert.EndsWith("_AddPricingPolicyAndSnapshot", status.LastMigration);
+        Assert.EndsWith("_DA7UserProfile", status.LastMigration);
         Assert.False(string.IsNullOrEmpty(status.ServerVersion));
     }
 }

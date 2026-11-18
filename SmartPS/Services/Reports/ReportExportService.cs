@@ -40,10 +40,15 @@ public sealed class ReportExportService : IReportExportService
 
     public string GetDefaultFileName(ReportDateRange range) => ReportFileNames.Default(range);
 
-    public async Task<ReportExportResult> ExportAsync(ReportFilter filter, string filePath, CancellationToken cancellationToken = default)
+    public async Task<ReportExportResult> ExportAsync(
+        ReportFilter filter,
+        string filePath,
+        CancellationToken cancellationToken = default,
+        IProgress<ReportExportProgress>? progress = null)
     {
         // Must stay the first statement: localization lookups need the caller's (UI) thread and run before any await.
         var labels = ReportWorkbookLabels.Resolve(_localization);
+        progress?.Report(new ReportExportProgress(0, ReportExportPhase.Preparing));
 
         ArgumentNullException.ThrowIfNull(filter);
         if (string.IsNullOrWhiteSpace(filePath))
@@ -60,6 +65,7 @@ public sealed class ReportExportService : IReportExportService
         var fileName = Path.GetFileName(fullPath);
 
         await _guard.DemandAsync(Permissions.ReportExport, EntityType, filter.Range.Key, cancellationToken);
+        progress?.Report(new ReportExportProgress(10, ReportExportPhase.LoadingData));
 
         var probe = Probe(fullPath);
         if (probe != ReportExportStatus.Success)
@@ -68,7 +74,9 @@ public sealed class ReportExportService : IReportExportService
         }
 
         var report = await _reports.GetReportAsync(filter, cancellationToken);
+        progress?.Report(new ReportExportProgress(28, ReportExportPhase.LoadingData));
         var sessions = await _reports.GetSessionDetailsAsync(filter, ReportLimits.MaxExportSessionRows, cancellationToken);
+        progress?.Report(new ReportExportProgress(42, ReportExportPhase.LoadingData));
         report = report with { GeneratedAtUtc = _timeProvider.GetUtcNow().UtcDateTime };
 
         var tempPath = Path.Combine(Path.GetDirectoryName(fullPath) ?? string.Empty, $"{fileName}.{Guid.NewGuid():N}.tmp");
@@ -79,7 +87,7 @@ public sealed class ReportExportService : IReportExportService
             {
                 using (var stream = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
                 {
-                    var written = new ReportWorkbookWriter(labels).Write(stream, report, sessions);
+                    var written = new ReportWorkbookWriter(labels).Write(stream, report, sessions, progress, cancellationToken);
                     stream.Flush(true);
                     return written;
                 }
@@ -104,6 +112,7 @@ public sealed class ReportExportService : IReportExportService
 
         try
         {
+            progress?.Report(new ReportExportProgress(96, ReportExportPhase.Finalizing));
             File.Move(tempPath, fullPath, overwrite: true);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -127,6 +136,7 @@ public sealed class ReportExportService : IReportExportService
                 Details(filter, fileName, counts, sessions.IsTruncated, reason: null)),
             cancellationToken);
 
+        progress?.Report(new ReportExportProgress(100, ReportExportPhase.Completed));
         return new ReportExportResult(ReportExportStatus.Success, fullPath, counts, sessions.IsTruncated, auditWritten);
     }
 

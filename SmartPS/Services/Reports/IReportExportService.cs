@@ -12,5 +12,9 @@ public interface IReportExportService
     /// writes the workbook through a temporary file and finally logs REPORT_EXPORT.
     /// </summary>
     /// <exception cref="ArgumentException">The path is empty or does not end with ".xlsx".</exception>
-    Task<ReportExportResult> ExportAsync(ReportFilter filter, string filePath, CancellationToken cancellationToken = default);
+    Task<ReportExportResult> ExportAsync(
+        ReportFilter filter,
+        string filePath,
+        CancellationToken cancellationToken = default,
+        IProgress<ReportExportProgress>? progress = null);
 }

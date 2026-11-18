@@ -133,6 +133,7 @@ public class DashboardViewModel : ViewModelBase
     public AsyncRelayCommand LogoutCommand { get; }
     public AsyncRelayCommand ExitCommand { get; }
     public AsyncRelayCommand RefreshCommand { get; }
+    public AsyncRelayCommand ShowProfileCommand { get; }
     public RelayCommand ShowShortcutsCommand { get; }
     public RelayCommand AboutCommand { get; }
 
@@ -226,6 +227,11 @@ public class DashboardViewModel : ViewModelBase
             {
                 await LoadContentAsync(CurrentViewModel, isRefresh: true);
             }
+        });
+
+        ShowProfileCommand = new AsyncRelayCommand(async () =>
+        {
+            await _dialogService.ShowUserProfileDialogAsync();
         });
 
         ShowShortcutsCommand = new RelayCommand(_ =>

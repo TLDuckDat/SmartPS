@@ -7,6 +7,12 @@ public static class ReportTextKeys
     public const string Subtitle = "Str_Rpt_Subtitle";
     public const string Refresh = "Str_Rpt_Refresh";
     public const string Export = "Str_Rpt_Export";
+    public const string ExportPreparing = "Str_Rpt_Export_Preparing";
+    public const string ExportLoadingData = "Str_Rpt_Export_LoadingData";
+    public const string ExportWritingWorkbook = "Str_Rpt_Export_WritingWorkbook";
+    public const string ExportFinalizing = "Str_Rpt_Export_Finalizing";
+    public const string ExportCompleted = "Str_Rpt_Export_Completed";
+    public const string ExportCancel = "Str_Rpt_Export_Cancel";
     public const string Loading = "Str_Rpt_Loading";
     public const string ComparedTo = "Str_Rpt_ComparedTo";
     public const string Total = "Str_Rpt_Total";
@@ -135,6 +141,7 @@ public static class ReportTextKeys
     public const string MsgExportFileLocked = "Msg_Rpt_ExportFileLocked";
     public const string MsgExportError = "Msg_Rpt_ExportError";
     public const string MsgExportAuditNotWritten = "Msg_Rpt_ExportAuditNotWritten";
+    public const string MsgExportCancelled = "Msg_Rpt_ExportCancelled";
     public const string OvParkedByVehicleType = "Str_Ov_ParkedByVehicleType";
     public const string OvParkedByGroup = "Str_Ov_ParkedByGroup";
     public const string MsgOvLoadError = "Msg_Ov_LoadError";
@@ -145,6 +152,12 @@ public static class ReportTextKeys
         Subtitle,
         Refresh,
         Export,
+        ExportPreparing,
+        ExportLoadingData,
+        ExportWritingWorkbook,
+        ExportFinalizing,
+        ExportCompleted,
+        ExportCancel,
         Loading,
         ComparedTo,
         Total,
@@ -273,6 +286,7 @@ public static class ReportTextKeys
         MsgExportFileLocked,
         MsgExportError,
         MsgExportAuditNotWritten,
+        MsgExportCancelled,
         OvParkedByVehicleType,
         OvParkedByGroup,
         MsgOvLoadError,

@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using SmartPS.Constants;
 using SmartPS.Data;
+using SmartPS.DTOs.Parking;
 using SmartPS.Models.Audit;
 using SmartPS.Models.GateControl;
 using SmartPS.Models.Parking;
+using SmartPS.Models.Shifts;
 using SmartPS.Services.Audit;
 using SmartPS.Services.Authorization;
 using SmartPS.Services.Pricing;
@@ -1093,6 +1095,72 @@ public class GateControlService : IGateControlService
         lock (_syncLock)
         {
             return _memorySessions.OrderByDescending(s => s.CheckInTime).ToList();
+        }
+    }
+
+    public async Task<List<ParkingSession>> GetSessionsHistoryAsync(
+        ParkingSessionHistoryFilterRequest filter,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filter);
+        if (filter.UserId <= 0)
+        {
+            return new List<ParkingSession>();
+        }
+
+        if (_dbContextFactory != null)
+        {
+            try
+            {
+                await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+                var query = db.ParkingSessions
+                    .AsNoTracking()
+                    .Include(s => s.VehicleType)
+                    .Include(s => s.Slot)
+                    .Include(s => s.Customer)
+                    .Where(s =>
+                        (s.CreatedByUserId == filter.UserId &&
+                         (!filter.FromUtc.HasValue || s.CheckInTime >= filter.FromUtc.Value) &&
+                         (!filter.ToUtc.HasValue || s.CheckInTime < filter.ToUtc.Value)) ||
+                        db.FinancialTransactions.Any(t =>
+                            t.ParkingSessionId == s.SessionId &&
+                            t.CreatedByUserId == filter.UserId &&
+                            t.Type == FinancialTransactionType.ParkingFee &&
+                            (!filter.FromUtc.HasValue || t.CreatedAt >= filter.FromUtc.Value) &&
+                            (!filter.ToUtc.HasValue || t.CreatedAt < filter.ToUtc.Value)));
+
+                if (filter.Status.HasValue)
+                {
+                    query = query.Where(s => s.Status == filter.Status.Value);
+                }
+
+                var limit = Math.Clamp(filter.Limit, 1, 2000);
+                return await query
+                    .OrderByDescending(s => s.CheckInTime)
+                    .Take(limit)
+                    .ToListAsync(cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch
+            {
+                // Fallback to the in-memory sessions when the database is unavailable.
+            }
+        }
+
+        lock (_syncLock)
+        {
+            var sessions = _memorySessions
+                .Where(s => s.CreatedByUserId == filter.UserId)
+                .Where(s => !filter.FromUtc.HasValue || s.CheckInTime >= filter.FromUtc.Value)
+                .Where(s => !filter.ToUtc.HasValue || s.CheckInTime < filter.ToUtc.Value)
+                .Where(s => !filter.Status.HasValue || s.Status == filter.Status.Value)
+                .OrderByDescending(s => s.CheckInTime)
+                .Take(Math.Clamp(filter.Limit, 1, 2000))
+                .ToList();
+            return sessions;
         }
     }
 

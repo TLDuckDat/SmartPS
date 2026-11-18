@@ -28,19 +28,38 @@ public sealed class ReportWorkbookWriter
         _labels = labels ?? throw new ArgumentNullException(nameof(labels));
     }
 
-    public ReportExportRowCounts Write(Stream output, ReportResult result, SessionDetailPage sessions)
+    public ReportExportRowCounts Write(
+        Stream output,
+        ReportResult result,
+        SessionDetailPage sessions,
+        IProgress<ReportExportProgress>? progress = null,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(output);
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(sessions);
 
         using var workbook = new XLWorkbook();
+        progress?.Report(new ReportExportProgress(50, ReportExportPhase.WritingWorkbook));
+        cancellationToken.ThrowIfCancellationRequested();
         WriteOverview(workbook.AddWorksheet(ReportSheetNames.Overview), result, sessions);
+        progress?.Report(new ReportExportProgress(58, ReportExportPhase.WritingWorkbook));
+        cancellationToken.ThrowIfCancellationRequested();
         WriteDaily(workbook.AddWorksheet(ReportSheetNames.Daily), result);
+        progress?.Report(new ReportExportProgress(66, ReportExportPhase.WritingWorkbook));
+        cancellationToken.ThrowIfCancellationRequested();
         WriteHourly(workbook.AddWorksheet(ReportSheetNames.Hourly), result);
+        progress?.Report(new ReportExportProgress(73, ReportExportPhase.WritingWorkbook));
+        cancellationToken.ThrowIfCancellationRequested();
         WriteShifts(workbook.AddWorksheet(ReportSheetNames.Shifts), result);
+        progress?.Report(new ReportExportProgress(80, ReportExportPhase.WritingWorkbook));
+        cancellationToken.ThrowIfCancellationRequested();
         WriteVehicleTypes(workbook.AddWorksheet(ReportSheetNames.VehicleTypes), result);
+        progress?.Report(new ReportExportProgress(87, ReportExportPhase.WritingWorkbook));
+        cancellationToken.ThrowIfCancellationRequested();
         WriteSessions(workbook.AddWorksheet(ReportSheetNames.Sessions), sessions);
+        progress?.Report(new ReportExportProgress(92, ReportExportPhase.WritingWorkbook));
+        cancellationToken.ThrowIfCancellationRequested();
         workbook.SaveAs(output);
 
         return new ReportExportRowCounts(result.Daily.Count, result.Hourly.Count, result.Shifts.Count, result.VehicleTypes.Count, sessions.Rows.Count);

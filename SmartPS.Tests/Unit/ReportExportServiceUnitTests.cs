@@ -32,6 +32,13 @@ public sealed class ReportExportServiceUnitTests : IDisposable
 
     private sealed record Harness(ReportExportService Service, FakeAuditService Audit, FakeReportService Reports);
 
+    private sealed class RecordingProgress<T> : IProgress<T>
+    {
+        public List<T> Values { get; } = new();
+
+        public void Report(T value) => Values.Add(value);
+    }
+
     private static Harness Create(User user, ILocalizationService? localization = null)
     {
         var context = new CurrentUserContext();
@@ -151,6 +158,22 @@ public sealed class ReportExportServiceUnitTests : IDisposable
 
         using var wb = new XLWorkbook(path);
         Assert.Equal(ReportSheetNames.All, wb.Worksheets.Select(w => w.Name).ToArray());
+    }
+
+    [Fact]
+    public async Task Export_reports_progress_until_completed()
+    {
+        var h = Create(TestUsers.Manager());
+        var progress = new RecordingProgress<ReportExportProgress>();
+
+        var result = await h.Service.ExportAsync(Filter, PathFor("progress.xlsx"), CancellationToken.None, progress);
+
+        Assert.Equal(ReportExportStatus.Success, result.Status);
+        Assert.NotEmpty(progress.Values);
+        Assert.Contains(progress.Values, value => value.Phase == ReportExportPhase.LoadingData);
+        Assert.Contains(progress.Values, value => value.Phase == ReportExportPhase.WritingWorkbook);
+        Assert.Equal(100, progress.Values[^1].Percent);
+        Assert.Equal(ReportExportPhase.Completed, progress.Values[^1].Phase);
     }
 
     [Fact]

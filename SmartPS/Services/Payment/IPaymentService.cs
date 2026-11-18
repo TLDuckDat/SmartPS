@@ -1,4 +1,5 @@
 using SmartPS.Models.Payment;
+using SmartPS.DTOs.Payment;
 
 namespace SmartPS.Services.Payment;
 
@@ -37,6 +38,7 @@ public interface IPaymentService
         CancellationToken cancellationToken = default);
 
     Task<List<PaymentHistoryItem>> GetPaymentHistoryAsync(
+        PaymentHistoryFilterRequest? filter = null,
         CancellationToken cancellationToken = default);
 
     Task<PaymentDetailsResult?> GetPaymentDetailsAsync(

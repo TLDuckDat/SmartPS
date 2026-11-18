@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
+using System.Net.Mail;
+using System.Text.RegularExpressions;
 using SmartPS.Constants;
 using SmartPS.Data;
 using SmartPS.DTOs.Auth;
@@ -341,6 +343,127 @@ namespace SmartPS.Services.Auth
             return true;
         }
 
+        public async Task<bool> UpdateOwnProfileAsync(UpdateOwnProfileRequest request, CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(request);
+
+            var current = CurrentUser ?? throw new UnauthorizedAccessException(AppText.Get("Msg_Profile_NotAuthenticated"));
+            var fullName = request.FullName?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(fullName))
+            {
+                throw new ArgumentException(AppText.Get("Msg_Profile_RequiredFullName"), nameof(request.FullName));
+            }
+
+            if (fullName.Length > 100)
+            {
+                throw new ArgumentException(AppText.Get("Msg_Profile_FullNameTooLong"), nameof(request.FullName));
+            }
+
+            var phoneNumber = string.IsNullOrWhiteSpace(request.PhoneNumber) ? null : request.PhoneNumber.Trim();
+            if (phoneNumber is not null &&
+                (phoneNumber.Length > 20 || !Regex.IsMatch(phoneNumber, @"^\+?[0-9 ()-]{7,20}$")))
+            {
+                throw new ArgumentException(AppText.Get("Msg_Profile_InvalidPhone"), nameof(request.PhoneNumber));
+            }
+
+            var email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
+            if (email is not null && (email.Length > 100 || !IsValidEmail(email)))
+            {
+                throw new ArgumentException(AppText.Get("Msg_Profile_InvalidEmail"), nameof(request.Email));
+            }
+
+            var hasPasswordChange = !string.IsNullOrEmpty(request.CurrentPassword) ||
+                                    !string.IsNullOrEmpty(request.NewPassword);
+            string? newPasswordHash = null;
+            if (hasPasswordChange)
+            {
+                if (string.IsNullOrEmpty(request.CurrentPassword))
+                {
+                    throw new ArgumentException(AppText.Get("Msg_Profile_CurrentPasswordRequired"), nameof(request.CurrentPassword));
+                }
+
+                if (string.IsNullOrEmpty(request.NewPassword))
+                {
+                    throw new ArgumentException(AppText.Get("Msg_Profile_NewPasswordRequired"), nameof(request.NewPassword));
+                }
+
+                if (request.NewPassword.Length < 6)
+                {
+                    throw new ArgumentException(AppText.Get("Msg_Profile_PasswordTooShort"), nameof(request.NewPassword));
+                }
+
+                if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, current.PasswordHash))
+                {
+                    await _audit.LogAsync(new AuditEntry(
+                        AuditActions.UserUpdate,
+                        AuditOutcome.Failed,
+                        "User",
+                        current.UserId.ToString(),
+                        new { Reason = "InvalidCurrentPassword", PasswordChanged = true },
+                        AuditActor.FromUser(current)),
+                        cancellationToken);
+                    throw new UnauthorizedAccessException(AppText.Get("Msg_Profile_InvalidCurrentPassword"));
+                }
+
+                if (BCrypt.Net.BCrypt.Verify(request.NewPassword, current.PasswordHash))
+                {
+                    throw new ArgumentException(AppText.Get("Msg_Profile_NewPasswordSame"), nameof(request.NewPassword));
+                }
+
+                newPasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            }
+
+            await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            await using (var transaction = await _audit.BeginAuditedTransactionAsync(
+                db,
+                System.Data.IsolationLevel.ReadCommitted,
+                cancellationToken))
+            {
+                var user = await db.Users
+                    .Include(x => x.Role)
+                    .FirstOrDefaultAsync(x => x.UserId == current.UserId, cancellationToken);
+                if (user is null)
+                {
+                    throw new KeyNotFoundException(AppText.Get("Msg_Auth_UserToUpdateNotFound"));
+                }
+
+                var before = new
+                {
+                    user.FullName,
+                    user.PhoneNumber,
+                    user.Email
+                };
+
+                user.FullName = fullName;
+                user.PhoneNumber = phoneNumber;
+                user.Email = email;
+                if (newPasswordHash is not null)
+                {
+                    user.PasswordHash = newPasswordHash;
+                }
+
+                await db.SaveChangesAsync(cancellationToken);
+                await _audit.AppendAsync(db, new AuditEntry(
+                    AuditActions.UserUpdate,
+                    AuditOutcome.Success,
+                    "User",
+                    user.UserId.ToString(),
+                    new
+                    {
+                        Before = before,
+                        After = new { user.FullName, user.PhoneNumber, user.Email },
+                        PasswordChanged = hasPasswordChange
+                    },
+                    AuditActor.FromUser(user)),
+                    cancellationToken);
+                await db.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+            }
+
+            await ReloadCurrentUserAsync(cancellationToken);
+            return true;
+        }
+
         public async Task<bool> DeleteUserAsync(int userId)
         {
             await _guard.DemandAsync(Permissions.UserDelete, "User", userId > 0 ? userId.ToString() : null);
@@ -546,6 +669,19 @@ namespace SmartPS.Services.Auth
         {
             await _audit.LogAsync(new AuditEntry(action, AuditOutcome.Failed, "User", entityId, new { Reason = reason.ToString() }));
             throw new AdminProtectionException(reason, message);
+        }
+
+        private static bool IsValidEmail(string email)
+        {
+            try
+            {
+                var address = new MailAddress(email);
+                return string.Equals(address.Address, email, StringComparison.OrdinalIgnoreCase);
+            }
+            catch (FormatException)
+            {
+                return false;
+            }
         }
 
         private static Task<bool> HasOtherActiveAdminAsync(SmartPsDbContext db, int excludedUserId)

@@ -11,6 +11,7 @@ using SmartPS.Services.Customers;
 using SmartPS.Services.Dialog;
 using SmartPS.Services.Localization;
 using SmartPS.Views.Customers;
+using System.Windows;
 
 namespace SmartPS.ViewModels.Customers;
 
@@ -21,6 +22,7 @@ public class CustomersViewModel : ViewModelBase
     private readonly IVehiclesService _vehiclesService;
     private readonly IDialogService _dialogService;
     private readonly IPermissionService _permissions;
+    private readonly ICustomerImportService _customerImportService;
 
     private readonly List<CustomerItemViewModel> _allCustomers = new();
     private readonly List<Household> _allHouseholds = new();
@@ -127,6 +129,7 @@ public class CustomersViewModel : ViewModelBase
     public AsyncRelayCommand AddHouseholdCommand { get; }
     public AsyncRelayCommand AddCustomerCommand { get; }
     public AsyncRelayCommand AddVehicleCommand { get; }
+    public AsyncRelayCommand ImportCustomersCommand { get; }
     public AsyncRelayCommand AddTicketCommand { get; }
     public AsyncRelayCommand AddBlacklistCommand { get; }
 
@@ -147,13 +150,15 @@ public class CustomersViewModel : ViewModelBase
         ITicketsService ticketsService,
         IVehiclesService vehiclesService,
         IDialogService dialogService,
-        IPermissionService permissions)
+        IPermissionService permissions,
+        ICustomerImportService customerImportService)
     {
         _permissions = permissions ?? throw new ArgumentNullException(nameof(permissions));
         _customersService = customersService;
         _ticketsService = ticketsService;
         _vehiclesService = vehiclesService;
         _dialogService = dialogService;
+        _customerImportService = customerImportService;
 
         AppText.Changed += OnLanguageChanged;
         RefreshCommand = new AsyncRelayCommand(LoadDataAsync, () => CanManage);
@@ -161,6 +166,7 @@ public class CustomersViewModel : ViewModelBase
         AddHouseholdCommand = new AsyncRelayCommand(() => RunGuardedAsync(AddHouseholdAsync), () => CanManage);
         AddCustomerCommand = new AsyncRelayCommand(() => RunGuardedAsync(AddCustomerAsync), () => CanManage);
         AddVehicleCommand = new AsyncRelayCommand(() => RunGuardedAsync(AddVehicleAsync), () => CanManage);
+        ImportCustomersCommand = new AsyncRelayCommand(() => RunGuardedAsync(ImportCustomersAsync), () => CanManage);
         AddTicketCommand = new AsyncRelayCommand(() => RunGuardedAsync(AddTicketAsync), () => CanManage);
         AddBlacklistCommand = new AsyncRelayCommand(() => RunGuardedAsync(AddBlacklistAsync), () => CanManage);
 
@@ -541,6 +547,28 @@ public class CustomersViewModel : ViewModelBase
         catch (Exception ex)
         {
             _dialogService.ShowError(AppText.Get("Msg_Common_ErrorDetail", ex.Message));
+        }
+    }
+
+    private async Task ImportCustomersAsync()
+    {
+        var viewModel = new CustomerImportViewModel(_customerImportService, _dialogService);
+        var dialog = new CustomerImportDialog(viewModel)
+        {
+            Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(x => x.IsActive)
+                    ?? Application.Current.MainWindow
+        };
+
+        if (dialog.ShowDialog() == true && viewModel.SaveResult != null)
+        {
+            await LoadDataAsync();
+            var result = viewModel.SaveResult;
+            _dialogService.ShowSuccess(AppText.Get(
+                "Msg_Customers_ImportSuccess",
+                result.CreatedHouseholds,
+                result.CreatedCustomers,
+                result.CreatedVehicles,
+                result.SkippedVehicles));
         }
     }
 

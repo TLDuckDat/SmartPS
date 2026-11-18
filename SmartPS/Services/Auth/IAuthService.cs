@@ -19,6 +19,8 @@ public interface IAuthService
 
     Task<bool> UpdateUserAsync(UpdateUserRequest request);
 
+    Task<bool> UpdateOwnProfileAsync(UpdateOwnProfileRequest request, CancellationToken cancellationToken = default);
+
     Task<bool> DeleteUserAsync(int userId);
 
     Task LogoutAsync(CancellationToken cancellationToken = default);

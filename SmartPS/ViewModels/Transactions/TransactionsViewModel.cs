@@ -1,11 +1,15 @@
 using System.Collections.ObjectModel;
 using SmartPS.Constants;
+using SmartPS.DTOs.Parking;
+using SmartPS.DTOs.Payment;
+using SmartPS.DTOs.Shifts;
 using SmartPS.Models.Parking;
 using SmartPS.Models.Payment;
 using SmartPS.Services.GateControl;
 using SmartPS.Services.Payment;
 using SmartPS.Services.Auth;
 using SmartPS.Services.Authorization;
+using SmartPS.Services.Audit;
 using SmartPS.Services.Localization;
 using SmartPS.Services.Shifts;
 using SmartPS.Models.Shifts;
@@ -24,6 +28,7 @@ public class TransactionsViewModel : ViewModelBase
     private readonly List<ParkingSession> _allSessions = new();
     private readonly List<PaymentHistoryItem> _allPayments = new();
     private readonly List<FinancialTransaction> _allFinancialTransactions = new();
+    private readonly List<Shift> _allShifts = new();
 
     private decimal _totalRevenue;
     public decimal TotalRevenue
@@ -148,6 +153,20 @@ public class TransactionsViewModel : ViewModelBase
         }
     }
 
+    private DateTime? _fromDate;
+    public DateTime? FromDate
+    {
+        get => _fromDate;
+        set => SetProperty(ref _fromDate, value);
+    }
+
+    private DateTime? _toDate;
+    public DateTime? ToDate
+    {
+        get => _toDate;
+        set => SetProperty(ref _toDate, value);
+    }
+
     private int _selectedTabIndex;
     public int SelectedTabIndex
     {
@@ -179,8 +198,10 @@ public class TransactionsViewModel : ViewModelBase
     public ObservableCollection<ParkingSession> FilteredSessions { get; } = new();
     public ObservableCollection<PaymentHistoryItem> FilteredPayments { get; } = new();
     public ObservableCollection<ShiftTransactionItemViewModel> FilteredFinancialTransactions { get; } = new();
+    public ObservableCollection<ShiftHistoryItemViewModel> FilteredShifts { get; } = new();
 
     public AsyncRelayCommand RefreshCommand { get; }
+    public AsyncRelayCommand ApplyDateFilterCommand { get; }
     public RelayCommand ClearFilterCommand { get; }
     public AsyncRelayCommand ViewPaymentDetailsCommand { get; }
     public AsyncRelayCommand RefundPaymentCommand { get; }
@@ -202,11 +223,15 @@ public class TransactionsViewModel : ViewModelBase
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
 
         RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
+        ApplyDateFilterCommand = new AsyncRelayCommand(LoadDataAsync);
         ClearFilterCommand = new RelayCommand(() =>
         {
             SearchKeyword = string.Empty;
             SelectedStatusFilter = "All";
             SelectedPaymentFilter = "All";
+            FromDate = null;
+            ToDate = null;
+            _ = LoadDataAsync();
         });
 
         ViewPaymentDetailsCommand = new AsyncRelayCommand(ExecuteViewPaymentDetailsAsync);
@@ -227,33 +252,62 @@ public class TransactionsViewModel : ViewModelBase
         {
             IsLoading = true;
 
-            var historyTask = _gateControlService.GetAllSessionsHistoryAsync();
-            var activeTask = _gateControlService.GetActiveSessionsAsync();
-            var paymentsTask = _paymentService.GetPaymentHistoryAsync();
+            var userId = _authService.CurrentUser?.UserId ?? 0;
+            if (userId <= 0)
+            {
+                return;
+            }
 
-            await Task.WhenAll(historyTask, activeTask, paymentsTask);
+            var fromUtc = ToVietnamDateStartUtc(FromDate);
+            var toUtc = ToVietnamDateEndUtc(ToDate);
+            var shiftTask = _shiftService.GetShiftHistoryAsync(new ShiftFilterRequest
+            {
+                UserId = userId,
+                OpenedFromUtc = fromUtc,
+                OpenedToUtc = toUtc,
+                Limit = 500
+            });
+            var sessionsTask = _gateControlService.GetSessionsHistoryAsync(new ParkingSessionHistoryFilterRequest
+            {
+                UserId = userId,
+                FromUtc = fromUtc,
+                ToUtc = toUtc,
+                Limit = 1000
+            });
+            var paymentsTask = _paymentService.GetPaymentHistoryAsync(new PaymentHistoryFilterRequest
+            {
+                CheckoutUserId = userId,
+                FromUtc = fromUtc,
+                ToUtc = toUtc,
+                Limit = 500
+            });
+            var financialTask = _shiftService.GetTransactionsAsync(new FinancialTransactionFilterRequest
+            {
+                CreatedByUserId = userId,
+                FromUtc = fromUtc,
+                ToUtc = toUtc,
+                Limit = 1000
+            });
 
-            var history = await historyTask;
-            var active = await activeTask;
+            await Task.WhenAll(shiftTask, sessionsTask, paymentsTask, financialTask);
+
+            var shifts = await shiftTask;
+            var sessions = await sessionsTask;
             var payments = await paymentsTask;
+            var financialTransactions = await financialTask;
 
             _allSessions.Clear();
-            var seenIds = new HashSet<int>();
-            foreach (var item in active.Concat(history))
-            {
-                if (item.SessionId > 0 && !seenIds.Add(item.SessionId))
-                {
-                    continue;
-                }
-                _allSessions.Add(item);
-            }
+            _allSessions.AddRange(sessions);
             _allSessions.Sort((a, b) => b.CheckInTime.CompareTo(a.CheckInTime));
+
+            _allShifts.Clear();
+            _allShifts.AddRange(shifts);
 
             _allPayments.Clear();
             _allPayments.AddRange(payments);
 
             _allFinancialTransactions.Clear();
-            _allFinancialTransactions.AddRange(await _shiftService.GetTransactionsAsync());
+            _allFinancialTransactions.AddRange(financialTransactions);
 
             // Cập nhật số liệu thống kê tài chính
             TotalTransactions = _allSessions.Count;
@@ -384,6 +438,24 @@ public class TransactionsViewModel : ViewModelBase
     {
         var kw = SearchKeyword?.Trim().ToUpperInvariant() ?? string.Empty;
 
+        FilteredShifts.Clear();
+        foreach (var shift in _allShifts)
+        {
+            var item = new ShiftHistoryItemViewModel(shift, _localizationService);
+            if (!string.IsNullOrEmpty(kw) &&
+                !item.ShiftCode.ToUpperInvariant().Contains(kw) &&
+                !item.EmployeeName.ToUpperInvariant().Contains(kw))
+            {
+                continue;
+            }
+
+            if (SelectedStatusFilter == "Active" && shift.Status != ShiftStatus.Active) continue;
+            if (SelectedStatusFilter == "Locked" && shift.Status != ShiftStatus.Locked) continue;
+            if (SelectedStatusFilter == "Reviewed" && shift.Status != ShiftStatus.Reviewed) continue;
+            if (SelectedStatusFilter is "Completed" or "Paid" or "Pending" or "Parked") continue;
+            FilteredShifts.Add(item);
+        }
+
         // 1. Lọc Sessions
         FilteredSessions.Clear();
         foreach (var s in _allSessions)
@@ -398,15 +470,19 @@ public class TransactionsViewModel : ViewModelBase
                 }
             }
 
-            if (SelectedStatusFilter == "Paid" && s.Status != SessionStatus.Completed)
+            if ((SelectedStatusFilter is "Paid" or "Completed") && s.Status != SessionStatus.Completed)
             {
                 continue;
             }
-            if (SelectedStatusFilter == "Parked" && s.Status != SessionStatus.Active)
+            if ((SelectedStatusFilter is "Active" or "Parked") && s.Status != SessionStatus.Active)
             {
                 continue;
             }
             if (SelectedStatusFilter == "Pending" && s.Status != SessionStatus.Active)
+            {
+                continue;
+            }
+            if (SelectedStatusFilter == "Locked" || SelectedStatusFilter == "Reviewed")
             {
                 continue;
             }
@@ -438,7 +514,7 @@ public class TransactionsViewModel : ViewModelBase
                 }
             }
 
-            if (SelectedStatusFilter == "Paid" && p.Status != PaymentStatus.Paid)
+            if ((SelectedStatusFilter is "Paid" or "Completed") && p.Status != PaymentStatus.Paid)
             {
                 continue;
             }
@@ -446,9 +522,13 @@ public class TransactionsViewModel : ViewModelBase
             {
                 continue;
             }
-            if (SelectedStatusFilter == "Parked")
+            if (SelectedStatusFilter is "Active" or "Parked" or "Locked" or "Reviewed")
             {
                 // Payments không có trạng thái Đang đỗ
+                continue;
+            }
+            if (SelectedStatusFilter == "Locked" || SelectedStatusFilter == "Reviewed")
+            {
                 continue;
             }
 
@@ -476,4 +556,14 @@ public class TransactionsViewModel : ViewModelBase
             FilteredFinancialTransactions.Add(new ShiftTransactionItemViewModel(transaction));
         }
     }
+
+    private static DateTime? ToVietnamDateStartUtc(DateTime? date)
+        => date.HasValue
+            ? AuditTime.VietnamDateStartUtc(DateOnly.FromDateTime(date.Value))
+            : null;
+
+    private static DateTime? ToVietnamDateEndUtc(DateTime? date)
+        => date.HasValue
+            ? AuditTime.VietnamDateStartUtc(DateOnly.FromDateTime(date.Value).AddDays(1))
+            : null;
 }

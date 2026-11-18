@@ -72,7 +72,7 @@ public class CustomersViewModelPermissionTests
         var tickets = new FakeTickets();
         var vehicles = new FakeVehicles();
         var dialogs = new FakeDialogService();
-        var vm = new CustomersViewModel(customers, tickets, vehicles, dialogs, new PermissionService(context));
+        var vm = new CustomersViewModel(customers, tickets, vehicles, dialogs, new PermissionService(context), null!);
         return new Harness(vm, customers, tickets, vehicles, dialogs, context);
     }
 

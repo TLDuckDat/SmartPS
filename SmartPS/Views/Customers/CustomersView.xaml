@@ -32,6 +32,24 @@
 
                     <!-- Nút bấm Làm mới dữ liệu -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Command="{Binding ImportCustomersCommand}"
+                                Height="36" Padding="14,0"
+                                Margin="0,0,8,0"
+                                Background="#0F766E"
+                                BorderThickness="0"
+                                Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                        <TextBlock Text="{DynamicResource Str_Customers_Import}"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="White"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
                         <Button Command="{Binding RefreshCommand}"
                                 Height="36" Padding="14,0"
                                 Background="{StaticResource PrimaryButtonBrush}"
