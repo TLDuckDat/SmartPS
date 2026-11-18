@@ -14,6 +14,7 @@ using SmartPS.Services.Localization;
 using SmartPS.Services.Shifts;
 using SmartPS.Models.Shifts;
 using SmartPS.ViewModels.Shifts;
+using SmartPS.ViewModels.Reports;
 
 namespace SmartPS.ViewModels.Transactions;
 
@@ -167,6 +168,69 @@ public class TransactionsViewModel : ViewModelBase
         set => SetProperty(ref _toDate, value);
     }
 
+    private int? _selectedStaffFilter;
+    public int? SelectedStaffFilter
+    {
+        get => _selectedStaffFilter;
+        set
+        {
+            if (SetProperty(ref _selectedStaffFilter, value))
+            {
+                _selectedStaffOption = StaffOptions.FirstOrDefault(o => o.Id == value) ?? StaffOptions.FirstOrDefault();
+                OnPropertyChanged(nameof(SelectedStaffOption));
+                ApplyFilters();
+            }
+        }
+    }
+
+    private int? _selectedShiftFilter;
+    public int? SelectedShiftFilter
+    {
+        get => _selectedShiftFilter;
+        set
+        {
+            if (SetProperty(ref _selectedShiftFilter, value))
+            {
+                _selectedShiftOption = ShiftOptions.FirstOrDefault(o => o.Id == value) ?? ShiftOptions.FirstOrDefault();
+                OnPropertyChanged(nameof(SelectedShiftOption));
+                ApplyFilters();
+            }
+        }
+    }
+
+    private LookupOption? _selectedStaffOption;
+    public LookupOption? SelectedStaffOption
+    {
+        get => _selectedStaffOption;
+        set
+        {
+            if (SetProperty(ref _selectedStaffOption, value))
+            {
+                _selectedStaffFilter = value?.Id;
+                OnPropertyChanged(nameof(SelectedStaffFilter));
+                ApplyFilters();
+            }
+        }
+    }
+
+    private LookupOption? _selectedShiftOption;
+    public LookupOption? SelectedShiftOption
+    {
+        get => _selectedShiftOption;
+        set
+        {
+            if (SetProperty(ref _selectedShiftOption, value))
+            {
+                _selectedShiftFilter = value?.Id;
+                OnPropertyChanged(nameof(SelectedShiftFilter));
+                ApplyFilters();
+            }
+        }
+    }
+
+    public ObservableCollection<LookupOption> StaffOptions { get; } = new();
+    public ObservableCollection<LookupOption> ShiftOptions { get; } = new();
+
     private int _selectedTabIndex;
     public int SelectedTabIndex
     {
@@ -222,15 +286,15 @@ public class TransactionsViewModel : ViewModelBase
         _permissionService = permissionService ?? throw new ArgumentNullException(nameof(permissionService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
 
-        RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
+        RefreshCommand = new AsyncRelayCommand(async () =>
+        {
+            ClearFilters();
+            await LoadDataAsync();
+        });
         ApplyDateFilterCommand = new AsyncRelayCommand(LoadDataAsync);
         ClearFilterCommand = new RelayCommand(() =>
         {
-            SearchKeyword = string.Empty;
-            SelectedStatusFilter = "All";
-            SelectedPaymentFilter = "All";
-            FromDate = null;
-            ToDate = null;
+            ClearFilters();
             _ = LoadDataAsync();
         });
 
@@ -320,6 +384,33 @@ public class TransactionsViewModel : ViewModelBase
 
             TotalElectronicPayments = _allPayments.Count;
             PaidElectronicPayments = _allPayments.Count(p => p.Status == PaymentStatus.Paid);
+
+            try
+            {
+                var users = await _authService.GetUsersAsync();
+                var currentStaffId = _selectedStaffFilter;
+                StaffOptions.Clear();
+                StaffOptions.Add(new LookupOption(null, AppText.Get("Str_Common_All")));
+                foreach (var u in users)
+                {
+                    StaffOptions.Add(new LookupOption(u.UserId, u.FullName));
+                }
+                SelectedStaffOption = StaffOptions.FirstOrDefault(o => o.Id == currentStaffId) ?? StaffOptions.FirstOrDefault();
+            }
+            catch { }
+
+            try
+            {
+                var currentShiftId = _selectedShiftFilter;
+                ShiftOptions.Clear();
+                ShiftOptions.Add(new LookupOption(null, AppText.Get("Str_Common_All")));
+                foreach (var sh in shifts)
+                {
+                    ShiftOptions.Add(new LookupOption(sh.ShiftId, $"Ca #{sh.ShiftId} ({(sh.OpenedByUser?.FullName ?? "N/A")})"));
+                }
+                SelectedShiftOption = ShiftOptions.FirstOrDefault(o => o.Id == currentShiftId) ?? ShiftOptions.FirstOrDefault();
+            }
+            catch { }
 
             ApplyFilters();
         }
@@ -434,6 +525,17 @@ public class TransactionsViewModel : ViewModelBase
         }
     }
 
+    private void ClearFilters()
+    {
+        SearchKeyword = string.Empty;
+        SelectedStatusFilter = "All";
+        SelectedPaymentFilter = "All";
+        FromDate = null;
+        ToDate = null;
+        SelectedStaffOption = StaffOptions.FirstOrDefault();
+        SelectedShiftOption = ShiftOptions.FirstOrDefault();
+    }
+
     private void ApplyFilters()
     {
         var kw = SearchKeyword?.Trim().ToUpperInvariant() ?? string.Empty;
@@ -496,6 +598,15 @@ public class TransactionsViewModel : ViewModelBase
                 continue;
             }
 
+            if (SelectedStaffFilter.HasValue && s.CreatedByUserId != SelectedStaffFilter.Value)
+            {
+                continue;
+            }
+            if (SelectedShiftFilter.HasValue && !s.Payments.Any(p => p.ShiftId == SelectedShiftFilter.Value))
+            {
+                continue;
+            }
+
             FilteredSessions.Add(s);
         }
 
@@ -541,6 +652,15 @@ public class TransactionsViewModel : ViewModelBase
                 continue;
             }
 
+            if (SelectedStaffFilter.HasValue && p.CheckoutUserId != SelectedStaffFilter.Value)
+            {
+                continue;
+            }
+            if (SelectedShiftFilter.HasValue && p.ShiftId != SelectedShiftFilter.Value)
+            {
+                continue;
+            }
+
             FilteredPayments.Add(p);
         }
 
@@ -553,6 +673,8 @@ public class TransactionsViewModel : ViewModelBase
                 !(transaction.ReferenceCode?.ToUpperInvariant().Contains(kw) ?? false)) continue;
             if (SelectedPaymentFilter == "Cash" && transaction.PaymentMethod != PaymentMethod.Cash) continue;
             if (SelectedPaymentFilter == "VietQR" && transaction.PaymentMethod != PaymentMethod.VietQR) continue;
+            if (SelectedStaffFilter.HasValue && transaction.CreatedByUserId != SelectedStaffFilter.Value) continue;
+            if (SelectedShiftFilter.HasValue && transaction.ShiftId != SelectedShiftFilter.Value) continue;
             FilteredFinancialTransactions.Add(new ShiftTransactionItemViewModel(transaction));
         }
     }

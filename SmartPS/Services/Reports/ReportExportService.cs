@@ -56,9 +56,10 @@ public sealed class ReportExportService : IReportExportService
             throw new ArgumentException("A target file path is required.", nameof(filePath));
         }
 
-        if (!string.Equals(Path.GetExtension(filePath), ".xlsx", StringComparison.OrdinalIgnoreCase))
+        var ext = Path.GetExtension(filePath)?.ToLowerInvariant();
+        if (ext != ".xlsx" && ext != ".csv" && ext != ".pdf")
         {
-            throw new ArgumentException("The target file must have the .xlsx extension.", nameof(filePath));
+            throw new ArgumentException("The target file must have the .xlsx, .csv, or .pdf extension.", nameof(filePath));
         }
 
         var fullPath = Path.GetFullPath(filePath);
@@ -87,7 +88,21 @@ public sealed class ReportExportService : IReportExportService
             {
                 using (var stream = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
                 {
-                    var written = new ReportWorkbookWriter(labels).Write(stream, report, sessions, progress, cancellationToken);
+                    ReportExportRowCounts written;
+                    if (string.Equals(ext, ".csv", StringComparison.OrdinalIgnoreCase))
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        written = new ReportCsvWriter(labels).Write(stream, report, sessions);
+                    }
+                    else if (string.Equals(ext, ".pdf", StringComparison.OrdinalIgnoreCase))
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        written = new ReportPdfWriter(labels).Write(stream, report, sessions);
+                    }
+                    else
+                    {
+                        written = new ReportWorkbookWriter(labels).Write(stream, report, sessions, progress, cancellationToken);
+                    }
                     stream.Flush(true);
                     return written;
                 }

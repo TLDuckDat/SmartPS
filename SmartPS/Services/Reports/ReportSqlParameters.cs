@@ -28,6 +28,9 @@ internal static class ReportSqlParameters
             Integer("fee", (int)FinancialTransactionType.ParkingFee),
             Integer("refund", (int)FinancialTransactionType.Refund),
             Integer("adjust", (int)FinancialTransactionType.Adjustment),
+            Integer("staff", filter.StaffUserId),
+            Integer("shift", filter.ShiftId),
+            Integer("method", filter.PaymentMethod.HasValue ? (int)filter.PaymentMethod.Value : null),
             new SqlParameter("sessionFiltered", SqlDbType.Bit) { Value = filter.HasSessionFilter }
         };
     }

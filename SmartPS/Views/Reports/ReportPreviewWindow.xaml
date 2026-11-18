@@ -1,0 +1,73 @@
+<Window x:Class="SmartPS.Views.Reports.ReportPreviewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Xem trước báo cáo - SmartPS"
+        Width="1100" Height="800"
+        MinWidth="850" MinHeight="600"
+        WindowStartupLocation="CenterOwner"
+        Background="#F1F5F9">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header (Top) -->
+        <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="20,12">
+            <StackPanel VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="📄" FontSize="18" Margin="0,0,8,0"/>
+                    <TextBlock Text="Xem trước báo cáo thống kê" FontSize="16" FontWeight="Bold" Foreground="#0F172A"/>
+                </StackPanel>
+                <TextBlock x:Name="TxtSubtitle" Text="Báo cáo được tạo theo đúng thông tin dữ liệu bộ lọc hiện tại" FontSize="12" Foreground="#64748B" Margin="26,2,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- 2. Body: DocumentViewer -->
+        <Grid Grid.Row="1" Background="#CBD5E1">
+            <DocumentViewer x:Name="DocViewer" Margin="0"/>
+            <ProgressBar x:Name="LoadingProgress" IsIndeterminate="True" Width="220" Height="6"
+                         HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+        </Grid>
+
+        <!-- 3. Footer (Bottom / Ở dưới): In báo cáo, Lưu báo cáo (3 định dạng), Đóng -->
+        <Border Grid.Row="2" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="20,12">
+            <DockPanel LastChildFill="False">
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+                    <TextBlock Text="💡 Bấm 'Lưu báo cáo' để tùy chọn 3 định dạng: Excel (.xlsx), CSV (.csv), hoặc PDF (.pdf)" FontSize="12" Foreground="#64748B"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+                    <!-- Nút 1: In báo cáo (gọi PrintDialog) -->
+                    <Button x:Name="BtnPrint" Click="BtnPrint_Click" Height="36" Padding="16,0" Margin="0,0,10,0"
+                            Background="#2563EB" Foreground="#FFFFFF" BorderThickness="0" Cursor="Hand" FontWeight="SemiBold">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="🖨️" FontSize="13" Margin="0,0,6,0"/>
+                            <TextBlock Text="In báo cáo" FontSize="12.5"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Nút 2: Lưu báo cáo (cho ra 3 định dạng .xlsx, .csv, .pdf) -->
+                    <Button x:Name="BtnSave" Click="BtnSave_Click" Height="36" Padding="16,0" Margin="0,0,10,0"
+                            Background="#059669" Foreground="#FFFFFF" BorderThickness="0" Cursor="Hand" FontWeight="SemiBold">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="💾" FontSize="13" Margin="0,0,6,0"/>
+                            <TextBlock Text="Lưu báo cáo" FontSize="12.5"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Nút 3: Đóng -->
+                    <Button x:Name="BtnClose" Click="BtnClose_Click" Height="36" Padding="16,0"
+                            Background="#F8FAFC" Foreground="#334155" BorderBrush="#CBD5E1" BorderThickness="1" Cursor="Hand" FontWeight="Medium">
+                        <TextBlock Text="Đóng" FontSize="12.5"/>
+                    </Button>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

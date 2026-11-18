@@ -119,6 +119,19 @@ public class PayOSPaymentGateway : IPaymentGateway
                 SanitizedResponsePayload = PaymentPayloadSanitizer.Redact(responseText)
             };
         }
+        catch (Exception ex) when (ex is TimeoutException ||
+                                  (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested) ||
+                                  ex.InnerException is TimeoutException)
+        {
+            PaymentLog.Event("PayOSTimeout", ex.Message);
+            return new PaymentGatewayCreateResult
+            {
+                Success = false,
+                ErrorCode = "TIMEOUT",
+                ErrorMessage = "Kết nối đến cổng thanh toán PayOS quá thời gian chờ (Timeout). Vui lòng thử lại hoặc chọn hình thức thanh toán khác.",
+                SanitizedRequestPayload = json
+            };
+        }
         catch (Exception ex)
         {
             PaymentLog.Event("PayOSCreateError", ex.Message);
@@ -189,6 +202,12 @@ public class PayOSPaymentGateway : IPaymentGateway
                     ? $"Số tiền PayOS trả về không khớp. Expected={request.ExpectedAmount}, Actual={amount}."
                     : null
             };
+        }
+        catch (Exception ex) when (ex is TimeoutException ||
+                                  (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested) ||
+                                  ex.InnerException is TimeoutException)
+        {
+            return new PaymentGatewayVerifyResult { Success = false, ErrorMessage = "Kết nối đến cổng thanh toán PayOS quá thời gian chờ (Timeout) khi đối soát." };
         }
         catch (Exception)
         {
@@ -425,6 +444,8 @@ public class PayOSPaymentGateway : IPaymentGateway
 
 public class PayOSPaymentGatewayOptions
 {
+    public bool UseMock { get; set; } = true;
+    public int TimeoutSeconds { get; set; } = 15;
     public string ClientId { get; set; } = string.Empty;
     public string ApiKey { get; set; } = string.Empty;
     public string ChecksumKey { get; set; } = string.Empty;

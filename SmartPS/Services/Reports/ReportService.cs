@@ -35,7 +35,17 @@ public sealed class ReportService : IReportService
             .OrderBy(z => z.ZoneCode).ThenBy(z => z.ZoneId)
             .Select(z => new LookupItem(z.ZoneId, z.ZoneName))
             .ToListAsync(cancellationToken);
-        return new ReportFilterOptions(types, zones);
+        var staff = await db.Users.AsNoTracking()
+            .Where(u => u.IsActive)
+            .OrderBy(u => u.FullName)
+            .Select(u => new LookupItem(u.UserId, u.FullName))
+            .ToListAsync(cancellationToken);
+        var shifts = await db.Shifts.AsNoTracking()
+            .OrderByDescending(s => s.ShiftId)
+            .Take(50)
+            .Select(s => new LookupItem(s.ShiftId, $"Ca #{s.ShiftId} - {(s.OpenedByUser != null ? s.OpenedByUser.FullName : "N/A")}"))
+            .ToListAsync(cancellationToken);
+        return new ReportFilterOptions(types, zones, staff, shifts);
     }
 
     public async Task<ReportResult> GetReportAsync(ReportFilter filter, CancellationToken cancellationToken = default)
@@ -60,7 +70,7 @@ public sealed class ReportService : IReportService
         var zoneSlots = await QueryAsync<ZoneSlotsRow>(db, ReportSql.SlotsPerZone, fromUtc, toUtc, filter, cancellationToken);
         var zoneActive = await QueryAsync<ZoneCountRow>(db, ReportSql.ActivePerZone, fromUtc, toUtc, filter, cancellationToken);
         var plates = await QueryAsync<TopPlateSqlRow>(db, ReportSql.TopPlates, fromUtc, toUtc, filter, cancellationToken);
-        var shifts = await LoadShiftsAsync(db, fromUtc, toUtc, cancellationToken);
+        var shifts = await LoadShiftsAsync(db, fromUtc, toUtc, filter.ShiftId, cancellationToken);
 
         var currentSummary = ReportAggregator.Summarize(current, nowUtc);
         var previousSummary = ReportAggregator.Summarize(previous, nowUtc);
@@ -111,6 +121,21 @@ public sealed class ReportService : IReportService
         if (filter.ZoneId is { } zoneId)
         {
             query = query.Where(s => s.Slot != null && s.Slot.ZoneId == zoneId);
+        }
+
+        if (filter.StaffUserId is { } staffUserId)
+        {
+            query = query.Where(s => s.CreatedByUserId == staffUserId);
+        }
+
+        if (filter.PaymentMethod is { } paymentMethod)
+        {
+            query = query.Where(s => s.PaymentMethod == paymentMethod);
+        }
+
+        if (filter.ShiftId is { } shiftId)
+        {
+            query = query.Where(s => s.Payments.Any(p => p.ShiftId == shiftId));
         }
 
         query = ReportCustomerGroupRules.Apply(query, filter.CustomerGroup);
@@ -288,10 +313,17 @@ public sealed class ReportService : IReportService
             capacity);
     }
 
-    private static async Task<List<ShiftReportRow>> LoadShiftsAsync(SmartPsDbContext db, DateTime fromUtc, DateTime toUtc, CancellationToken ct)
+    private static async Task<List<ShiftReportRow>> LoadShiftsAsync(SmartPsDbContext db, DateTime fromUtc, DateTime toUtc, int? shiftId, CancellationToken ct)
     {
-        var rows = await db.Shifts.AsNoTracking()
-            .Where(s => s.OpenedAt >= fromUtc && s.OpenedAt < toUtc)
+        var query = db.Shifts.AsNoTracking()
+            .Where(s => s.OpenedAt >= fromUtc && s.OpenedAt < toUtc);
+
+        if (shiftId.HasValue)
+        {
+            query = query.Where(s => s.ShiftId == shiftId.Value);
+        }
+
+        var rows = await query
             .OrderBy(s => s.OpenedAt).ThenBy(s => s.ShiftId)
             .Select(s => new
             {

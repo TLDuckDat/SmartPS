@@ -878,55 +878,73 @@
         </Grid.Style>
 
         <Border Background="{StaticResource CardBackgroundBrush}"
-                CornerRadius="12"
+                CornerRadius="16"
                 BorderBrush="{StaticResource AppBorderBrush}"
                 BorderThickness="1"
-                Width="680"
+                Width="940"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
-                Padding="28">
+                Padding="30,26,30,26">
             <Border.Effect>
-                <DropShadowEffect BlurRadius="25" ShadowDepth="4" Direction="270" Color="#000000" Opacity="0.35"/>
+                <DropShadowEffect BlurRadius="35" ShadowDepth="8" Direction="270" Color="#000000" Opacity="0.32"/>
             </Border.Effect>
 
             <StackPanel>
                 <!-- Modal Header -->
-                <Grid Margin="0,0,0,20">
+                <Grid Margin="0,0,0,22">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Column="0">
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="📱" FontSize="20" Margin="0,0,8,0"/>
-                            <TextBlock Text="{DynamicResource Str_GateUi_QrTitle}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <Border Background="#EFF6FF" CornerRadius="10" Padding="8,6" Margin="0,0,12,0">
+                                <TextBlock Text="📱" FontSize="20"/>
+                            </Border>
+                            <StackPanel>
+                                <TextBlock Text="{DynamicResource Str_GateUi_QrTitle}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <TextBlock Text="{DynamicResource Str_GateUi_QrHint}" FontSize="12.5" Foreground="{StaticResource TextDimBrush}" Margin="0,3,0,0"/>
+                            </StackPanel>
                         </StackPanel>
-                        <TextBlock Text="{DynamicResource Str_GateUi_QrHint}" FontSize="12" Foreground="{StaticResource TextDimBrush}" Margin="28,2,0,0"/>
                     </StackPanel>
 
+                    <!-- Biển số xe nổi bật -->
+                    <Border Grid.Column="1" Background="#FEF3C7" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="8" Padding="14,6" Margin="0,0,14,0" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Xe: " FontSize="12.5" FontWeight="SemiBold" Foreground="#92400E"/>
+                            <TextBlock Text="{Binding MatchedSession.LicensePlate}" FontSize="17" FontWeight="Bold" Foreground="#78350F"/>
+                        </StackPanel>
+                    </Border>
+
                     <!-- Nút Hủy / Đóng -->
-                    <Button Grid.Column="1" Command="{Binding CancelVietQrPaymentCommand}"
-                            Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="6"
-                            VerticalAlignment="Top">
-                        <TextBlock Text="✕" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
+                    <Button Grid.Column="2" Command="{Binding CancelVietQrPaymentCommand}"
+                            Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="8,4"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="✕" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}"/>
                     </Button>
                 </Grid>
 
-                <!-- Modal Body: 2 Cột (Mã QR & Thông tin thanh toán) -->
+                <!-- Modal Body: 2 Cột rộng rãi (Mã QR & Thông tin thanh toán / Thành công) -->
                 <Grid Margin="0,0,0,20">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="260"/>
-                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="360"/>
+                        <ColumnDefinition Width="22"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Cột Trái: Ảnh QR Code -->
-                    <Border Grid.Column="0" Background="#F8FAFC" BorderBrush="{StaticResource AppBorderBrush}"
-                            BorderThickness="1" CornerRadius="8" Padding="14">
+                    <!-- Cột Trái: Thẻ mã QR Code lớn, sắc nét -->
+                    <Border Grid.Column="0" Background="#F8FAFC" BorderBrush="#E2E8F0"
+                            BorderThickness="1" CornerRadius="14" Padding="18,16">
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Border Width="220" Height="220" Background="White" CornerRadius="6"
-                                    BorderBrush="#E2E8F0" BorderThickness="1" ClipToBounds="True">
+                            <!-- Badge mạng thanh toán -->
+                            <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="6" Padding="12,5" Margin="0,0,0,12" HorizontalAlignment="Center">
+                                <TextBlock Text="{DynamicResource Str_GateUi_QrNetwork}" FontSize="11.5" FontWeight="Bold" Foreground="#1D4ED8"/>
+                            </Border>
+
+                            <Border Width="270" Height="270" Background="White" CornerRadius="10"
+                                    BorderBrush="#CBD5E1" BorderThickness="1" ClipToBounds="True" Padding="8">
                                 <Grid>
                                     <Image Source="{Binding VietQrImageSource}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     
@@ -942,88 +960,141 @@
                                                 </Style.Triggers>
                                             </Style>
                                         </StackPanel.Style>
-                                        <TextBlock Text="⏳" FontSize="28" HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                                        <TextBlock Text="{DynamicResource Str_GateUi_QrCreating}" FontSize="12" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="⏳" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                        <TextBlock Text="{DynamicResource Str_GateUi_QrCreating}" FontSize="13" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Grid>
                             </Border>
 
-                            <TextBlock Text="{DynamicResource Str_GateUi_QrNetwork}" FontSize="11" FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+                            <TextBlock Text="{DynamicResource Str_GateUi_QrHint}" FontSize="11.5"
+                                       Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,12,0,0"
+                                       TextWrapping="Wrap" TextAlignment="Center" MaxWidth="280"/>
                         </StackPanel>
                     </Border>
 
-                    <!-- Cột Phải: Chi tiết thanh toán -->
-                    <Border Grid.Column="2" Background="{StaticResource AppBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}"
-                            BorderThickness="1" CornerRadius="8" Padding="18">
-                        <StackPanel VerticalAlignment="Center">
-                            <!-- Biển số xe & Mã vé -->
-                            <Grid Margin="0,0,0,12">
-                                <StackPanel>
-                                    <TextBlock Text="{DynamicResource Str_GateUi_QrPlate}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextDimBrush}"/>
-                                    <TextBlock Text="{Binding MatchedSession.LicensePlate}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                </StackPanel>
-                                <StackPanel HorizontalAlignment="Right">
-                                    <TextBlock Text="{DynamicResource Str_GateUi_QrTicket}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Right"/>
-                                    <TextBlock Text="{Binding MatchedSession.TicketCode}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right"/>
-                                </StackPanel>
-                            </Grid>
+                    <!-- Cột Phải: Giao diện 2 trạng thái (Đang chờ / Thành công) -->
+                    <Grid Grid.Column="2">
+                        <!-- TRẠNG THÁI 1: ĐANG CHỜ THANH TOÁN -->
+                        <Border Background="{StaticResource AppBackgroundBrush}" BorderBrush="{StaticResource AppBorderBrush}"
+                                BorderThickness="1" CornerRadius="14" Padding="18,16"
+                                Visibility="{Binding IsVietQrPaidSuccess, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                            <StackPanel VerticalAlignment="Center">
+                                <!-- Thẻ Số tiền thanh toán (Hero) -->
+                                <Border Background="#F0FDF4" BorderBrush="#86EFAC" BorderThickness="1.5" CornerRadius="10" Padding="18,12" Margin="0,0,0,14">
+                                    <Grid>
+                                        <StackPanel>
+                                            <TextBlock Text="{DynamicResource Str_GateUi_QrAmount}" FontSize="11" FontWeight="Bold" Foreground="#166534"/>
+                                            <TextBlock Text="{Binding VietQrAmountFormatted}" FontSize="32" FontWeight="Bold" Foreground="#15803D"/>
+                                        </StackPanel>
+                                        <Border Background="#DCFCE7" CornerRadius="6" Padding="10,5" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                            <TextBlock Text="VND" FontSize="13" FontWeight="Bold" Foreground="#15803D"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
 
-                            <!-- Số tiền cước cần thanh toán -->
-                            <Border Background="#FEF2F2" BorderBrush="#FECACA" BorderThickness="1" CornerRadius="6" Padding="12,10" Margin="0,0,0,14">
-                                <Grid>
+                                <!-- Thẻ Thông tin ngân hàng & chuyển khoản chi tiết -->
+                                <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="16,14" Margin="0,0,0,14">
                                     <StackPanel>
-                                        <TextBlock Text="{DynamicResource Str_GateUi_QrAmount}" FontSize="10.5" FontWeight="Bold" Foreground="#991B1B"/>
-                                        <TextBlock Text="{Binding VietQrAmountFormatted}" FontSize="26" FontWeight="Bold" Foreground="#DC2626"/>
+                                        <!-- Dòng 1: Ngân hàng -->
+                                        <Grid Margin="0,0,0,10">
+                                            <TextBlock Text="{DynamicResource Str_GateUi_QrBank}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding VietQrBankName}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right"/>
+                                        </Grid>
+
+                                        <!-- Dòng 2: Số tài khoản + Nút Copy -->
+                                        <Grid Margin="0,0,0,10">
+                                            <TextBlock Text="{DynamicResource Str_GateUi_QrAccount}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                <TextBlock Text="{Binding VietQrAccountNumber}" FontSize="14" FontWeight="Bold" FontFamily="Consolas" Foreground="#0F172A" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                <Button Command="{Binding CopyAccountNumberCommand}"
+                                                        Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" Padding="8,3" Cursor="Hand">
+                                                    <TextBlock Text="{DynamicResource Str_GateUi_QrCopy}" FontSize="11" Foreground="#334155"/>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- Dòng 3: Chủ tài khoản -->
+                                        <Grid Margin="0,0,0,10">
+                                            <TextBlock Text="{DynamicResource Str_GateUi_QrAccountName}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding VietQrAccountName}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right"/>
+                                        </Grid>
+
+                                        <Border Height="1" Background="#F1F5F9" Margin="0,2,0,10"/>
+
+                                        <!-- Dòng 4: Nội dung chuyển khoản + Nút Copy -->
+                                        <Grid Margin="0,0,0,4">
+                                            <TextBlock Text="{DynamicResource Str_GateUi_QrContent}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                <TextBlock Text="{Binding VietQrDescription}" FontSize="13.5" FontWeight="Bold" FontFamily="Consolas" Foreground="#1D4ED8" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                <Button Command="{Binding CopyDescriptionCommand}"
+                                                        Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" Padding="8,3" Cursor="Hand">
+                                                    <TextBlock Text="{DynamicResource Str_GateUi_QrCopy}" FontSize="11" Foreground="#1D4ED8" FontWeight="SemiBold"/>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
                                     </StackPanel>
-                                    <TextBlock Text="VND" FontSize="13" FontWeight="Bold" Foreground="#991B1B" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                </Grid>
-                            </Border>
+                                </Border>
 
-                            <!-- Mã giao dịch đối soát -->
-                            <StackPanel Margin="0,0,0,12">
-                                <TextBlock Text="{DynamicResource Str_GateUi_QrReference}" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource TextDimBrush}"/>
-                                <TextBlock Text="{Binding VietQrTransactionReference}" FontSize="13" FontWeight="Bold" FontFamily="Consolas" Foreground="#1D4ED8"/>
+                                <!-- Badge Trạng Thái Chờ -->
+                                <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="8" Padding="14,10">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="{Binding VietQrStatusText}" FontSize="12.5" FontWeight="SemiBold" Foreground="#1D4ED8" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{DynamicResource Str_GateUi_QrWaitingScanDetail}" FontSize="11" FontStyle="Italic" Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
+                        </Border>
 
-                            <!-- Badge Trạng Thái Thanh Toán -->
-                            <Border CornerRadius="6" Padding="12,8">
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Setter Property="Background" Value="#EFF6FF"/>
-                                        <Setter Property="BorderBrush" Value="#BFDBFE"/>
-                                        <Setter Property="BorderThickness" Value="1"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsVietQrPaidSuccess}" Value="True">
-                                                <Setter Property="Background" Value="#DCFCE7"/>
-                                                <Setter Property="BorderBrush" Value="#86EFAC"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                                <TextBlock FontSize="12" FontWeight="Bold">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Text" Value="{Binding VietQrStatusText}"/>
-                                            <Setter Property="Foreground" Value="#1D4ED8"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsVietQrPaidSuccess}" Value="True">
-                                                    <Setter Property="Text" Value="{DynamicResource Str_GateUi_QrPaid}"/>
-                                                    <Setter Property="Foreground" Value="#15803D"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                            </Border>
-                        </StackPanel>
-                    </Border>
+                        <!-- TRẠNG THÁI 2: THANH TOÁN THÀNH CÔNG (SUCCESS VIEW) -->
+                        <Border Background="#F0FDF4" BorderBrush="#86EFAC" BorderThickness="1.5" CornerRadius="14" Padding="28,24"
+                                Visibility="{Binding IsVietQrPaidSuccess, Converter={StaticResource BoolToVisConverter}}">
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <!-- Vòng tròn tích xanh lớn -->
+                                <Border Width="64" Height="64" CornerRadius="32" Background="#22C55E" HorizontalAlignment="Center" Margin="0,0,0,14">
+                                    <TextBlock Text="✓" FontSize="36" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+
+                                <TextBlock Text="{DynamicResource Str_GateUi_QrSuccessTitle}" FontSize="22" FontWeight="Bold" Foreground="#15803D" HorizontalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource Str_GateUi_QrSuccessDesc}" FontSize="13" Foreground="#166534"
+                                           TextWrapping="Wrap" TextAlignment="Center" Margin="0,6,0,18"/>
+
+                                <!-- Hộp tóm tắt đối soát -->
+                                <Border Width="400" Background="White" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="10" Padding="16,12" Margin="0,0,0,20">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,8">
+                                            <TextBlock Text="Biển số xe:" FontSize="13" Foreground="{StaticResource TextDimBrush}"/>
+                                            <TextBlock Text="{Binding MatchedSession.LicensePlate}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right"/>
+                                        </Grid>
+                                        <Grid Margin="0,0,0,8">
+                                            <TextBlock Text="Số tiền đã thu:" FontSize="13" Foreground="{StaticResource TextDimBrush}"/>
+                                            <TextBlock Text="{Binding VietQrAmountFormatted}" FontSize="20" FontWeight="Bold" Foreground="#15803D" HorizontalAlignment="Right"/>
+                                        </Grid>
+                                        <Grid>
+                                            <TextBlock Text="Mã tham chiếu:" FontSize="12" Foreground="{StaticResource TextDimBrush}"/>
+                                            <TextBlock Text="{Binding VietQrTransactionReference}" FontSize="12" FontFamily="Consolas" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Nút to Hoàn tất & Cho xe tiếp theo -->
+                                <Button Command="{Binding CompletePaymentCommand}"
+                                        Background="#16A34A" Foreground="White" BorderThickness="0"
+                                        Height="48" Width="380" Cursor="Hand" HorizontalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="✓" FontSize="18" FontWeight="Bold" Margin="0,0,8,0"/>
+                                        <TextBlock Text="{DynamicResource Str_GateUi_QrCompleteBtn}" FontSize="15" FontWeight="Bold"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
                 </Grid>
 
-                <!-- Modal Footer: Nút bấm kiểm tra & hủy -->
-                <Grid>
+                <!-- Modal Footer: Chỉ hiển thị khi đang chờ (Chưa thành công) -->
+                <Grid Visibility="{Binding IsVietQrPaidSuccess, Converter={StaticResource InverseBoolToVisibilityConverter}}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
@@ -1031,18 +1102,28 @@
                     <TextBlock Grid.Column="0" Text="{DynamicResource Str_GateUi_QrAutoOpen}"
                                FontSize="11.5" Foreground="{StaticResource TextDimBrush}" FontStyle="Italic" VerticalAlignment="Center"/>
 
-                    <Button Grid.Column="1" Command="{Binding RefreshVietQrStatusCommand}"
-                            Style="{StaticResource SecondaryButtonStyle}" Height="38" Padding="14,0" Margin="0,0,10,0">
+                    <!-- Nút Xác nhận đã nhận tiền -->
+                    <Button Grid.Column="1" Command="{Binding ConfirmPaymentReceivedCommand}"
+                            Background="#16A34A" Foreground="White" BorderThickness="0"
+                            Height="40" Padding="16,0" Margin="0,0,10,0" Cursor="Hand">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="🔄" FontSize="12" Margin="0,0,6,0"/>
-                            <TextBlock Text="{DynamicResource Str_GateUi_QrCheck}" FontSize="12" FontWeight="SemiBold"/>
+                            <TextBlock Text="✓" FontSize="14" FontWeight="Bold" Margin="0,0,6,0"/>
+                            <TextBlock Text="{DynamicResource Str_GateUi_QrConfirmReceived}" FontSize="12.5" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Button>
 
-                    <Button Grid.Column="2" Command="{Binding CancelVietQrPaymentCommand}"
+                    <Button Grid.Column="2" Command="{Binding RefreshVietQrStatusCommand}"
+                            Style="{StaticResource SecondaryButtonStyle}" Height="40" Padding="14,0" Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="🔄" FontSize="12" Margin="0,0,6,0"/>
+                            <TextBlock Text="{DynamicResource Str_GateUi_QrCheck}" FontSize="12.5" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Grid.Column="3" Command="{Binding CancelVietQrPaymentCommand}"
                             Background="#F1F5F9" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1"
-                            Height="38" Padding="16,0" Cursor="Hand">
-                        <TextBlock Text="{DynamicResource Str_GateUi_QrCancel}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            Height="40" Padding="18,0" Cursor="Hand">
+                        <TextBlock Text="{DynamicResource Str_GateUi_QrCancel}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
                     </Button>
                 </Grid>
             </StackPanel>

@@ -18,6 +18,9 @@ public class PaymentCreationResult
     public string? QrCodePayload { get; set; }
     public byte[]? QrImagePng { get; set; }
     public string? CheckoutUrl { get; set; }
+    public string? AccountNumber { get; set; }
+    public string? AccountName { get; set; }
+    public string? BankCode { get; set; }
     public string Description { get; set; } = string.Empty;
     public bool IsPermissionDenied { get; set; }
 }
@@ -49,6 +52,8 @@ public class PaymentHistoryItem
 {
     public int PaymentId { get; set; }
     public int SessionId { get; set; }
+    public int? ShiftId { get; set; }
+    public int? CheckoutUserId { get; set; }
     public string TransactionReference { get; set; } = string.Empty;
     public string LicensePlate { get; set; } = string.Empty;
     public string TicketCode { get; set; } = string.Empty;

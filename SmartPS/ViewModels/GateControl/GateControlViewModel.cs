@@ -37,6 +37,7 @@ public class GateControlViewModel : ViewModelBase
     private readonly DispatcherTimer _barrierInTimer;
     private readonly DispatcherTimer _barrierOutTimer;
     private readonly DispatcherTimer _vietQrPollTimer;
+    private int _vietQrPollCount = 0;
 
     // Danh sách loại xe và phiên gửi xe đang hoạt động trong bãi
     public ObservableCollection<VehicleType> VehicleTypes { get; } = new();
@@ -493,6 +494,28 @@ public class GateControlViewModel : ViewModelBase
         set => SetProperty(ref _vietQrDescription, value);
     }
 
+    private string _vietQrBankName = VietQrGenerator.DefaultBankName;
+    public string VietQrBankName
+    {
+        get => _vietQrBankName;
+        set => SetProperty(ref _vietQrBankName, value);
+    }
+
+    private string _vietQrAccountNumber = VietQrGenerator.DefaultAccountNumber;
+    public string VietQrAccountNumber
+    {
+        get => _vietQrAccountNumber;
+        set => SetProperty(ref _vietQrAccountNumber, value);
+    }
+
+    private string _vietQrAccountName = VietQrGenerator.DefaultAccountName;
+    public string VietQrAccountName
+    {
+        get => _vietQrAccountName;
+        set => SetProperty(ref _vietQrAccountName, value);
+    }
+
+
     #endregion
 
     private ParkingSession? _selectedActiveSession;
@@ -530,6 +553,10 @@ public class GateControlViewModel : ViewModelBase
 
     public AsyncRelayCommand CancelVietQrPaymentCommand { get; }
     public AsyncRelayCommand RefreshVietQrStatusCommand { get; }
+    public AsyncRelayCommand ConfirmPaymentReceivedCommand { get; }
+    public RelayCommand CompletePaymentCommand { get; }
+    public RelayCommand CopyAccountNumberCommand { get; }
+    public RelayCommand CopyDescriptionCommand { get; }
 
     #endregion
 
@@ -611,6 +638,10 @@ public class GateControlViewModel : ViewModelBase
         // Commands Thanh Toán VietQR
         CancelVietQrPaymentCommand = new AsyncRelayCommand(ExecuteCancelVietQrPaymentAsync);
         RefreshVietQrStatusCommand = new AsyncRelayCommand(ExecuteRefreshVietQrStatusAsync);
+        ConfirmPaymentReceivedCommand = new AsyncRelayCommand(ExecuteConfirmPaymentReceivedAsync);
+        CompletePaymentCommand = new RelayCommand(ExecuteCompletePayment);
+        CopyAccountNumberCommand = new RelayCommand(() => CopyToClipboard(VietQrAccountNumber));
+        CopyDescriptionCommand = new RelayCommand(() => CopyToClipboard(VietQrDescription));
 
         RefreshActiveSessionsCommand = new AsyncRelayCommand(LoadActiveSessionsAsync);
 
@@ -1346,6 +1377,9 @@ public class GateControlViewModel : ViewModelBase
             VietQrTransactionReference = result.TransactionReference;
             VietQrAmount = result.Amount;
             VietQrDescription = result.Description;
+            VietQrAccountNumber = !string.IsNullOrWhiteSpace(result.AccountNumber) ? result.AccountNumber : VietQrGenerator.DefaultAccountNumber;
+            VietQrAccountName = !string.IsNullOrWhiteSpace(result.AccountName) ? result.AccountName : VietQrGenerator.DefaultAccountName;
+            VietQrBankName = !string.IsNullOrWhiteSpace(result.BankCode) ? result.BankCode : VietQrGenerator.DefaultBankName;
             VietQrStatusText = _localizationService.GetString("Msg_GateUi_QrWaiting");
 
             if (result.QrImagePng != null && result.QrImagePng.Length > 0)
@@ -1354,6 +1388,7 @@ public class GateControlViewModel : ViewModelBase
             }
 
             IsVietQrLoading = false;
+            _vietQrPollCount = 0;
             _vietQrPollTimer.Stop();
             _vietQrPollTimer.Start();
             return true;
@@ -1417,18 +1452,7 @@ public class GateControlViewModel : ViewModelBase
 
                     OutStatusMessage = _localizationService.GetString("Msg_GateUi_OutPaidQr", session.LicensePlate, session.TotalFee);
 
-                    await Task.Delay(1500);
-                    IsVietQrModalOpen = false;
-
-                    MatchedSession = null;
-                    OutPlateText = string.Empty;
-                    OutImagePath = null;
-                    OutAnnotatedImagePath = null;
-                    OutCropImagePath = null;
-                    IsPlateMatched = null;
-                    CalculatedFee = 0;
-                    DurationFormatted = "--:--";
-                }
+                    }
             }
 
             await LoadActiveSessionsAsync();
@@ -1443,14 +1467,24 @@ public class GateControlViewModel : ViewModelBase
             return;
         }
 
+        _vietQrPollCount++;
+
+        // Cho khách hàng khoảng 3-4 giây để hướng camera quét mã VietQR trên màn hình
+        if (_vietQrPollCount < 2)
+        {
+            VietQrStatusText = _localizationService.GetString("Msg_GateUi_QrWaiting") ?? "Đang chờ quét mã thanh toán...";
+            return;
+        }
+
         try
         {
-            var status = await _paymentService.GetPaymentStatusAsync(VietQrPaymentId);
+            VietQrStatusText = _localizationService.GetString("Msg_GateUi_QrChecking");
+            var status = await _paymentService.RefreshFromGatewayAsync(VietQrPaymentId);
             if (status.Success && status.Status == PaymentStatus.Paid && !IsVietQrPaidSuccess)
             {
                 _vietQrPollTimer.Stop();
                 IsVietQrPaidSuccess = true;
-                VietQrStatusText = _localizationService.GetString("Msg_GateUi_QrConfirmed");
+                VietQrStatusText = _localizationService.GetString("Msg_GateUi_QrPaidOpening");
 
                 IsBarrierOutOpen = true;
                 _barrierOutTimer.Stop();
@@ -1464,22 +1498,56 @@ public class GateControlViewModel : ViewModelBase
 
                 await LoadActiveSessionsAsync();
 
-                await Task.Delay(1500);
-                IsVietQrModalOpen = false;
-
-                MatchedSession = null;
-                OutPlateText = string.Empty;
-                OutImagePath = null;
-                OutAnnotatedImagePath = null;
-                OutCropImagePath = null;
-                IsPlateMatched = null;
-                CalculatedFee = 0;
-                DurationFormatted = "--:--";
             }
         }
         catch
         {
             // Bỏ qua lỗi mạng trong quá trình polling
+        }
+    }
+
+    private async Task ExecuteConfirmPaymentReceivedAsync()
+    {
+        if (VietQrPaymentId <= 0 || _paymentService == null || IsVietQrPaidSuccess) return;
+
+        try
+        {
+            IsVietQrLoading = true;
+            VietQrStatusText = _localizationService.GetString("Msg_GateUi_QrChecking");
+
+            var status = await _paymentService.ConfirmPaymentReceivedAsync(
+                VietQrPaymentId,
+                _authService.CurrentUser?.UserId ?? 0);
+
+            if (status.Success && status.Status == PaymentStatus.Paid)
+            {
+                _vietQrPollTimer.Stop();
+                IsVietQrPaidSuccess = true;
+                VietQrStatusText = _localizationService.GetString("Msg_GateUi_QrConfirmed");
+                IsBarrierOutOpen = true;
+                _barrierOutTimer.Stop();
+                _barrierOutTimer.Start();
+                PlayNotificationSound();
+
+                if (MatchedSession != null)
+                {
+                    OutStatusMessage = _localizationService.GetString("Msg_GateUi_OutPaid", MatchedSession.LicensePlate, status.Amount);
+                }
+
+                await LoadActiveSessionsAsync();
+            }
+            else
+            {
+                VietQrStatusText = status.Message ?? "Không thể xác nhận giao dịch.";
+            }
+        }
+        catch (Exception ex)
+        {
+            VietQrStatusText = $"Lỗi: {ex.Message}";
+        }
+        finally
+        {
+            IsVietQrLoading = false;
         }
     }
 
@@ -1500,17 +1568,6 @@ public class GateControlViewModel : ViewModelBase
             PlayNotificationSound();
 
             await LoadActiveSessionsAsync();
-            await Task.Delay(1500);
-            IsVietQrModalOpen = false;
-
-            MatchedSession = null;
-            OutPlateText = string.Empty;
-            OutImagePath = null;
-            OutAnnotatedImagePath = null;
-            OutCropImagePath = null;
-            IsPlateMatched = null;
-            CalculatedFee = 0;
-            DurationFormatted = "--:--";
         }
         else
         {
@@ -1520,6 +1577,12 @@ public class GateControlViewModel : ViewModelBase
 
     private async Task ExecuteCancelVietQrPaymentAsync()
     {
+        if (IsVietQrPaidSuccess)
+        {
+            ExecuteCompletePayment();
+            return;
+        }
+
         _vietQrPollTimer.Stop();
         if (VietQrPaymentId > 0 && _paymentService != null)
         {
@@ -1536,6 +1599,39 @@ public class GateControlViewModel : ViewModelBase
         IsVietQrModalOpen = false;
         IsVietQrLoading = false;
         OutStatusMessage = _localizationService.GetString("Msg_GateUi_QrCancelled");
+    }
+
+    private void ExecuteCompletePayment()
+    {
+        _vietQrPollTimer.Stop();
+        IsVietQrModalOpen = false;
+        IsVietQrPaidSuccess = false;
+        IsVietQrLoading = false;
+
+        MatchedSession = null;
+        OutPlateText = string.Empty;
+        OutImagePath = null;
+        OutAnnotatedImagePath = null;
+        OutCropImagePath = null;
+        IsPlateMatched = null;
+        DurationFormatted = string.Empty;
+        CalculatedFee = 0;
+        FeeDetails = string.Empty;
+        VietQrImageSource = null;
+        VietQrPaymentId = 0;
+    }
+
+    private static void CopyToClipboard(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return;
+        try
+        {
+            System.Windows.Clipboard.SetText(text);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Clipboard error]: {ex.Message}");
+        }
     }
 
     private static BitmapImage? LoadBitmapFromBytes(byte[]? bytes)
