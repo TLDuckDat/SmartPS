@@ -742,7 +742,9 @@
                               CanUserAddRows="False"
                               RowHeight="36"
                               MaxHeight="260"
-                              GridLinesVisibility="Horizontal"
+                              GridLinesVisibility="All"
+                              VerticalGridLinesBrush="{StaticResource TableColumnDividerBrush}"
+                              CanUserResizeColumns="True"
                               HorizontalGridLinesBrush="{StaticResource DividerBrush}"
                               Background="Transparent"
                               BorderThickness="1"
@@ -753,7 +755,7 @@
 
                         <DataGrid.Columns>
                             <!-- Mã vé -->
-                            <DataGridTextColumn Header="{DynamicResource Str_GateUi_ColTicket}" Binding="{Binding TicketCode}" Width="140">
+                            <DataGridTextColumn Header="{DynamicResource Str_GateUi_ColTicket}" Binding="{Binding TicketCode}" Width="Auto" MinWidth="130">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -765,7 +767,7 @@
                             </DataGridTextColumn>
 
                             <!-- Biển số xe -->
-                            <DataGridTextColumn Header="{DynamicResource Str_GateUi_ColPlate}" Binding="{Binding LicensePlate}" Width="130">
+                            <DataGridTextColumn Header="{DynamicResource Str_GateUi_ColPlate}" Binding="{Binding LicensePlate}" Width="Auto" MinWidth="110">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -777,7 +779,7 @@
                             </DataGridTextColumn>
 
                             <!-- Loại phương tiện -->
-                            <DataGridTextColumn Header="{DynamicResource Str_GateUi_ColVehicleType}" Binding="{Binding VehicleType.TypeName}" Width="120">
+                            <DataGridTextColumn Header="{DynamicResource Str_GateUi_ColVehicleType}" Binding="{Binding VehicleType.TypeName}" Width="Auto" MinWidth="95">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -788,7 +790,7 @@
                             </DataGridTextColumn>
 
                             <!-- Vị trí ô đỗ -->
-                            <DataGridTextColumn Header="{DynamicResource Str_GateUi_ColSlot}" Binding="{Binding Slot.SlotCode}" Width="90">
+                            <DataGridTextColumn Header="{DynamicResource Str_GateUi_ColSlot}" Binding="{Binding Slot.SlotCode}" Width="Auto" MinWidth="70">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -800,7 +802,7 @@
                             </DataGridTextColumn>
 
                             <!-- Thời gian vào (chính xác theo giờ máy trạm địa phương) -->
-                            <DataGridTextColumn Header="{DynamicResource Str_GateUi_ColCheckIn}" Binding="{Binding CheckInTimeLocal, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}}" Width="160">
+                            <DataGridTextColumn Header="{DynamicResource Str_GateUi_ColCheckIn}" Binding="{Binding CheckInTimeLocal, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}}" Width="Auto" MinWidth="150">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -811,7 +813,7 @@
                             </DataGridTextColumn>
 
                             <!-- Thời lượng đã gửi trong bãi -->
-                            <DataGridTextColumn Header="{DynamicResource Str_GateUi_ColDuration}" Binding="{Binding DurationDisplay}" Width="120">
+                            <DataGridTextColumn Header="{DynamicResource Str_GateUi_ColDuration}" Binding="{Binding DurationDisplay}" Width="Auto" MinWidth="120">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -823,7 +825,7 @@
                             </DataGridTextColumn>
 
                             <!-- Phân loại khách hàng -->
-                            <DataGridTemplateColumn Header="{DynamicResource Str_GateUi_ColCustomer}" Width="*">
+                            <DataGridTemplateColumn Header="{DynamicResource Str_GateUi_ColCustomer}" Width="*" MinWidth="200">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
@@ -1000,7 +1002,7 @@
                                             <TextBlock Text="{Binding VietQrAmountFormatted}" FontSize="32" FontWeight="Bold" Foreground="#15803D"/>
                                         </StackPanel>
                                         <Border Background="#DCFCE7" CornerRadius="6" Padding="10,5" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                            <TextBlock Text="VND" FontSize="13" FontWeight="Bold" Foreground="#15803D"/>
+                                            <TextBlock Text="đ" FontSize="13" FontWeight="Bold" Foreground="#15803D"/>
                                         </Border>
                                     </Grid>
                                 </Border>

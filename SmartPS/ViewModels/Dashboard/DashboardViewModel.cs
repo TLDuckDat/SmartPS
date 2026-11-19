@@ -61,7 +61,8 @@ public class DashboardViewModel : ViewModelBase
 
     // Thông tin người đăng nhập
     public string CurrentUserFullName => _authService.CurrentUser?.FullName ?? string.Empty;
-    public string CurrentUserRole => _authService.CurrentUser?.Role?.RoleName ?? string.Empty;
+    public string CurrentUserRole => (string)new SmartPS.Resources.Converters.RoleLocalizedConverter()
+        .Convert(_authService.CurrentUser?.Role?.RoleName, typeof(string), null, System.Globalization.CultureInfo.CurrentCulture);
 
     public string AppVersion { get; } = Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "1.0.0";
 
@@ -135,6 +136,13 @@ public class DashboardViewModel : ViewModelBase
     public AsyncRelayCommand RefreshCommand { get; }
     public AsyncRelayCommand ShowProfileCommand { get; }
     public RelayCommand ShowShortcutsCommand { get; }
+    public RelayCommand OpenUserGuideCommand { get; }
+
+    /// <summary>View mở cửa sổ bảng phím tắt.</summary>
+    public event Action? ShortcutsRequested;
+
+    /// <summary>Đường dẫn tệp PDF hướng dẫn sử dụng đi kèm ứng dụng.</summary>
+    public static string UserGuidePath => System.IO.Path.Combine(AppContext.BaseDirectory, "Docs", "HuongDanSuDung.pdf");
     public RelayCommand AboutCommand { get; }
 
     public event Action? LogoutRequested;
@@ -235,7 +243,13 @@ public class DashboardViewModel : ViewModelBase
         });
 
         ShowShortcutsCommand = new RelayCommand(_ =>
-            _dialogService.ShowInfo(_localizationService.GetString("Msg_Help_Shortcuts"), _localizationService.GetString("Str_MainMenu_Shortcuts")));
+        {
+            if (ShortcutsRequested != null)
+                ShortcutsRequested.Invoke();
+            else
+                _dialogService.ShowInfo(_localizationService.GetString("Msg_Help_Shortcuts"), _localizationService.GetString("Str_MainMenu_Shortcuts"));
+        });
+        OpenUserGuideCommand = new RelayCommand(_ => OpenUserGuide());
         AboutCommand = new RelayCommand(_ =>
             _dialogService.ShowInfo(_localizationService.GetString("Msg_Help_About", AppVersion), _localizationService.GetString("Str_MainMenu_About")));
 
@@ -374,6 +388,27 @@ public class DashboardViewModel : ViewModelBase
 
         SelectedTab = tab;
         _ = LoadContentAsync(tab.Content, isRefresh: false);
+    }
+
+    /// <summary>Mở tệp PDF hướng dẫn sử dụng bằng trình xem PDF mặc định của máy.</summary>
+    private void OpenUserGuide()
+    {
+        var path = UserGuidePath;
+        if (!System.IO.File.Exists(path))
+        {
+            _dialogService.ShowWarning(_localizationService.GetString("Msg_Help_GuideMissing"));
+            return;
+        }
+
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            SmartPS.Services.Logging.ErrorLog.Error("Help", ex);
+            _dialogService.ShowWarning(_localizationService.GetString("Msg_Help_GuideOpenFailed"));
+        }
     }
 
     private void OpenByShortcut(string? digitText)

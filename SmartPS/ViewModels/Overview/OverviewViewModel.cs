@@ -3,7 +3,9 @@ using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 using SmartPS.Models.Parking;
 using SmartPS.Models.Reports;
+using System.Windows.Threading;
 using SmartPS.Services.Localization;
+using SmartPS.Services.Pricing;
 using SmartPS.Services.Reports;
 using SmartPS.ViewModels.Reports;
 
@@ -143,7 +145,7 @@ public class OverviewViewModel : ViewModelBase
     private Axis[] _parkedYAxes = Array.Empty<Axis>();
     public Axis[] ParkedYAxes { get => _parkedYAxes; private set => SetProperty(ref _parkedYAxes, value); }
 
-    public ObservableCollection<ParkingSession> RecentSessions { get; } = new();
+    public ObservableCollection<RecentSessionItem> RecentSessions { get; } = new();
 
     // Hiện trạng thái trống thay cho khung/bảng rỗng
     public bool HasParkedByVehicleType => ParkedByVehicleType.Count > 0;
@@ -151,14 +153,78 @@ public class OverviewViewModel : ViewModelBase
 
     public AsyncRelayCommand RefreshCommand { get; }
 
-    public OverviewViewModel(IReportService reportService, ILocalizationService localization)
+    public OverviewViewModel(IReportService reportService, ILocalizationService localization, IParkingFeeEstimator? feeEstimator = null)
     {
         _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
+        _feeEstimator = feeEstimator;
         RefreshCommand = new AsyncRelayCommand(LoadDataAsync);
 
         ParkedByVehicleType.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasParkedByVehicleType));
         RecentSessions.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasRecentSessions));
+    }
+
+    // ---------------- Phí tạm tính realtime cho xe đang trong bãi ----------------
+    private static readonly TimeSpan LiveFeeInterval = TimeSpan.FromSeconds(30);
+    private readonly IParkingFeeEstimator? _feeEstimator;
+    private IReadOnlyDictionary<int, PricingContext> _pricingContexts = new Dictionary<int, PricingContext>();
+    private DispatcherTimer? _liveFeeTimer;
+
+    /// <summary>Gọi khi màn hình hiển thị: bắt đầu cập nhật phí tạm tính định kỳ (không truy cập CSDL).</summary>
+    public void StartLiveFees()
+    {
+        if (_feeEstimator is null || _liveFeeTimer is not null) return;
+        _liveFeeTimer = new DispatcherTimer { Interval = LiveFeeInterval };
+        _liveFeeTimer.Tick += (_, _) => RefreshEstimatedFees();
+        _liveFeeTimer.Start();
+        RefreshEstimatedFees();
+    }
+
+    /// <summary>Gọi khi màn hình bị ẩn/đóng để dừng bộ đếm.</summary>
+    public void StopLiveFees()
+    {
+        _liveFeeTimer?.Stop();
+        _liveFeeTimer = null;
+    }
+
+    /// <summary>Tính lại phí tạm tính tại thời điểm hiện tại từ ngữ cảnh giá đã nạp.</summary>
+    public void RefreshEstimatedFees()
+    {
+        if (_feeEstimator is null) return;
+        var nowUtc = DateTime.UtcNow;
+        foreach (var item in RecentSessions)
+        {
+            if (!item.IsActive || !_pricingContexts.TryGetValue(item.Session.SessionId, out var context))
+            {
+                item.UpdateEstimate(null);
+                continue;
+            }
+
+            try
+            {
+                item.UpdateEstimate(_feeEstimator.Estimate(item.Session, context, nowUtc));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[OverviewViewModel LiveFee]: {ex.Message}");
+                item.UpdateEstimate(null);
+            }
+        }
+    }
+
+    private async Task LoadPricingContextsAsync(IReadOnlyList<ParkingSession> sessions)
+    {
+        if (_feeEstimator is null) return;
+        try
+        {
+            _pricingContexts = await _feeEstimator.ResolveContextsAsync(sessions);
+        }
+        catch (Exception ex)
+        {
+            // Không có phí tạm tính thì cột tiền hiển thị như cũ; không làm hỏng màn Tổng quan
+            System.Diagnostics.Debug.WriteLine($"[OverviewViewModel PricingContexts]: {ex.Message}");
+            _pricingContexts = new Dictionary<int, PricingContext>();
+        }
     }
 
     public async Task LoadDataAsync()
@@ -194,11 +260,14 @@ public class OverviewViewModel : ViewModelBase
             ParkedXAxes = parkedItems.Count == 0 ? Array.Empty<Axis>() : LiveChartsSeriesFactory.CreateParkedCategoryAxes(parkedItems);
             ParkedYAxes = parkedItems.Count == 0 ? Array.Empty<Axis>() : LiveChartsSeriesFactory.CreateParkedValueAxes();
 
+            await LoadPricingContextsAsync(recent);
+
             RecentSessions.Clear();
             foreach (var session in recent)
             {
-                RecentSessions.Add(session);
+                RecentSessions.Add(new RecentSessionItem(session));
             }
+            RefreshEstimatedFees();
 
             ErrorMessage = null;
         }

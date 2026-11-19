@@ -10,7 +10,11 @@ public sealed record HourlyReportRow(int HourVn, int CheckIns, int CheckOuts, do
 
 public sealed record ShiftReportRow(
     int ShiftId, string OpenedByName, DateTime OpenedAtUtc, DateTime? ClosedAtUtc, decimal BeginningCash,
-    decimal? ExpectedCash, decimal? ActualCash, decimal? Difference, ShiftStatus Status);
+    decimal? ExpectedCash, decimal? ActualCash, decimal? Difference, ShiftStatus Status, string? ShiftCode = null)
+{
+    /// <summary>Mã ca CA-yyMMdd-01 (ca cũ chưa có mã hiển thị CA-#Id).</summary>
+    public string DisplayCode => string.IsNullOrWhiteSpace(ShiftCode) ? $"CA-#{ShiftId}" : ShiftCode;
+}
 
 public sealed record VehicleTypeReportRow(
     int VehicleTypeId, string VehicleTypeName, int CheckIns, int CheckOuts, decimal NetRevenue, double? AverageDurationMinutes);

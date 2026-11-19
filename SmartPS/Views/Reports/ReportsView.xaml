@@ -274,7 +274,7 @@
                         <TabItem Header="{DynamicResource Str_Rpt_Tab_Daily}">
                             <DataGrid ItemsSource="{Binding DailyRows}"
                                       AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False"
-                                      RowHeight="32" MaxHeight="420" GridLinesVisibility="Horizontal"
+                                      RowHeight="32" MaxHeight="420" GridLinesVisibility="All"
                                       HorizontalGridLinesBrush="{StaticResource DividerBrush}" Background="Transparent"
                                       BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0"
                                       HeadersVisibility="Column" SelectionMode="Single" Margin="0,10,0,0">
@@ -324,7 +324,7 @@
                         <TabItem Header="{DynamicResource Str_Rpt_Tab_Shifts}">
                             <DataGrid ItemsSource="{Binding ShiftRows}"
                                       AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False"
-                                      RowHeight="32" MaxHeight="420" GridLinesVisibility="Horizontal"
+                                      RowHeight="32" MaxHeight="420" GridLinesVisibility="All"
                                       HorizontalGridLinesBrush="{StaticResource DividerBrush}" Background="Transparent"
                                       BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0"
                                       HeadersVisibility="Column" SelectionMode="Single" Margin="0,10,0,0">
@@ -382,7 +382,7 @@
                         <TabItem Header="{DynamicResource Str_Rpt_Tab_VehicleTypes}">
                             <DataGrid ItemsSource="{Binding VehicleTypeRows}"
                                       AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False"
-                                      RowHeight="32" MaxHeight="420" GridLinesVisibility="Horizontal"
+                                      RowHeight="32" MaxHeight="420" GridLinesVisibility="All"
                                       HorizontalGridLinesBrush="{StaticResource DividerBrush}" Background="Transparent"
                                       BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0"
                                       HeadersVisibility="Column" SelectionMode="Single" Margin="0,10,0,0">
@@ -409,7 +409,7 @@
                         <TabItem Header="{DynamicResource Str_Rpt_Tab_TopPlates}">
                             <DataGrid ItemsSource="{Binding TopPlateRows}"
                                       AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False"
-                                      RowHeight="32" MaxHeight="420" GridLinesVisibility="Horizontal"
+                                      RowHeight="32" MaxHeight="420" GridLinesVisibility="All"
                                       HorizontalGridLinesBrush="{StaticResource DividerBrush}" Background="Transparent"
                                       BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0"
                                       HeadersVisibility="Column" SelectionMode="Single" Margin="0,10,0,0">

@@ -2,7 +2,7 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- ========================================================================= -->
-    <!-- BẢNG DỮ LIỆU PHẲNG SHIBA SUNSET: tiêu đề kem ấm, không kẻ dọc, dòng thoáng -->
+    <!-- BẢNG DỮ LIỆU PHẲNG SHIBA SUNSET: tiêu đề kem ấm, kẻ dọc nhạt, dòng thoáng -->
     <!-- Dùng: Style="{StaticResource ModernDataGridStyle}"                         -->
     <!-- ========================================================================= -->
 
@@ -10,6 +10,9 @@
     <SolidColorBrush x:Key="TableHeaderTextBrush" Color="#7A667C"/>
     <SolidColorBrush x:Key="TableRowHoverBrush" Color="#FFF8F0"/>
     <SolidColorBrush x:Key="TableRowSelectedBrush" Color="#FFF0E8"/>
+    <!-- Đường ngăn cột: nhạt ở thân bảng, đậm hơn một chút ở tiêu đề để thấy chỗ kéo giãn cột -->
+    <SolidColorBrush x:Key="TableColumnDividerBrush" Color="#F3E7DD"/>
+    <SolidColorBrush x:Key="TableHeaderDividerBrush" Color="#E6D2C2"/>
 
     <!-- Vùng kéo đổi độ rộng cột: vô hình nhưng vẫn kéo được -->
     <Style x:Key="ModernColumnGripperStyle" TargetType="Thumb">
@@ -48,6 +51,8 @@
                                       VerticalAlignment="Center" Data="M1,1 L5,5 L9,1"/>
                             </StackPanel>
                         </Border>
+                        <!-- Vạch ngăn cột ở mép phải tiêu đề -->
+                        <Rectangle Width="1" HorizontalAlignment="Right" Margin="0,9" Fill="{StaticResource TableHeaderDividerBrush}"/>
                         <Thumb x:Name="PART_LeftHeaderGripper" HorizontalAlignment="Left" Style="{StaticResource ModernColumnGripperStyle}"/>
                         <Thumb x:Name="PART_RightHeaderGripper" HorizontalAlignment="Right" Style="{StaticResource ModernColumnGripperStyle}"/>
                     </Grid>
@@ -104,8 +109,10 @@
         <Setter Property="RowHeaderWidth" Value="0"/>
         <Setter Property="RowHeight" Value="42"/>
         <Setter Property="ColumnHeaderHeight" Value="38"/>
-        <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+        <Setter Property="GridLinesVisibility" Value="All"/>
         <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource DividerBrush}"/>
+        <Setter Property="VerticalGridLinesBrush" Value="{StaticResource TableColumnDividerBrush}"/>
+        <Setter Property="CanUserResizeColumns" Value="True"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="RowBackground" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>

@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:mode="clr-namespace:SmartPS.Services.Common"
              mc:Ignorable="d"
              d:DesignHeight="700" d:DesignWidth="1000">
 
@@ -77,7 +78,7 @@
             <Border Style="{StaticResource SettingsCardStyle}">
                 <StackPanel>
                     <TextBlock Text="{DynamicResource Str_SetUi_ParamsTitle}" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                    <TextBlock Text="{DynamicResource Str_SetUi_AuditNote}" FontSize="12" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,18"/>
+                    <TextBlock Text="{DynamicResource Str_SetUi_AuditNote}" FontSize="12" Foreground="{StaticResource TextDimBrush}" Margin="0,4,0,18" TextWrapping="Wrap"/>
 
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -127,7 +128,7 @@
                                 <Run Text="{DynamicResource Str_SetUi_Database}"/>
                                 <Run Text="{Binding DatabaseSummary, Mode=OneWay}" FontWeight="SemiBold"/>
                             </TextBlock>
-                            <TextBlock Text="{Binding DatabaseDetail}" Style="{StaticResource StatusDetailStyle}"/>
+                            <TextBlock Text="{Binding DatabaseDetail}" Style="{StaticResource StatusDetailStyle}" Visibility="{x:Static mode:AppMode.DeveloperVisibility}"/>
                         </StackPanel>
                     </DockPanel>
 
@@ -143,7 +144,7 @@
                                 <Run Text="{DynamicResource Str_SetUi_Ocr}"/>
                                 <Run Text="{Binding OcrSummary, Mode=OneWay}" FontWeight="SemiBold"/>
                             </TextBlock>
-                            <TextBlock Text="{Binding OcrDetail}" Style="{StaticResource StatusDetailStyle}"/>
+                            <TextBlock Text="{Binding OcrDetail}" Style="{StaticResource StatusDetailStyle}" Visibility="{x:Static mode:AppMode.DeveloperVisibility}"/>
                             <TextBlock Text="{Binding OcrTestResult}" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,6,0,0" TextWrapping="Wrap"/>
                         </StackPanel>
                     </DockPanel>
@@ -156,12 +157,12 @@
                                 <Run Text="{DynamicResource Str_SetUi_Payment}"/>
                                 <Run Text="{Binding PaymentSummary, Mode=OneWay}" FontWeight="SemiBold"/>
                             </TextBlock>
-                            <TextBlock Text="{Binding PaymentDetail}" Style="{StaticResource StatusDetailStyle}"/>
+                            <TextBlock Text="{Binding PaymentDetail}" Style="{StaticResource StatusDetailStyle}" Visibility="{x:Static mode:AppMode.DeveloperVisibility}"/>
                         </StackPanel>
                     </DockPanel>
 
-                    <!-- Webhook -->
-                    <DockPanel Margin="0,0,0,16">
+                    <!-- Webhook: chỉ hiện ở chế độ nhà phát triển -->
+                    <DockPanel Margin="0,0,0,16" Visibility="{x:Static mode:AppMode.DeveloperVisibility}">
                         <Border DockPanel.Dock="Left" Style="{StaticResource StatusDotStyle}" Tag="{Binding IsWebhookRunning}"/>
                         <StackPanel>
                             <TextBlock Text="{DynamicResource Str_SetUi_Webhook}" Style="{StaticResource StatusTitleStyle}"/>
@@ -180,8 +181,8 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource Str_SetUi_CaptureFolder}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,10,6"/>
-                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CaptureStoragePath}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource Str_SetUi_CaptureFolder}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,10,6" Visibility="{x:Static mode:AppMode.DeveloperVisibility}"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CaptureStoragePath}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Visibility="{x:Static mode:AppMode.DeveloperVisibility}"/>
                         <TextBlock Grid.Row="1" Grid.Column="0" Text="{DynamicResource Str_SetUi_Version}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,10,0"/>
                         <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding AppVersion}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"/>
                     </Grid>

@@ -80,7 +80,9 @@ public class PermissionsConstantsTests
             // Customers / tickets / vehicles / blacklist (KAN-33b)
             "HOUSEHOLD_CREATE", "HOUSEHOLD_DELETE", "CUSTOMER_CREATE", "CUSTOMER_DELETE", "VEHICLE_CREATE", "VEHICLE_DELETE",
             "TICKET_ISSUE", "TICKET_RENEW", "TICKET_CHANGE_PLATE", "TICKET_LOCK_TOGGLE", "TICKET_CANCEL",
-            "BLACKLIST_ADD", "BLACKLIST_TOGGLE", "BLACKLIST_DELETE"
+            "BLACKLIST_ADD", "BLACKLIST_TOGGLE", "BLACKLIST_DELETE",
+            // Sơ đồ bãi: tạo khu, thêm / bảo trì / xoá ô
+            "ZONE_CREATE", "SLOT_CREATE", "SLOT_STATUS_UPDATE", "SLOT_DELETE"
         }, AuditActions.All);
     }
 

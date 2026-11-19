@@ -189,7 +189,7 @@
                               CanUserAddRows="False"
                               RowHeight="38"
                               MaxHeight="450"
-                              GridLinesVisibility="Horizontal"
+                              GridLinesVisibility="All"
                               HorizontalGridLinesBrush="{StaticResource DividerBrush}"
                               Background="Transparent"
                               BorderThickness="1"
@@ -383,7 +383,7 @@
                                 </Grid>
                             </Border>
 
-                            <DataGrid ItemsSource="{Binding Households}" SelectedItem="{Binding SelectedHousehold}" AutoGenerateColumns="False" IsReadOnly="True" RowHeight="38" MaxHeight="550" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{StaticResource DividerBrush}" Background="Transparent" BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0" HeadersVisibility="Column">
+                            <DataGrid ItemsSource="{Binding Households}" SelectedItem="{Binding SelectedHousehold}" AutoGenerateColumns="False" IsReadOnly="True" RowHeight="38" MaxHeight="550" GridLinesVisibility="All" HorizontalGridLinesBrush="{StaticResource DividerBrush}" Background="Transparent" BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0" HeadersVisibility="Column">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="{DynamicResource Str_Customers_ColApartment}" Binding="{Binding ApartmentCode}" Width="150"/>
                                     <DataGridTextColumn Header="{DynamicResource Str_Customers_ColMaxVehicles}" Binding="{Binding MaxVehicles}" Width="120"/>
@@ -437,11 +437,11 @@
                                         <TextBlock Text="{DynamicResource Str_Customers_SortBy}" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12.5" Margin="0,0,8,0"/>
                                         <ComboBox ItemsSource="{Binding TicketSortOptions}" SelectedIndex="{Binding SelectedTicketSortIndex}" Width="220" Height="34" VerticalContentAlignment="Center"/>
                                     </StackPanel>
-                                    <CheckBox Grid.Column="1" Content="Chỉ xem vé sắp hết hạn (≤ 15 ngày)" IsChecked="{Binding OnlyExpiringSoonTickets, Mode=TwoWay}" VerticalAlignment="Center" Margin="16,0,0,0" FontWeight="SemiBold" Foreground="#D97706"/>
+                                    <CheckBox Grid.Column="1" Content="Chỉ xem vé sắp hết hạn trong 15 ngày" IsChecked="{Binding OnlyExpiringSoonTickets, Mode=TwoWay}" VerticalAlignment="Center" Margin="16,0,0,0" FontWeight="SemiBold" Foreground="#D97706"/>
                                 </Grid>
                             </Border>
 
-                            <DataGrid ItemsSource="{Binding Tickets}" SelectedItem="{Binding SelectedTicket}" AutoGenerateColumns="False" IsReadOnly="True" RowHeight="38" MaxHeight="550" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{StaticResource DividerBrush}" Background="Transparent" BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0" HeadersVisibility="Column">
+                            <DataGrid ItemsSource="{Binding Tickets}" SelectedItem="{Binding SelectedTicket}" AutoGenerateColumns="False" IsReadOnly="True" RowHeight="38" MaxHeight="550" GridLinesVisibility="All" HorizontalGridLinesBrush="{StaticResource DividerBrush}" Background="Transparent" BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0" HeadersVisibility="Column">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="{DynamicResource Str_Customers_ColTicket}" Binding="{Binding TicketCode}" Width="150">
                                         <DataGridTextColumn.ElementStyle>
@@ -583,7 +583,7 @@
                                     </Grid>
 
                                     <DataGrid ItemsSource="{Binding SelectedTicketHistories}" AutoGenerateColumns="False" IsReadOnly="True" RowHeight="32" MaxHeight="220"
-                                              GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{StaticResource DividerBrush}"
+                                              GridLinesVisibility="All" HorizontalGridLinesBrush="{StaticResource DividerBrush}"
                                               Background="White" BorderThickness="1" BorderBrush="{StaticResource DividerBrush}" RowHeaderWidth="0" HeadersVisibility="Column">
                                         <DataGrid.Columns>
                                             <DataGridTextColumn Header="Thời Gian" Binding="{Binding CreatedAt, Converter={StaticResource UtcToVietnamTimeConverter}, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}" Width="130"/>
@@ -674,7 +674,7 @@
                                       CanUserAddRows="False"
                                       RowHeight="38"
                                       MaxHeight="450"
-                                      GridLinesVisibility="Horizontal"
+                                      GridLinesVisibility="All"
                                       HorizontalGridLinesBrush="{StaticResource DividerBrush}"
                                       Background="Transparent"
                                       BorderThickness="1"

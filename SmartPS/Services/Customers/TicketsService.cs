@@ -186,7 +186,10 @@ public class TicketsService : ITicketsService
                     MonthlyPrice = fee.Value,
                     StartDate = now,
                     EndDate = now.AddMonths(request.DurationMonths),
-                    TicketCode = $"MT-{now:yyyyMM}-{Random.Shared.Next(1000, 9999)}",
+                    // VT-yyyy-0001: số thứ tự trong năm, cấp trong giao dịch có khoá nhật ký nên không trùng
+                    TicketCode = await DocumentCodes.NextAsync(
+                        db.MonthlyTickets.Select(t => t.TicketCode),
+                        DocumentCodes.YearlyPrefix(DocumentCodes.MonthlyTicket, now), 4, ct),
                     Status = MonthlyTicketStatus.Active,
                     CreatedAt = now
                 };

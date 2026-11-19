@@ -6,6 +6,12 @@ public class Shift
 {
     public int ShiftId { get; set; }
 
+    /// <summary>Mã ca dễ đọc CA-yyMMdd-01 (số thứ tự ca trong ngày, giờ Việt Nam).</summary>
+    public string? ShiftCode { get; set; }
+
+    /// <summary>Mã hiển thị: ShiftCode, hoặc CA-#Id với ca cũ chưa có mã.</summary>
+    public string DisplayCode => string.IsNullOrWhiteSpace(ShiftCode) ? $"CA-#{ShiftId}" : ShiftCode;
+
     public int OpenedByUserId { get; set; }
     public User? OpenedByUser { get; set; }
 

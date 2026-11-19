@@ -269,7 +269,7 @@
                               CanUserAddRows="False"
                               RowHeight="44"
                               MaxHeight="450"
-                              GridLinesVisibility="Horizontal"
+                              GridLinesVisibility="All"
                               HorizontalGridLinesBrush="{StaticResource DividerBrush}"
                               Background="Transparent"
                               BorderThickness="1"

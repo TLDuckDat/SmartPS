@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Text.Json;
 using SmartPS.Constants;
 using SmartPS.Data;
 using SmartPS.Models.Audit;
@@ -18,12 +17,6 @@ public class AuditLogViewModel : ViewModelBase
     private readonly IPermissionService _permissionService;
     private readonly IDialogService _dialogService;
     private readonly ILocalizationService _localizationService;
-
-    private static readonly JsonSerializerOptions PrettyJson = new()
-    {
-        WriteIndented = true,
-        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-    };
 
     public sealed record FilterOption(string? Value, string Label);
 
@@ -186,6 +179,7 @@ public class AuditLogViewModel : ViewModelBase
                 SelectedAction = ActionOptions.FirstOrDefault(o => o.Value == action) ?? ActionOptions[0];
                 SelectedOutcome = OutcomeOptions.FirstOrDefault(o => o.Value == outcome) ?? OutcomeOptions[0];
                 OnPropertyChanged(nameof(PageInfoText));
+                OnPropertyChanged(nameof(SelectedDetailsText));
             }
 
             if (System.Windows.Application.Current?.Dispatcher.CheckAccess() == false)
@@ -207,7 +201,7 @@ public class AuditLogViewModel : ViewModelBase
         ActionOptions.Add(new FilterOption(null, _localizationService.GetString("Str_Audit_All")));
         foreach (var action in AuditActions.All)
         {
-            ActionOptions.Add(new FilterOption(action, action));
+            ActionOptions.Add(new FilterOption(action, AuditDisplayText.Action(action)));
         }
 
         OutcomeOptions.Clear();
@@ -338,15 +332,8 @@ public class AuditLogViewModel : ViewModelBase
             return string.Empty;
         }
 
-        try
-        {
-            using var document = JsonDocument.Parse(entry.Details);
-            return JsonSerializer.Serialize(document.RootElement, PrettyJson);
-        }
-        catch (JsonException)
-        {
-            return entry.Details;
-        }
+        // Bản cho khách hàng: các dòng "Tên mục: giá trị"; chế độ nhà phát triển: JSON gốc
+        return AuditDisplayText.Details(entry.Details, SmartPS.Services.Common.AppMode.IsDeveloperMode);
     }
 
     private void RaisePagingChanged()

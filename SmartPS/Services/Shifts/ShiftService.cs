@@ -8,6 +8,7 @@ using SmartPS.Models.Shifts;
 using SmartPS.Models.Payment;
 using SmartPS.Services.Audit;
 using SmartPS.Services.Authorization;
+using SmartPS.Services.Common;
 using SmartPS.Services.Localization;
 
 namespace SmartPS.Services.Shifts;
@@ -75,13 +76,17 @@ public class ShiftService : IShiftService
         {
             await using (var transaction = await _audit.BeginAuditedTransactionAsync(db, System.Data.IsolationLevel.ReadCommitted, cancellationToken))
             {
+                // CA-yyMMdd-01: số thứ tự ca trong ngày, cấp khi đang giữ khoá nhật ký
+                shift.ShiftCode = await DocumentCodes.NextAsync(
+                    db.Shifts.Where(x => x.ShiftCode != null).Select(x => x.ShiftCode!),
+                    DocumentCodes.DailyPrefix(DocumentCodes.Shift, shift.OpenedAt), 2, cancellationToken);
                 await db.SaveChangesAsync(cancellationToken);
                 await _audit.AppendAsync(db, new AuditEntry(
                     AuditActions.ShiftOpen,
                     AuditOutcome.Success,
                     "Shift",
                     shift.ShiftId.ToString(),
-                    new { BeginningCash = beginningCash }), cancellationToken);
+                    new { ShiftCode = shift.ShiftCode, BeginningCash = beginningCash }), cancellationToken);
                 await db.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
             }
@@ -281,7 +286,7 @@ public class ShiftService : IShiftService
 
             var transaction = new FinancialTransaction
             {
-                TransactionCode = CreateTransactionCode(),
+                TransactionCode = await ShiftAccounting.NewCodeAsync(db, DateTime.UtcNow, cancellationToken),
                 ShiftId = shiftId,
                 CreatedByUserId = createdByUserId,
                 Type = type,
@@ -360,7 +365,4 @@ public class ShiftService : IShiftService
             return shift;
         }
     }
-
-    private static string CreateTransactionCode()
-        => $"TX-{DateTime.UtcNow:yyyyMMddHHmmssfff}-{Guid.NewGuid():N}"[..45].ToUpperInvariant();
 }

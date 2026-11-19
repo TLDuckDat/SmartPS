@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:common="clr-namespace:SmartPS.Views.Common"
+        xmlns:mode="clr-namespace:SmartPS.Services.Common"
         mc:Ignorable="d"
         Title="{DynamicResource Str_Login_WindowTitle}"
         Height="620" Width="960"
@@ -63,7 +64,8 @@
                 <!-- Các nút tác vụ bên phải: Đổi ngôn ngữ & Điều khiển cửa sổ -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,5,8,0" VerticalAlignment="Center">
                     <!-- Nút đổi ngôn ngữ (VI | EN | JA) với icon quả địa cầu SVG tự vẽ -->
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0" WindowChrome.IsHitTestVisibleInChrome="True">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0" WindowChrome.IsHitTestVisibleInChrome="True"
+                                Visibility="{x:Static mode:AppMode.DeveloperVisibility}">
                         <Button Command="{Binding SetLanguageCommand}" CommandParameter="vi-VN" Style="{StaticResource LangButtonStyle}" ToolTip="{DynamicResource Str_Lang_VI}">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <Path Style="{StaticResource ButtonSvgIconStyle}" Data="{StaticResource Icon_Globe}" Width="12" Height="12" StrokeThickness="1.6" Margin="0,0,4,0"/>

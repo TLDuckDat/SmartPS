@@ -35,6 +35,7 @@ public partial class DashboardView : Window
 
         ViewModel.LogoutRequested += OnLogoutRequested;
         ViewModel.ExitRequested += OnExitRequested;
+        ViewModel.ShortcutsRequested += () => new SmartPS.Views.Help.ShortcutsWindow(ViewModel) { Owner = this }.ShowDialog();
 
         _clockTimer.Tick += (_, _) => UpdateClock();
         UpdateClock();

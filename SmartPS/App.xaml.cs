@@ -67,6 +67,47 @@ public partial class App : Application
         return _cachedWindowIcon;
     }
 
+    private static bool _globalFontApplied;
+
+    /// <summary>
+    /// Đặt Be Vietnam Pro làm font mặc định cho mọi cửa sổ, menu xổ xuống, chú thích và hộp chọn.
+    /// Style ngầm định TargetType=Window trong App.xaml không áp dụng cho lớp con (LoginView, DashboardView...)
+    /// nên trước đây một số chỗ hiện Be Vietnam Pro, chỗ khác lại hiện Segoe UI, nhìn lệch nhau.
+    /// </summary>
+    private void ApplyGlobalFont()
+    {
+        if (_globalFontApplied || TryFindResource("AppFontFamily") is not FontFamily font)
+            return;
+
+        _globalFontApplied = true;
+        var options = FrameworkPropertyMetadataOptions.Inherits
+            | FrameworkPropertyMetadataOptions.AffectsMeasure
+            | FrameworkPropertyMetadataOptions.AffectsRender;
+
+        foreach (var type in new[]
+                 {
+                     typeof(Window), typeof(System.Windows.Controls.ToolTip), typeof(System.Windows.Controls.ContextMenu),
+                     typeof(System.Windows.Controls.Primitives.Popup)
+                 })
+        {
+            try
+            {
+                if (type == typeof(System.Windows.Controls.Primitives.Popup))
+                {
+                    System.Windows.Documents.TextElement.FontFamilyProperty.OverrideMetadata(type, new FrameworkPropertyMetadata(font, options));
+                }
+                else
+                {
+                    System.Windows.Controls.Control.FontFamilyProperty.OverrideMetadata(type, new FrameworkPropertyMetadata(font, options));
+                }
+            }
+            catch (ArgumentException)
+            {
+                // Kiểu đã có metadata riêng: bỏ qua, các kiểu còn lại vẫn được áp dụng
+            }
+        }
+    }
+
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -79,7 +120,7 @@ public partial class App : Application
             try
             {
                 MessageBox.Show(
-                    "Đã xảy ra lỗi không mong muốn. Chi tiết đã được ghi vào thư mục logs cạnh ứng dụng. Bạn có thể tiếp tục sử dụng.",
+                    "Đã xảy ra lỗi không mong muốn. Bạn có thể tiếp tục sử dụng. Nếu lỗi lặp lại, vui lòng liên hệ bộ phận kỹ thuật.",
                     "SmartPS",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
@@ -131,6 +172,9 @@ public partial class App : Application
             .AddEnvironmentVariables("SMARTPS_")
             .Build();
 
+        SmartPS.Services.Common.AppMode.Load(configuration);
+        ApplyGlobalFont();
+
         // 2. Cấu hình Service Collection (Dependency Injection)
         var services = new ServiceCollection();
 
@@ -166,6 +210,7 @@ public partial class App : Application
         services.AddSingleton<SmartPS.Services.Pricing.IPricingEngine, SmartPS.Services.Pricing.PricingEngine>();
         services.AddSingleton<SmartPS.Services.Pricing.IPricingService, SmartPS.Services.Pricing.PricingService>();
         services.AddSingleton<SmartPS.Services.GateControl.IParkingFeeCalculator, SmartPS.Services.GateControl.StandardParkingFeeCalculator>();
+        services.AddSingleton<SmartPS.Services.Pricing.IParkingFeeEstimator, SmartPS.Services.Pricing.ParkingFeeEstimator>();
         services.AddSingleton<SmartPS.Services.OcrLisencePlate.IOcrLicensePlateService, SmartPS.Services.OcrLisencePlate.LicensePlateOcrService>();
         services.AddSingleton<SmartPS.Services.GateControl.IPlateOwnershipReader, SmartPS.Services.GateControl.PlateOwnershipReader>();
         services.AddSingleton<SmartPS.Services.GateControl.IGateControlService, SmartPS.Services.GateControl.GateControlService>();

@@ -163,7 +163,7 @@
                                 <StackPanel>
                                     <TextBlock Text="{DynamicResource Str_Shifts_TransactionsTitle}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="16,14,16,8"/>
                                     <DataGrid ItemsSource="{Binding CurrentTransactions}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False"
-                                              HeadersVisibility="Column" GridLinesVisibility="Horizontal" Height="250"
+                                              HeadersVisibility="Column" GridLinesVisibility="All" Height="250"
                                               BorderThickness="0" Background="White" RowBackground="White" AlternatingRowBackground="#F8FAFC"
                                               ColumnHeaderStyle="{StaticResource ShiftGridHeaderStyle}" CellStyle="{StaticResource ShiftGridCellStyle}">
                                         <DataGrid.Columns>
@@ -260,7 +260,7 @@
                                 <TextBlock Text="{DynamicResource Str_Shifts_HistoryTitle}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="16,14,16,8"/>
                                 <DataGrid ItemsSource="{Binding ShiftHistory}" SelectedItem="{Binding SelectedHistoryShift, Mode=TwoWay}"
                                           AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="270"
-                                          GridLinesVisibility="Horizontal" BorderThickness="0" Background="White" RowBackground="White" AlternatingRowBackground="#F8FAFC"
+                                          GridLinesVisibility="All" BorderThickness="0" Background="White" RowBackground="White" AlternatingRowBackground="#F8FAFC"
                                           ColumnHeaderStyle="{StaticResource ShiftGridHeaderStyle}" CellStyle="{StaticResource ShiftGridCellStyle}">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_ShiftCode}" Binding="{Binding ShiftCode}" Width="110"/>
@@ -309,7 +309,7 @@
                                     </WrapPanel>
 
                                     <DataGrid ItemsSource="{Binding SelectedShiftTransactions}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Height="230"
-                                              GridLinesVisibility="Horizontal" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" Background="White" RowBackground="White" AlternatingRowBackground="#F8FAFC"
+                                              GridLinesVisibility="All" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" Background="White" RowBackground="White" AlternatingRowBackground="#F8FAFC"
                                               ColumnHeaderStyle="{StaticResource ShiftGridHeaderStyle}" CellStyle="{StaticResource ShiftGridCellStyle}">
                                         <DataGrid.Columns>
                                             <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_TransactionCode}" Binding="{Binding TransactionCode}" Width="165">

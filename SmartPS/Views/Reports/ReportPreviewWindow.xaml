@@ -40,7 +40,7 @@
             <DockPanel LastChildFill="False">
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
                     <Path Style="{StaticResource CustomSvgIconStyle}" Data="{StaticResource Icon_Bulb}" Width="14" Height="14" Stroke="#D9821E" Margin="0,0,6,0"/>
-                    <TextBlock Text="Bấm 'Lưu báo cáo' để tùy chọn 3 định dạng: Excel (.xlsx), CSV (.csv), hoặc PDF (.pdf)" FontSize="12" Foreground="{StaticResource TextDimBrush}"/>
+                    <TextBlock Text="Bấm Lưu báo cáo để chọn lưu dạng Excel, CSV hoặc PDF" FontSize="12" Foreground="{StaticResource TextDimBrush}"/>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">

@@ -30,6 +30,14 @@ public class ShiftConfiguration : IEntityTypeConfiguration<Shift>
         builder.Property(x => x.ManagerNote)
                .HasMaxLength(1000);
 
+        // Mã ca CA-yyMMdd-01; ca tạo trước khi có cột này được điền bởi migration AddShiftCode
+        builder.Property(x => x.ShiftCode)
+               .HasMaxLength(20);
+        builder.HasIndex(x => x.ShiftCode)
+               .IsUnique()
+               .HasFilter("[ShiftCode] IS NOT NULL");
+        builder.Ignore(x => x.DisplayCode);
+
         builder.HasIndex(x => new { x.OpenedByUserId, x.Status });
         builder.HasIndex(x => x.OpenedByUserId)
                .IsUnique()

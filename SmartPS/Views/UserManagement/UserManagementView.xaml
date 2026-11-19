@@ -231,7 +231,7 @@
                               IsReadOnly="True"
                               CanUserAddRows="False"
                               RowHeight="36"
-                              GridLinesVisibility="Horizontal"
+                              GridLinesVisibility="All"
                               HorizontalGridLinesBrush="{StaticResource DividerBrush}"
                               Background="Transparent"
                               BorderThickness="1"

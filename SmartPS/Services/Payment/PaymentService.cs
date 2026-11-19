@@ -652,9 +652,10 @@ public class PaymentService : IPaymentService
                         Message = AppText.Get("Msg_Payment_AlreadyRefunded")
                     };
 
+                var refundCode = await ShiftAccounting.NewCodeAsync(db, DateTime.UtcNow, cancellationToken);
                 db.FinancialTransactions.Add(new FinancialTransaction
                 {
-                    TransactionCode = ShiftAccounting.NewCode(),
+                    TransactionCode = refundCode,
                     ShiftId = activeShift.ShiftId,
                     ParkingSessionId = payment.SessionId,
                     CreatedByUserId = actorUserId,

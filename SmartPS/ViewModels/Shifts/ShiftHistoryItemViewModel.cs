@@ -10,7 +10,7 @@ public class ShiftHistoryItemViewModel : ViewModelBase
     public Shift Shift { get; }
 
     public int ShiftId => Shift.ShiftId;
-    public string ShiftCode => $"SHIFT-{Shift.ShiftId:D6}";
+    public string ShiftCode => Shift.DisplayCode;
     public string EmployeeName => Shift.OpenedByUser?.FullName ?? $"User #{Shift.OpenedByUserId}";
     public DateTime OpenedAtLocal => Shift.OpenedAt.Kind == DateTimeKind.Utc ? Shift.OpenedAt.ToLocalTime() : Shift.OpenedAt;
     public DateTime? ClosedAtLocal => Shift.ClosedAt.HasValue

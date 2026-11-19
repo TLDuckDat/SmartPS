@@ -23,6 +23,10 @@
     <None Update="seed_data.sql">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <!-- Hướng dẫn sử dụng mở bằng F1 / Trợ giúp. Sửa nội dung ở Docs/source/HuongDanSuDung.html rồi in lại ra PDF. -->
+    <None Update="Docs\HuongDanSuDung.pdf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Resource Include="Resources\Fonts\*.ttf" />
     <Resource Include="Resources\Images\*.svg" />
   </ItemGroup>

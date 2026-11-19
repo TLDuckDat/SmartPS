@@ -11,6 +11,7 @@ using SmartPS.Services.Authorization;
 using SmartPS.Services.Pricing;
 using SmartPS.Services.Storage;
 using SmartPS.Services.Shifts;
+using SmartPS.Services.Common;
 using System.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -557,12 +558,12 @@ public class GateControlService : IGateControlService
         var vehicleTypeId = request.VehicleTypeId > 0 ? request.VehicleTypeId : (ticket?.VehicleTypeId ?? owner?.VehicleTypeId ?? 1);
         var activeOwner = owner is { OwnerIsActive: true, OwnerCustomerId: not null } ? owner : null;
 
-        // Bộ đếm chỉ duy nhất trong một lần chạy và bắt đầu lại sau mỗi lần mở ứng dụng,
-        // nên thêm một đoạn ngẫu nhiên để mã vé không trùng với mã đã cấp ở lần chạy trước
+        // Vé lượt nhận số thứ tự trong ngày (VL-yyMMdd-0001) bên trong giao dịch CSDL bên dưới.
+        // Mã tạm này chỉ được giữ khi mất kết nối CSDL (chế độ ngoại tuyến).
         var issuedAtUtc = DateTime.UtcNow;
         var ticketCode = isMonthly
             ? ticket!.TicketCode
-            : $"TK-{issuedAtUtc:yyyyMMdd}-{Interlocked.Increment(ref _sessionSequence)}-{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}";
+            : DocumentCodes.OfflineWalkInTicket(issuedAtUtc);
 
         // Lưu trữ an toàn vĩnh viễn tệp ảnh chụp khi xe vào (trước giao dịch có khoá nhật ký)
         var archivedImagePath = await _imageStorageService.ArchiveCaptureAsync(request.ImagePath, "CheckIn", cleanPlate);
@@ -629,6 +630,15 @@ public class GateControlService : IGateControlService
                         else
                         {
                             allocatedSlot = slot;
+                            if (!isMonthly)
+                            {
+                                // Đang giữ khoá nhật ký: số thứ tự trong ngày không trùng giữa các máy trạm
+                                session.TicketCode = await DocumentCodes.NextAsync(
+                                    db.ParkingSessions.Select(s => s.TicketCode),
+                                    DocumentCodes.DailyPrefix(DocumentCodes.WalkInTicket, session.CheckInTime),
+                                    4, cancellationToken);
+                            }
+
                             var dbSession = new ParkingSession
                             {
                                 TicketCode = session.TicketCode,

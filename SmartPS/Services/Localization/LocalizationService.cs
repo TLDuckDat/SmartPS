@@ -25,8 +25,11 @@ public class LocalizationService : ILocalizationService
     {
         _preferences = preferences;
 
-        // Khởi tạo bằng ngôn ngữ đã chọn lần trước (nếu có)
-        _currentLanguage = Normalize(preferences?.Current.Language) ?? DefaultLanguage;
+        // Bản dành cho khách hàng luôn dùng tiếng Việt để giao diện không bị lẫn ngôn ngữ;
+        // chế độ nhà phát triển mới khôi phục ngôn ngữ đã chọn lần trước
+        _currentLanguage = SmartPS.Services.Common.AppMode.IsDeveloperMode
+            ? Normalize(preferences?.Current.Language) ?? DefaultLanguage
+            : DefaultLanguage;
         ApplyLanguage(_currentLanguage);
     }
 

@@ -1351,6 +1351,10 @@ namespace SmartPS.Migrations
                     b.Property<int?>("ReviewedByUserId")
                         .HasColumnType("int");
 
+                    b.Property<string>("ShiftCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<int>("Status")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
@@ -1366,6 +1370,10 @@ namespace SmartPS.Migrations
                         .HasFilter("[Status] = 0");
 
                     b.HasIndex("ReviewedByUserId");
+
+                    b.HasIndex("ShiftCode")
+                        .IsUnique()
+                        .HasFilter("[ShiftCode] IS NOT NULL");
 
                     b.HasIndex("Status");
 

@@ -43,9 +43,12 @@ public sealed class ReportService : IReportService
         var shifts = await db.Shifts.AsNoTracking()
             .OrderByDescending(s => s.ShiftId)
             .Take(50)
-            .Select(s => new LookupItem(s.ShiftId, $"Ca #{s.ShiftId} - {(s.OpenedByUser != null ? s.OpenedByUser.FullName : "N/A")}"))
+            .Select(s => new { s.ShiftId, s.ShiftCode, Name = s.OpenedByUser != null ? s.OpenedByUser.FullName : "N/A" })
             .ToListAsync(cancellationToken);
-        return new ReportFilterOptions(types, zones, staff, shifts);
+        var shiftItems = shifts
+            .Select(s => new LookupItem(s.ShiftId, $"{(string.IsNullOrWhiteSpace(s.ShiftCode) ? $"CA-#{s.ShiftId}" : s.ShiftCode)} - {s.Name}"))
+            .ToList();
+        return new ReportFilterOptions(types, zones, staff, shiftItems);
     }
 
     public async Task<ReportResult> GetReportAsync(ReportFilter filter, CancellationToken cancellationToken = default)
@@ -328,6 +331,7 @@ public sealed class ReportService : IReportService
             .Select(s => new
             {
                 s.ShiftId,
+                s.ShiftCode,
                 OpenedByName = s.OpenedByUser != null ? s.OpenedByUser.FullName : string.Empty,
                 s.OpenedAt,
                 s.ClosedAt,
@@ -348,7 +352,8 @@ public sealed class ReportService : IReportService
                 r.ExpectedCash,
                 r.ActualCash,
                 r.Difference,
-                r.Status))
+                r.Status,
+                r.ShiftCode))
             .ToList();
     }
 }

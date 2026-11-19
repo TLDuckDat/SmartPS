@@ -59,12 +59,13 @@ public class SqlServerMigrationTests : IClassFixture<SqlServerDatabaseFixture>
         using var ctx = SqlServerDatabaseFixture.CreateContext(SqlServerDatabaseFixture.DefaultConnectionString);
         var migrations = ctx.Database.GetMigrations().ToList();
 
-        Assert.Equal(5, migrations.Count);
+        Assert.Equal(6, migrations.Count);
         Assert.EndsWith("_ConfigureSqlServerDatabase", migrations[0], StringComparison.Ordinal);
         Assert.EndsWith("_InitialSqlServer", migrations[1], StringComparison.Ordinal);
         Assert.EndsWith("_AddMonthlyTicketHistory", migrations[2], StringComparison.Ordinal);
         Assert.EndsWith("_AddPricingPolicyAndSnapshot", migrations[3], StringComparison.Ordinal);
         Assert.EndsWith("_DA7UserProfile", migrations[4], StringComparison.Ordinal);
+        Assert.EndsWith("_AddShiftCode", migrations[5], StringComparison.Ordinal);
         Assert.False(ctx.Database.HasPendingModelChanges(), "dotnet ef migrations has-pending-model-changes must report none");
     }
 

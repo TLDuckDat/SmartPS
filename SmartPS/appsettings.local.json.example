@@ -1,4 +1,7 @@
 {
+  "App": {
+    "DeveloperMode": true
+  },
   "PayOS": {
     "ClientId": "",
     "ApiKey": "",

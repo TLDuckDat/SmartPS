@@ -1,4 +1,4 @@
-using SmartPS.Models.Parking;
+﻿using SmartPS.Models.Parking;
 
 namespace SmartPS.Tests.TestSupport;
 
@@ -99,10 +99,12 @@ public sealed class FakeReportService : IReportService
             new[] { new VehicleTypeCount(1, "Xe máy", 6), new VehicleTypeCount(2, "Xe ô tô", 2) }, 3, 1, 4));
     }
 
+    public IReadOnlyList<ParkingSession> RecentSessionsResult { get; set; } = Array.Empty<ParkingSession>();
+
     public Task<IReadOnlyList<ParkingSession>> GetRecentSessionsAsync(int count = 15, CancellationToken cancellationToken = default)
     {
         RecentSessionsCalls++;
-        return Task.FromResult<IReadOnlyList<ParkingSession>>(Array.Empty<ParkingSession>());
+        return Task.FromResult(RecentSessionsResult);
     }
 
     private static TaskCompletionSource<ReportFilter> NewSignal() => new(TaskCreationOptions.RunContinuationsAsynchronously);

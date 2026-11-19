@@ -43,6 +43,12 @@ public static class AuditActions
     public const string BlacklistToggle = "BLACKLIST_TOGGLE";
     public const string BlacklistDelete = "BLACKLIST_DELETE";
 
+    // Sơ đồ bãi: tạo khu, thêm / bảo trì / xoá ô đỗ
+    public const string ZoneCreate = "ZONE_CREATE";
+    public const string SlotCreate = "SLOT_CREATE";
+    public const string SlotStatusUpdate = "SLOT_STATUS_UPDATE";
+    public const string SlotDelete = "SLOT_DELETE";
+
     public static IReadOnlyList<string> All { get; } = typeof(AuditActions)
         .GetFields(BindingFlags.Public | BindingFlags.Static)
         .Where(fi => fi.IsLiteral && !fi.IsInitOnly && fi.FieldType == typeof(string))

@@ -103,7 +103,7 @@
                           CanUserAddRows="False"
                           CanUserDeleteRows="False"
                           RowHeight="32"
-                          GridLinesVisibility="Horizontal"
+                          GridLinesVisibility="All"
                           HorizontalGridLinesBrush="{StaticResource DividerBrush}"
                           Background="Transparent"
                           BorderThickness="1"
@@ -127,12 +127,12 @@
                                 <DataTemplate><TextBlock Text="{DynamicResource Str_Audit_Col_User}"/></DataTemplate>
                             </DataGridTextColumn.HeaderTemplate>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Binding="{Binding RoleName}" Width="90">
+                        <DataGridTextColumn Binding="{Binding RoleName, Converter={StaticResource RoleLocalizedConverter}}" Width="110">
                             <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate><TextBlock Text="{DynamicResource Str_Audit_Col_Role}"/></DataTemplate>
                             </DataGridTextColumn.HeaderTemplate>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Binding="{Binding Action}" Width="200">
+                        <DataGridTextColumn Binding="{Binding Action, Converter={StaticResource AuditActionConverter}}" Width="220">
                             <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate><TextBlock Text="{DynamicResource Str_Audit_Col_Action}"/></DataTemplate>
                             </DataGridTextColumn.HeaderTemplate>
@@ -144,13 +144,17 @@
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
-                                        <Run Text="{Binding EntityType, Mode=OneWay}"/>
-                                        <Run Text="{Binding EntityId, Mode=OneWay}" FontWeight="SemiBold"/>
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{StaticResource AuditEntityConverter}">
+                                                <Binding Path="EntityType"/>
+                                                <Binding Path="EntityId"/>
+                                            </MultiBinding>
+                                        </TextBlock.Text>
                                     </TextBlock>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn Binding="{Binding Outcome}" Width="90">
+                        <DataGridTextColumn Binding="{Binding Outcome, Converter={StaticResource AuditOutcomeConverter}}" Width="100">
                             <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate><TextBlock Text="{DynamicResource Str_Audit_Col_Outcome}"/></DataTemplate>
                             </DataGridTextColumn.HeaderTemplate>
@@ -182,7 +186,7 @@
                     <TextBlock Grid.Row="0" Text="{DynamicResource Str_Audit_Details}" FontSize="11.5" FontWeight="SemiBold"
                                Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
                     <TextBox Grid.Row="1" Text="{Binding SelectedDetailsText, Mode=OneWay}" IsReadOnly="True"
-                             FontFamily="Consolas" FontSize="12" TextWrapping="Wrap"
+                             FontSize="12.5" TextWrapping="Wrap"
                              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
                              Background="{StaticResource AppBackgroundBrush}"
                              BorderBrush="{StaticResource DividerBrush}"/>

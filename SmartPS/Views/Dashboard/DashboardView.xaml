@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:mode="clr-namespace:SmartPS.Services.Common"
         xmlns:vmOverview="clr-namespace:SmartPS.ViewModels.Overview"
         xmlns:vOverview="clr-namespace:SmartPS.Views.Overview"
         xmlns:vmGate="clr-namespace:SmartPS.ViewModels.GateControl"
@@ -41,7 +42,10 @@
     <!-- Phím tắt toàn cục của cửa sổ chính -->
     <Window.InputBindings>
         <KeyBinding Key="F5" Command="{Binding RefreshCommand}"/>
-        <KeyBinding Key="F1" Command="{Binding ShowShortcutsCommand}"/>
+        <KeyBinding Key="F1" Command="{Binding OpenUserGuideCommand}"/>
+        <KeyBinding Key="F2" Command="{Binding ShowShortcutsCommand}"/>
+        <KeyBinding Key="I" Modifiers="Ctrl" Command="{Binding ShowProfileCommand}"/>
+        <KeyBinding Key="W" Modifiers="Ctrl+Shift" Command="{Binding CloseAllTabsCommand}"/>
         <KeyBinding Key="W" Modifiers="Ctrl" Command="{Binding CloseTabCommand}"/>
         <KeyBinding Key="F4" Modifiers="Ctrl" Command="{Binding CloseTabCommand}"/>
         <KeyBinding Key="L" Modifiers="Ctrl" Command="{Binding LogoutCommand}"/>
@@ -297,7 +301,7 @@
 
                 <Menu Grid.Column="1" Background="Transparent" VerticalAlignment="Center" FontSize="12.5">
                     <MenuItem Header="{DynamicResource Str_MainMenu_System}">
-                        <MenuItem Header="{DynamicResource Str_MainMenu_Language}">
+                        <MenuItem Header="{DynamicResource Str_MainMenu_Language}" Visibility="{x:Static mode:AppMode.DeveloperVisibility}">
                             <MenuItem Header="{DynamicResource Str_Lang_VI}" IsCheckable="False" IsChecked="{Binding IsLanguageVi, Mode=OneWay}"
                                       Command="{Binding SetLanguageCommand}" CommandParameter="vi-VN"/>
                             <MenuItem Header="{DynamicResource Str_Lang_EN}" IsCheckable="False" IsChecked="{Binding IsLanguageEn, Mode=OneWay}"
@@ -305,12 +309,12 @@
                             <MenuItem Header="{DynamicResource Str_Lang_JA}" IsCheckable="False" IsChecked="{Binding IsLanguageJa, Mode=OneWay}"
                                       Command="{Binding SetLanguageCommand}" CommandParameter="ja-JP"/>
                         </MenuItem>
-                        <MenuItem Header="{DynamicResource Str_MainMenu_Profile}"
+                        <MenuItem Header="{DynamicResource Str_MainMenu_Profile}" InputGestureText="Ctrl+I"
                                   Command="{Binding ShowProfileCommand}"/>
                         <Separator/>
                         <MenuItem Header="{DynamicResource Str_MainMenu_Refresh}" InputGestureText="F5" Command="{Binding RefreshCommand}"/>
                         <MenuItem Header="{DynamicResource Str_MainMenu_CloseTab}" InputGestureText="Ctrl+W" Command="{Binding CloseTabCommand}"/>
-                        <MenuItem Header="{DynamicResource Str_MainMenu_CloseAllTabs}" Command="{Binding CloseAllTabsCommand}"/>
+                        <MenuItem Header="{DynamicResource Str_MainMenu_CloseAllTabs}" InputGestureText="Ctrl+Shift+W" Command="{Binding CloseAllTabsCommand}"/>
                         <Separator/>
                         <MenuItem Header="{DynamicResource Str_MainMenu_Logout}" InputGestureText="Ctrl+L" Command="{Binding LogoutCommand}"/>
                         <MenuItem Header="{DynamicResource Str_MainMenu_Exit}" InputGestureText="Alt+F4" Command="{Binding ExitCommand}"/>
@@ -334,7 +338,9 @@
                               Visibility="{Binding AdminMenu.IsVisible, Converter={StaticResource BoolToVisConverter}}"/>
 
                     <MenuItem Header="{DynamicResource Str_MainMenu_Help}">
-                        <MenuItem Header="{DynamicResource Str_MainMenu_Shortcuts}" InputGestureText="F1" Command="{Binding ShowShortcutsCommand}"/>
+                        <MenuItem Header="{DynamicResource Str_MainMenu_UserGuide}" InputGestureText="F1" Command="{Binding OpenUserGuideCommand}"/>
+                        <MenuItem Header="{DynamicResource Str_MainMenu_Shortcuts}" InputGestureText="F2" Command="{Binding ShowShortcutsCommand}"/>
+                        <Separator/>
                         <MenuItem Header="{DynamicResource Str_MainMenu_About}" Command="{Binding AboutCommand}"/>
                     </MenuItem>
                 </Menu>

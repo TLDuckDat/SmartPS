@@ -83,7 +83,8 @@ public class GateResidentVisitorFlowTests : IClassFixture<SqlServerDatabaseFixtu
         Assert.Equal(resident.CustomerId, session.CustomerId);
         Assert.Equal("ZONE_R", await _data.SlotZoneCodeAsync(session.SlotId!.Value));
         Assert.Equal(SlotStatus.Occupied, await _data.SlotStatusAsync(session.SlotId.Value));
-        Assert.StartsWith("TK-", session.TicketCode, StringComparison.Ordinal);
+        // Vé lượt: VL-yyMMdd-0001 (số thứ tự trong ngày, giờ Việt Nam)
+        Assert.Matches(@"^VL-\d{6}-\d{4}$", session.TicketCode);
 
         var row = Assert.Single(await AuditDb.RowsAfterAsync(_db.Factory, idBefore, AuditActions.ParkingCheckIn));
         var details = AuditDb.Details(row);

@@ -404,14 +404,33 @@
                                 <DataGridTextColumn Header="{DynamicResource Str_Ov_ColCheckOut}" Binding="{Binding CheckOutTimeLocal, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}, TargetNullValue='--:--:--'}" Width="150"
                                                     ElementStyle="{StaticResource OvCellTextStyle}"/>
 
-                                <DataGridTextColumn Header="{DynamicResource Str_Ov_ColFee}" Binding="{Binding TotalFee, Converter={StaticResource VndCurrencyConverter}}" Width="110">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock" BasedOn="{StaticResource OvCellTextStyle}">
-                                            <Setter Property="FontWeight" Value="SemiBold"/>
-                                            <Setter Property="Foreground" Value="#8E4479"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
+                                <!-- Xe đã ra: phí đã thu. Xe đang trong bãi: phí tạm tính, cập nhật mỗi 30 giây -->
+                                <DataGridTemplateColumn Header="{DynamicResource Str_Ov_ColFee}" Width="150">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Fee, Converter={StaticResource VndCurrencyConverter}}">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource OvCellTextStyle}">
+                                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                                            <Setter Property="Foreground" Value="#8E4479"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsEstimated}" Value="True">
+                                                                    <Setter Property="Foreground" Value="#C2410C"/>
+                                                                    <Setter Property="ToolTip" Value="{DynamicResource Str_Ov_FeeEstimatedTip}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBlock Text="{DynamicResource Str_Ov_FeeEstimated}" FontSize="10.5" FontStyle="Italic"
+                                                           Foreground="#9A6B4F" Margin="5,0,0,0" VerticalAlignment="Center"
+                                                           ToolTip="{DynamicResource Str_Ov_FeeEstimatedTip}"
+                                                           Visibility="{Binding IsEstimated, Converter={StaticResource BoolToVisConverter}}"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
 
                                 <!-- Trạng thái: nhãn bo tròn có chấm màu -->
                                 <DataGridTemplateColumn Header="{DynamicResource Str_Ov_ColStatus}" Width="*" MinWidth="165">

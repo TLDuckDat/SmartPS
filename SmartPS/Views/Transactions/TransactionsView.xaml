@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:mode="clr-namespace:SmartPS.Services.Common"
              mc:Ignorable="d"
              d:DesignHeight="850" d:DesignWidth="1100">
     <Grid Background="{StaticResource AppBackgroundBrush}">
@@ -155,7 +156,7 @@
                                   VerticalContentAlignment="Center">
                             <ComboBoxItem Tag="All" Content="{DynamicResource Str_Common_All}" IsSelected="True"/>
                             <ComboBoxItem Tag="Cash" Content="{DynamicResource Str_Tx_Cash}"/>
-                            <ComboBoxItem Tag="VietQR" Content="VietQR"/>
+                            <ComboBoxItem Tag="VietQR" Content="{DynamicResource Str_Shifts_PaymentVietQr}"/>
                         </ComboBox>
                         <!-- Lọc Nhân viên -->
                         <ComboBox ItemsSource="{Binding StaffOptions}"
@@ -217,7 +218,7 @@
                         <TabItem Header="{DynamicResource Str_Shifts_HistoryTab}" FontSize="13" FontWeight="Bold" Padding="16,8">
                             <DataGrid ItemsSource="{Binding FilteredShifts}" AutoGenerateColumns="False"
                                       IsReadOnly="True" CanUserAddRows="False" HeadersVisibility="Column"
-                                      GridLinesVisibility="Horizontal" BorderThickness="0">
+                                      GridLinesVisibility="All" BorderThickness="0">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_ShiftCode}" Binding="{Binding ShiftCode}" Width="130"/>
                                     <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_OpenedAt}" Binding="{Binding OpenedAtLocal, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}}" Width="155"/>
@@ -243,7 +244,7 @@
                                           CanUserAddRows="False"
                                           RowHeight="40"
                                           MaxHeight="460"
-                                          GridLinesVisibility="Horizontal"
+                                          GridLinesVisibility="All"
                                           HorizontalGridLinesBrush="{StaticResource DividerBrush}"
                                           Background="Transparent"
                                           BorderThickness="1"
@@ -264,7 +265,7 @@
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
                                         <!-- Phiên Đỗ -->
-                                        <DataGridTextColumn Header="{DynamicResource Str_Tx_ColSession}" Binding="{Binding SessionId, StringFormat='#S-{0}'}" Width="85">
+                                        <DataGridTextColumn Header="{DynamicResource Str_Tx_ColSession}" Binding="{Binding TicketCode}" Width="Auto" MinWidth="110">
                                             <DataGridTextColumn.ElementStyle>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="VerticalAlignment" Value="Center"/>
@@ -306,7 +307,7 @@
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
                                         <!-- Cổng Thanh Toán -->
-                                        <DataGridTextColumn Header="{DynamicResource Str_Tx_ColGateway}" Binding="{Binding Gateway}" Width="90">
+                                        <DataGridTextColumn Header="{DynamicResource Str_Tx_ColGateway}" Binding="{Binding Gateway}" Width="90" Visibility="{x:Static mode:AppMode.DeveloperVisibility}">
                                             <DataGridTextColumn.ElementStyle>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="VerticalAlignment" Value="Center"/>
@@ -459,7 +460,7 @@
                                           CanUserAddRows="False"
                                           RowHeight="38"
                                           MaxHeight="460"
-                                          GridLinesVisibility="Horizontal"
+                                          GridLinesVisibility="All"
                                           HorizontalGridLinesBrush="{StaticResource DividerBrush}"
                                           Background="Transparent"
                                           BorderThickness="1"
@@ -622,7 +623,7 @@
                         <TabItem Header="{DynamicResource Str_Shifts_TransactionsTitle}" FontSize="13" FontWeight="Bold" Padding="16,8">
                             <DataGrid ItemsSource="{Binding FilteredFinancialTransactions}" AutoGenerateColumns="False"
                                       IsReadOnly="True" CanUserAddRows="False" HeadersVisibility="Column"
-                                      GridLinesVisibility="Horizontal" BorderThickness="0">
+                                      GridLinesVisibility="All" BorderThickness="0">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_TransactionCode}" Binding="{Binding TransactionCode}" Width="175"/>
                                     <DataGridTextColumn Header="{DynamicResource Str_Shifts_Column_Time}" Binding="{Binding CreatedAtLocal, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}}" Width="160"/>
@@ -718,7 +719,7 @@
                                                 <TextBlock Text="{Binding SelectedPaymentDetails.Payment.LicensePlate}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                                                 <TextBlock Text="{DynamicResource Str_Tx_TicketSep}" FontSize="13" Foreground="{StaticResource TextDimBrush}"/>
                                                 <TextBlock Text="{Binding SelectedPaymentDetails.Payment.TicketCode}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                                <TextBlock FontSize="12" Foreground="{StaticResource TextDimBrush}"><Run Text="{DynamicResource Str_Tx_SessionRefPrefix}"/><Run Text="{Binding SelectedPaymentDetails.Payment.SessionId, Mode=OneWay}"/><Run Text="{DynamicResource Str_Common_CloseParen}"/></TextBlock>
+                                                <TextBlock FontSize="12" Foreground="{StaticResource TextDimBrush}"><Run Text="{DynamicResource Str_Tx_SessionRefPrefix}"/><Run Text="{Binding SelectedPaymentDetails.Payment.SessionId, Mode=OneWay}"/></TextBlock>
                                             </StackPanel>
                                         </StackPanel>
                                         <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,10">
@@ -726,7 +727,7 @@
                                             <TextBlock Text="{Binding SelectedPaymentDetails.Payment.Status}" FontSize="13" FontWeight="Bold" Foreground="#15803D"/>
                                         </StackPanel>
                                         <!-- Hàng 3 -->
-                                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,12,10">
+                                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,12,10" Visibility="{x:Static mode:AppMode.DeveloperVisibility}">
                                             <TextBlock Text="{DynamicResource Str_Tx_GatewayAndCode}" FontSize="11" Foreground="{StaticResource TextDimBrush}"/>
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="{Binding SelectedPaymentDetails.Payment.Gateway}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
@@ -765,7 +766,7 @@
                                             </StackPanel>
                                         </StackPanel>
                                         <!-- Hàng 4: Chuỗi QR Payload -->
-                                        <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                                        <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Margin="0,4,0,0" Visibility="{x:Static mode:AppMode.DeveloperVisibility}">
                                             <TextBlock Text="{DynamicResource Str_Tx_QrPayload}" FontSize="11" Foreground="{StaticResource TextDimBrush}"/>
                                             <TextBox Text="{Binding SelectedPaymentDetails.QrCodePayload, Mode=OneWay}" 
                                                      IsReadOnly="True" 
@@ -780,7 +781,7 @@
                                     </Grid>
                                 </Border>
                                 <!-- Card Danh Sách Lần Thử Gọi Cổng (Payment Attempts Audit Trail) -->
-                                <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="14" Margin="0,0,0,16">
+                                <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="14" Margin="0,0,0,16" Visibility="{x:Static mode:AppMode.DeveloperVisibility}">
                                     <StackPanel>
                                         <TextBlock Text="{DynamicResource Str_Tx_AttemptsTitle}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
                                         <DataGrid ItemsSource="{Binding SelectedPaymentDetails.Attempts}"
@@ -789,7 +790,7 @@
                                                   CanUserAddRows="False"
                                                   RowHeight="32"
                                                   MaxHeight="150"
-                                                  GridLinesVisibility="Horizontal"
+                                                  GridLinesVisibility="All"
                                                   HorizontalGridLinesBrush="{StaticResource DividerBrush}"
                                                   Background="Transparent"
                                                   BorderThickness="1"
@@ -808,7 +809,7 @@
                                     </StackPanel>
                                 </Border>
                                 <!-- Card Lịch Sử Webhook Nhận Được (Webhook History) -->
-                                <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="14">
+                                <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="14" Visibility="{x:Static mode:AppMode.DeveloperVisibility}">
                                     <StackPanel>
                                         <TextBlock Text="{DynamicResource Str_Tx_WebhooksTitle}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
                                         <DataGrid ItemsSource="{Binding SelectedPaymentDetails.Webhooks}"
@@ -817,7 +818,7 @@
                                                   CanUserAddRows="False"
                                                   RowHeight="32"
                                                   MaxHeight="150"
-                                                  GridLinesVisibility="Horizontal"
+                                                  GridLinesVisibility="All"
                                                   HorizontalGridLinesBrush="{StaticResource DividerBrush}"
                                                   Background="Transparent"
                                                   BorderThickness="1"

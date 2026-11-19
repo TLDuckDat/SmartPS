@@ -105,9 +105,9 @@ public class SettingsViewModel : ViewModelBase
 
     public bool IsPaymentLive => _paymentGateway is not MockPaymentGateway;
 
-    public string PaymentSummary => IsPaymentLive
-        ? AppText.Get("Str_SetUi_PayOsLive")
-        : AppText.Get("Str_SetUi_PayOsDemo");
+    public string PaymentSummary => SmartPS.Services.Common.AppMode.IsDeveloperMode
+        ? (IsPaymentLive ? AppText.Get("Str_SetUi_PayOsLive") : AppText.Get("Str_SetUi_PayOsDemo"))
+        : (IsPaymentLive ? AppText.Get("Str_SetUi_StatusOk") : AppText.Get("Str_SetUi_PaymentTrial"));
 
     public string PaymentDetail => IsPaymentLive
         ? AppText.Get("Str_SetUi_PayOsLiveDetail")
@@ -190,6 +190,18 @@ public class SettingsViewModel : ViewModelBase
         var db = _lastDatabaseStatus;
         if (db is null)
             return;
+
+        var developerMode = SmartPS.Services.Common.AppMode.IsDeveloperMode;
+        if (!developerMode)
+        {
+            // Bản cho khách hàng: chỉ cần biết hệ thống ổn hay không, chi tiết kỹ thuật xem ở môi trường phát triển
+            DatabaseSummary = AppText.Get(db.IsOnline ? "Str_SetUi_StatusOk" : "Str_SetUi_StatusError");
+            DatabaseDetail = string.Empty;
+            OcrSummary = AppText.Get(IsOcrAvailable ? "Str_SetUi_StatusOk" : "Str_SetUi_StatusError");
+            OcrDetail = string.Empty;
+            WebhookSummary = string.Empty;
+            return;
+        }
 
         if (db.IsOnline)
         {

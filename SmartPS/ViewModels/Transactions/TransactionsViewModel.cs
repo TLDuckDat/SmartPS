@@ -406,7 +406,7 @@ public class TransactionsViewModel : ViewModelBase
                 ShiftOptions.Add(new LookupOption(null, AppText.Get("Str_Common_All")));
                 foreach (var sh in shifts)
                 {
-                    ShiftOptions.Add(new LookupOption(sh.ShiftId, $"Ca #{sh.ShiftId} ({(sh.OpenedByUser?.FullName ?? "N/A")})"));
+                    ShiftOptions.Add(new LookupOption(sh.ShiftId, $"{sh.DisplayCode} ({(sh.OpenedByUser?.FullName ?? "N/A")})"));
                 }
                 SelectedShiftOption = ShiftOptions.FirstOrDefault(o => o.Id == currentShiftId) ?? ShiftOptions.FirstOrDefault();
             }

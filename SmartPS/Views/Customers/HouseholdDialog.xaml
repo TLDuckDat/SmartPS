@@ -17,7 +17,7 @@
         <TextBlock Text="{DynamicResource Str_Customers_DlgAptMaxVehicles}" Grid.Row="1" Margin="0,5,0,0"/>
         <Grid Grid.Row="1" Margin="110,0,0,10">
             <TextBox x:Name="txtMaxVehicles" Text="{Binding MaxVehicles, TargetNullValue='', UpdateSourceTrigger=PropertyChanged}" Height="25"/>
-            <TextBlock Text="(Để trống = theo cấu hình hệ thống)" IsHitTestVisible="False" Foreground="#94A3B8" Margin="8,4,0,0" FontSize="11">
+            <TextBlock Text="Để trống thì dùng số mặc định của hệ thống" IsHitTestVisible="False" Foreground="#94A3B8" Margin="8,4,0,0" FontSize="11">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
                         <Setter Property="Visibility" Value="Collapsed"/>

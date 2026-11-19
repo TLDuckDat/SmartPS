@@ -16,4 +16,8 @@
     <conv:VndCurrencyConverter x:Key="VndCurrencyConverter"/>
     <conv:DateOnlyVnConverter x:Key="DateOnlyVnConverter"/>
     <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
+    <!-- Nhật ký hệ thống: mã kỹ thuật thành chữ dễ hiểu -->
+    <conv:AuditActionConverter x:Key="AuditActionConverter"/>
+    <conv:AuditOutcomeConverter x:Key="AuditOutcomeConverter"/>
+    <conv:AuditEntityConverter x:Key="AuditEntityConverter"/>
 </ResourceDictionary>

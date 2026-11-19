@@ -76,7 +76,7 @@ public class ShiftsViewModel : ViewModelBase
     }
 
     public bool HasActiveShift => CurrentShift?.Status == ShiftStatus.Active;
-    public string CurrentShiftCode => CurrentShift == null ? "--" : $"SHIFT-{CurrentShift.ShiftId:D6}";
+    public string CurrentShiftCode => CurrentShift == null ? "--" : CurrentShift.DisplayCode;
     public string CurrentShiftOpenedAt => CurrentShift == null
         ? "--"
         : (CurrentShift.OpenedAt.Kind == DateTimeKind.Utc ? CurrentShift.OpenedAt.ToLocalTime() : CurrentShift.OpenedAt).ToString("dd/MM/yyyy HH:mm:ss");
