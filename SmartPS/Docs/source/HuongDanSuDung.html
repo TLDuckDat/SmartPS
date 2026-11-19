@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>SmartPS - Hướng dẫn sử dụng</title>
+<style>
+  @font-face { font-family: "Be Vietnam Pro"; font-weight: 400; src: url("../../Resources/Fonts/BeVietnamPro-Regular.ttf"); }
+  @font-face { font-family: "Be Vietnam Pro"; font-weight: 500; src: url("../../Resources/Fonts/BeVietnamPro-Medium.ttf"); }
+  @font-face { font-family: "Be Vietnam Pro"; font-weight: 600; src: url("../../Resources/Fonts/BeVietnamPro-SemiBold.ttf"); }
+  @font-face { font-family: "Be Vietnam Pro"; font-weight: 700; src: url("../../Resources/Fonts/BeVietnamPro-Bold.ttf"); }
+
+  :root {
+    --brand: #E8735A; --brand-dark: #B84B34; --ink: #3A2A3C; --ink-2: #564258; --muted: #7A667C;
+    --line: #EFE0D6; --soft: #FFF6EA; --card: #FFFDF9; --key: #F6E6D4; --ok: #168A5B; --warn: #B86B14; --bad: #C93B4B;
+  }
+  @page { size: A4; margin: 16mm 15mm 18mm 15mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: "Be Vietnam Pro", "Segoe UI", sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.55; }
+
+  h1, h2, h3 { line-height: 1.25; margin: 0; }
+  h2 { font-size: 17pt; color: var(--ink); padding-bottom: 6px; border-bottom: 2px solid var(--brand); margin: 0 0 12px; break-after: avoid; }
+  h2 .num { color: var(--brand); margin-right: 6px; }
+  h3 { font-size: 12pt; margin: 16px 0 6px; color: var(--ink); break-after: avoid; }
+  p { margin: 0 0 8px; }
+  ul, ol { margin: 0 0 10px; padding-left: 20px; }
+  li { margin: 2px 0; }
+  b, strong { font-weight: 600; }
+  section { break-before: page; }
+  section.first { break-before: auto; }
+
+  /* Bìa */
+  .cover { height: 255mm; display: flex; flex-direction: column; justify-content: space-between; break-after: page;
+           background: var(--soft); border-radius: 10px; padding: 26mm 18mm 16mm; }
+  .cover .brand { font-size: 13pt; font-weight: 700; color: var(--brand); letter-spacing: .5px; }
+  .cover h1 { font-size: 34pt; font-weight: 700; margin-top: 30mm; color: var(--ink); }
+  .cover .sub { font-size: 14pt; color: var(--ink-2); margin-top: 8px; }
+  .cover .for { margin-top: 18mm; font-size: 11pt; color: var(--ink-2); }
+  .cover .for span { display: inline-block; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 3px 12px; margin: 0 6px 6px 0; }
+  .cover .foot { font-size: 9.5pt; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
+
+  /* Mục lục */
+  .toc ol { list-style: none; padding: 0; columns: 2; column-gap: 24px; }
+  .toc li { padding: 5px 0; border-bottom: 1px dotted var(--line); break-inside: avoid; }
+  .toc li b { color: var(--brand); display: inline-block; width: 26px; }
+
+  /* Khối */
+  .note, .tip, .warn { border-radius: 6px; padding: 8px 12px; margin: 8px 0 12px; break-inside: avoid; }
+  .tip  { background: #E6F9F0; border-left: 4px solid var(--ok); }
+  .note { background: var(--soft); border-left: 4px solid var(--brand); }
+  .warn { background: #FFF3D6; border-left: 4px solid var(--warn); }
+  .tip b:first-child, .note b:first-child, .warn b:first-child { display: block; margin-bottom: 2px; }
+
+  .steps { counter-reset: s; list-style: none; padding: 0; }
+  .steps > li { counter-increment: s; position: relative; padding: 6px 0 6px 34px; break-inside: avoid; }
+  .steps > li::before { content: counter(s); position: absolute; left: 0; top: 5px; width: 24px; height: 24px; border-radius: 50%;
+                         background: var(--brand); color: #fff; font-weight: 700; font-size: 10pt; text-align: center; line-height: 24px; }
+
+  table { width: 100%; border-collapse: collapse; margin: 6px 0 12px; font-size: 10pt; break-inside: auto; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--soft); font-weight: 600; color: var(--ink-2); }
+  tr { break-inside: avoid; }
+
+  .kbd { display: inline-block; font-weight: 600; font-size: 9.5pt; background: var(--key); border: 1px solid #E6D2C6; border-bottom-width: 2px;
+         border-radius: 4px; padding: 0 7px; white-space: nowrap; }
+  .menu { font-weight: 600; color: var(--brand-dark); }
+  .ui { font-weight: 600; }
+
+  /* Bảng phím tắt: mỗi phím một thẻ riêng */
+  .keys { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 6px 0 8px; }
+  .keycard { border: 1px solid var(--line); border-radius: 8px; background: var(--card); padding: 6px 10px; display: flex; gap: 10px; align-items: center; break-inside: avoid; }
+  .keycard .kbd { font-size: 10pt; min-width: 92px; text-align: center; padding: 2px 8px; }
+  .keycard div { font-size: 10pt; color: var(--ink-2); }
+  .group-title { font-size: 9.5pt; font-weight: 700; color: var(--brand); letter-spacing: .4px; margin: 10px 0 0; }
+
+  /* Sơ đồ màn hình chính */
+  .screen { border: 1px solid #DFC7B9; border-radius: 8px; overflow: hidden; margin: 8px 0 12px; font-size: 9pt; break-inside: avoid; }
+  .screen .bar { display: flex; align-items: center; gap: 9px; white-space: nowrap; font-size: 8.5pt; padding: 6px 10px; background: var(--card); border-bottom: 1px solid var(--line); }
+  .screen .bar .logo { font-weight: 700; color: var(--brand); }
+  .screen .bar .m { color: var(--ink); }
+  .screen .tabs { display: flex; gap: 4px; padding: 5px 10px 0; background: var(--soft); border-bottom: 1px solid var(--line); }
+  .screen .tabs span { padding: 3px 10px; border: 1px solid var(--line); border-bottom: 0; border-radius: 5px 5px 0 0; background: #fff; }
+  .screen .tabs span.on { color: var(--brand); font-weight: 600; }
+  .screen .body { height: 70px; background: var(--soft); display: flex; align-items: center; justify-content: center; color: var(--muted); }
+  .screen .status { display: flex; justify-content: space-between; padding: 4px 10px; background: #FDF2E4; color: var(--muted); border-top: 1px solid var(--line); }
+  .callouts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; font-size: 9.5pt; }
+  .callouts b { color: var(--brand); }
+
+  .flow { display: flex; align-items: stretch; gap: 6px; margin: 10px 0 14px; break-inside: avoid; }
+  .flow div { flex: 1; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px; font-size: 9.5pt; text-align: center; }
+  .flow div b { display: block; color: var(--brand); font-size: 10pt; }
+  .flow .arrow { flex: 0 0 14px; border: 0; background: none; padding: 0; color: var(--brand); font-weight: 700; display: flex; align-items: center; }
+
+  .role { display: inline-block; font-size: 8.5pt; font-weight: 600; border-radius: 10px; padding: 0 8px; margin-left: 6px; vertical-align: 2px; }
+  .r-nv { background: #E6F9F0; color: var(--ok); }
+  .r-ql { background: #FFF3D6; color: var(--warn); }
+  .r-qt { background: #FCEEF4; color: #8E4479; }
+</style>
+</head>
+<body>
+
+<!-- ============ BÌA ============ -->
+<div class="cover">
+  <div>
+    <div class="brand">SmartPS</div>
+    <h1>Hướng dẫn sử dụng</h1>
+    <div class="sub">Hệ thống quản lý bãi đỗ xe thông minh</div>
+    <div class="for">
+      Dành cho:
+      <span>Nhân viên trực cổng</span><span>Quản lý</span><span>Quản trị viên</span>
+    </div>
+  </div>
+  <div class="foot">
+    Phiên bản 1.0 · Mở nhanh tài liệu này trong ứng dụng bằng phím <span class="kbd">F1</span> hoặc menu <span class="menu">Trợ giúp → Hướng dẫn sử dụng</span>.
+  </div>
+</div>
+
+<!-- ============ MỤC LỤC ============ -->
+<section class="first toc">
+  <h2>Mục lục</h2>
+  <ol>
+    <li><b>1</b> Làm quen với SmartPS</li>
+    <li><b>2</b> Đăng nhập và tài khoản</li>
+    <li><b>3</b> Màn hình chính</li>
+    <li><b>4</b> Một ca làm việc từ đầu đến cuối</li>
+    <li><b>5</b> Ca trực và đối soát</li>
+    <li><b>6</b> Kiểm soát xe vào ra</li>
+    <li><b>7</b> Sơ đồ bãi đỗ</li>
+    <li><b>8</b> Sự cố và cảnh báo</li>
+    <li><b>9</b> Khách hàng và vé tháng</li>
+    <li><b>10</b> Bảng giá gửi xe</li>
+    <li><b>11</b> Tổng quan, báo cáo và giao dịch</li>
+    <li><b>12</b> Quản trị hệ thống</li>
+    <li><b>13</b> Phím tắt</li>
+    <li><b>14</b> Câu hỏi thường gặp</li>
+  </ol>
+
+  <h3>Ký hiệu trong tài liệu</h3>
+  <table>
+    <tr><th style="width:34%">Ký hiệu</th><th>Ý nghĩa</th></tr>
+    <tr><td><span class="menu">Nghiệp vụ → Kiểm soát xe vào ra</span></td><td>Bấm menu <b>Nghiệp vụ</b> rồi chọn mục <b>Kiểm soát xe vào ra</b>.</td></tr>
+    <tr><td><span class="ui">Mở ca</span></td><td>Tên nút hoặc ô trên màn hình.</td></tr>
+    <tr><td><span class="kbd">Ctrl+1</span></td><td>Phím tắt: giữ phím Ctrl rồi nhấn phím 1.</td></tr>
+    <tr><td><span class="role r-nv">Nhân viên</span> <span class="role r-ql">Quản lý</span> <span class="role r-qt">Quản trị viên</span></td><td>Vai trò thường dùng chức năng đó. Bạn chỉ thấy những chức năng được cấp quyền.</td></tr>
+  </table>
+</section>
+
+<!-- ============ 1 ============ -->
+<section>
+  <h2><span class="num">1</span>Làm quen với SmartPS</h2>
+  <p>SmartPS giúp bãi đỗ xe ghi nhận xe vào ra, tự đọc biển số từ ảnh camera, tính tiền gửi xe, quản lý vé tháng và đối soát tiền theo từng ca trực.</p>
+
+  <h3>Ba vai trò trong hệ thống</h3>
+  <table>
+    <tr><th style="width:22%">Vai trò</th><th>Công việc chính</th></tr>
+    <tr><td><b>Nhân viên</b></td><td>Mở ca, cho xe vào ra, thu tiền mặt hoặc chuyển khoản, lập biên bản sự cố, đóng ca.</td></tr>
+    <tr><td><b>Quản lý</b></td><td>Như nhân viên, thêm: xác nhận ca, điều chỉnh tiền ca, xem báo cáo, quản lý khách hàng, vé tháng và bảng giá.</td></tr>
+    <tr><td><b>Quản trị viên</b></td><td>Toàn quyền: tạo tài khoản, phân quyền, xem nhật ký hệ thống, thay đổi cài đặt.</td></tr>
+  </table>
+  <div class="note"><b>Bạn không thấy một chức năng?</b>Mỗi tài khoản chỉ thấy chức năng mình được cấp quyền. Hãy nhờ quản trị viên cấp thêm quyền nếu cần.</div>
+
+  <h3>Các nhóm khách gửi xe</h3>
+  <ul>
+    <li><b>Cư dân</b>: xe đã đăng ký với một hộ gia đình trong tòa nhà.</li>
+    <li><b>Vé tháng</b>: xe có vé tháng còn hạn, ra vào không mất tiền lượt.</li>
+    <li><b>Khách vãng lai</b>: xe chưa đăng ký, trả tiền theo thời gian gửi.</li>
+    <li><b>Xe bị cấm</b>: xe trong danh sách cấm, hệ thống không cho vào bãi.</li>
+  </ul>
+</section>
+
+<!-- ============ 2 ============ -->
+<section>
+  <h2><span class="num">2</span>Đăng nhập và tài khoản</h2>
+  <h3>Đăng nhập</h3>
+  <ol class="steps">
+    <li>Mở ứng dụng SmartPS trên máy tính.</li>
+    <li>Nhập <span class="ui">Tên đăng nhập</span> và <span class="ui">Mật khẩu</span> do quản trị viên cấp.</li>
+    <li>Nếu đây là máy riêng của bạn, có thể chọn <span class="ui">Ghi nhớ mật khẩu</span> để lần sau không phải nhập lại.</li>
+    <li>Bấm <span class="ui">ĐĂNG NHẬP</span> hoặc nhấn <span class="kbd">Enter</span>.</li>
+  </ol>
+  <div class="warn"><b>Không chọn Ghi nhớ mật khẩu trên máy dùng chung.</b>Người khác dùng máy sẽ vào được tài khoản của bạn.</div>
+
+  <h3>Đổi thông tin và mật khẩu</h3>
+  <ol class="steps">
+    <li>Chọn <span class="menu">Hệ thống → Thông tin tài khoản</span> hoặc nhấn <span class="kbd">Ctrl+I</span>.</li>
+    <li>Sửa họ tên, số điện thoại, email nếu cần.</li>
+    <li>Muốn đổi mật khẩu: nhập <span class="ui">Mật khẩu hiện tại</span>, <span class="ui">Mật khẩu mới</span> và nhập lại mật khẩu mới. Mật khẩu cần ít nhất 6 ký tự.</li>
+    <li>Bấm <span class="ui">Lưu thay đổi</span>.</li>
+  </ol>
+
+  <h3>Đăng xuất và thoát</h3>
+  <ul>
+    <li>Đăng xuất: bấm <span class="ui">Đăng xuất</span> ở góc trên bên phải, hoặc nhấn <span class="kbd">Ctrl+L</span>.</li>
+    <li>Thoát chương trình: <span class="menu">Hệ thống → Thoát</span> hoặc nhấn <span class="kbd">Alt+F4</span>.</li>
+  </ul>
+  <div class="tip"><b>Mẹo</b>Luôn đăng xuất khi rời khỏi máy hoặc khi bàn giao ca cho người khác.</div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section>
+  <h2><span class="num">3</span>Màn hình chính</h2>
+  <div class="screen">
+    <div class="bar"><span class="logo">① SmartPS</span><span class="m">Hệ thống</span><span class="m">Nghiệp vụ</span><span class="m">Danh mục</span><span class="m">Báo cáo và thống kê</span><span class="m">Quản trị</span><span class="m">Trợ giúp</span><span style="color:#968298">│ ② biểu tượng</span><span style="margin-left:auto">③ Đăng xuất</span></div>
+    <div class="tabs"><span>Ca trực và đối soát ×</span><span class="on">④ Kiểm soát xe vào ra ×</span><span>Sơ đồ bãi đỗ xe ×</span></div>
+    <div class="body">⑤ Vùng làm việc của chức năng đang chọn</div>
+    <div class="status"><span>⑥ Người dùng: Nguyễn Văn A · Nhân viên │ Màn hình: Kiểm soát xe vào ra</span><span>Phiên bản · Giờ hiện tại</span></div>
+  </div>
+  <div class="callouts">
+    <div><b>① Thanh menu</b>: tất cả chức năng, chia theo nhóm.</div>
+    <div><b>② Thanh biểu tượng</b>: mở nhanh các chức năng hay dùng. Rê chuột lên để xem tên và phím tắt.</div>
+    <div><b>③ Đăng xuất</b>: thoát khỏi tài khoản đang dùng.</div>
+    <div><b>④ Thẻ làm việc</b>: mỗi chức năng mở ra một thẻ. Bấm dấu × hoặc <span class="kbd">Ctrl+W</span> để đóng.</div>
+    <div><b>⑤ Vùng làm việc</b>: nội dung của thẻ đang chọn.</div>
+    <div><b>⑥ Thanh trạng thái</b>: người đang đăng nhập, màn hình hiện tại, giờ.</div>
+  </div>
+
+  <h3>Các nhóm menu</h3>
+  <table>
+    <tr><th style="width:24%">Menu</th><th>Chức năng bên trong</th><th style="width:16%">Phím tắt</th></tr>
+    <tr><td><b>Hệ thống</b></td><td>Thông tin tài khoản, Làm mới, Đóng thẻ, Đóng tất cả thẻ, Đăng xuất, Thoát</td><td><span class="kbd">Alt+H</span></td></tr>
+    <tr><td><b>Nghiệp vụ</b></td><td>Kiểm soát xe vào ra · Ca trực và đối soát · Sơ đồ bãi đỗ xe · Sự cố và cảnh báo</td><td><span class="kbd">Alt+N</span></td></tr>
+    <tr><td><b>Danh mục</b></td><td>Khách hàng và vé tháng · Bảng giá gửi xe</td><td><span class="kbd">Alt+D</span></td></tr>
+    <tr><td><b>Báo cáo và thống kê</b></td><td>Tổng quan · Lịch sử và báo cáo · Giao dịch và thanh toán</td><td><span class="kbd">Alt+B</span></td></tr>
+    <tr><td><b>Quản trị</b></td><td>Tài khoản và quyền · Phân quyền vai trò · Nhật ký hệ thống · Cài đặt hệ thống</td><td><span class="kbd">Alt+Q</span></td></tr>
+    <tr><td><b>Trợ giúp</b></td><td>Hướng dẫn sử dụng · Phím tắt · Giới thiệu</td><td><span class="kbd">Alt+G</span></td></tr>
+  </table>
+  <div class="tip"><b>Làm mới dữ liệu</b>Nhấn <span class="kbd">F5</span> bất cứ lúc nào để tải lại số liệu mới nhất của màn hình đang xem.</div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section>
+  <h2><span class="num">4</span>Một ca làm việc từ đầu đến cuối</h2>
+  <p>Đây là trình tự công việc hằng ngày của nhân viên trực cổng.</p>
+  <div class="flow">
+    <div><b>1. Mở ca</b>Nhập tiền mặt có sẵn trong két</div><div class="arrow">›</div>
+    <div><b>2. Xe vào</b>Đọc biển số, mở cổng</div><div class="arrow">›</div>
+    <div><b>3. Xe ra</b>Đối chiếu biển số, thu tiền</div><div class="arrow">›</div>
+    <div><b>4. Đóng ca</b>Đếm tiền, đối soát</div><div class="arrow">›</div>
+    <div><b>5. Xác nhận</b>Quản lý kiểm tra ca</div>
+  </div>
+  <table>
+    <tr><th style="width:24%">Bước</th><th>Làm ở đâu</th><th>Mục hướng dẫn</th></tr>
+    <tr><td>Mở ca</td><td><span class="menu">Nghiệp vụ → Ca trực và đối soát</span> hoặc <span class="kbd">Ctrl+2</span></td><td>Mục 5</td></tr>
+    <tr><td>Cho xe vào, xe ra</td><td><span class="menu">Nghiệp vụ → Kiểm soát xe vào ra</span> hoặc <span class="kbd">Ctrl+1</span></td><td>Mục 6</td></tr>
+    <tr><td>Ghi nhận sự cố</td><td><span class="menu">Nghiệp vụ → Sự cố và cảnh báo</span> hoặc <span class="kbd">Ctrl+4</span></td><td>Mục 8</td></tr>
+    <tr><td>Đóng ca</td><td><span class="menu">Nghiệp vụ → Ca trực và đối soát</span></td><td>Mục 5</td></tr>
+  </table>
+  <div class="warn"><b>Phải mở ca trước khi thu tiền.</b>Nếu chưa mở ca, hệ thống không cho thu tiền và cho xe ra.</div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section>
+  <h2><span class="num">5</span>Ca trực và đối soát <span class="role r-nv">Nhân viên</span><span class="role r-ql">Quản lý</span></h2>
+  <p>Mở bằng <span class="menu">Nghiệp vụ → Ca trực và đối soát</span> hoặc <span class="kbd">Ctrl+2</span>. Màn hình có hai thẻ: <b>Ca hiện tại</b> và <b>Lịch sử ca</b>.</p>
+
+  <h3>Mở ca</h3>
+  <ol class="steps">
+    <li>Đếm số tiền mặt đang có trong két.</li>
+    <li>Nhập vào ô <span class="ui">Tiền mặt đầu ca</span>.</li>
+    <li>Bấm <span class="ui">Mở ca</span>. Màn hình hiện giờ mở ca và các số liệu của ca.</li>
+  </ol>
+
+  <h3>Trong ca</h3>
+  <ul>
+    <li>Mỗi lần thu tiền gửi xe, hệ thống tự ghi vào <b>Sổ giao dịch ca</b>. Bạn không cần nhập tay.</li>
+    <li>Các ô số liệu cho biết: doanh thu tiền mặt, doanh thu chuyển khoản, tổng doanh thu, số giao dịch và <b>tiền mặt dự kiến</b> phải có trong két.</li>
+    <li>Cần ghi một khoản thu chi khác, ví dụ hoàn tiền cho khách: dùng phần <span class="ui">Giao dịch thủ công</span>, chọn loại, nhập số tiền và ghi chú, rồi bấm <span class="ui">Ghi nhận</span>.</li>
+  </ul>
+
+  <h3>Đóng ca</h3>
+  <ol class="steps">
+    <li>Đếm toàn bộ tiền mặt trong két.</li>
+    <li>Nhập vào ô <span class="ui">Tiền mặt thực tế</span>. Hệ thống hiện ngay <b>chênh lệch</b> so với số dự kiến.</li>
+    <li>Ghi chú lý do nếu có chênh lệch.</li>
+    <li>Bấm <span class="ui">Đóng ca</span>. Ca đã đóng không thể sửa giao dịch cũ.</li>
+  </ol>
+  <div class="warn"><b>Còn giao dịch chuyển khoản đang chờ?</b>Hãy hoàn tất hoặc hủy giao dịch đó ở màn Kiểm soát xe vào ra trước khi đóng ca.</div>
+
+  <h3>Quản lý xác nhận và điều chỉnh ca <span class="role r-ql">Quản lý</span></h3>
+  <ol class="steps">
+    <li>Mở thẻ <span class="ui">Lịch sử ca</span>, lọc theo ngày, nhân viên hoặc trạng thái rồi bấm <span class="ui">Lọc</span>.</li>
+    <li>Chọn một ca để xem chi tiết các giao dịch.</li>
+    <li>Nếu cần sửa số tiền: dùng <span class="ui">Tạo điều chỉnh</span>, chọn tăng hoặc giảm, nhập số tiền và lý do.</li>
+    <li>Khi đã kiểm tra xong, bấm <span class="ui">Xác nhận ca</span>. Ca đã xác nhận không thể thêm giao dịch.</li>
+  </ol>
+</section>
+
+<!-- ============ 6 ============ -->
+<section>
+  <h2><span class="num">6</span>Kiểm soát xe vào ra <span class="role r-nv">Nhân viên</span></h2>
+  <p>Mở bằng <span class="menu">Nghiệp vụ → Kiểm soát xe vào ra</span> hoặc <span class="kbd">Ctrl+1</span>. Màn hình chia làm ba phần: <b>Làn xe vào</b> bên trái, <b>Làn xe ra</b> bên phải và <b>Danh sách xe đang đỗ</b> ở dưới.</p>
+
+  <h3>Cho xe vào</h3>
+  <ol class="steps">
+    <li>Khi có xe tới, ảnh từ camera tự hiện ở làn vào. Nếu không có camera, bấm <span class="ui">Chọn ảnh</span> để chọn ảnh xe từ máy.</li>
+    <li>Hệ thống tự đọc biển số và hiện ở ô <span class="ui">Biển số xe vào</span>. Kiểm tra lại, sửa nếu đọc sai.</li>
+    <li>Xem nhãn nhóm khách: <b>Cư dân</b>, <b>Vé tháng</b> hay <b>Khách vãng lai</b>. Chọn <span class="ui">Loại phương tiện</span> và ô đỗ nếu muốn đổi ô gợi ý.</li>
+    <li>Bấm <span class="ui">Xác nhận vào và mở cổng</span>. Cổng mở, xe được thêm vào danh sách xe đang đỗ cùng mã vé và ô đỗ.</li>
+  </ol>
+  <div class="warn"><b>Xe bị cấm hoặc bãi hết chỗ</b>Hệ thống hiện cảnh báo màu đỏ và giữ cổng đóng. Làm theo quy định của ban quản lý, có thể lập biên bản sự cố.</div>
+
+  <h3>Cho xe ra và thu tiền</h3>
+  <ol class="steps">
+    <li>Ảnh xe ra tự hiện ở làn ra, hoặc bấm <span class="ui">Chọn ảnh</span>. Bạn cũng có thể <b>nhấp đúp</b> vào xe trong danh sách xe đang đỗ để chuyển sang làn ra.</li>
+    <li>Hệ thống đọc biển số và <b>đối chiếu với biển số lúc vào</b>. Dòng chữ xanh <i>Biển số vào ra trùng khớp</i> nghĩa là đúng xe.</li>
+    <li>Kiểm tra ảnh lúc vào, thời gian gửi và <b>Tổng tiền gửi xe</b>.</li>
+    <li>Chọn hình thức thanh toán:
+      <ul>
+        <li><b>Tiền mặt</b>: thu tiền của khách rồi bấm <span class="ui">Thu tiền và mở cổng cho ra</span>.</li>
+        <li><b>Chuyển khoản QR</b>: màn hình hiện mã QR. Khách quét bằng ứng dụng ngân hàng. Khi tiền về, cổng tự mở. Bấm <span class="ui">Kiểm tra thanh toán</span> nếu cần kiểm tra lại.</li>
+      </ul>
+    </li>
+    <li>Xe vé tháng còn hạn và lượt miễn phí sẽ được cho ra ngay, không thu tiền.</li>
+  </ol>
+  <div class="warn"><b>Biển số vào và ra không khớp</b>Hệ thống không cho xe ra. Kiểm tra lại giấy tờ, ảnh lúc vào và báo trưởng ca. Có thể lập biên bản sự cố loại <i>Biển số bị che hoặc không đọc được</i>.</div>
+
+  <h3>Các công tắc tự động</h3>
+  <table>
+    <tr><th style="width:36%">Công tắc</th><th>Tác dụng</th></tr>
+    <tr><td>Tự động</td><td>Đọc được biển số là tự ghi nhận và mở cổng, không cần bấm nút.</td></tr>
+    <tr><td>Camera</td><td>Tự nhận ảnh mới từ camera ngoài bãi.</td></tr>
+    <tr><td>Tự động cho xe vãng lai ra</td><td>Cho xe vãng lai ra ngay khi đã thanh toán, không cần dừng lại.</td></tr>
+  </table>
+  <div class="tip"><b>Muốn tập thử?</b>Bấm <span class="ui">Xe vào mẫu</span>, <span class="ui">Xe ra mẫu</span> hoặc <span class="ui">Chạy thử tự động</span> để xem quy trình với ảnh mẫu.</div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section>
+  <h2><span class="num">7</span>Sơ đồ bãi đỗ</h2>
+  <p>Mở bằng <span class="menu">Nghiệp vụ → Sơ đồ bãi đỗ xe</span> hoặc <span class="kbd">Ctrl+3</span>.</p>
+  <ul>
+    <li>Các ô số liệu ở trên cho biết tổng sức chứa, số ô còn trống, số ô đang có xe và tỷ lệ lấp đầy.</li>
+    <li>Mỗi khu đỗ hiện các ô theo màu: <b style="color:#168A5B">còn trống</b>, <b style="color:#C93B4B">đã có xe</b>, <b style="color:#B86B14">đang bảo trì</b>.</li>
+    <li>Bấm vào một ô để xem biển số, mã vé và giờ vào của xe đang đỗ.</li>
+    <li><span class="role r-qt">Quản trị viên</span> có thể chọn <b>đối tượng của khu</b>: dùng chung, chỉ cư dân, hoặc chỉ khách vãng lai, rồi bấm <span class="ui">Lưu đối tượng</span>.</li>
+  </ul>
+</section>
+
+<!-- ============ 8 ============ -->
+<section>
+  <h2><span class="num">8</span>Sự cố và cảnh báo</h2>
+  <p>Mở bằng <span class="menu">Nghiệp vụ → Sự cố và cảnh báo</span> hoặc <span class="kbd">Ctrl+4</span>. Dùng khi có việc bất thường như mất vé, biển số mờ, xe gửi quá lâu, va chạm, hỏng thiết bị.</p>
+  <h3>Lập biên bản</h3>
+  <ol class="steps">
+    <li>Bấm <span class="ui">Lập biên bản</span>.</li>
+    <li>Chọn <span class="ui">Loại sự cố</span>, nhập biển số xe liên quan nếu có và mô tả sự việc.</li>
+    <li>Bấm <span class="ui">Lưu biên bản</span>. Biên bản có trạng thái <b>Đang xử lý</b>.</li>
+  </ol>
+  <h3>Giải quyết biên bản</h3>
+  <ol class="steps">
+    <li>Chọn biên bản trong danh sách, bấm <span class="ui">Giải quyết</span>.</li>
+    <li>Ghi cách xử lý và kết quả, bấm <span class="ui">Xác nhận đã giải quyết</span>.</li>
+  </ol>
+  <div class="tip"><b>Quét xe gửi quá hạn</b>Bấm <span class="ui">Quét xe quá hạn</span> để hệ thống tự lập biên bản cho các xe gửi lâu hơn số giờ quy định trong Cài đặt hệ thống.</div>
+</section>
+
+<!-- ============ 9 ============ -->
+<section>
+  <h2><span class="num">9</span>Khách hàng và vé tháng <span class="role r-ql">Quản lý</span></h2>
+  <p>Mở bằng <span class="menu">Danh mục → Khách hàng và vé tháng</span> hoặc <span class="kbd">Ctrl+5</span>. Màn hình có các thẻ: <b>Hộ gia đình</b>, <b>Vé tháng</b> và <b>Danh sách cấm</b>.</p>
+
+  <h3>Thêm hộ gia đình, khách hàng và xe</h3>
+  <ol class="steps">
+    <li>Thẻ <b>Hộ gia đình</b>: bấm <span class="ui">Thêm hộ gia đình</span>, nhập mã căn hộ và số xe tối đa. Để trống số xe tối đa thì dùng số mặc định.</li>
+    <li>Bấm <span class="ui">Thêm khách hàng</span>, nhập họ tên, số điện thoại, chọn hộ gia đình. Có thể đăng ký luôn một xe.</li>
+    <li>Thêm xe khác cho khách: bấm <span class="ui">Thêm phương tiện</span>, nhập biển số và loại xe.</li>
+  </ol>
+
+  <h3>Nhập nhiều cư dân cùng lúc từ Excel</h3>
+  <ol class="steps">
+    <li>Bấm <span class="ui">Nhập danh sách cư dân</span>, chọn tệp Excel hoặc CSV.</li>
+    <li>Xem trước kết quả: mỗi dòng được đánh dấu <b>Hợp lệ</b>, <b>Cảnh báo</b> hoặc <b>Lỗi</b>.</li>
+    <li>Sửa các dòng lỗi trong tệp rồi chọn lại, cho tới khi không còn lỗi. Bấm <span class="ui">Lưu dữ liệu</span>.</li>
+  </ol>
+  <p>Tệp cần các cột: <b>Mã căn hộ, Họ tên, Số điện thoại, Biển số, Loại phương tiện</b>.</p>
+
+  <h3>Đăng ký, gia hạn và hủy vé tháng</h3>
+  <ul>
+    <li><b>Đăng ký</b>: bấm <span class="ui">Đăng ký vé tháng</span>, chọn khách hàng, xe, thời hạn 1, 3 hoặc 6 tháng và cách thanh toán. Xác nhận đã thu tiền thì vé mới được tạo.</li>
+    <li><b>Gia hạn</b>: chọn vé, bấm <span class="ui">Gia hạn</span>, chọn gói và xác nhận thu tiền.</li>
+    <li><b>Khóa hoặc mở thẻ</b>: tạm ngừng vé mà không hủy, ví dụ khi khách báo mất thẻ.</li>
+    <li><b>Hủy vé</b>: vé không còn dùng được ở cổng nhưng lịch sử thu tiền vẫn được giữ. Chỉ xóa vĩnh viễn khi nhập nhầm.</li>
+    <li>Đánh dấu ô <span class="ui">Chỉ xem vé sắp hết hạn trong 15 ngày</span> để biết ai cần nhắc gia hạn.</li>
+  </ul>
+
+  <h3>Danh sách cấm</h3>
+  <ol class="steps">
+    <li>Thẻ <b>Danh sách cấm</b>: bấm <span class="ui">+ Thêm vào danh sách cấm</span>.</li>
+    <li>Nhập biển số, chọn lý do, ghi chú thêm nếu cần, bấm <span class="ui">Lưu</span>.</li>
+    <li>Muốn cho xe vào lại: bấm <span class="ui">Gỡ cấm</span>. Muốn cấm lại: bấm <span class="ui">Cấm lại</span>.</li>
+  </ol>
+</section>
+
+<!-- ============ 10 ============ -->
+<section>
+  <h2><span class="num">10</span>Bảng giá gửi xe <span class="role r-ql">Quản lý</span></h2>
+  <p>Mở bằng <span class="menu">Danh mục → Bảng giá gửi xe</span> hoặc <span class="kbd">Ctrl+6</span>. Mỗi loại xe có một bảng giá riêng.</p>
+  <table>
+    <tr><th style="width:36%">Mục</th><th>Ý nghĩa</th></tr>
+    <tr><td>Khung 4 giờ</td><td>Giá cho mỗi 4 giờ gửi của khách vãng lai.</td></tr>
+    <tr><td>Giá 1 ngày, tối đa 24 giờ</td><td>Số tiền cao nhất phải trả trong một ngày.</td></tr>
+    <tr><td>Miễn phí trong số phút đầu</td><td>Xe ra trong khoảng này không mất tiền.</td></tr>
+    <tr><td>Phụ phí qua đêm</td><td>Cộng thêm mỗi lần xe gửi qua 0 giờ.</td></tr>
+    <tr><td>Giá vé tháng 1, 3, 6 tháng</td><td>Giá bán các gói vé tháng.</td></tr>
+    <tr><td>Số xe tối đa mỗi hộ</td><td>Xe vượt quá số này sẽ tính theo giá riêng.</td></tr>
+  </table>
+  <p>Sửa số liệu rồi bấm <span class="ui">LƯU THAY ĐỔI</span>. Giá mới áp dụng cho các lượt gửi bắt đầu sau khi lưu.</p>
+</section>
+
+<!-- ============ 11 ============ -->
+<section>
+  <h2><span class="num">11</span>Tổng quan, báo cáo và giao dịch</h2>
+  <h3>Tổng quan <span class="kbd">Ctrl+7</span></h3>
+  <p>Số xe đang trong bãi, tỷ lệ lấp đầy, lượt vào và doanh thu hôm nay, cùng danh sách xe vào ra gần đây.</p>
+
+  <h3>Lịch sử và báo cáo <span class="kbd">Ctrl+8</span> <span class="role r-ql">Quản lý</span></h3>
+  <ol class="steps">
+    <li>Chọn khoảng thời gian: hôm nay, hôm qua, 7 ngày, 30 ngày, tháng này, tháng trước hoặc tự chọn ngày.</li>
+    <li>Lọc thêm theo loại xe, nhóm khách, khu, nhân viên, ca trực hoặc hình thức thanh toán.</li>
+    <li>Xem các số liệu chính, biểu đồ doanh thu, lượt xe theo giờ và các bảng theo ngày, theo ca, theo loại xe.</li>
+    <li>Bấm <span class="ui">Xuất báo cáo</span> và chọn lưu dạng <b>Excel</b>, <b>CSV</b> hoặc <b>PDF</b>.</li>
+  </ol>
+  <div class="note"><b>Không lưu được tệp?</b>Hãy đóng tệp đó trong Excel trước khi xuất lại.</div>
+
+  <h3>Giao dịch và thanh toán <span class="kbd">Ctrl+9</span></h3>
+  <ul>
+    <li>Thẻ <b>Thanh toán chuyển khoản</b>: danh sách các lần khách chuyển khoản và trạng thái: đã thanh toán, chờ thanh toán, đã hủy, đã hoàn tiền.</li>
+    <li>Thẻ <b>Lượt gửi xe</b>: từng lượt xe với giờ vào, giờ ra, thời gian gửi, số tiền và hình thức thu.</li>
+    <li><b>Hoàn tiền</b> <span class="role r-ql">Quản lý</span>: bấm <span class="ui">Hoàn tiền</span> trên giao dịch cần hoàn. Lưu ý việc chuyển trả tiền cho khách cần làm riêng với ngân hàng.</li>
+    <li>Nhân viên chỉ thấy <b>Giao dịch của tôi</b>: các ca và giao dịch do chính mình xử lý.</li>
+  </ul>
+</section>
+
+<!-- ============ 12 ============ -->
+<section>
+  <h2><span class="num">12</span>Quản trị hệ thống <span class="role r-qt">Quản trị viên</span></h2>
+  <h3>Tài khoản và quyền</h3>
+  <ul>
+    <li>Bấm <span class="ui">Thêm tài khoản</span>: nhập tên đăng nhập, họ tên, mật khẩu ít nhất 6 ký tự và chọn vai trò.</li>
+    <li>Bấm <span class="ui">Sửa</span> để đổi họ tên, vai trò, khóa tài khoản hoặc đặt lại mật khẩu.</li>
+    <li>Tài khoản đã có ca trực hoặc giao dịch không xóa được, hãy <b>khóa</b> thay vì xóa.</li>
+    <li>Hệ thống luôn giữ lại ít nhất một quản trị viên đang hoạt động.</li>
+  </ul>
+  <h3>Phân quyền vai trò</h3>
+  <p>Đánh dấu các quyền cho từng vai trò Quản lý và Nhân viên, rồi bấm <span class="ui">Lưu thay đổi</span>. Bấm <span class="ui">Hoàn tác</span> để bỏ các thay đổi chưa lưu. Quản trị viên luôn có toàn quyền.</p>
+  <h3>Nhật ký hệ thống</h3>
+  <ul>
+    <li>Ghi lại mọi thao tác quan trọng: ai làm, lúc nào, làm gì, kết quả ra sao. Nhật ký không thể sửa hoặc xóa.</li>
+    <li>Lọc theo ngày, người dùng, hành động, kết quả hoặc tìm theo biển số, rồi bấm <span class="ui">Lọc</span>.</li>
+    <li>Chọn một dòng để xem <b>Chi tiết</b> ở khung bên dưới.</li>
+    <li>Bấm <span class="ui">Kiểm tra nhật ký</span> để chắc chắn không ai sửa nhật ký trái phép.</li>
+  </ul>
+  <h3>Cài đặt hệ thống</h3>
+  <ul>
+    <li><b>Thông số vận hành</b>: số giờ tối đa trước khi tính là gửi quá hạn, số xe tối đa mỗi hộ. Sửa rồi bấm <span class="ui">Lưu thay đổi</span>.</li>
+    <li><b>Tình trạng hệ thống</b>: mỗi mục hiện chấm <b style="color:#168A5B">xanh: Hoạt động tốt</b> hoặc <b style="color:#C93B4B">đỏ: Đang gặp sự cố</b>. Bấm <span class="ui">Kiểm tra lại</span> để cập nhật.</li>
+    <li>Bấm <span class="ui">Thử đọc biển số</span> và chọn một ảnh xe để kiểm tra bộ đọc biển số.</li>
+  </ul>
+  <div class="note"><b>Thấy chấm đỏ?</b>Thử bấm Kiểm tra lại. Nếu vẫn đỏ, hãy báo bộ phận kỹ thuật kèm tên mục đang đỏ.</div>
+</section>
+
+<!-- ============ 13 ============ -->
+<section>
+  <h2><span class="num">13</span>Phím tắt</h2>
+  <p>Trong ứng dụng, nhấn <span class="kbd">F2</span> để xem bảng này bất cứ lúc nào. Mỗi phím tắt dưới đây làm một việc riêng. Phím Ctrl+số chỉ mở được chức năng mà tài khoản của bạn có quyền dùng.</p>
+
+  <div class="group-title">CHUNG</div>
+  <div class="keys">
+    <div class="keycard"><span class="kbd">F1</span><div>Mở hướng dẫn sử dụng này</div></div>
+    <div class="keycard"><span class="kbd">F2</span><div>Xem bảng phím tắt</div></div>
+    <div class="keycard"><span class="kbd">F5</span><div>Làm mới dữ liệu màn hình đang xem</div></div>
+    <div class="keycard"><span class="kbd">Ctrl+I</span><div>Mở thông tin tài khoản</div></div>
+    <div class="keycard"><span class="kbd">Ctrl+L</span><div>Đăng xuất</div></div>
+    <div class="keycard"><span class="kbd">Alt+F4</span><div>Thoát chương trình</div></div>
+  </div>
+
+  <div class="group-title">MỞ NHANH CHỨC NĂNG</div>
+  <div class="keys">
+    <div class="keycard"><span class="kbd">Ctrl+1</span><div>Kiểm soát xe vào ra</div></div>
+    <div class="keycard"><span class="kbd">Ctrl+2</span><div>Ca trực và đối soát</div></div>
+    <div class="keycard"><span class="kbd">Ctrl+3</span><div>Sơ đồ bãi đỗ xe</div></div>
+    <div class="keycard"><span class="kbd">Ctrl+4</span><div>Sự cố và cảnh báo</div></div>
+    <div class="keycard"><span class="kbd">Ctrl+5</span><div>Khách hàng và vé tháng</div></div>
+    <div class="keycard"><span class="kbd">Ctrl+6</span><div>Bảng giá gửi xe</div></div>
+    <div class="keycard"><span class="kbd">Ctrl+7</span><div>Tổng quan</div></div>
+    <div class="keycard"><span class="kbd">Ctrl+8</span><div>Lịch sử và báo cáo</div></div>
+    <div class="keycard"><span class="kbd">Ctrl+9</span><div>Giao dịch và thanh toán</div></div>
+  </div>
+
+  <div class="group-title">THẺ ĐANG MỞ</div>
+  <div class="keys">
+    <div class="keycard"><span class="kbd">Ctrl+W</span><div>Đóng thẻ đang mở</div></div>
+    <div class="keycard"><span class="kbd">Ctrl+F4</span><div>Đóng thẻ đang mở, cách thứ hai</div></div>
+    <div class="keycard"><span class="kbd">Ctrl+Shift+W</span><div>Đóng tất cả các thẻ</div></div>
+    <div class="keycard"><span class="kbd">Chuột giữa</span><div>Bấm chuột giữa vào thẻ để đóng thẻ đó</div></div>
+  </div>
+
+  <div class="group-title">MỞ MENU BẰNG BÀN PHÍM</div>
+  <div class="keys">
+    <div class="keycard"><span class="kbd">Alt+H</span><div>Menu Hệ thống</div></div>
+    <div class="keycard"><span class="kbd">Alt+N</span><div>Menu Nghiệp vụ</div></div>
+    <div class="keycard"><span class="kbd">Alt+D</span><div>Menu Danh mục</div></div>
+    <div class="keycard"><span class="kbd">Alt+B</span><div>Menu Báo cáo và thống kê</div></div>
+    <div class="keycard"><span class="kbd">Alt+Q</span><div>Menu Quản trị</div></div>
+    <div class="keycard"><span class="kbd">Alt+G</span><div>Menu Trợ giúp</div></div>
+  </div>
+
+  <div class="group-title">TRONG HỘP NHẬP LIỆU</div>
+  <div class="keys">
+    <div class="keycard"><span class="kbd">Enter</span><div>Xác nhận hoặc lưu</div></div>
+    <div class="keycard"><span class="kbd">Esc</span><div>Hủy hoặc đóng hộp thoại</div></div>
+    <div class="keycard"><span class="kbd">Tab</span><div>Chuyển sang ô nhập tiếp theo</div></div>
+  </div>
+</section>
+
+<!-- ============ 14 ============ -->
+<section>
+  <h2><span class="num">14</span>Câu hỏi thường gặp</h2>
+  <table>
+    <tr><th style="width:38%">Tình huống</th><th>Cách xử lý</th></tr>
+    <tr><td>Đăng nhập báo sai tài khoản hoặc mật khẩu</td><td>Kiểm tra phím Caps Lock và bộ gõ tiếng Việt. Nếu quên mật khẩu, nhờ quản trị viên đặt lại.</td></tr>
+    <tr><td>Báo tài khoản đã bị khóa</td><td>Liên hệ quản trị viên để mở khóa.</td></tr>
+    <tr><td>Hiện thông báo <i>Mất kết nối với hệ thống</i></td><td>Kiểm tra mạng, bấm <span class="ui">Thử kết nối lại</span>. Nếu vẫn lỗi, báo bộ phận kỹ thuật.</td></tr>
+    <tr><td>Không đọc được biển số</td><td>Chọn ảnh rõ hơn hoặc gõ tay biển số vào ô biển số. Biển số gồm 5 đến 12 chữ cái hoặc chữ số.</td></tr>
+    <tr><td>Không thu tiền được, báo cần mở ca</td><td>Mở ca ở màn Ca trực và đối soát rồi làm lại.</td></tr>
+    <tr><td>Khách đã chuyển khoản nhưng cổng chưa mở</td><td>Bấm <span class="ui">Kiểm tra thanh toán</span>. Nếu khách đưa được bằng chứng chuyển tiền, quản lý có thể <span class="ui">Xác nhận đã nhận tiền</span>.</td></tr>
+    <tr><td>Biển số vào và ra không khớp</td><td>Không cho xe ra. Đối chiếu giấy tờ xe, báo trưởng ca và lập biên bản sự cố.</td></tr>
+    <tr><td>Không đóng được ca</td><td>Hoàn tất hoặc hủy các giao dịch chuyển khoản đang chờ. Chỉ người mở ca mới đóng được ca đó.</td></tr>
+    <tr><td>Không thấy một chức năng trong menu</td><td>Tài khoản chưa được cấp quyền. Liên hệ quản trị viên.</td></tr>
+    <tr><td>Xuất báo cáo báo không lưu được tệp</td><td>Đóng tệp đang mở trong Excel rồi xuất lại, hoặc chọn nơi lưu khác.</td></tr>
+    <tr><td>Hiện lỗi không mong muốn</td><td>Bấm Đồng ý để tiếp tục làm việc. Nếu lỗi lặp lại, ghi lại thao tác vừa làm và báo bộ phận kỹ thuật.</td></tr>
+  </table>
+  <div class="tip"><b>Cần hỗ trợ thêm?</b>Liên hệ quản trị viên hệ thống của tòa nhà hoặc bộ phận kỹ thuật SmartPS.</div>
+</section>
+
+</body>
+</html>
